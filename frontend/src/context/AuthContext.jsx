@@ -1,275 +1,117 @@
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
-const User = require('../models/User');
-const OtpSession = require('../models/OtpSession');
-const emailService = require('../services/emailService');
-const AppError = require('../utils/AppError');
-const asyncHandler = require('../utils/asyncHandler');
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import api from '../utils/api';
 
-const generateToken = (userId) => {
-  return jwt.sign(
-    { userId: userId.toString() },
-    process.env.JWT_SECRET,
-    {
-      expiresIn: process.env.JWT_EXPIRES_IN || '30d'
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Initialize auth state
+  useEffect(() => {
+    const initializeAuth = async () => {
+      const token = sessionStorage.getItem('token');
+      const storedUser = sessionStorage.getItem('user');
+
+      console.log('🔐 AuthContext: Initializing...', { hasToken: !!token, hasStoredUser: !!storedUser });
+
+      if (!token) {
+        console.log('🔐 AuthContext: No token found, user is guest');
+        setLoading(false);
+        return;
+      }
+
+      // If we have a user in storage, use it immediately for better UX
+      if (storedUser) {
+        try {
+          const parsed = JSON.parse(storedUser);
+          console.log('🔐 AuthContext: Restoring user from storage', parsed.email);
+          setUser(parsed);
+        } catch (err) {
+          console.error('🔐 AuthContext: Failed to parse stored user', err);
+        }
+      }
+
+      // Always verify token and get fresh user data from server
+      try {
+        console.log('🔐 AuthContext: Verifying token with server...');
+        const response = await api.get('/auth/me');
+        const userData = response.data.user;
+        console.log('🔐 AuthContext: Token verified, user:', userData.email);
+        setUser(userData);
+        sessionStorage.setItem('user', JSON.stringify(userData));
+      } catch (err) {
+        const status = err.response?.status || err.status;
+        console.error('🔐 AuthContext: Verification failed', { status, message: err.message });
+        
+        // Only clear if it's a 401/403 error
+        if (status === 401 || status === 403) {
+          console.log('🔐 AuthContext: Clearing session due to auth error');
+          logout();
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
+  }, []);
+
+  const login = async ({ email, password }) => {
+    console.log('🔐 AuthContext: Attempting manual login for:', email);
+    try {
+      const response = await api.post('/auth/login', { email, password });
+      const { user: userData, token } = response.data;
+      
+      console.log('🔐 AuthContext: Manual login successful!', userData.email);
+      setUser(userData);
+      sessionStorage.setItem('user', JSON.stringify(userData));
+      sessionStorage.setItem('token', token);
+      
+      return response.data;
+    } catch (err) {
+      console.error('🔐 AuthContext: Manual login failed', err.response?.data?.message || err.message);
+      throw err;
     }
+  };
+
+  const logout = () => {
+    setUser(null);
+    sessionStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    // Clear any other auth related items
+    sessionStorage.removeItem('auth_user');
+    
+    if (window.location.pathname !== '/login') {
+      window.location.href = '/login';
+    }
+  };
+
+  const updateUser = (userData) => {
+    setUser(userData);
+    sessionStorage.setItem('user', JSON.stringify(userData));
+  };
+
+  const isAuthenticated = !!user;
+
+  return (
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      isAuthenticated, 
+      login, 
+      logout, 
+      updateUser 
+    }}>
+      {children}
+    </AuthContext.Provider>
   );
 };
 
-const sendTokenResponse = (user, statusCode, res) => {
-  const token = generateToken(user._id);
-
-  res.status(statusCode).json({
-    status: 'success',
-    token,
-    user: {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role
-    }
-  });
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };
-
-// @desc    Normal Signup
-// @route   POST /api/v1/auth/signup
-exports.signup = asyncHandler(async (req, res, next) => {
-  const { name, email, password, phone } = req.body;
-
-  const existingUser = await User.findOne({ email: email.toLowerCase() });
-
-  if (existingUser) {
-    return next(new AppError('Email already in use', 400));
-  }
-
-  if (phone) {
-    const existingPhone = await User.findOne({ phone });
-    if (existingPhone) {
-      return next(new AppError('Phone number already in use', 400));
-    }
-  }
-
-  const user = await User.create({
-    name,
-    email,
-    password,
-    phone,
-    role: 'user',
-    active: true,
-    isVerified: true,
-    provider: 'local'
-  });
-
-  sendTokenResponse(user, 201, res);
-});
-
-// @desc    Normal Login
-// @route   POST /api/v1/auth/login
-exports.login = asyncHandler(async (req, res, next) => {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    return next(new AppError('Please provide email and password', 400));
-  }
-
-  const trimmedEmail = email.trim().toLowerCase();
-
-  const user = await User.findOne({
-    email: trimmedEmail,
-    active: { $ne: false }
-  }).select('+password');
-
-  if (!user) {
-    console.log(`❌ Login failed: User not found for ${trimmedEmail}`);
-    return next(new AppError('Invalid email or password', 401));
-  }
-
-  if (!user.password) {
-    console.log(`❌ Login failed: User ${trimmedEmail} has no password set (likely a Google user)`);
-    return next(new AppError('This account does not have a password. Please login with Google.', 401));
-  }
-
-  let isCorrect = false;
-
-  const isHashed =
-    user.password &&
-    user.password.startsWith('$2');
-
-  if (isHashed) {
-    isCorrect = await user.comparePassword(
-      password,
-      user.password
-    );
-  } else {
-    if (user.password === password) {
-      isCorrect = true;
-      user.password = password;
-      await user.save({
-        validateBeforeSave: false
-      });
-    }
-  }
-
-  if (!isCorrect) {
-    console.log(`❌ Login failed: Incorrect password for ${trimmedEmail}`);
-    return next(new AppError('Invalid email or password', 401));
-  }
-
-  user.lastActiveAt = Date.now();
-
-  await user.save({
-    validateBeforeSave: false
-  });
-
-  sendTokenResponse(user, 200, res);
-});
-
-// @desc    Get Current User
-// @route   GET /api/v1/auth/me
-exports.getMe = asyncHandler(async (req, res) => {
-  res.status(200).json({
-    status: 'success',
-    user: {
-      id: req.user._id,
-      name: req.user.name,
-      email: req.user.email,
-      role: req.user.role,
-      phone: req.user.phone
-    }
-  });
-});
-
-// @desc    Google OAuth Success Redirect
-exports.googleSuccess = asyncHandler(async (req, res) => {
-  if (req.user) {
-    const token = generateToken(req.user._id);
-
-    const frontendUrl =
-      process.env.FRONTEND_URL ||
-      'http://localhost:5173';
-
-    res.redirect(
-      `${frontendUrl}/oauth-callback?token=${token}`
-    );
-  } else {
-    const frontendUrl =
-      process.env.FRONTEND_URL ||
-      'http://localhost:5173';
-
-    res.redirect(
-      `${frontendUrl}/login?error=GoogleAuthFailed`
-    );
-  }
-});
-
-// @desc    Forgot Password - Generate OTP and send email
-// @route   POST /api/v1/auth/forgot-password
-exports.forgotPassword = asyncHandler(async (req, res, next) => {
-  const { email } = req.body;
-
-  if (!email) {
-    return next(
-      new AppError(
-        'Please provide an email address',
-        400
-      )
-    );
-  }
-
-  const user = await User.findOne({ email });
-
-  if (!user) {
-    return next(
-      new AppError(
-        'No user found with that email address',
-        404
-      )
-    );
-  }
-
-  const otp = Math.floor(
-    100000 + Math.random() * 900000
-  ).toString();
-
-  const hashedOtp = await bcrypt.hash(otp, 12);
-
-  await OtpSession.create({
-    email,
-    hashedOtp,
-    expiresAt: new Date(
-      Date.now() + 10 * 60 * 1000
-    ),
-  });
-
-  await emailService.sendPasswordResetOTP(email, otp);
-
-  res.status(200).json({
-    status: 'success',
-    message: 'OTP sent to your email'
-  });
-});
-
-// @desc    Reset Password - Verify OTP and update password
-// @route   POST /api/v1/auth/reset-password
-exports.resetPassword = asyncHandler(async (req, res, next) => {
-  const { email, otp, password } = req.body;
-
-  if (!email || !otp || !password) {
-    return next(
-      new AppError(
-        'Please provide email, otp and new password',
-        400
-      )
-    );
-  }
-
-  const session = await OtpSession.findOne({
-    email,
-    isUsed: false,
-    expiresAt: { $gt: new Date() }
-  }).sort('-createdAt');
-
-  if (!session) {
-    return next(
-      new AppError(
-        'OTP expired or not found. Please request a new one.',
-        400
-      )
-    );
-  }
-
-  const isCorrect = await bcrypt.compare(
-    otp,
-    session.hashedOtp
-  );
-
-  if (!isCorrect) {
-    return next(
-      new AppError(
-        'Invalid OTP. Please try again.',
-        400
-      )
-    );
-  }
-
-  const user = await User.findOne({ email });
-
-  if (!user) {
-    return next(
-      new AppError('User not found', 404)
-    );
-  }
-
-  user.password = password;
-
-  await user.save();
-
-  session.isUsed = true;
-
-  await session.save();
-
-  res.status(200).json({
-    status: 'success',
-    message: 'Password reset successfully'
-  });
-});

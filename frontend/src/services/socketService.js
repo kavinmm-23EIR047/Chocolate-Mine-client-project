@@ -21,7 +21,9 @@ class SocketService {
       return;
     }
 
-    this.socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000', {
+    const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace('/api/v1', '');
+    
+    this.socket = io(baseUrl, {
       auth: { token },
       transports: ['websocket'],
       reconnection: true,

@@ -36,7 +36,7 @@ const sendTokenResponse = (user, statusCode, res) => {
 exports.signup = asyncHandler(async (req, res, next) => {
   const { name, email, password, phone } = req.body;
 
-  const existingUser = await User.findOne({ email });
+  const existingUser = await User.findOne({ email: email.toLowerCase() });
 
   if (existingUser) {
     return next(new AppError('Email already in use', 400));
@@ -44,7 +44,7 @@ exports.signup = asyncHandler(async (req, res, next) => {
 
   const user = await User.create({
     name,
-    email,
+    email: email.toLowerCase(),
     password,
     phone,
     role: 'user',
