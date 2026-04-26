@@ -9,7 +9,7 @@ const OAuthCallback = () => {
   useEffect(() => {
     const token = searchParams.get('token');
     if (token) {
-      localStorage.setItem('token', token);
+      sessionStorage.setItem('token', token);
       // We trigger a reload to let AuthContext pick up the token and fetch the user cleanly
       window.location.href = '/'; 
     } else {

@@ -62,7 +62,7 @@ const SocketInitializer = ({ children }) => {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       if (token) {
         socketService.connect(token);
         

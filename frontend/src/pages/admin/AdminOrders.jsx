@@ -168,7 +168,7 @@ const AdminOrders = () => {
 
   // Initialize socket connection for real-time updates
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (!token) return;
 
     socketRef.current = io(import.meta.env.VITE_API_URL || 'http://localhost:5000', {

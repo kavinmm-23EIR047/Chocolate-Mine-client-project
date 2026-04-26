@@ -277,7 +277,7 @@ const StaffDashboard = () => {
 
   // Initialize socket connection
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (!token) return;
 
     socketRef.current = io(import.meta.env.VITE_API_URL || 'http://localhost:5000', {
@@ -287,7 +287,7 @@ const StaffDashboard = () => {
 
     socketRef.current.on('connect', () => {
       console.log('Socket connected');
-      socketRef.current.emit('join_staff_room', localStorage.getItem('userId'));
+      socketRef.current.emit('join_staff_room', sessionStorage.getItem('userId'));
       socketRef.current.emit('join_admin_room');
     });
 

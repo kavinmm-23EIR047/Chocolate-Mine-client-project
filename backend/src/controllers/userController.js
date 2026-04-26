@@ -77,3 +77,38 @@ exports.getWishlist = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id).populate('wishlist');
   res.status(200).json({ status: 'success', data: user.wishlist });
 });
+
+exports.updateProfile = asyncHandler(async (req, res, next) => {
+  const { name, phone } = req.body;
+  
+  const user = await User.findById(req.user._id);
+  if (!user) return next(new AppError('User not found', 404));
+
+  if (name) user.name = name;
+  
+  if (phone !== undefined) {
+    const formattedPhone = phone.trim() === '' ? null : phone.trim();
+    
+    if (formattedPhone && formattedPhone !== user.phone) {
+      const existingUser = await User.findOne({ phone: formattedPhone, _id: { $ne: user._id } });
+      if (existingUser) {
+        return next(new AppError('Phone number already in use by another account', 400));
+      }
+    }
+    user.phone = formattedPhone;
+  }
+
+  await user.save();
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      phone: user.phone,
+      createdAt: user.createdAt
+    }
+  });
+});

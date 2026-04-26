@@ -32,10 +32,9 @@ const Checkout = () => {
   const [showMap, setShowMap] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loaderText, setLoaderText] = useState('Preparing your order...');
-  const [currentStep, setCurrentStep] = useState(1);
   const [couponInput, setCouponInput] = useState('');
   
-  // ✅ Prevent duplicate payment attempts
+  // Prevent duplicate payment attempts
   const isProcessingPayment = useRef(false);
 
   const [deliveryInfo, setDeliveryInfo] = useState({
@@ -47,6 +46,7 @@ const Checkout = () => {
   const [distance, setDistance] = useState(0);
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const [deliveryDate, setDeliveryDate] = useState(new Date());
 
   const [addressDetails, setAddressDetails] = useState({
     fullName: user?.name || '',
@@ -58,14 +58,85 @@ const Checkout = () => {
   const SHOP_LAT = 11.004540031168712;
   const SHOP_LNG = 76.97510955713153;
 
+  // Define slots with end times for validation
   const slots = [
-    { value: '10am-1pm', label: 'Morning (10 AM - 1 PM)' },
-    { value: '1pm-4pm', label: 'Afternoon (1 PM - 4 PM)' },
-    { value: '4pm-7pm', label: 'Evening (4 PM - 7 PM)' },
-    { value: '7pm-10pm', label: 'Night (7 PM - 10 PM)' },
+    { value: '10am-1pm', label: 'Morning (10 AM - 1 PM)', endHour: 13, endMinute: 0 },
+    { value: '1pm-4pm', label: 'Afternoon (1 PM - 4 PM)', endHour: 16, endMinute: 0 },
+    { value: '4pm-7pm', label: 'Evening (4 PM - 7 PM)', endHour: 19, endMinute: 0 },
+    { value: '7pm-10pm', label: 'Night (7 PM - 10 PM)', endHour: 22, endMinute: 0 },
   ];
 
-  const [deliverySlot, setDeliverySlot] = useState('4pm-7pm');
+  const [deliverySlot, setDeliverySlot] = useState(null);
+
+  // Function to check if a slot is available for a given date
+  const isSlotAvailableForDate = (slot, date) => {
+    const now = new Date();
+    const currentDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const selectedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    
+    // For future dates (tomorrow or later), all slots are available
+    if (selectedDate > currentDate) {
+      return true;
+    }
+    
+    // For today, check based on current time
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const currentTimeDecimal = currentHour + (currentMinute / 60);
+    
+    // Slot cutoff time = end time - 1 hour
+    const cutoffTimeDecimal = slot.endHour - 1;
+    
+    // Slot is available if current time is before cutoff time
+    return currentTimeDecimal < cutoffTimeDecimal;
+  };
+
+  // Get slots with availability status for current date
+  const getSlotsWithAvailability = () => {
+    const todaySlots = slots.map(slot => ({
+      ...slot,
+      available: isSlotAvailableForDate(slot, deliveryDate)
+    }));
+    
+    // Check if any slot is available today
+    const hasAvailableSlot = todaySlots.some(slot => slot.available);
+    
+    // If no slots available today, auto-switch to tomorrow
+    if (!hasAvailableSlot && deliveryDate.toDateString() === new Date().toDateString()) {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      setDeliveryDate(tomorrow);
+      return slots.map(slot => ({ ...slot, available: true }));
+    }
+    
+    return todaySlots;
+  };
+
+  // Get available slots for current date
+  const availableSlots = getSlotsWithAvailability();
+
+  // Set default available slot when date changes
+  useEffect(() => {
+    const firstAvailableSlot = availableSlots.find(slot => slot.available);
+    if (firstAvailableSlot) {
+      setDeliverySlot(firstAvailableSlot.value);
+    } else {
+      setDeliverySlot(null);
+    }
+  }, [deliveryDate]);
+
+  // Handle date change to tomorrow when no slots available
+  const handleDateChange = (increment) => {
+    const newDate = new Date(deliveryDate);
+    newDate.setDate(newDate.getDate() + increment);
+    setDeliveryDate(newDate);
+  };
+
+  // Check if today has any available slots
+  const hasAvailableSlotsToday = () => {
+    const todaySlots = slots.map(slot => isSlotAvailableForDate(slot, new Date()));
+    return todaySlots.some(slot => slot);
+  };
 
   // ==================== PRICE CALCULATION ====================
 
@@ -117,6 +188,8 @@ const Checkout = () => {
       );
       setDistance(dist);
       setDeliveryFee(Math.max(30, Math.round(dist * 4)));
+    } else {
+      setDeliveryFee(50);
     }
   }, [deliveryInfo.position]);
 
@@ -144,6 +217,9 @@ const Checkout = () => {
   const gst = Math.round(subtotal * 0.18);
   const convenienceFee = Math.round(subtotal * 0.02);
   const total = subtotal + deliveryFee + gst + convenienceFee;
+
+  // Check if address is selected
+  const isAddressSelected = deliveryInfo.position !== null;
 
   // ==================== FETCH ADDRESSES ====================
 
@@ -177,6 +253,12 @@ const Checkout = () => {
     });
   };
 
+  // Phone number validation (exactly 10 digits)
+  const validatePhoneNumber = (phone) => {
+    const phoneRegex = /^[0-9]{10}$/;
+    return phoneRegex.test(phone);
+  };
+
   const validateForm = () => {
     if (!addressDetails.fullName.trim()) {
       toast.error('Please enter full name');
@@ -184,6 +266,10 @@ const Checkout = () => {
     }
     if (!addressDetails.phone.trim()) {
       toast.error('Please enter phone number');
+      return false;
+    }
+    if (!validatePhoneNumber(addressDetails.phone.trim())) {
+      toast.error('Please enter a valid 10-digit phone number');
       return false;
     }
     if (!addressDetails.houseNo.trim() && !addressDetails.street.trim() && !deliveryInfo.address) {
@@ -194,6 +280,18 @@ const Checkout = () => {
       toast.error('Please select delivery location on map');
       return false;
     }
+    if (!deliverySlot) {
+      toast.error('Please select a delivery slot');
+      return false;
+    }
+    
+    // Final slot availability check before submission
+    const selectedSlot = slots.find(s => s.value === deliverySlot);
+    if (selectedSlot && !isSlotAvailableForDate(selectedSlot, deliveryDate)) {
+      toast.error('Selected delivery slot is no longer available. Please choose another slot.');
+      return false;
+    }
+    
     return true;
   };
 
@@ -224,7 +322,7 @@ const Checkout = () => {
   });
 
   const handlePlaceOrder = async () => {
-    // ✅ Prevent duplicate payment attempts
+    // Prevent duplicate payment attempts
     if (isProcessingPayment.current) {
       toast.error('Payment already in progress. Please wait.');
       return;
@@ -232,14 +330,14 @@ const Checkout = () => {
 
     if (!validateForm()) return;
 
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (!token) {
       toast.error('Session expired. Please login again.');
       navigate('/login');
       return;
     }
 
-    // ✅ Check if Razorpay key is configured
+    // Check if Razorpay key is configured
     const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
     if (!razorpayKey) {
       toast.error('Payment configuration error. Please contact support.');
@@ -271,7 +369,7 @@ const Checkout = () => {
           lat: deliveryInfo.position?.lat,
           lng: deliveryInfo.position?.lng,
         },
-        deliveryDate: new Date(),
+        deliveryDate: deliveryDate,
         deliverySlot,
       };
 
@@ -284,7 +382,7 @@ const Checkout = () => {
         return;
       }
 
-      // ✅ Create order with backend
+      // Create order with backend
       const res = await api.post('/payment/create-order', {
         address: payload.address,
         deliveryDate: payload.deliveryDate,
@@ -295,7 +393,7 @@ const Checkout = () => {
 
       const { razorpayOrder, orderId } = res.data.data;
 
-      // ✅ Validate order response
+      // Validate order response
       if (!razorpayOrder || !razorpayOrder.id) {
         throw new Error('Invalid order response from server');
       }
@@ -303,12 +401,12 @@ const Checkout = () => {
       clearInterval(loadingInterval);
       setLoading(false);
 
-      // ✅ Get prefill data from selected address or user
+      // Get prefill data from selected address or user
       const prefillName = addressDetails.fullName || user?.name || '';
       const prefillContact = addressDetails.phone || user?.phone || '';
       const prefillEmail = user?.email || '';
 
-      // ✅ Razorpay options with improved payment methods configuration
+      // Razorpay options
       const options = {
         key: razorpayKey,
         amount: razorpayOrder.amount,
@@ -316,14 +414,12 @@ const Checkout = () => {
         name: 'The Chocolate Mine',
         description: 'Order Payment',
         order_id: razorpayOrder.id,
-        // ✅ Explicitly enable all payment methods
         method: {
           upi: true,
           card: true,
           netbanking: true,
           wallet: true,
         },
-        // ✅ Configure display order - UPI first, then Card
         display: {
           blocks: {
             upi: {
@@ -352,7 +448,6 @@ const Checkout = () => {
         },
         handler: async function (response) {
           try {
-            // ✅ Prevent duplicate verification
             if (isProcessingPayment.current) return;
             isProcessingPayment.current = true;
             setLoading(true);
@@ -381,7 +476,6 @@ const Checkout = () => {
         },
         modal: {
           ondismiss: async function () {
-            // ✅ Always reset loading state when modal closes
             setLoading(false);
             isProcessingPayment.current = false;
             try {
@@ -395,24 +489,18 @@ const Checkout = () => {
             toast.error('Payment cancelled. You can try again.');
           },
         },
-        // ✅ Safe prefill with fallbacks
         prefill: {
           name: prefillName,
           email: prefillEmail,
           contact: prefillContact,
         },
-        // ✅ Theme color matching existing project
         theme: { color: '#4A2C2A' },
       };
 
       const razorpayInstance = new window.Razorpay(options);
-      
-      // ✅ Allow handler to run
-      isProcessingPayment.current = false;
       razorpayInstance.open();
 
       razorpayInstance.on('payment.failed', async function (response) {
-        // ✅ Reset all states on payment failure
         setLoading(false);
         isProcessingPayment.current = false;
         
@@ -428,10 +516,7 @@ const Checkout = () => {
         toast.error(`Payment failed: ${response.error?.description || 'Please try again'}`);
       });
 
-      razorpayInstance.open();
-
     } catch (err) {
-      // ✅ Ensure loading state is reset in all error cases
       setLoading(false);
       isProcessingPayment.current = false;
       
@@ -444,7 +529,6 @@ const Checkout = () => {
       console.error('Order creation error:', err);
       toast.error(err?.response?.data?.message || 'Failed to place order. Please try again.');
     } finally {
-      // ✅ Additional safety: reset after 60 seconds if something hangs
       setTimeout(() => {
         if (isProcessingPayment.current) {
           isProcessingPayment.current = false;
@@ -464,6 +548,20 @@ const Checkout = () => {
     });
     return Array.from(coupons);
   }, [cartItems]);
+
+  // Handle phone number input (only allow digits and limit to 10)
+  const handlePhoneChange = (e) => {
+    const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+    setAddressDetails({ ...addressDetails, phone: value });
+  };
+
+  // Format date for display
+  const formatDate = (date) => {
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  };
+
+  const isToday = deliveryDate.toDateString() === new Date().toDateString();
+  const showDateSelector = !hasAvailableSlotsToday() && isToday;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -546,6 +644,7 @@ const Checkout = () => {
                     <p className="text-sm font-medium text-green-800">Delivery Location Selected</p>
                     <p className="text-xs text-green-600 mt-1">{deliveryInfo.address}</p>
                     <p className="text-xs text-green-500 mt-1">{distance.toFixed(1)} km from our bakery</p>
+                    <p className="text-xs text-green-600 mt-1">Delivery Fee: {formatCurrency(deliveryFee)}</p>
                   </div>
                 )}
 
@@ -563,10 +662,15 @@ const Checkout = () => {
                     <label className="block text-xs font-medium text-gray-600 mb-1">Phone Number *</label>
                     <input
                       className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                      placeholder="Contact number"
+                      placeholder="10-digit mobile number"
                       value={addressDetails.phone}
-                      onChange={(e) => setAddressDetails({ ...addressDetails, phone: e.target.value })}
+                      onChange={handlePhoneChange}
+                      type="tel"
+                      maxLength={10}
                     />
+                    {addressDetails.phone && !validatePhoneNumber(addressDetails.phone) && (
+                      <p className="text-xs text-red-500 mt-1">Please enter a valid 10-digit phone number</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">House/Flat No. *</label>
@@ -590,7 +694,7 @@ const Checkout = () => {
               </div>
             </div>
 
-            {/* Step 2: Delivery Slot */}
+            {/* Step 2: Delivery Slot with Dynamic Validation */}
             <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
               <div className="p-5 border-b bg-gray-50">
                 <div className="flex items-center gap-2">
@@ -599,21 +703,62 @@ const Checkout = () => {
                 </div>
               </div>
               <div className="p-5">
+                {/* Date Selector - Shows when no slots available today */}
+                <div className="flex items-center justify-between mb-4 pb-3 border-b">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => handleDateChange(-1)}
+                      className="px-3 py-1 border rounded-lg text-sm hover:bg-gray-50"
+                      disabled={deliveryDate <= new Date()}
+                    >
+                      ←
+                    </button>
+                    <span className="font-medium text-sm">
+                      {formatDate(deliveryDate)}
+                      {deliveryDate.toDateString() === new Date().toDateString() && ' (Today)'}
+                    </span>
+                    <button
+                      onClick={() => handleDateChange(1)}
+                      className="px-3 py-1 border rounded-lg text-sm hover:bg-gray-50"
+                    >
+                      →
+                    </button>
+                  </div>
+                  {showDateSelector && (
+                    <span className="text-xs text-orange-600">
+                      No slots available today
+                    </span>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {slots.map((slot) => (
+                  {availableSlots.map((slot) => (
                     <button
                       key={slot.value}
-                      onClick={() => setDeliverySlot(slot.value)}
-                      className={`p-4 text-center border rounded-lg transition-all ${deliverySlot === slot.value
+                      onClick={() => slot.available && setDeliverySlot(slot.value)}
+                      disabled={!slot.available}
+                      className={`p-4 text-center border rounded-lg transition-all ${
+                        deliverySlot === slot.value
                           ? 'border-primary bg-primary/5 text-primary'
-                          : 'border-gray-200 hover:border-primary'
-                        }`}
+                          : slot.available
+                            ? 'border-gray-200 hover:border-primary cursor-pointer'
+                            : 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-50'
+                      }`}
                     >
                       <Clock size={18} className="mx-auto mb-2" />
                       <p className="text-xs font-medium">{slot.label}</p>
+                      {!slot.available && (
+                        <p className="text-[8px] mt-1 text-gray-400">Closed</p>
+                      )}
                     </button>
                   ))}
                 </div>
+                
+                <p className="text-xs text-gray-500 text-center mt-3">
+                  {deliveryDate.toDateString() === new Date().toDateString() 
+                    ? 'Slots available until 1 hour before end time'
+                    : 'All slots available for future dates'}
+                </p>
               </div>
             </div>
 
@@ -696,17 +841,17 @@ const Checkout = () => {
 
                   <div className="flex justify-between">
                     <span className="text-gray-600">Delivery Fee</span>
-                    <span>{deliveryInfo.position ? formatCurrency(deliveryFee) : '--'}</span>
+                    <span>{isAddressSelected ? formatCurrency(deliveryFee) : 'Select address'}</span>
                   </div>
 
                   <div className="flex justify-between">
                     <span className="text-gray-600">GST (18%)</span>
-                    <span>{deliveryInfo.position ? formatCurrency(gst) : '--'}</span>
+                    <span>{isAddressSelected ? formatCurrency(gst) : '--'}</span>
                   </div>
 
                   <div className="flex justify-between">
                     <span className="text-gray-600">Convenience Fee</span>
-                    <span>{deliveryInfo.position ? formatCurrency(convenienceFee) : '--'}</span>
+                    <span>{isAddressSelected ? formatCurrency(convenienceFee) : '--'}</span>
                   </div>
 
                   {(offerDiscount + couponDiscount) > 0 && (
@@ -720,9 +865,14 @@ const Checkout = () => {
                     <div className="flex justify-between font-bold text-lg">
                       <span>Total</span>
                       <span className="text-primary">
-                        {deliveryInfo.position ? formatCurrency(total) : '--'}
+                        {isAddressSelected ? formatCurrency(total) : '--'}
                       </span>
                     </div>
+                    {!isAddressSelected && (
+                      <p className="text-xs text-orange-600 mt-2 text-center">
+                        Please select delivery address to see complete total
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -768,9 +918,9 @@ const Checkout = () => {
                 <Button
                   onClick={handlePlaceOrder}
                   className="w-full mt-6"
-                  disabled={!addressDetails.fullName.trim() || !addressDetails.phone.trim() || !deliveryInfo.position}
+                  disabled={!addressDetails.fullName.trim() || !validatePhoneNumber(addressDetails.phone) || !isAddressSelected || !deliverySlot}
                 >
-                  {`PAY ${deliveryInfo.position ? formatCurrency(total) : ''}`}
+                  {`PAY ${isAddressSelected ? formatCurrency(total) : '---'}`}
                 </Button>
 
                 <div className="flex items-center justify-center gap-4 mt-4 text-xs text-gray-400">
