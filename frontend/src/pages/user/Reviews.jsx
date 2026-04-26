@@ -40,7 +40,8 @@ const MyReviews = () => {
       {reviews.length > 0 ? (
         <div className="grid gap-6">
           {reviews.map((review) => (
-            <div key={review._id} className="card-premium p-6 bg-white border border-border/50 group hover:shadow-xl transition-all duration-500">
+            <div key={review._id} className="card-premium p-6 bg-card border border-border/50 group hover:shadow-xl transition-all duration-500 rounded-[2rem]">
+
               <div className="flex flex-col md:flex-row gap-6">
                 <div className="w-24 h-24 rounded-2xl overflow-hidden border border-border/50 shrink-0 shadow-sm">
                   <img src={review.productId?.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={review.productId?.name} />
@@ -49,12 +50,13 @@ const MyReviews = () => {
                 <div className="flex-1">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                     <div>
-                      <h4 className="font-black text-heading uppercase tracking-tight text-lg mb-1">{review.productId?.name}</h4>
-                      <div className="flex items-center gap-2 text-[10px] font-bold text-muted uppercase tracking-widest">
-                        <Calendar size={12} />
+                      <h4 className="font-black text-heading uppercase tracking-tight text-xl mb-1 leading-tight">{review.productId?.name}</h4>
+                      <div className="flex items-center gap-2 text-[10px] font-black text-muted uppercase tracking-[0.15em]">
+                        <Calendar size={12} className="text-secondary" />
                         {formatDate(review.createdAt)}
                       </div>
                     </div>
+
                     <div className="flex gap-1">
                       {[...Array(5)].map((_, i) => (
                         <Star 
@@ -67,7 +69,8 @@ const MyReviews = () => {
                     </div>
                   </div>
                   
-                  <div className="bg-[#FAF9F6] p-4 rounded-xl border border-border/30 relative">
+                  <div className="bg-card-soft p-5 rounded-2xl border border-border/30 relative">
+
                     <div className="absolute top-2 right-4 opacity-5 pointer-events-none">
                       <ShoppingBag size={40} />
                     </div>

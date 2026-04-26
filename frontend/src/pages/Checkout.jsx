@@ -55,8 +55,13 @@ const Checkout = () => {
     street: '',
   });
 
-  const SHOP_LAT = 11.004540031168712;
-  const SHOP_LNG = 76.97510955713153;
+  const SHOP_LAT = import.meta.env.VITE_SHOP_LAT || 11.004540031168712;
+  const SHOP_LNG = import.meta.env.VITE_SHOP_LNG || 76.97510955713153;
+  const DELIVERY_RADIUS = import.meta.env.VITE_DELIVERY_RADIUS_KM || 30;
+
+  const [locationValid, setLocationValid] = useState(true);
+  const [locationError, setLocationError] = useState('');
+
 
   // Define slots with end times for validation
   const slots = [
@@ -125,7 +130,7 @@ const Checkout = () => {
     }
   }, [deliveryDate]);
 
-  // Handle date change to tomorrow when no slots available
+  // Handle date change
   const handleDateChange = (increment) => {
     const newDate = new Date(deliveryDate);
     newDate.setDate(newDate.getDate() + increment);
@@ -180,7 +185,9 @@ const Checkout = () => {
   };
 
   useEffect(() => {
-    if (deliveryInfo.position) {
+    const validateLocation = async () => {
+      if (!deliveryInfo.position) return;
+
       const dist = calculateDistance(
         SHOP_LAT, SHOP_LNG,
         deliveryInfo.position.lat,
@@ -188,10 +195,38 @@ const Checkout = () => {
       );
       setDistance(dist);
       setDeliveryFee(Math.max(30, Math.round(dist * 4)));
-    } else {
-      setDeliveryFee(50);
-    }
+
+      // Condition B: Distance Check
+      if (dist > DELIVERY_RADIUS) {
+        setLocationValid(false);
+        setLocationError("Delivery available only inside Coimbatore service area (within 30km).");
+        return;
+      }
+
+      // Condition A: Address Check (Coimbatore)
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${deliveryInfo.position.lat}&lon=${deliveryInfo.position.lng}`);
+        const data = await res.json();
+        const fullAddress = data.display_name || '';
+        
+        if (!fullAddress.toLowerCase().includes('coimbatore')) {
+          setLocationValid(false);
+          setLocationError("Delivery available only inside Coimbatore service area.");
+          return;
+        }
+
+        setLocationValid(true);
+        setLocationError('');
+      } catch (error) {
+        console.error("Location validation error:", error);
+        // Fallback to basic check if geocoding fails
+        setLocationValid(true); 
+      }
+    };
+
+    validateLocation();
   }, [deliveryInfo.position]);
+
 
   const cartItems = cart?.items || [];
   const appliedCoupon = cart?.appliedCoupon;
@@ -292,8 +327,14 @@ const Checkout = () => {
       return false;
     }
     
+    if (!locationValid) {
+      toast.error(locationError || 'Selected location is outside our service area');
+      return false;
+    }
+    
     return true;
   };
+
 
   const handleApplyCoupon = async () => {
     const code = couponInput.trim().toUpperCase();
@@ -414,42 +455,8 @@ const Checkout = () => {
         name: 'The Chocolate Mine',
         description: 'Order Payment',
         order_id: razorpayOrder.id,
-        method: {
-          upi: true,
-          card: true,
-          netbanking: true,
-          wallet: true,
-        },
-        display: {
-          blocks: {
-            upi: {
-              name: 'Pay with UPI',
-              instruments: [
-                {
-                  method: 'upi',
-                  flows: ['collect', 'intent', 'qr']
-                }
-              ]
-            },
-            cards: {
-              name: 'Credit/Debit Card',
-              instruments: [
-                {
-                  method: 'card',
-                  flows: ['inapp']
-                }
-              ]
-            }
-          },
-          sequence: ['block.upi', 'block.cards'],
-          preference: {
-            show_default_blocks: true
-          }
-        },
         handler: async function (response) {
           try {
-            if (isProcessingPayment.current) return;
-            isProcessingPayment.current = true;
             setLoading(true);
             setLoaderText('Verifying your payment...');
 
@@ -498,8 +505,7 @@ const Checkout = () => {
       };
 
       const razorpayInstance = new window.Razorpay(options);
-      razorpayInstance.open();
-
+      
       razorpayInstance.on('payment.failed', async function (response) {
         setLoading(false);
         isProcessingPayment.current = false;
@@ -515,6 +521,9 @@ const Checkout = () => {
         
         toast.error(`Payment failed: ${response.error?.description || 'Please try again'}`);
       });
+
+      // ✅ FIX: Only call open() once
+      razorpayInstance.open();
 
     } catch (err) {
       setLoading(false);
@@ -549,7 +558,7 @@ const Checkout = () => {
     return Array.from(coupons);
   }, [cartItems]);
 
-  // Handle phone number input (only allow digits and limit to 10)
+  // Handle phone number input
   const handlePhoneChange = (e) => {
     const value = e.target.value.replace(/\D/g, '').slice(0, 10);
     setAddressDetails({ ...addressDetails, phone: value });
@@ -564,11 +573,13 @@ const Checkout = () => {
   const showDateSelector = !hasAvailableSlotsToday() && isToday;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background pb-20">
+
       <ScooterLoader isVisible={loading} text={loaderText} />
 
       {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-10">
+      <div className="bg-card border-b border-border/50 sticky top-0 z-20">
+
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <button onClick={() => navigate('/cart')} className="hover:text-primary flex items-center gap-1">
@@ -588,8 +599,9 @@ const Checkout = () => {
           <div className="lg:col-span-2 space-y-6">
 
             {/* Step 1: Delivery Address */}
-            <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-              <div className="p-5 border-b bg-gray-50">
+            <div className="bg-card rounded-[2rem] shadow-sm border border-border/50 overflow-hidden">
+              <div className="p-6 border-b border-border/50 bg-card-soft">
+
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold">1</div>
                   <h2 className="font-bold">Delivery Address</h2>
@@ -640,13 +652,22 @@ const Checkout = () => {
                 </button>
 
                 {deliveryInfo.position && (
-                  <div className="mt-4 p-4 bg-green-50 rounded-lg">
-                    <p className="text-sm font-medium text-green-800">Delivery Location Selected</p>
-                    <p className="text-xs text-green-600 mt-1">{deliveryInfo.address}</p>
-                    <p className="text-xs text-green-500 mt-1">{distance.toFixed(1)} km from our bakery</p>
-                    <p className="text-xs text-green-600 mt-1">Delivery Fee: {formatCurrency(deliveryFee)}</p>
+                  <div className={`mt-4 p-4 rounded-lg ${locationValid ? 'bg-green-50' : 'bg-red-50'}`}>
+                    <p className={`text-sm font-medium ${locationValid ? 'text-green-800' : 'text-red-800'}`}>
+                      {locationValid ? 'Delivery Location Selected' : 'Service Area Error'}
+                    </p>
+                    <p className={`text-xs mt-1 ${locationValid ? 'text-green-600' : 'text-red-600'}`}>{deliveryInfo.address}</p>
+                    {locationValid ? (
+                      <>
+                        <p className="text-xs text-green-500 mt-1">{distance.toFixed(1)} km from our bakery</p>
+                        <p className="text-xs text-green-600 mt-1">Delivery Fee: {formatCurrency(deliveryFee)}</p>
+                      </>
+                    ) : (
+                      <p className="text-xs text-red-600 mt-1 font-bold">{locationError}</p>
+                    )}
                   </div>
                 )}
+
 
                 <div className="grid md:grid-cols-2 gap-4 pt-4 border-t">
                   <div>
@@ -695,15 +716,16 @@ const Checkout = () => {
             </div>
 
             {/* Step 2: Delivery Slot with Dynamic Validation */}
-            <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-              <div className="p-5 border-b bg-gray-50">
+            <div className="bg-card rounded-[2rem] shadow-sm border border-border/50 overflow-hidden">
+              <div className="p-6 border-b border-border/50 bg-card-soft">
+
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold">2</div>
                   <h2 className="font-bold">Delivery Slot</h2>
                 </div>
               </div>
               <div className="p-5">
-                {/* Date Selector - Shows when no slots available today */}
+                {/* Date Selector */}
                 <div className="flex items-center justify-between mb-4 pb-3 border-b">
                   <div className="flex items-center gap-3">
                     <button
@@ -763,8 +785,9 @@ const Checkout = () => {
             </div>
 
             {/* Step 3: Payment - Online Only */}
-            <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-              <div className="p-5 border-b bg-gray-50">
+            <div className="bg-card rounded-[2rem] shadow-sm border border-border/50 overflow-hidden">
+              <div className="p-6 border-b border-border/50 bg-card-soft">
+
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold">3</div>
                   <h2 className="font-bold">Payment Method</h2>
@@ -918,7 +941,8 @@ const Checkout = () => {
                 <Button
                   onClick={handlePlaceOrder}
                   className="w-full mt-6"
-                  disabled={!addressDetails.fullName.trim() || !validatePhoneNumber(addressDetails.phone) || !isAddressSelected || !deliverySlot}
+                  disabled={!addressDetails.fullName.trim() || !validatePhoneNumber(addressDetails.phone) || !isAddressSelected || !deliverySlot || !locationValid}
+
                 >
                   {`PAY ${isAddressSelected ? formatCurrency(total) : '---'}`}
                 </Button>

@@ -61,7 +61,8 @@ const DashboardHome = () => {
           <Link 
             key={index} 
             to={stat.title === 'Wishlist' ? '/account/wishlist' : stat.title === 'Total Orders' ? '/account/orders' : stat.title === 'My Reviews' ? '/account/reviews' : '/account/addresses'}
-            className="p-5 rounded-2xl border border-border/50 bg-[#FAF9F6] hover:bg-white hover:shadow-md transition-all group"
+            className="p-5 rounded-2xl border border-border/50 bg-card-soft hover:bg-card hover:shadow-md transition-all group"
+
           >
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 ${stat.color}`}>
               <stat.icon size={20} />
@@ -74,12 +75,14 @@ const DashboardHome = () => {
 
       {/* Quick Links */}
       <div className="grid md:grid-cols-2 gap-6 pt-6">
-        <div className="card-premium p-6 border border-border/50 bg-white">
+        <div className="card-premium p-6 border border-border/50 bg-card">
+
           <h3 className="text-sm font-black text-heading uppercase tracking-widest mb-4 flex items-center gap-2">
             <ShoppingBag size={16} className="text-secondary" />
             Recent Orders
           </h3>
-          <div className="flex flex-col items-center justify-center py-8 text-center bg-[#FAF9F6] rounded-xl border border-dashed border-border">
+          <div className="flex flex-col items-center justify-center py-8 text-center bg-card-soft rounded-xl border border-dashed border-border">
+
             <p className="text-xs font-bold text-muted mb-4">View your recent purchases and track deliveries.</p>
             <Link to="/account/orders" className="text-xs font-black text-secondary hover:underline uppercase tracking-widest">
               View All Orders
@@ -87,12 +90,14 @@ const DashboardHome = () => {
           </div>
         </div>
 
-        <div className="card-premium p-6 border border-border/50 bg-white">
+        <div className="card-premium p-6 border border-border/50 bg-card">
+
           <h3 className="text-sm font-black text-heading uppercase tracking-widest mb-4 flex items-center gap-2">
             <MapPin size={16} className="text-secondary" />
             Default Address
           </h3>
-          <div className="p-5 bg-[#FAF9F6] rounded-xl border border-border/50">
+          <div className="p-5 bg-card-soft rounded-xl border border-border/50">
+
             <p className="text-sm font-black text-heading mb-1">{user?.name}</p>
             <p className="text-xs text-muted font-bold line-clamp-2 leading-relaxed mb-4">
               Manage your saved addresses for quicker checkout.

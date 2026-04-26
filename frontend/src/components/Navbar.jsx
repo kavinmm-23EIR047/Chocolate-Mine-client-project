@@ -51,7 +51,8 @@ const Navbar = () => {
             
             {/* 1. LOGO */}
             <Link to="/" className="flex items-center gap-2 sm:gap-3 shrink-0 group">
-              <Logo className="w-12 h-12 sm:w-14 sm:h-14 bg-white rounded-md p-1 shadow-sm" />
+              <Logo className="w-12 h-12 sm:w-14 sm:h-14 bg-card rounded-md p-1 shadow-sm border border-border/50" />
+
               <div className="flex flex-col">
                 <span className="text-[12px] sm:text-[15px] font-black text-[#2D1816] dark:text-[#FFF9F5] tracking-tight leading-none uppercase transition-colors">THE CHOCOLATE</span>
                 <span className="text-[9px] sm:text-[11px] font-black text-[#2D1816] dark:text-[#D4A017] tracking-[0.3em] uppercase mt-0.5 transition-colors">Mine</span>
@@ -69,16 +70,18 @@ const Navbar = () => {
                   type="text"
                   readOnly
                   placeholder="Search for cakes, desserts and more"
-                  className="hidden sm:block w-full bg-white text-black pl-4 pr-12 py-2.5 rounded-sm shadow-sm outline-none placeholder:text-gray-500 font-medium text-sm transition-all group-hover:shadow-md"
+                  className="hidden sm:block w-full bg-card text-heading pl-4 pr-12 py-2.5 rounded-sm shadow-sm border border-border/50 outline-none placeholder:text-muted font-medium text-sm transition-all group-hover:shadow-md"
                 />
+
                 <div className="hidden sm:flex absolute right-0 top-0 h-full px-4 items-center bg-transparent">
                   <Search size={18} className="text-primary font-bold" />
                 </div>
 
                 {/* Mobile Icon Button */}
-                <div className="sm:hidden w-11 h-9 bg-white rounded-md flex items-center justify-center shadow-sm ml-auto border border-black/5">
-                  <Search size={18} className="text-[#2D1816]" />
+                <div className="sm:hidden w-11 h-9 bg-card rounded-md flex items-center justify-center shadow-sm ml-auto border border-border/50">
+                  <Search size={18} className="text-navbar-text" />
                 </div>
+
               </div>
             </div>
 
@@ -194,7 +197,8 @@ const Navbar = () => {
             >
               <div className="bg-navbar p-6 text-navbar-text">
                 <div className="flex justify-between items-center mb-6">
-                  <Logo className="w-10 h-10 bg-white rounded-sm p-1" />
+                  <Logo className="w-10 h-10 bg-card rounded-sm p-1 border border-border/50" />
+
                   <button onClick={() => setIsMenuOpen(false)}>
                     <X size={20} />
                   </button>

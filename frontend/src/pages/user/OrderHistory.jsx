@@ -97,7 +97,8 @@ const OrderHistory = () => {
               placeholder="Search orders..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-[#FAF9F6] border-2 border-transparent focus:border-secondary/20 h-12 pl-12 pr-4 rounded-xl text-sm font-bold text-heading placeholder:text-muted/50 transition-all outline-none"
+              className="w-full bg-card-soft border-2 border-transparent focus:border-secondary/20 h-12 pl-12 pr-4 rounded-xl text-sm font-bold text-heading placeholder:text-muted/50 transition-all outline-none"
+
             />
           </div>
           
@@ -105,7 +106,8 @@ const OrderHistory = () => {
             <select 
               value={activeFilter}
               onChange={(e) => setActiveFilter(e.target.value)}
-              className="appearance-none bg-[#FAF9F6] border-2 border-transparent hover:border-secondary/20 text-heading h-12 pl-4 pr-10 rounded-xl text-xs font-black uppercase tracking-widest cursor-pointer outline-none transition-all"
+              className="appearance-none bg-card-soft border-2 border-transparent hover:border-secondary/20 text-heading h-12 pl-4 pr-10 rounded-xl text-xs font-black uppercase tracking-widest cursor-pointer outline-none transition-all"
+
             >
               {filters.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
             </select>
@@ -158,7 +160,8 @@ const OrderCard = ({ order, index, canReview = false }) => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
-      className="card-premium group hover:border-secondary/30 transition-all duration-300 overflow-hidden bg-white cursor-pointer"
+      className="card-premium group hover:border-secondary/30 transition-all duration-300 overflow-hidden bg-card cursor-pointer rounded-[2.5rem]"
+
       onClick={() => navigate(`/account/orders/${order._id}`)}
     >
       <div className="p-0">
@@ -177,7 +180,8 @@ const OrderCard = ({ order, index, canReview = false }) => {
         <div className="p-6">
           <div className="flex flex-col md:flex-row justify-between items-start gap-6">
             <div className="flex-1 min-w-0 flex items-center gap-6">
-               <div className="w-20 h-20 bg-[#FAF9F6] rounded-2xl flex items-center justify-center p-2 border border-border/50 shrink-0 shadow-sm relative overflow-hidden group-hover:scale-105 transition-transform duration-500">
+               <div className="w-20 h-20 bg-card-soft rounded-2xl flex items-center justify-center p-2 border border-border/50 shrink-0 shadow-sm relative overflow-hidden group-hover:scale-105 transition-transform duration-500">
+
                   {order.items[0]?.image ? (
                     <img src={order.items[0].image} alt="product" className="w-full h-full object-cover rounded-xl" />
                   ) : (
@@ -211,7 +215,8 @@ const OrderCard = ({ order, index, canReview = false }) => {
                 <Button size="sm" variant="outline" onClick={(e) => {
                   e.stopPropagation();
                   navigate(`/account/orders/${order._id}`);
-                }} className="bg-[#FAF9F6]">
+                }} className="bg-card-soft">
+
                   DETAILS
                 </Button>
                 {showReviewButton && (

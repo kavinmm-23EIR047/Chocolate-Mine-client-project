@@ -189,10 +189,12 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
   await OtpSession.create({
     email,
     hashedOtp,
+    type: 'password_reset',
     expiresAt: new Date(
       Date.now() + 10 * 60 * 1000
     ),
   });
+
 
   await emailService.sendPasswordResetOTP(email, otp);
 
@@ -218,8 +220,10 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
 
   const session = await OtpSession.findOne({
     email,
+    type: 'password_reset',
     isUsed: false,
     expiresAt: { $gt: new Date() }
+
   }).sort('-createdAt');
 
   if (!session) {

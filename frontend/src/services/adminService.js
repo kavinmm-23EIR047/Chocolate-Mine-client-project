@@ -80,7 +80,25 @@ const adminService = {
     api.put(`/admin/products/${id}`, formData),
 
   deleteProduct: (id) =>
-    api.delete(`/admin/products/${id}`)
+    api.delete(`/admin/products/${id}`),
+
+  /* ----------------------------------------
+     Banner Management
+  ---------------------------------------- */
+  getBanners: () => api.get('/banners'),
+  
+  createBanner: (formData) =>
+    api.post('/banners', formData),
+
+  updateBanner: (id, formData) =>
+    api.patch(`/banners/${id}`, formData),
+
+  deleteBanner: (id) =>
+    api.delete(`/banners/${id}`),
+
+  toggleBanner: (id) =>
+    api.patch(`/banners/${id}/toggle`)
 };
+
 
 export default adminService;

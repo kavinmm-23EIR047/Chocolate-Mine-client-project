@@ -42,7 +42,7 @@ const ProductDetails = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
 
-  const { cart, addToCart, updateQuantity, applyCoupon, removeCoupon } = useCart();
+  const { cart, addToCart, updateQuantity, applyCoupon, removeCoupon, fetchCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
 
   const [product, setProduct] = useState(null);
@@ -52,6 +52,9 @@ const ProductDetails = () => {
   const [reviewStats, setReviewStats] = useState({ avg: 0, total: 0, list: [] });
   const [imgZoom, setImgZoom] = useState(false);
   const [displayImage, setDisplayImage] = useState('');
+  const [quantity, setQuantity] = useState(1);
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
+  const [addingToCart, setAddingToCart] = useState(false);
   
   // Cake-specific states for variant system
   const [selectedFlavor, setSelectedFlavor] = useState(null);
@@ -71,18 +74,17 @@ const ProductDetails = () => {
         const res = await productService.getBySlug(slug);
         const prod = res.data.data;
         setProduct(prod);
+        setQuantity(1);
         
         // Initialize cake selections if product has variants
         if (prod.category === 'cakes' && prod.hasVariants && prod.flavors && prod.flavors.length > 0) {
           setSelectedFlavor(prod.flavors[0]);
-          // Set first available weight from variants
           const firstVariant = prod.variants?.find(v => v.flavor === prod.flavors[0].name);
           if (firstVariant) {
             setSelectedWeight(firstVariant.weight);
             setSelectedPrice(firstVariant.price);
             setSelectedStock(firstVariant.stock);
           }
-          // Set display image from first flavor's first image
           if (prod.flavors[0].images && prod.flavors[0].images.length > 0) {
             setDisplayImage(prod.flavors[0].images[0]);
           } else {
@@ -121,13 +123,23 @@ const ProductDetails = () => {
     load();
   }, [slug, navigate]);
 
+  // Handle quantity change
+  const handleQuantityChange = (newQuantity) => {
+    if (newQuantity < 1) return;
+    if (selectedStock !== null && newQuantity > selectedStock) {
+      toast.error(`Only ${selectedStock} items available`);
+      return;
+    }
+    setQuantity(newQuantity);
+  };
+
   // Handle flavor change
   const handleFlavorChange = (flavor) => {
     setSelectedFlavor(flavor);
     setShowCustomFlavorInput(false);
     setCustomFlavor('');
+    setQuantity(1);
     
-    // Find variant for this flavor with current weight or first available weight
     let variant = product.variants?.find(v => v.flavor === flavor.name && v.weight === selectedWeight);
     if (!variant && product.variants) {
       variant = product.variants.find(v => v.flavor === flavor.name);
@@ -139,7 +151,6 @@ const ProductDetails = () => {
       setSelectedStock(variant.stock);
     }
     
-    // Update display image from flavor's images
     if (flavor.images && flavor.images.length > 0) {
       setDisplayImage(flavor.images[0]);
     }
@@ -150,6 +161,7 @@ const ProductDetails = () => {
     setSelectedWeight(weight);
     setShowCustomWeightInput(false);
     setCustomWeight('');
+    setQuantity(1);
     
     const variant = product.variants?.find(v => v.flavor === selectedFlavor?.name && v.weight === weight);
     if (variant) {
@@ -163,8 +175,8 @@ const ProductDetails = () => {
     if (customFlavor.trim()) {
       setSelectedFlavor({ name: customFlavor.trim(), images: [] });
       setShowCustomFlavorInput(false);
-      // Price and stock for custom flavor need to be set manually or use default
       setSelectedPrice(product.variants?.[0]?.price || product.price);
+      setQuantity(1);
     }
   };
   
@@ -173,49 +185,135 @@ const ProductDetails = () => {
     if (customWeight.trim()) {
       setSelectedWeight(customWeight.trim());
       setShowCustomWeightInput(false);
+      setQuantity(1);
     }
   };
 
   // ─── CART / WISHLIST STATE ──────────────────────────────
-  const cartItem = cart?.items?.find(i => i.productId === product?._id);
+  const currentVariantFlavor = product?.category === 'cakes' 
+    ? (showCustomFlavorInput ? customFlavor : selectedFlavor?.name)
+    : null;
+  const currentVariantWeight = product?.category === 'cakes'
+    ? (showCustomWeightInput ? customWeight : selectedWeight)
+    : null;
+
+  // Find cart item with same variant
+  const cartItem = cart?.items?.find(i => 
+    i.productId === product?._id && 
+    (product.category !== 'cakes' || (i.selectedFlavor === currentVariantFlavor && i.selectedWeight === currentVariantWeight))
+  );
   const cartQty = cartItem?.qty || 0;
   const isWishlisted = product ? isInWishlist(product._id) : false;
 
   // ─── PRICE LOGIC ───────────────────────────────────────
-  // Use selected price from variant, or regular price for non-cake products
-  const currentPrice = product?.category === 'cakes' && selectedPrice 
-    ? selectedPrice 
-    : Number(product?.price || 0);
-    
+  const getCurrentPrice = () => {
+    return product?.category === 'cakes' && selectedPrice 
+      ? selectedPrice 
+      : Number(product?.price || 0);
+  };
+  
+  const currentPrice = getCurrentPrice();
   const hasOffer = product?.offerPrice && Number(product.offerPrice) > 0 && Number(product.offerPrice) < currentPrice;
   const basePrice = hasOffer ? Number(product.offerPrice) : currentPrice;
   const offerDiscount = currentPrice - basePrice;
   const offerPct = currentPrice > 0 ? Math.round((offerDiscount / currentPrice) * 100) : 0;
 
-  const isCouponApplied =
-    cart?.appliedCoupon &&
+  // Check if coupon is applied to cart
+  const isCouponApplied = cart?.appliedCoupon &&
     product?.coupon?.code &&
     cart.appliedCoupon.toUpperCase() === product.coupon.code.toUpperCase();
 
-  const couponSavings = (() => {
+  // Calculate discount per unit
+  const getCouponSavingsPerUnit = () => {
     if (!isCouponApplied || !product?.coupon?.enabled) return 0;
     const c = product.coupon;
     if (c.type === 'percent') return Math.round((basePrice * c.value) / 100);
-    if (c.type === 'flat') return Number(c.value);
+    if (c.type === 'flat') return Math.min(basePrice, Number(c.value));
     return 0;
-  })();
+  };
 
-  const finalPrice = Math.max(0, basePrice - couponSavings);
-  const totalSavings = currentPrice - finalPrice;
-  const totalSavingsPct = currentPrice > 0 ? Math.round((totalSavings / currentPrice) * 100) : 0;
+  const couponSavingsPerUnit = getCouponSavingsPerUnit();
+  const discountedPricePerUnit = Math.max(0, basePrice - couponSavingsPerUnit);
+  
+  // Total calculations with quantity
+  const totalOriginalPrice = currentPrice * quantity;
+  const totalBasePrice = basePrice * quantity;
+  const totalOfferDiscount = offerDiscount * quantity;
+  const totalCouponDiscount = couponSavingsPerUnit * quantity;
+  const totalFinalPrice = discountedPricePerUnit * quantity;
+  const totalSavings = totalOriginalPrice - totalFinalPrice;
+  const totalSavingsPct = totalOriginalPrice > 0 ? Math.round((totalSavings / totalOriginalPrice) * 100) : 0;
 
   // Check if variant is in stock
   const isInStock = product?.category === 'cakes' 
     ? (selectedStock > 0)
     : (product?.stock > 0);
 
-  // ─── ACTIONS ───────────────────────────────────────────
+  // ─── COUPON ACTIONS ───────────────────────────────────────────
+  const handleApplyCoupon = async () => {
+    if (!product?.coupon?.enabled) {
+      toast.error('No coupon available for this product');
+      return;
+    }
+
+    setApplyingCoupon(true);
+    
+    try {
+      const isInCart = cart?.items?.some(item => 
+        item.productId === product._id && 
+        (product.category !== 'cakes' || 
+          (item.selectedFlavor === currentVariantFlavor && 
+           item.selectedWeight === currentVariantWeight))
+      );
+
+      if (!isInCart && quantity > 0) {
+        const options = {};
+        if (product?.category === 'cakes') {
+          if (showCustomFlavorInput && customFlavor) {
+            options.flavor = customFlavor;
+          } else if (selectedFlavor) {
+            options.flavor = selectedFlavor.name;
+          }
+          if (showCustomWeightInput && customWeight) {
+            options.weight = customWeight;
+          } else if (selectedWeight) {
+            options.weight = selectedWeight;
+          }
+        }
+        await addToCart(product._id, quantity, options);
+        toast.success(`${quantity} item(s) added to cart`);
+      }
+      
+      await applyCoupon(product.coupon.code);
+      toast.success(`🎉 ${product.coupon.code} applied!`);
+      await fetchCart();
+      
+    } catch (err) {
+      console.error('Coupon application error:', err);
+      toast.error(err?.response?.data?.message || 'Failed to apply coupon. Please try again.');
+    } finally {
+      setApplyingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = async () => {
+    try {
+      await removeCoupon();
+      toast.success('Coupon removed');
+      await fetchCart();
+    } catch (err) {
+      toast.error('Failed to remove coupon');
+    }
+  };
+
+  // ─── ADD TO CART ───────────────────────────────────────────
   const handleAddToCart = async () => {
+    if (!isInStock) {
+      toast.error('Out of stock');
+      return;
+    }
+    
+    setAddingToCart(true);
     try {
       const options = {};
       if (product?.category === 'cakes') {
@@ -223,49 +321,85 @@ const ProductDetails = () => {
           options.flavor = customFlavor;
         } else if (selectedFlavor) {
           options.flavor = selectedFlavor.name;
+        } else {
+          toast.error('Please select flavor');
+          setAddingToCart(false);
+          return;
         }
         
         if (showCustomWeightInput && customWeight) {
           options.weight = customWeight;
         } else if (selectedWeight) {
           options.weight = selectedWeight;
-        }
-        
-        if (!options.flavor || !options.weight) {
-          toast.error('Please select flavor and weight');
+        } else {
+          toast.error('Please select weight');
+          setAddingToCart(false);
           return;
         }
       }
-      await addToCart(product._id, 1, options);
-      toast.success('Added to cart!');
-    } catch {
-      toast.error('Failed to add');
+      
+      await addToCart(product._id, quantity, options);
+      toast.success(`${quantity} item(s) added to cart!`);
+      await fetchCart();
+    } catch (err) {
+      toast.error('Failed to add to cart');
+    } finally {
+      setAddingToCart(false);
     }
   };
 
+  // ─── BUY NOW ──
   const handleBuyNow = async () => {
-    await handleAddToCart();
-    navigate('/checkout');
-  };
-
-  const handleApplyCoupon = async () => {
+    if (!isInStock) {
+      toast.error('Out of stock');
+      return;
+    }
+    
+    setAddingToCart(true);
     try {
-      await applyCoupon(product.coupon.code);
-      toast.success(`🎉 ${product.coupon.code} applied!`);
-    } catch {
-      toast.error('Coupon failed');
+      const options = {};
+      if (product?.category === 'cakes') {
+        if (showCustomFlavorInput && customFlavor) {
+          options.flavor = customFlavor;
+        } else if (selectedFlavor) {
+          options.flavor = selectedFlavor.name;
+        } else {
+          toast.error('Please select flavor');
+          setAddingToCart(false);
+          return;
+        }
+        
+        if (showCustomWeightInput && customWeight) {
+          options.weight = customWeight;
+        } else if (selectedWeight) {
+          options.weight = selectedWeight;
+        } else {
+          toast.error('Please select weight');
+          setAddingToCart(false);
+          return;
+        }
+      }
+      
+      await addToCart(product._id, quantity, options);
+      navigate('/checkout');
+    } catch (err) {
+      toast.error('Failed to process. Please try again.');
+    } finally {
+      setAddingToCart(false);
     }
   };
 
-  const handleRemoveCoupon = async () => {
-    await removeCoupon();
-    toast.success('Coupon removed');
-  };
-
-  // Get valid flavor images (filter out blob URLs)
+  // Get valid flavor images
   const getFlavorImages = (flavor) => {
     if (!flavor || !flavor.images) return [];
     return flavor.images.filter(img => img && !img.startsWith('blob:'));
+  };
+
+  // Handle quantity update from cart
+  const handleCartQuantityUpdate = (newQty) => {
+    if (cartItem && product) {
+      updateQuantity(product._id, newQty, currentVariantFlavor, currentVariantWeight);
+    }
   };
 
   // ─── LOADER ────────────────────────────────────────────
@@ -283,7 +417,8 @@ const ProductDetails = () => {
   return (
     <div className="min-h-screen bg-background pb-24 lg:pb-12">
       {/* ── BREADCRUMB ── */}
-      <div className="bg-card border-b hidden lg:block">
+      <div className="bg-card border-b border-border hidden lg:block">
+
         <div className="max-w-[1400px] mx-auto px-6 py-4">
           <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-muted">
             <button onClick={() => navigate('/')} className="hover:text-primary transition">Home</button>
@@ -320,8 +455,9 @@ const ProductDetails = () => {
 
               <button
                 onClick={(e) => { e.stopPropagation(); toggleWishlist(product._id); }}
-                className="absolute top-6 right-6 bg-white/90 backdrop-blur-md shadow-xl p-3 rounded-full hover:scale-110 transition-all z-10 group/heart"
+                className="absolute top-6 right-6 bg-card/90 backdrop-blur-md shadow-xl p-3 rounded-full hover:scale-110 transition-all z-10 group/heart"
               >
+
                 <Heart 
                   size={24} 
                   fill={isWishlisted ? '#ef4444' : 'none'} 
@@ -352,7 +488,7 @@ const ProductDetails = () => {
               </div>
             )}
 
-            {/* Highlights Grid — Larger for PC */}
+            {/* Highlights Grid */}
             <div className="hidden lg:grid grid-cols-3 gap-6">
               {[
                 { icon: Truck, label: 'Free Delivery', sub: 'On all orders' },
@@ -367,21 +503,20 @@ const ProductDetails = () => {
               ))}
             </div>
 
-            {/* Info Section — Separated (Moved to Left Side) */}
+            {/* Info Section */}
             <div className="space-y-6 pt-4 hidden lg:block">
-              {/* Description Box */}
               <div className="bg-card rounded-[2.5rem] border border-border/50 p-8 shadow-sm">
                 <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-heading mb-4">Description</h3>
                 <p className="text-sm text-muted font-medium leading-relaxed tracking-wide italic">"{product.description}"</p>
               </div>
 
-              {/* Highlights Box */}
               <div className="bg-card rounded-[2.5rem] border border-border/50 p-8 shadow-sm">
                 <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-heading mb-6">Highlights</h3>
                 <div className="grid grid-cols-2 gap-y-5 gap-x-6">
                   {['Freshly Baked', 'Premium Quality', 'Eggless Available', 'No Preservatives', 'Secure Packing', 'Fast Delivery'].map(item => (
                     <div key={item} className="flex items-center gap-3">
-                      <div className="w-6 h-6 rounded-full bg-green-50 flex items-center justify-center border border-green-100 flex-shrink-0">
+                      <div className="w-6 h-6 rounded-full bg-success/10 flex items-center justify-center border border-success/20 flex-shrink-0">
+
                         <CheckCircle2 size={12} className="text-green-500" />
                       </div>
                       <span className="text-[11px] font-black uppercase tracking-wider text-heading">{item}</span>
@@ -392,10 +527,11 @@ const ProductDetails = () => {
             </div>
           </div>
 
-          {/* ── RIGHT — DETAILS (sticky) ── */}
+          {/* ── RIGHT — DETAILS ── */}
           <div className="w-full lg:sticky lg:top-24 space-y-6 px-1 lg:px-0">
-            {/* Main Header Card */}
-            <div className="bg-white rounded-[2.5rem] border border-gray-100 p-6 lg:p-10 shadow-sm hover:shadow-md transition-shadow">
+            {/* Main Product Info Card */}
+            <div className="bg-card rounded-[2.5rem] border border-border/50 p-6 lg:p-10 shadow-sm hover:shadow-md transition-shadow">
+
               <div className="flex items-center justify-between mb-4">
                 <span className="text-[11px] font-black text-primary uppercase bg-primary/5 px-4 py-1.5 rounded-full tracking-widest border border-primary/10">
                   {product.category}
@@ -412,10 +548,9 @@ const ProductDetails = () => {
                 <span className="text-xs text-muted font-black uppercase tracking-widest">{reviewStats.total} verified ratings</span>
               </div>
 
-              {/* Cake Flavor and Weight Selection for Variant System */}
+              {/* Cake Flavor and Weight Selection */}
               {product?.category === 'cakes' && product.hasVariants && (
                 <div className="space-y-6 mb-6">
-                  {/* Flavor Selection */}
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <Cake size={16} className="text-primary" />
@@ -465,15 +600,15 @@ const ProductDetails = () => {
                         </button>
                         <button
                           onClick={() => setShowCustomFlavorInput(false)}
-                          className="px-4 py-2 bg-muted text-white rounded-xl text-xs font-black"
+                          className="px-4 py-2 bg-card-soft text-heading rounded-xl text-xs font-black border border-border"
                         >
                           Cancel
                         </button>
+
                       </div>
                     )}
                   </div>
 
-                  {/* Weight Selection */}
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <Scale size={16} className="text-primary" />
@@ -523,138 +658,203 @@ const ProductDetails = () => {
                         </button>
                         <button
                           onClick={() => setShowCustomWeightInput(false)}
-                          className="px-4 py-2 bg-muted text-white rounded-xl text-xs font-black"
+                          className="px-4 py-2 bg-card-soft text-heading rounded-xl text-xs font-black border border-border"
                         >
                           Cancel
                         </button>
+
                       </div>
                     )}
                   </div>
                   
-                  {/* Stock Status */}
                   {!isInStock && (
-                    <div className="text-center py-2 bg-red-50 text-red-600 rounded-xl text-xs font-black">
+                    <div className="text-center py-2 bg-error/10 text-error rounded-xl text-xs font-black border border-error/20">
                       Out of Stock for this combination
                     </div>
+
                   )}
                 </div>
               )}
 
-              {/* Price Display for Non-Cake Products */}
-              {product?.category !== 'cakes' && (
-                <div className="flex items-baseline gap-4 mb-4">
-                  <span className="text-4xl font-black text-heading tracking-tighter">{formatCurrency(currentPrice)}</span>
-                  {product?.offerPrice && product.offerPrice < product.price && (
-                    <span className="text-xl line-through text-muted/40 font-black tracking-tighter">{formatCurrency(product.price)}</span>
-                  )}
-                </div>
-              )}
-
-              {/* Enhanced Price Breakdown for All Products */}
+              {/* ========== ACTION CARD SECTION ========== */}
+              {/* Organized in proper order: Price → Coupon → Quantity → Buttons */}
               <div className="space-y-6">
-                <div className="flex items-baseline gap-4">
-                  <span className="text-4xl font-black text-heading tracking-tighter">{formatCurrency(finalPrice)}</span>
-                  {currentPrice > finalPrice && (
-                    <span className="text-xl line-through text-muted/40 font-black tracking-tighter">{formatCurrency(currentPrice)}</span>
-                  )}
-                  {totalSavingsPct > 0 && (
-                    <span className="text-base font-black text-green-600 bg-green-50 px-3 py-1 rounded-lg uppercase tracking-wide">
-                      {totalSavingsPct}% off
+                {/* 1. PRICE SECTION */}
+                <div>
+                  <div className="flex items-baseline gap-3 flex-wrap">
+                    <span className="text-3xl lg:text-4xl font-black text-heading tracking-tighter">
+                      {formatCurrency(totalFinalPrice)}
                     </span>
+                    {totalOriginalPrice > totalFinalPrice && (
+                      <span className="text-xl line-through text-muted/40 font-black tracking-tighter">
+                        {formatCurrency(totalOriginalPrice)}
+                      </span>
+                    )}
+                    {totalSavingsPct > 0 && (
+                      <span className="text-base font-black text-green-600 bg-green-50 px-3 py-1 rounded-lg uppercase tracking-wide">
+                        Save {totalSavingsPct}%
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted mt-1">Inclusive of all taxes</p>
+                </div>
+
+                {/* 2. COUPON SECTION - Stays above quantity */}
+                {product?.coupon?.enabled && (
+                  <div className="bg-orange-500/10 rounded-2xl border border-orange-500/20 p-4">
+
+                    <div className="flex items-center justify-between flex-wrap gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-card p-2 rounded-xl shadow-sm border border-border/50">
+
+                          <Tag size={18} className="text-orange-500" />
+                        </div>
+                        <div>
+                          <p className="font-black text-heading text-sm font-mono">{product.coupon.code}</p>
+                          <p className="text-[10px] font-black text-orange-600">
+                            {product.coupon.type === 'percent' ? `${product.coupon.value}% OFF` : `Flat ₹${product.coupon.value} OFF`}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={isCouponApplied ? handleRemoveCoupon : handleApplyCoupon}
+                        disabled={applyingCoupon}
+                        className={`text-[10px] font-black px-4 py-2 rounded-xl transition-all uppercase tracking-wider ${
+                          isCouponApplied 
+                            ? 'bg-card text-error border border-error/30 hover:bg-error/5' 
+                            : 'bg-primary text-button-text hover:brightness-110 shadow-sm'
+
+                        } ${applyingCoupon ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        {applyingCoupon ? (
+                          <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
+                        ) : (
+                          isCouponApplied ? 'Remove' : 'Apply'
+                        )}
+                      </button>
+                    </div>
+                    {isCouponApplied && (
+                      <p className="text-[9px] text-green-600 mt-2 text-center">
+                        ✓ Coupon applied! You're saving {formatCurrency(totalCouponDiscount)} on this order
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* 3. QUANTITY SECTION */}
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-black text-muted uppercase tracking-widest">Quantity:</span>
+                  <div className="flex items-center border-2 border-border/30 rounded-xl bg-muted/5">
+                    <button
+                      onClick={() => handleQuantityChange(quantity - 1)}
+                      disabled={quantity <= 1}
+                      className="w-10 h-10 flex items-center justify-center hover:bg-muted/10 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <Minus size={16} />
+                    </button>
+                    <span className="w-12 text-center font-black text-lg text-heading">{quantity}</span>
+                    <button
+                      onClick={() => handleQuantityChange(quantity + 1)}
+                      disabled={selectedStock !== null && quantity >= selectedStock}
+                      className="w-10 h-10 flex items-center justify-center hover:bg-muted/10 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <Plus size={16} />
+                    </button>
+                  </div>
+                  {selectedStock && (
+                    <span className="text-xs text-muted">{selectedStock} available</span>
                   )}
                 </div>
 
-                <div className="bg-muted/5 rounded-3xl p-6 space-y-3 text-sm font-bold border border-border/20">
-                  <div className="flex justify-between text-muted/60 uppercase text-[10px] tracking-widest">
-                    <span>MRP (Inclusive of all taxes)</span>
-                    <span>{formatCurrency(currentPrice)}</span>
+                {/* 4. PRICE BREAKDOWN */}
+                <div className="bg-muted/5 rounded-2xl p-4 space-y-2 text-sm font-bold border border-border/20">
+                  <div className="flex justify-between text-muted/70">
+                    <span>Price ({quantity} item{quantity > 1 ? 's' : ''})</span>
+                    <span>{formatCurrency(totalBasePrice)}</span>
                   </div>
                   {offerDiscount > 0 && (
-                    <div className="flex justify-between text-green-600 uppercase text-[10px] tracking-widest">
-                      <span>Offer Savings</span>
-                      <span>- {formatCurrency(offerDiscount)}</span>
+                    <div className="flex justify-between text-green-600">
+                      <span>Offer Discount</span>
+                      <span>- {formatCurrency(totalOfferDiscount)}</span>
                     </div>
                   )}
-                  {couponSavings > 0 && (
-                    <div className="flex justify-between text-green-600 uppercase text-[10px] tracking-widest">
-                      <span>Coupon Discount ({product.coupon.code})</span>
-                      <span>- {formatCurrency(couponSavings)}</span>
+                  {couponSavingsPerUnit > 0 && isCouponApplied && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Coupon ({product.coupon.code})</span>
+                      <span>- {formatCurrency(totalCouponDiscount)}</span>
                     </div>
                   )}
-                  <div className="border-t border-border/30 pt-3 flex justify-between font-black text-heading text-lg tracking-tight">
-                    <span className="uppercase text-[11px] tracking-widest self-center text-muted">Final Price</span>
-                    <span>{formatCurrency(finalPrice)}</span>
+                  <div className="border-t border-border/30 pt-2 flex justify-between font-black text-heading">
+                    <span>Total Amount</span>
+                    <span className="text-primary">{formatCurrency(totalFinalPrice)}</span>
                   </div>
+                </div>
+
+                {/* 5. BUTTONS SECTION - ALWAYS VISIBLE & FIXED BELOW */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 size={16} className={isInStock ? 'text-green-600' : 'text-red-500'} />
+                    <span className={`text-[11px] font-black uppercase tracking-widest ${isInStock ? 'text-green-600' : 'text-red-500'}`}>
+                      {isInStock ? 'In Stock & Ready to Ship' : 'Out of Stock'}
+                    </span>
+                  </div>
+                  
+                  {cartQty > 0 ? (
+                    <div className="flex items-center border-2 border-border/30 rounded-2xl h-14 bg-muted/5">
+                      <button 
+                        onClick={() => handleCartQuantityUpdate(cartQty - 1)} 
+                        className="w-14 h-full flex items-center justify-center hover:bg-muted/10 transition"
+                      >
+                        <Minus size={20} />
+                      </button>
+                      <span className="flex-1 text-center font-black text-xl text-heading">{cartQty} in cart</span>
+                      <button 
+                        onClick={() => handleCartQuantityUpdate(cartQty + 1)} 
+                        className="w-14 h-full flex items-center justify-center hover:bg-muted/10 transition"
+                      >
+                        <Plus size={20} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-4">
+                      <button 
+                        onClick={handleAddToCart} 
+                        disabled={!isInStock || addingToCart}
+                        className={`h-14 border-2 border-primary text-primary font-black text-[11px] uppercase tracking-[0.2em] rounded-2xl transition flex items-center justify-center gap-2 ${
+                          !isInStock || addingToCart ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary/5'
+                        }`}
+                      >
+                        {addingToCart ? (
+                          <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <>
+                            <ShoppingCart size={18} /> Add to Cart
+                          </>
+                        )}
+                      </button>
+                      
+                      <button 
+                        onClick={handleBuyNow} 
+                        disabled={!isInStock || addingToCart}
+                        className={`h-14 font-black text-[11px] uppercase tracking-[0.2em] rounded-2xl transition shadow-md flex items-center justify-center gap-2 ${
+                          isInStock && !addingToCart
+                            ? 'bg-secondary text-white shadow-secondary/20 hover:brightness-110 cursor-pointer'
+                            : 'bg-muted/40 text-muted/60 cursor-not-allowed shadow-none'
+                        }`}
+                      >
+                        {addingToCart ? (
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <>Buy Now <ArrowRight size={16} /></>
+                        )}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* Coupon Card — Premium Style */}
-            {product?.coupon?.enabled && (
-              <div className="bg-card rounded-[2.5rem] border p-6 lg:p-8 shadow-sm relative overflow-hidden group/coupon">
-                <div className="absolute -top-4 -right-4 p-2 opacity-[0.03] rotate-12 transition-transform group-hover/coupon:rotate-45 duration-700">
-                  <Percent size={120} />
-                </div>
-                <p className="text-[10px] font-black text-muted uppercase tracking-[0.2em] mb-4">Available Exclusive Offer</p>
-                <div className="flex items-center justify-between bg-orange-50/40 border border-orange-100 border-dashed rounded-[1.5rem] p-5 lg:p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-white p-3 rounded-2xl shadow-sm border border-orange-50"><Tag size={20} className="text-orange-500" /></div>
-                    <div>
-                      <p className="font-black text-heading text-lg font-mono tracking-widest">{product.coupon.code}</p>
-                      <p className="text-[11px] font-black text-orange-600/70 uppercase tracking-wider">
-                        {product.coupon.type === 'percent' ? `${product.coupon.value}% Instant OFF` : `Flat ₹${product.coupon.value} OFF`}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={isCouponApplied ? handleRemoveCoupon : handleApplyCoupon}
-                    className={`text-[11px] font-black px-6 py-3 rounded-xl transition-all uppercase tracking-widest shadow-sm ${isCouponApplied ? 'bg-white text-red-600 border border-red-100 hover:bg-red-50' : 'bg-primary text-white hover:brightness-110 shadow-primary/20'}`}
-                  >
-                    {isCouponApplied ? 'Remove' : 'Apply'}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Buttons Section */}
-            <div className="grid grid-cols-2 gap-4 bg-card rounded-[2.5rem] border p-6 lg:p-8 shadow-sm">
-              <div className="col-span-2 mb-2 flex items-center gap-2">
-                <CheckCircle2 size={16} className={isInStock ? 'text-green-600' : 'text-red-500'} />
-                <span className={`text-[11px] font-black uppercase tracking-widest ${isInStock ? 'text-green-600' : 'text-red-500'}`}>
-                  {isInStock ? 'In Stock & Ready to Ship' : 'Out of Stock'}
-                </span>
-              </div>
-              
-              {cartQty > 0 ? (
-                <div className="flex items-center border-2 border-border/30 rounded-2xl h-16 bg-muted/5">
-                  <button onClick={() => updateQuantity(product._id, cartQty - 1)} className="w-16 h-full flex items-center justify-center hover:bg-muted/10 transition"><Minus size={20} /></button>
-                  <span className="flex-1 text-center font-black text-xl text-heading">{cartQty}</span>
-                  <button onClick={() => updateQuantity(product._id, cartQty + 1)} className="w-16 h-full flex items-center justify-center hover:bg-muted/10 transition"><Plus size={20} /></button>
-                </div>
-              ) : (
-                <button 
-                  onClick={handleAddToCart} 
-                  disabled={!isInStock}
-                  className={`h-16 border-2 border-primary text-primary font-black text-[11px] uppercase tracking-[0.2em] rounded-2xl transition flex items-center justify-center gap-3 ${!isInStock ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary/5'}`}
-                >
-                  <ShoppingCart size={20} /> {isInStock ? 'Add to Cart' : 'Out of Stock'}
-                </button>
-              )}
-              
-              <button 
-                onClick={handleBuyNow} 
-                disabled={!isInStock}
-                className={`h-16 font-black text-[11px] uppercase tracking-[0.2em] rounded-2xl transition shadow-xl flex items-center justify-center gap-3 ${
-                  isInStock
-                    ? 'bg-secondary text-white shadow-secondary/20 hover:brightness-110 cursor-pointer'
-                    : 'bg-muted/40 text-muted/60 cursor-not-allowed shadow-none'
-                }`}
-              >
-                {isInStock ? 'Buy Now' : 'Out of Stock'} <ArrowRight size={20} />
-              </button>
-            </div>
-
-            {/* Mobile-only Info Section */}
+            {/* Mobile Info Section */}
             <div className="space-y-4 block lg:hidden">
               <div className="bg-card rounded-[2rem] border border-border/50 p-6 shadow-sm">
                 <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-heading mb-4">Description</h3>
@@ -677,7 +877,7 @@ const ProductDetails = () => {
           </div>
         </div>
 
-        {/* ── RATINGS & REVIEWS SECTION ── */}
+        {/* Ratings & Reviews Section */}
         <div className="mt-12 lg:mt-16 bg-card rounded-[2.5rem] border border-border/50 p-6 lg:p-10 shadow-sm">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
@@ -747,7 +947,7 @@ const ProductDetails = () => {
           )}
         </div>
 
-        {/* ── RELATED PRODUCTS ── */}
+        {/* Related Products */}
         {relatedProducts.length > 0 && (
           <div className="mt-20 lg:mt-24 px-5 lg:px-0">
             <div className="flex items-center justify-between mb-10">
@@ -760,7 +960,6 @@ const ProductDetails = () => {
           </div>
         )}
       </div>
-
     </div>
   );
 };

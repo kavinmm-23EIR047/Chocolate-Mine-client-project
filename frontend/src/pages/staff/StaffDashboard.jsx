@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChefHat, ShoppingBag, Clock, CheckCircle, Printer, RefreshCw, Eye, Flame, Truck, Package, X, KeyRound, Phone, ChevronDown, ChevronUp } from 'lucide-react';
+import { ChefHat, ShoppingBag, Clock, CheckCircle, Printer, RefreshCw, Eye, Flame, Truck, Package, X, KeyRound, Phone, ChevronDown, ChevronUp, LayoutDashboard, History, ClipboardList } from 'lucide-react';
 import staffService from '../../services/staffService';
 import { OrderStatusBadge } from '../../components/ui/StatusBadge';
 import Button from '../../components/ui/Button';
@@ -9,8 +9,10 @@ import { TableSkeleton } from '../../components/ui/Skeleton';
 import EmptyState from '../../components/ui/EmptyState';
 import toast from 'react-hot-toast';
 import { formatCurrency } from '../../utils/helpers';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import io from 'socket.io-client';
+import orderService from '../../services/orderService';
+
 
 // OTP Modal Component
 const OtpModal = ({ isOpen, onClose, onVerify, order, loading, onRegenerateOtp }) => {
@@ -49,13 +51,15 @@ const OtpModal = ({ isOpen, onClose, onVerify, order, loading, onRegenerateOtp }
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
       >
+
         <div className="p-6 border-b border-border">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
@@ -140,13 +144,15 @@ const OrderDetailsModal = ({ order, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm overflow-y-auto p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm overflow-y-auto p-4" onClick={onClose}>
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-auto overflow-hidden max-h-[90vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
       >
+
         <div className="p-6 border-b border-border sticky top-0 bg-white z-10">
           <div className="flex justify-between items-center">
             <div>
@@ -267,7 +273,7 @@ const StaffDashboard = () => {
   const socketRef = useRef(null);
   
   const [orders, setOrders] = useState([]);
-  const [stats, setStats] = useState({ confirmedOrders: 0, outForDeliveryOrders: 0, deliveredToday: 0 });
+  const [stats, setStats] = useState({ confirmedOrders: 0, outForDeliveryOrders: 0, deliveredOrders: 0 });
   const [loading, setLoading] = useState(true);
   const [otpModalOpen, setOtpModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -286,73 +292,50 @@ const StaffDashboard = () => {
     });
 
     socketRef.current.on('connect', () => {
-      console.log('Socket connected');
       socketRef.current.emit('join_staff_room', sessionStorage.getItem('userId'));
       socketRef.current.emit('join_admin_room');
     });
 
-    socketRef.current.on('assigned_order_updated', (data) => {
-      console.log('Order update received:', data);
-      fetchData();
-    });
-
-    socketRef.current.on('dashboard_needs_refresh', () => {
-      fetchData();
-    });
+    socketRef.current.on('assigned_order_updated', () => fetchData());
+    socketRef.current.on('dashboard_needs_refresh', () => fetchData());
 
     return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-      }
+      if (socketRef.current) socketRef.current.disconnect();
     };
   }, []);
 
-  // Sync activeTab with URL
-  const getTabFromPath = (path) => {
-    if (path.includes('out-for-delivery')) return 'out_for_delivery';
-    if (path.includes('delivered')) return 'delivered';
-    if (path.includes('history')) return 'history';
-    return 'confirmed'; 
+  // Determine current page type
+  const getPageType = (path) => {
+    if (path.includes('orders/new')) return 'new';
+    if (path.includes('orders/active')) return 'active';
+    if (path.includes('orders/history')) return 'history';
+    if (path.includes('dashboard')) return 'dashboard';
+    return 'dashboard'; 
   };
 
-  const activeTab = getTabFromPath(location.pathname);
-
-  const setActiveTab = (tab) => {
-    const pathMap = {
-      confirmed: '/staff/orders/new',
-      out_for_delivery: '/staff/orders/out-for-delivery',
-      delivered: '/staff/orders/delivered',
-      history: '/staff/orders/history'
-    };
-    navigate(pathMap[tab]);
-  };
-
-  const [pendingStatuses, setPendingStatuses] = useState({});
-  const statusOptions = ['confirmed', 'out_for_delivery', 'delivered'];
+  const pageType = getPageType(location.pathname);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      if (activeTab === 'history') {
-        const res = await staffService.getAllOrders({ limit: 50 });
+      const statsRes = await staffService.getDashboard();
+      setStats(statsRes.data.data);
+
+      if (pageType === 'new') {
+        const res = await staffService.getNewOrders();
+        setOrders(res.data.data);
+      } else if (pageType === 'active') {
+        const res = await staffService.getOutForDeliveryOrders();
+        setOrders(res.data.data);
+      } else if (pageType === 'history') {
+        const res = await staffService.getDeliveredOrders();
         setOrders(res.data.data);
       } else {
-        let ordersRes;
-        if (activeTab === 'out_for_delivery') {
-          ordersRes = await staffService.getOutForDeliveryOrders();
-        } else if (activeTab === 'delivered') {
-          ordersRes = await staffService.getDeliveredOrders();
-        } else {
-          ordersRes = await staffService.getNewOrders();
-        }
-        const statsRes = await staffService.getDashboard();
-        
-        setOrders(ordersRes.data.data);
-        setStats(statsRes.data.data);
+        setOrders([]); // Dashboard summary page doesn't need order list
       }
     } catch (err) {
       console.error('Failed to load data:', err);
-      toast.error('Failed to load delivery data');
+      toast.error('Failed to load portal data');
     } finally {
       setLoading(false);
     }
@@ -380,7 +363,7 @@ const StaffDashboard = () => {
     
     try {
       const response = await staffService.updateKitchenStatus(id, status);
-      toast.success(`Order ${status.replace(/_/g, ' ').toUpperCase()}`);
+      toast.success(`Order marked as ${status.replace(/_/g, ' ')}`);
       if (status === 'out_for_delivery' && response.data.otp) {
         toast.success(`OTP: ${response.data.otp}`, { duration: 10000 });
       }
@@ -392,16 +375,15 @@ const StaffDashboard = () => {
 
   const handleVerifyOtp = async (otp) => {
     if (!selectedOrder) return;
-    
     setVerifyingOtp(true);
     try {
       await staffService.verifyDeliveryOtp(selectedOrder._id, otp);
-      toast.success('Delivery confirmed successfully! 🎉');
+      toast.success('Delivery confirmed! 🎉');
       setOtpModalOpen(false);
       setSelectedOrder(null);
       fetchData();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Invalid OTP. Please try again.');
+      toast.error(err.response?.data?.message || 'Invalid OTP');
     } finally {
       setVerifyingOtp(false);
     }
@@ -409,242 +391,188 @@ const StaffDashboard = () => {
 
   const handleRegenerateOtp = async () => {
     if (!selectedOrder) return;
-    
     try {
-      const response = await staffService.generateDeliveryOtp(selectedOrder._id);
-      toast.success(`New OTP sent`, { duration: 10000 });
+      await staffService.generateDeliveryOtp(selectedOrder._id);
+      toast.success(`New OTP sent`);
     } catch (err) {
       toast.error('Failed to generate OTP');
     }
   };
 
-  const handleStatusSelect = (orderId, status) => {
-    setPendingStatuses(prev => ({ ...prev, [orderId]: status }));
-  };
-
-  const handleGlobalStatusUpdate = async (orderId) => {
-    const newStatus = pendingStatuses[orderId];
-    if (!newStatus) return;
+  const handlePrintInvoice = async (orderId) => {
     try {
-      await staffService.updateOrderStatus(orderId, newStatus);
-      toast.success(`Order ${newStatus.replace(/_/g, ' ')}`);
-      fetchData();
-      setPendingStatuses(prev => {
-        const newState = { ...prev };
-        delete newState[orderId];
-        return newState;
-      });
+      toast.loading('Generating invoice...', { id: 'invoice' });
+      const res = await orderService.downloadInvoice(orderId);
+      const blob = new Blob([res.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      toast.success('Invoice ready', { id: 'invoice' });
     } catch (err) {
-      toast.error('Failed to update status');
+      toast.error('Failed to generate invoice', { id: 'invoice' });
     }
   };
 
-  const isStatusDisabled = (currentStatus, optionStatus) => {
-    if (currentStatus === 'delivered') return true;
-    if (currentStatus === 'confirmed' && optionStatus !== 'out_for_delivery') return true;
-    if (currentStatus === 'out_for_delivery' && optionStatus !== 'delivered') return true;
-    return false;
-  };
 
-  const tabs = [
-    { id: 'confirmed', label: 'Confirmed', icon: Clock, count: stats.confirmedOrders, color: 'text-secondary' },
-    { id: 'out_for_delivery', label: 'Out For Delivery', icon: Truck, count: stats.outForDeliveryOrders, color: 'text-primary' },
-    { id: 'delivered', label: 'Delivered', icon: CheckCircle, count: stats.deliveredToday, color: 'text-success' },
-    { id: 'history', label: 'History', icon: ShoppingBag, count: null, color: 'text-heading' },
-  ];
+  // ── DASHBOARD SUMMARY VIEW ───────────────────────────────────────────
+  if (pageType === 'dashboard') {
+    const summaryItems = [
+      { id: 'confirmed', label: 'Confirmed', icon: ClipboardList, count: stats.confirmedOrders, color: 'text-secondary', bg: 'bg-secondary/10', path: '/staff/orders/new' },
+      { id: 'active', label: 'Out For Delivery', icon: Flame, count: stats.outForDeliveryOrders, color: 'text-primary', bg: 'bg-primary/10', path: '/staff/orders/active' },
+      { id: 'delivered', label: 'Delivered', icon: CheckCircle, count: stats.deliveredOrders, color: 'text-success', bg: 'bg-success/10', path: '/staff/orders/history' },
+      { id: 'history', label: 'History', icon: History, count: stats.deliveredOrders, color: 'text-heading', bg: 'bg-gray-100', path: '/staff/orders/history' },
+    ];
 
+    return (
+      <div className="space-y-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {summaryItems.map((item) => (
+            <Link key={item.id} to={item.path} className="group">
+              <motion.div 
+                whileHover={{ y: -5 }}
+                className="bg-card border border-border p-8 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300"
+              >
+                <div className={`w-14 h-14 ${item.bg} ${item.color} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
+                  <item.icon size={28} />
+                </div>
+                <h3 className="text-sm font-black text-muted uppercase tracking-widest">{item.label}</h3>
+                <p className="text-4xl font-black text-heading mt-2">{item.count || 0}</p>
+                <div className="flex items-center gap-2 text-[10px] font-black text-primary mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                  VIEW ALL ORDERS →
+                </div>
+              </motion.div>
+            </Link>
+          ))}
+        </div>
+
+        <div className="bg-primary/5 border border-primary/10 p-6 rounded-3xl flex items-center gap-6">
+          <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center text-primary">
+            <RefreshCw size={24} />
+          </div>
+          <div>
+            <h4 className="font-black text-heading uppercase tracking-tight">Real-time Updates Active</h4>
+            <p className="text-xs text-muted font-medium mt-1">Orders from the kitchen and online store will appear here automatically as they are confirmed.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── LIST VIEWS (NEW, ACTIVE, HISTORY) ──────────────────────────────
   return (
-    <div className="space-y-8">
-      {/* OTP Modal */}
+    <div className="space-y-6">
       <OtpModal 
         isOpen={otpModalOpen}
-        onClose={() => {
-          setOtpModalOpen(false);
-          setSelectedOrder(null);
-        }}
+        onClose={() => { setOtpModalOpen(false); setSelectedOrder(null); }}
         onVerify={handleVerifyOtp}
         onRegenerateOtp={handleRegenerateOtp}
         order={selectedOrder}
         loading={verifyingOtp}
       />
 
-      {/* Order Details Modal */}
       <OrderDetailsModal 
         order={selectedOrderDetails}
-        onClose={() => setDetailsModalOpen(false)}
+        onClose={() => {
+          setDetailsModalOpen(false);
+          setSelectedOrderDetails(null);
+        }}
       />
 
-      {/* Header & Refresh */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-        <div className="flex items-center gap-4">
-           <div className="w-14 h-14 bg-primary text-white rounded-2xl flex items-center justify-center shadow-2xl shadow-primary/20">
-              <ChefHat size={32} />
-           </div>
-           <div>
-              <h2 className="text-2xl font-black text-heading tracking-tight">Staff Portal</h2>
-              <p className="text-xs text-muted font-bold uppercase tracking-[0.2em]">Delivery Management</p>
-           </div>
-        </div>
-        <Button variant="outline" icon={RefreshCw} onClick={fetchData}>Refresh</Button>
-      </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 p-1.5 bg-border/20 rounded-2xl w-fit overflow-x-auto">
-         {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-3 px-6 py-3 rounded-xl transition-all duration-300 font-black text-sm whitespace-nowrap ${
-                activeTab === tab.id 
-                  ? 'bg-card text-heading shadow-premium' 
-                  : 'text-muted hover:text-heading'
-              }`}
-            >
-              <tab.icon size={18} className={activeTab === tab.id ? tab.color : ''} />
-              {tab.label}
-              {tab.count !== null && (
-                <span className={`ml-1 px-2 py-0.5 rounded-lg text-[10px] ${activeTab === tab.id ? 'bg-secondary/10 text-secondary' : 'bg-border/40'}`}>
-                  {tab.count}
-                </span>
-              )}
-            </button>
-         ))}
+      <div className="flex justify-end">
+        <Button variant="outline" icon={RefreshCw} onClick={fetchData} loading={loading}>Refresh</Button>
       </div>
 
       {loading ? <TableSkeleton rows={3} cols={1} /> : orders.length === 0 ? (
         <EmptyState 
           icon={ShoppingBag} 
           title="No orders found" 
-          message="Relax! There's nothing to do here right now." 
+          message="Relax! There's nothing to do in this section right now." 
         />
-      ) : activeTab === 'history' ? (
-        <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-soft">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-border/10 border-b border-border">
-                  <th className="px-6 py-4 text-left font-black uppercase tracking-widest text-[10px]">Order</th>
-                  <th className="px-6 py-4 text-left font-black uppercase tracking-widest text-[10px]">Customer</th>
-                  <th className="px-6 py-4 text-left font-black uppercase tracking-widest text-[10px]">Items</th>
-                  <th className="px-6 py-4 text-left font-black uppercase tracking-widest text-[10px]">Amount</th>
-                  <th className="px-6 py-4 text-left font-black uppercase tracking-widest text-[10px]">Status</th>
-                  <th className="px-6 py-4 text-right font-black uppercase tracking-widest text-[10px]">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {orders.map((order) => (
-                  <tr key={order._id} className="hover:bg-border/5">
-                    <td className="px-6 py-4 font-bold">#{order.orderNumber || order.trackingCode}</td>
-                    <td className="px-6 py-4">
-                      <p className="font-bold">{order.address?.fullName}</p>
-                      <p className="text-[10px] text-muted">{order.address?.phone}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="text-sm">{order.items?.length} items</p>
-                      <p className="text-[10px] text-muted">{order.items?.reduce((sum, i) => sum + i.qty, 0)} units</p>
-                    </td>
-                    <td className="px-6 py-4 font-bold text-primary">{formatCurrency(order.total)}</td>
-                    <td className="px-6 py-4"><OrderStatusBadge status={order.orderStatus} /></td>
-                    <td className="px-6 py-4 text-right">
-                      <button 
-                        onClick={() => handleViewOrderDetails(order._id)}
-                        className="p-2 hover:bg-secondary/10 rounded-xl transition-colors"
-                        title="View Details"
-                      >
-                        <Eye size={18} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-           <AnimatePresence mode="popLayout">
-              {orders.map((order) => (
-                <motion.div 
-                  key={order._id}
-                  layout
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  className="card-premium p-6 border-t-4 border-t-secondary relative"
-                >
-                   <div className="flex justify-between items-start mb-4">
-                      <div>
-                         <Badge variant="secondary" className="mb-2 text-[10px] tracking-widest">{order.deliverySlot}</Badge>
-                         <h3 className="font-black text-xl text-heading">#{order.orderNumber}</h3>
-                         {order.trackingCode && (
-                           <p className="text-[9px] text-muted font-mono">Track: {order.trackingCode}</p>
-                         )}
+          <AnimatePresence mode="popLayout">
+            {orders.map((order) => (
+              <motion.div 
+                key={order._id}
+                layout
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="card-premium p-6 border-t-4 border-t-secondary relative group"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <Badge variant="secondary" className="mb-2 text-[10px] tracking-widest">{order.deliverySlot}</Badge>
+                    <h3 className="font-black text-xl text-heading">#{order.orderNumber}</h3>
+                    <p className="text-[9px] text-muted font-mono">{new Date(order.createdAt).toLocaleString()}</p>
+                  </div>
+                  <OrderStatusBadge status={order.orderStatus} />
+                </div>
+
+                <div className="mb-4 p-4 bg-card-soft rounded-2xl border border-border/30">
+                  <p className="font-black text-xs uppercase tracking-widest text-secondary mb-1">Customer Info</p>
+                  <p className="font-bold text-sm text-heading">{order.address?.fullName}</p>
+                  <p className="text-xs text-muted">{order.address?.phone}</p>
+                </div>
+
+                <div className="space-y-2 mb-4 max-h-40 overflow-y-auto custom-scrollbar pr-1">
+                  {order.formattedItems?.map((item, idx) => (
+                    <div key={idx} className="flex justify-between items-center p-2 bg-border/10 rounded-lg text-sm border border-transparent group-hover:border-border/50 transition-all">
+                      <div className="flex-1">
+                        <p className="font-bold truncate">{item.name}</p>
+                        <p className="text-[10px] text-muted">{item.qty}x · {item.selectedFlavor || 'Standard'}</p>
                       </div>
-                      <OrderStatusBadge status={order.orderStatus} />
-                   </div>
+                      <p className="font-black text-xs">{formatCurrency(item.price * item.qty)}</p>
+                    </div>
+                  ))}
+                </div>
 
-                   {/* Customer Info */}
-                   <div className="mb-4 p-3 bg-gray-50 rounded-xl">
-                     <p className="font-bold text-sm">{order.address?.fullName}</p>
-                     <p className="text-xs text-muted">{order.address?.phone}</p>
-                   </div>
+                <div className="flex justify-between items-center mb-6 pt-2 border-t border-border">
+                  <span className="font-bold text-sm">Total Amount</span>
+                  <span className="font-black text-primary text-xl">{formatCurrency(order.total)}</span>
+                </div>
 
-                   {/* Items Preview */}
-                   <div className="space-y-2 mb-4 max-h-40 overflow-y-auto">
-                      {order.formattedItems?.map((item, idx) => (
-                        <div key={idx} className="flex justify-between items-center p-2 bg-border/10 rounded-lg text-sm">
-                          <div className="flex-1">
-                            <p className="font-bold">{item.name}</p>
-                            {item.selectedFlavor && (
-                              <p className="text-[10px] text-muted">Flavor: {item.selectedFlavor}</p>
-                            )}
-                            {item.selectedWeight && (
-                              <p className="text-[10px] text-muted">Weight: {item.selectedWeight}</p>
-                            )}
-                            {item.sku && (
-                              <p className="text-[9px] text-muted font-mono">SKU: {item.sku}</p>
-                            )}
-                          </div>
-                          <div className="text-right">
-                            <p className="font-bold">{item.qty}x</p>
-                            <p className="text-[10px] text-muted">{formatCurrency(item.price)}</p>
-                          </div>
-                        </div>
-                      ))}
-                   </div>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => handleViewOrderDetails(order._id)}
+                    className="p-3 bg-border/20 rounded-2xl hover:bg-secondary/10 transition-colors text-heading"
+                    title="View Details"
+                  >
+                    <Eye size={18} />
+                  </button>
+                  
+                  {pageType === 'new' && (
+                    <Button 
+                      className="flex-1 rounded-2xl py-3 text-xs" 
+                      icon={Truck} 
+                      onClick={() => handleDeliveryStatusUpdate(order._id, 'out_for_delivery')}
+                    >
+                      OUT FOR DELIVERY
+                    </Button>
+                  )}
+                  
+                  {pageType === 'active' && (
+                    <Button 
+                      className="flex-1 bg-success hover:bg-success/90 rounded-2xl py-3 text-xs" 
+                      icon={CheckCircle} 
+                      onClick={() => handleDeliveryStatusUpdate(order._id, 'delivered')}
+                    >
+                      VERIFY & DELIVER
+                    </Button>
+                  )}
 
-                   {/* Total Amount */}
-                   <div className="flex justify-between items-center mb-4 pt-2 border-t border-border">
-                     <span className="font-bold">Total</span>
-                     <span className="font-black text-primary text-lg">{formatCurrency(order.total)}</span>
-                   </div>
+                  <button 
+                    onClick={() => handlePrintInvoice(order._id)} 
+                    className="p-3 bg-border/20 rounded-2xl hover:bg-secondary/10 transition-colors text-heading"
+                    title="Print Invoice"
+                  >
+                    <Printer size={18} />
+                  </button>
 
-                   {/* Action Buttons */}
-                   <div className="flex items-center gap-3">
-                      <button 
-                        onClick={() => handleViewOrderDetails(order._id)}
-                        className="p-2 bg-border/30 rounded-xl hover:bg-secondary/10 transition-colors"
-                        title="View Details"
-                      >
-                        <Eye size={18} />
-                      </button>
-                      {activeTab === 'confirmed' && (
-                        <Button className="flex-1" icon={Truck} onClick={() => handleDeliveryStatusUpdate(order._id, 'out_for_delivery')}>
-                          OUT FOR DELIVERY
-                        </Button>
-                      )}
-                      {activeTab === 'out_for_delivery' && (
-                        <Button className="flex-1 bg-success hover:bg-success/90" icon={CheckCircle} onClick={() => handleDeliveryStatusUpdate(order._id, 'delivered')}>
-                          VERIFY & DELIVER
-                        </Button>
-                      )}
-                      <button onClick={() => staffService.printKOT(order._id)} className="p-3 bg-border/30 rounded-xl hover:bg-secondary/10 transition-colors">
-                        <Printer size={20} />
-                      </button>
-                   </div>
-                </motion.div>
-              ))}
-           </AnimatePresence>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       )}
     </div>
