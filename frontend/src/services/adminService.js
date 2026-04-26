@@ -1,0 +1,86 @@
+import api from '../utils/api';
+
+const adminService = {
+  /* ----------------------------------------
+     Dashboard
+  ---------------------------------------- */
+  getDashboard: () => api.get('/admin/dashboard'),
+
+  /* ----------------------------------------
+     Staff Management
+  ---------------------------------------- */
+  createStaff: (data) => api.post('/admin/staff/create', data),
+  getAllStaff: () => api.get('/admin/staff'),
+  updateStaff: (id, data) => api.patch(`/admin/staff/${id}`, data),
+  deleteStaff: (id) => api.delete(`/admin/staff/${id}`),
+
+  /* ----------------------------------------
+     Order Management
+  ---------------------------------------- */
+  getOrders: () => api.get('/admin/orders'),
+  
+  // ✅ ADD THIS - Get single order details for admin
+  getOrder: (id) => api.get(`/admin/orders/${id}`),
+
+  updateOrderStatus: (id, status) =>
+    api.patch(`/admin/orders/${id}/status`, { status }),
+
+  downloadInvoice: (id) =>
+    api.get(`/admin/orders/${id}/invoice`, {
+      responseType: 'blob',
+      headers: {
+        Accept: 'application/pdf'
+      }
+    }),
+
+  resendInvoice: (id) =>
+    api.post(`/admin/orders/${id}/resend-invoice`),
+
+  /* ----------------------------------------
+     Category Management
+  ---------------------------------------- */
+  getCategories: () => api.get('/categories'),
+
+  createCategory: (formData) =>
+    api.post('/categories', formData),
+
+  updateCategory: (id, formData) =>
+    api.put(`/categories/${id}`, formData),
+
+  deleteCategory: (id) =>
+    api.delete(`/categories/${id}`),
+
+  /* ----------------------------------------
+     Occasion Management
+  ---------------------------------------- */
+  getOccasions: () => api.get('/occasions'),
+
+  createOccasion: (formData) =>
+    api.post('/occasions', formData),
+
+  updateOccasion: (id, formData) =>
+    api.put(`/occasions/${id}`, formData),
+
+  deleteOccasion: (id) =>
+    api.delete(`/occasions/${id}`),
+
+  /* ----------------------------------------
+     Product Management
+  ---------------------------------------- */
+  getProducts: (params) =>
+    api.get('/admin/products', { params }),
+
+  getProduct: (id) =>
+    api.get(`/admin/products/${id}`),
+
+  createProduct: (formData) =>
+    api.post('/admin/products', formData),
+
+  updateProduct: (id, formData) =>
+    api.put(`/admin/products/${id}`, formData),
+
+  deleteProduct: (id) =>
+    api.delete(`/admin/products/${id}`)
+};
+
+export default adminService;

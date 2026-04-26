@@ -1,0 +1,487 @@
+import React, { useState, useEffect, useRef } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import {
+  ArrowLeft,
+  MapPin,
+  CreditCard,
+  CheckCircle2,
+  Package,
+  Truck,
+  Download,
+  Phone,
+  Receipt,
+  ChevronDown,
+  ChevronUp,
+  Star
+} from "lucide-react";
+
+import api from "../../utils/api";
+import orderService from "../../services/orderService";
+import reviewService from "../../services/reviewService";
+import { formatCurrency } from "../../utils/helpers";
+import Button from "../../components/ui/Button";
+import toast from "react-hot-toast";
+import { CardSkeleton } from "../../components/ui/Skeleton";
+import io from "socket.io-client";
+
+const STATUS_ORDER = ["confirmed", "out_for_delivery", "delivered"];
+
+// Status display mapping
+const STATUS_MAP = {
+  confirmed: { label: "Confirmed", color: "text-blue-600 bg-blue-50" },
+  out_for_delivery: { label: "Out for Delivery", color: "text-orange-600 bg-orange-50" },
+  delivered: { label: "Delivered", color: "text-green-600 bg-green-50" }
+};
+
+const OrderDetails = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const socketRef = useRef(null);
+
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [expandedItems, setExpandedItems] = useState({});
+  const [canReview, setCanReview] = useState(false);
+  const [reviewCheckLoading, setReviewCheckLoading] = useState(true);
+
+  // Initialize socket connection for real-time updates
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token || !id) return;
+
+    socketRef.current = io(import.meta.env.VITE_API_URL || 'http://localhost:5000', {
+      auth: { token },
+      transports: ['websocket']
+    });
+
+    socketRef.current.on('connect', () => {
+      console.log('OrderDetails socket connected');
+      socketRef.current.emit('join_order_room', id);
+    });
+
+    socketRef.current.on('order_detail_updated', (data) => {
+      console.log('Order detail update received:', data);
+      fetchOrder(true); // Silent refresh
+    });
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+    };
+  }, [id]);
+
+  const fetchOrder = async (silent = false) => {
+    try {
+      if (!silent) setLoading(true);
+
+      // First try to get order directly by ID
+      let orderData = null;
+      
+      try {
+        const directRes = await api.get(`/orders/${id}`);
+        orderData = directRes.data.data;
+      } catch (err) {
+        // If direct fetch fails, try from my orders list
+        const res = await api.get("/orders/my");
+        orderData = res.data.data.find((o) => o._id === id);
+      }
+
+      if (orderData) {
+        setOrder(orderData);
+        
+        // Check if order can be reviewed (delivered and not yet reviewed)
+        if (orderData.orderStatus === 'delivered') {
+          try {
+            const checkRes = await reviewService.checkOrderReviewable(id);
+            setCanReview(checkRes.data.data.canReview);
+          } catch (err) {
+            console.error('Failed to check review status:', err);
+            setCanReview(false);
+          }
+        }
+        setReviewCheckLoading(false);
+      } else if (!silent) {
+        toast.error("Order not found");
+        navigate("/account/orders");
+      }
+    } catch (error) {
+      console.error("Failed to load order:", error);
+      if (!silent) {
+        toast.error("Failed to load order");
+        navigate("/account/orders");
+      }
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (id) {
+      fetchOrder();
+    }
+  }, [id, navigate]);
+
+  const toggleItemExpand = (index) => {
+    setExpandedItems(prev => ({ ...prev, [index]: !prev[index] }));
+  };
+
+  const handleWriteReview = () => {
+    navigate(`/review/${order._id}`);
+  };
+
+  /* ----------------------------------------
+     BACKEND PDF DOWNLOAD (CORRECT METHOD)
+  ---------------------------------------- */
+  const handleDownloadInvoice = async () => {
+    if (!order) return;
+    try {
+      const res = await orderService.downloadInvoice(order._id);
+
+      const blob = res.data;
+
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Invoice-${order.invoiceNumber || order.orderNumber || order._id}.pdf`;
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Invoice downloaded");
+    } catch (err) {
+      console.error("Invoice download failed:", err);
+      toast.error("Unable to download invoice");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <CardSkeleton />
+        <CardSkeleton />
+      </div>
+    );
+  }
+
+  if (!order) return null;
+
+  // Calculate current step index for timeline
+  const activeStep = STATUS_ORDER.indexOf(order.orderStatus);
+  const progressPercent = activeStep >= 0 ? (activeStep / (STATUS_ORDER.length - 1)) * 100 : 0;
+
+  // Format timeline steps with proper dates
+  const timelineSteps = [
+    {
+      id: "confirmed",
+      label: "Order Confirmed",
+      icon: Receipt,
+      description: "Your order has been confirmed and paid for.",
+      time: order.createdAt,
+      completed: activeStep >= 0,
+    },
+    {
+      id: "out_for_delivery",
+      label: "Out For Delivery",
+      icon: Truck,
+      description: "Your order is on the way to your doorstep.",
+      time: order.orderStatus === "out_for_delivery" || order.orderStatus === "delivered" 
+        ? (order.otpVerifiedAt || order.updatedAt) 
+        : null,
+      completed: activeStep >= 1,
+    },
+    {
+      id: "delivered",
+      label: "Delivered",
+      icon: CheckCircle2,
+      description: "Your order has been delivered. Enjoy!",
+      time: order.orderStatus === "delivered" ? (order.otpVerifiedAt || order.updatedAt) : null,
+      completed: activeStep >= 2,
+    },
+  ];
+
+  return (
+    <div className="space-y-8">
+
+      <div className="flex items-center gap-4 border-b border-border/50 pb-6 flex-wrap">
+        <button
+          onClick={() => navigate("/account/orders")}
+          className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center hover:bg-border/20 transition-colors"
+        >
+          <ArrowLeft size={18} />
+        </button>
+
+        <div>
+          <h1 className="text-2xl font-black uppercase">
+            Order #{order.orderNumber}
+          </h1>
+          <p className="text-xs text-muted mt-1">
+            Placed on {new Date(order.createdAt).toLocaleString()}
+          </p>
+          {order.trackingCode && (
+            <p className="text-[9px] text-muted font-mono mt-0.5">
+              Tracking: {order.trackingCode}
+            </p>
+          )}
+        </div>
+
+        <div className="ml-auto flex gap-3">
+          {/* Status Badge */}
+          <div className={`px-4 py-2 rounded-full text-xs font-bold uppercase ${STATUS_MAP[order.orderStatus]?.color || 'bg-gray-100 text-gray-600'}`}>
+            {STATUS_MAP[order.orderStatus]?.label || order.orderStatus.replace(/_/g, ' ')}
+          </div>
+
+          <Button
+            icon={Download}
+            onClick={handleDownloadInvoice}
+            variant="outline"
+          >
+            INVOICE
+          </Button>
+
+          {/* ✅ Write Review Button - Only show if order is delivered and not yet reviewed */}
+          {order.orderStatus === 'delivered' && canReview && !reviewCheckLoading && (
+            <Button
+              icon={Star}
+              onClick={handleWriteReview}
+              className="bg-primary hover:bg-primary/90"
+            >
+              WRITE REVIEW
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <div className="grid lg:grid-cols-3 gap-8">
+
+        <div className="lg:col-span-2 space-y-8">
+
+          {/* Delivery Timeline */}
+          <div className="card-premium p-8 bg-card rounded-3xl border border-border">
+            <h3 className="text-sm font-black uppercase tracking-widest mb-10">
+              Delivery Status
+            </h3>
+
+            <div className="relative">
+              {/* Progress line */}
+              <div className="absolute left-5 top-5 bottom-5 w-[3px] rounded-full bg-border/30" />
+              
+              <div
+                className="absolute left-5 top-5 w-[3px] rounded-full bg-secondary transition-all duration-500"
+                style={{ height: `calc(${progressPercent}% * (100% - 2rem) / 100)` }}
+              />
+
+              <div className="space-y-0">
+                {timelineSteps.map((step, index) => {
+                  const isCompleted = step.completed;
+                  const isCurrent = index === activeStep;
+
+                  return (
+                    <div key={step.id} className="relative flex gap-6 mb-6">
+                      <div className="flex flex-col items-center z-10">
+                        <div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center border-4 border-card shadow-lg transition-all duration-300 ${
+                            isCompleted || isCurrent
+                              ? "bg-secondary text-white"
+                              : "bg-card text-muted border-border"
+                          } ${isCurrent ? "ring-4 ring-secondary/20 scale-110" : ""}`}
+                        >
+                          <step.icon size={16} />
+                        </div>
+                      </div>
+
+                      <div className={`flex-1 p-5 rounded-2xl border transition-all ${
+                        isCurrent ? "border-secondary bg-secondary/5" : "border-border"
+                      }`}>
+                        <div className="flex justify-between flex-wrap gap-2">
+                          <h4 className={`text-sm font-black uppercase ${isCurrent ? "text-secondary" : ""}`}>
+                            {step.label}
+                          </h4>
+                          {step.time && (
+                            <span className="text-[10px] text-muted">
+                              {new Date(step.time).toLocaleString()}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs mt-2 text-muted">
+                          {step.description}
+                        </p>
+                        {step.id === "out_for_delivery" && order.orderStatus === "out_for_delivery" && (
+                          <div className="mt-3 p-2 bg-orange-50 rounded-lg text-xs text-orange-700">
+                            📦 Your order is out for delivery! Please keep your phone handy for OTP verification.
+                          </div>
+                        )}
+                        {step.id === "delivered" && order.orderStatus === "delivered" && (
+                          <div className="mt-3 p-2 bg-green-50 rounded-lg text-xs text-green-700">
+                            ✅ Order delivered successfully! Please share your feedback by clicking the "WRITE REVIEW" button above.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Order Items with SKU and Custom Details */}
+          <div className="card-premium p-6 bg-card rounded-3xl border border-border">
+            <h3 className="font-black uppercase mb-4">Order Items</h3>
+            <div className="space-y-3">
+              {order.items?.map((item, idx) => (
+                <div key={idx} className="border rounded-xl p-3">
+                  <div className="flex gap-4">
+                    {item.image && (
+                      <img src={item.image} alt={item.name} className="w-16 h-16 rounded-lg object-cover" />
+                    )}
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-bold">{item.name}</p>
+                          <p className="text-xs text-muted">SKU: {item.sku || 'N/A'}</p>
+                        </div>
+                        <p className="font-bold">{formatCurrency(item.price * item.qty)}</p>
+                      </div>
+                      <div className="flex justify-between items-center mt-1">
+                        <span className="text-sm">Qty: {item.qty}</span>
+                        <span className="text-xs text-muted">{formatCurrency(item.price)} each</span>
+                      </div>
+                      {(item.selectedFlavor || item.selectedWeight) && (
+                        <div className="text-xs text-muted mt-1">
+                          {item.selectedFlavor && <span>Flavor: {item.selectedFlavor}</span>}
+                          {item.selectedWeight && <span className="ml-2">Weight: {item.selectedWeight}</span>}
+                        </div>
+                      )}
+                      {item.customDetails && Object.keys(item.customDetails).length > 0 && (
+                        <button 
+                          onClick={() => toggleItemExpand(idx)}
+                          className="text-xs text-secondary flex items-center gap-1 mt-2"
+                        >
+                          {expandedItems[idx] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                          Custom Details
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  {expandedItems[idx] && item.customDetails && (
+                    <div className="mt-3 p-3 bg-gray-50 rounded-lg text-xs">
+                      {item.customDetails.flavour && <p><span className="font-medium">Flavor:</span> {item.customDetails.flavour}</p>}
+                      {item.customDetails.shape && <p><span className="font-medium">Shape:</span> {item.customDetails.shape}</p>}
+                      {item.customDetails.tiers && <p><span className="font-medium">Tiers:</span> {item.customDetails.tiers}</p>}
+                      {item.customDetails.weight && <p><span className="font-medium">Weight:</span> {item.customDetails.weight}</p>}
+                      {item.customDetails.eggless && <p><span className="font-medium">Eggless:</span> Yes</p>}
+                      {item.customDetails.lessSugar && <p><span className="font-medium">Less Sugar:</span> Yes</p>}
+                      {item.customDetails.messageOnCake && <p><span className="font-medium">Message:</span> {item.customDetails.messageOnCake}</p>}
+                      {item.customDetails.notes && <p><span className="font-medium">Notes:</span> {item.customDetails.notes}</p>}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-8">
+          {/* Delivery Info */}
+          <div className="card-premium p-6 bg-card rounded-3xl border border-border">
+            <h3 className="font-black uppercase mb-4 flex gap-2 items-center">
+              <MapPin size={16} />
+              Delivery Info
+            </h3>
+
+            <div className="p-4 rounded-2xl bg-muted/5 border border-border">
+              <p className="font-black">{order.address?.fullName}</p>
+              <p className="text-sm">{order.address?.phone}</p>
+              <p className="text-sm text-muted mt-2">
+                {order.address?.houseNo}, {order.address?.street}
+                <br />
+                {order.address?.city}, {order.address?.pincode}
+              </p>
+              {order.deliverySlot && (
+                <p className="text-xs text-muted mt-2">
+                  Delivery Slot: {order.deliverySlot}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Payment Summary */}
+          <div className="card-premium p-6 bg-card rounded-3xl border border-border">
+            <h3 className="font-black uppercase mb-4 flex gap-2 items-center">
+              <CreditCard size={16} />
+              Payment Summary
+            </h3>
+
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted">Subtotal</span>
+                <span>{formatCurrency(order.subtotal)}</span>
+              </div>
+
+              {order.discount > 0 && (
+                <div className="flex justify-between text-green-600">
+                  <span>Discount</span>
+                  <span>- {formatCurrency(order.discount)}</span>
+                </div>
+              )}
+
+              <div className="flex justify-between">
+                <span className="text-muted">Delivery Charge</span>
+                <span>{formatCurrency(order.deliveryCharge)}</span>
+              </div>
+
+              <div className="flex justify-between">
+                <span className="text-muted">GST (18%)</span>
+                <span>{formatCurrency(order.gst)}</span>
+              </div>
+
+              <div className="flex justify-between">
+                <span className="text-muted">Convenience Fee</span>
+                <span>{formatCurrency(order.convenienceFee)}</span>
+              </div>
+
+              <div className="border-t pt-3 mt-2 flex justify-between font-black text-lg">
+                <span>Total</span>
+                <span className="text-primary">{formatCurrency(order.total)}</span>
+              </div>
+
+              <div className="pt-2">
+                <p className="text-xs text-muted">
+                  Payment Status:{" "}
+                  <span className={`font-bold ${
+                    order.paymentStatus === 'paid' ? 'text-green-600' : 'text-orange-600'
+                  }`}>
+                    {order.paymentStatus?.toUpperCase()}
+                  </span>
+                </p>
+                <p className="text-xs text-muted mt-1">
+                  Payment Method: {order.paymentMethod}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Need Help? */}
+          <div className="card-premium p-6 bg-card rounded-3xl border border-border">
+            <h3 className="font-black uppercase mb-3 flex gap-2 items-center">
+              <Phone size={16} />
+              Need Help?
+            </h3>
+            <p className="text-sm text-muted mb-3">
+              Have questions about your order? Contact our support team.
+            </p>
+            <Button variant="outline" className="w-full" icon={Phone}>
+              Contact Support
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default OrderDetails;

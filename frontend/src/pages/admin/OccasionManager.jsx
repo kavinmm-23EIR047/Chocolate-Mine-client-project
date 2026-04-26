@@ -1,0 +1,218 @@
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Plus, Trash2, Edit2, Check, X, ToggleLeft, ToggleRight } from 'lucide-react';
+import adminService from '../../services/adminService';
+import ImageUpload from '../../components/admin/ImageUpload';
+import toast from 'react-hot-toast';
+
+const OccasionManager = () => {
+  const [occasions, setOccasions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [form, setForm] = useState({ name: '', label: '', imageFile: null });
+
+  const fetchOccasions = async () => {
+    try {
+      setLoading(true);
+      const res = await adminService.getOccasions();
+      setOccasions(res.data.data || []);
+    } catch {
+      toast.error('Failed to load occasions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchOccasions(); }, []);
+
+  const resetForm = () => {
+    setForm({ name: '', label: '', imageFile: null });
+    setEditId(null);
+    setShowForm(false);
+  };
+
+  const handleEdit = (occ) => {
+    setEditId(occ._id);
+    setForm({ name: occ.name, label: occ.label || occ.name, imageFile: null });
+    setShowForm(true);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.name.trim()) return toast.error('Occasion name is required');
+    if (!editId && !form.imageFile) return toast.error('Image is required');
+
+    try {
+      setSaving(true);
+      const fd = new FormData();
+      fd.append('name', form.name.trim());
+      fd.append('label', form.label.trim() || form.name.trim());
+      if (form.imageFile) fd.append('image', form.imageFile);
+
+      if (editId) {
+        await adminService.updateOccasion(editId, fd);
+        toast.success('Occasion updated!');
+      } else {
+        await adminService.createOccasion(fd);
+        toast.success('Occasion created!');
+      }
+      resetForm();
+      fetchOccasions();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Save failed');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this occasion?')) return;
+    try {
+      await adminService.deleteOccasion(id);
+      toast.success('Occasion deleted');
+      fetchOccasions();
+    } catch {
+      toast.error('Delete failed');
+    }
+  };
+
+  const handleToggleActive = async (occ) => {
+    try {
+      const fd = new FormData();
+      fd.append('active', String(!occ.active));
+      await adminService.updateOccasion(occ._id, fd);
+      fetchOccasions();
+    } catch {
+      toast.error('Update failed');
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-black text-heading">Occasion Manager</h2>
+          <p className="text-muted text-sm mt-1">Create and manage product occasions & relations</p>
+        </div>
+        <button
+          onClick={() => { resetForm(); setShowForm(true); }}
+          className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-black text-sm uppercase tracking-widest hover:brightness-110 transition-all shadow-lg"
+        >
+          <Plus size={16} /> New Occasion
+        </button>
+      </div>
+
+      {/* Form */}
+      <AnimatePresence>
+        {showForm && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="bg-card border border-border rounded-2xl p-6 shadow-sm"
+          >
+            <h3 className="font-black text-heading text-lg mb-5">{editId ? 'Edit Occasion' : 'New Occasion'}</h3>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-black text-muted uppercase tracking-widest">Name (slug)</label>
+                  <input
+                    type="text"
+                    value={form.name}
+                    onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
+                    placeholder="e.g. birthday"
+                    className="w-full bg-input border border-input-border px-4 py-3 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-black text-muted uppercase tracking-widest">Display Label</label>
+                  <input
+                    type="text"
+                    value={form.label}
+                    onChange={e => setForm(p => ({ ...p, label: e.target.value }))}
+                    placeholder="e.g. Birthday Gifts"
+                    className="w-full bg-input border border-input-border px-4 py-3 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold"
+                  />
+                </div>
+              </div>
+              <ImageUpload
+                label="Occasion Banner Image"
+                onChange={(file) => setForm(p => ({ ...p, imageFile: file }))}
+              />
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-xl font-black text-sm uppercase tracking-widest hover:brightness-110 disabled:opacity-60 transition-all"
+                >
+                  <Check size={16} /> {saving ? 'Saving...' : 'Save Occasion'}
+                </button>
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="flex items-center gap-2 border border-border px-6 py-2.5 rounded-xl font-black text-sm uppercase tracking-widest hover:bg-border/30 transition-all"
+                >
+                  <X size={16} /> Cancel
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Occasion Grid */}
+      {loading ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-card border border-border rounded-2xl p-4 animate-pulse h-40" />
+          ))}
+        </div>
+      ) : occasions.length === 0 ? (
+        <div className="text-center py-20 text-muted font-black uppercase tracking-widest">
+          No occasions yet. Create your first one!
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {occasions.map((occ, i) => (
+            <motion.div
+              key={occ._id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className={`bg-card border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all ${!occ.active ? 'opacity-50' : 'border-border'}`}
+            >
+              <div className="aspect-video relative overflow-hidden">
+                <img src={occ.image} alt={occ.label || occ.name} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-3">
+                  <p className="text-white text-sm font-black uppercase tracking-widest truncate">{occ.label || occ.name}</p>
+                </div>
+              </div>
+              <div className="p-3 flex items-center justify-between gap-2">
+                <span className="text-[10px] font-black text-muted uppercase tracking-widest truncate">{occ.name}</span>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    onClick={() => handleToggleActive(occ)}
+                    className="text-muted hover:text-primary transition-colors"
+                    title={occ.active ? 'Deactivate' : 'Activate'}
+                  >
+                    {occ.active ? <ToggleRight size={18} className="text-green-500" /> : <ToggleLeft size={18} />}
+                  </button>
+                  <button onClick={() => handleEdit(occ)} className="text-muted hover:text-primary transition-colors">
+                    <Edit2 size={14} />
+                  </button>
+                  <button onClick={() => handleDelete(occ._id)} className="text-muted hover:text-red-500 transition-colors">
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default OccasionManager;
