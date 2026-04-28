@@ -191,7 +191,7 @@ const ProductCard = ({ product }) => {
         {/* OFFER BADGE */}
         {discountPct >
           0 && (
-            <span className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-black px-2.5 py-1 rounded-lg shadow-lg z-20 uppercase tracking-wide">
+            <span className="absolute top-2 left-2 bg-sale text-white text-[10px] font-black px-2.5 py-1 rounded-lg shadow-lg z-20 uppercase tracking-wide">
               {
                 discountPct
               }
@@ -201,14 +201,14 @@ const ProductCard = ({ product }) => {
 
         {/* BESTSELLER */}
         {product.bestseller && (
-          <span className="absolute bottom-2 left-2 bg-orange-500 text-white text-[10px] font-black px-2.5 py-1 rounded-lg shadow-lg z-20 uppercase tracking-wide">
+          <span className="absolute bottom-2 left-2 bg-accent text-primary text-[10px] font-black px-2.5 py-1 rounded-lg shadow-lg z-20 uppercase tracking-wide">
             Bestseller
           </span>
         )}
 
         {/* FLAVOUR BADGE for Cakes */}
         {hasFlavours && flavourBadge && (
-          <span className="absolute top-2 right-12 bg-primary/90 text-white text-[9px] font-black px-2 py-1 rounded-lg shadow-lg z-20 uppercase tracking-wide flex items-center gap-1">
+          <span className="absolute top-2 right-12 bg-primary text-button-text text-[9px] font-black px-2 py-1 rounded-lg shadow-lg z-20 uppercase tracking-wide flex items-center gap-1">
             <Cake size={10} />
             {flavourBadge}
           </span>
@@ -217,18 +217,18 @@ const ProductCard = ({ product }) => {
         {/* WISHLIST */}
         <button
           onClick={wish}
-          className="absolute top-2 right-2 w-9 h-9 rounded-full bg-white shadow-xl flex items-center justify-center z-20"
+          className="absolute top-2 right-2 w-9 h-9 rounded-full bg-card border border-border shadow-xl flex items-center justify-center z-20 hover:scale-110 transition-transform"
         >
           <Heart
             size={16}
             fill={
               isLiked
-                ? '#ef4444'
+                ? 'var(--error)'
                 : 'none'
             }
             className={
               isLiked
-                ? 'text-red-500'
+                ? 'text-error'
                 : 'text-muted'
             }
           />
@@ -245,20 +245,23 @@ const ProductCard = ({ product }) => {
                   key="qty"
                   initial={{
                     opacity: 0,
+                    y: 10
                   }}
                   animate={{
                     opacity: 1,
+                    y: 0
                   }}
                   exit={{
                     opacity: 0,
+                    y: 10
                   }}
-                  className="h-9 px-2 rounded-full bg-white shadow-xl border flex items-center gap-2"
+                  className="h-9 px-2 rounded-full bg-card shadow-premium border border-border flex items-center gap-2"
                 >
                   <button
                     onClick={
                       dec
                     }
-                    className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-muted/10"
+                    className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-muted/10 text-primary"
                   >
                     <Minus
                       size={
@@ -267,7 +270,7 @@ const ProductCard = ({ product }) => {
                     />
                   </button>
 
-                  <span className="font-black text-xs min-w-[16px] text-center">
+                  <span className="font-black text-xs min-w-[16px] text-center text-foreground">
                     {
                       quantity
                     }
@@ -277,7 +280,7 @@ const ProductCard = ({ product }) => {
                     onClick={
                       inc
                     }
-                    className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-muted/10"
+                    className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-muted/10 text-primary"
                   >
                     <Plus
                       size={
@@ -291,17 +294,20 @@ const ProductCard = ({ product }) => {
                   key="add"
                   initial={{
                     opacity: 0,
+                    scale: 0.8
                   }}
                   animate={{
                     opacity: 1,
+                    scale: 1
                   }}
                   exit={{
                     opacity: 0,
+                    scale: 0.8
                   }}
                   onClick={
                     add
                   }
-                  className="w-10 h-10 rounded-full bg-primary text-white shadow-xl flex items-center justify-center"
+                  className="w-10 h-10 rounded-full bg-primary text-button-text shadow-premium flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
                 >
                   <Plus
                     size={
@@ -317,8 +323,8 @@ const ProductCard = ({ product }) => {
 
         {/* OUT OF STOCK */}
         {isOutOfStock && (
-          <div className="absolute inset-0 bg-white/70 flex items-center justify-center z-30">
-            <span className="bg-card border px-3 py-1 rounded-full text-[10px] font-black uppercase">
+          <div className="absolute inset-0 bg-background/60 backdrop-blur-[1px] flex items-center justify-center z-30">
+            <span className="bg-card text-foreground border border-border px-3 py-1 rounded-full text-[10px] font-black uppercase shadow-xl">
               Out Of Stock
             </span>
           </div>
@@ -326,9 +332,9 @@ const ProductCard = ({ product }) => {
       </Link>
 
       {/* INFO */}
-      <div className="p-3 flex flex-col gap-1 flex-1">
+      <div className="p-3 flex flex-col gap-1 flex-1 bg-card">
 
-        <p className="text-[10px] uppercase tracking-widest text-muted font-bold">
+        <p className="text-[10px] uppercase tracking-widest text-muted font-black">
           {
             product.category
           }
@@ -355,7 +361,7 @@ const ProductCard = ({ product }) => {
           </span>
 
           {hasOffer && (
-            <span className="text-sm line-through text-muted">
+            <span className="text-sm line-through text-muted font-bold">
               ₹
               {mrp}
             </span>
@@ -363,7 +369,7 @@ const ProductCard = ({ product }) => {
 
           {product.ratingsAverage >
             0 && (
-              <span className="ml-auto bg-green-600 text-white px-2 py-1 rounded-full text-[10px] font-black flex items-center gap-1">
+              <span className="ml-auto bg-success-light text-success-text px-2 py-1 rounded-full text-[10px] font-black flex items-center gap-1 border border-success/10">
                 {product.ratingsAverage.toFixed(
                   1
                 )}

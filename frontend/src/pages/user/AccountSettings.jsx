@@ -38,57 +38,58 @@ const AccountSettings = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <div>
-        <h1 className="text-3xl font-black text-heading tracking-tight">Account Settings</h1>
-        <p className="text-sm text-muted font-bold mt-1">Manage your security and preferences</p>
+        <h1 className="text-4xl font-black text-heading tracking-tighter uppercase">Account Settings</h1>
+        <p className="text-[11px] text-muted font-black mt-1 uppercase tracking-widest">Manage your security and preferences</p>
       </div>
 
-      <div className="space-y-6">
-        <div className="card-premium p-6 border border-border/50 bg-[#FAF9F6] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex gap-4 items-center">
-            <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary shrink-0">
-              <ShieldCheck size={24} />
+      <div className="space-y-8">
+        <div className="bg-card p-8 rounded-[2.5rem] border border-border/40 shadow-premium flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+          <div className="flex gap-6 items-center">
+            <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0 border border-primary/10">
+              <ShieldCheck size={28} />
             </div>
             <div>
-              <h3 className="font-black text-heading text-lg leading-tight">Change Password</h3>
-              <p className="text-xs font-bold text-muted mt-1">Ensure your account is using a long, random password to stay secure.</p>
+              <h3 className="font-black text-heading text-xl leading-tight uppercase tracking-tight">Change Password</h3>
+              <p className="text-[11px] font-bold text-muted mt-2 max-w-sm uppercase tracking-widest leading-relaxed">Ensure your account is using a long, random password to stay secure.</p>
             </div>
           </div>
           <Button 
             variant="outline" 
             onClick={handlePasswordReset} 
-            className="w-full sm:w-auto shrink-0 bg-white"
+            className="w-full sm:w-auto shrink-0 border-2 border-border/60 hover:border-primary text-[10px] font-black tracking-widest uppercase px-8"
             loading={loading}
           >
             UPDATE
           </Button>
         </div>
 
-        <div className="card-premium p-6 border border-border/50 bg-[#FAF9F6] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex gap-4 items-center">
-            <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 shrink-0">
-              <Bell size={24} />
+        <div className="bg-card p-8 rounded-[2.5rem] border border-border/40 shadow-premium flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+          <div className="flex gap-6 items-center">
+            <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-600 shrink-0 border border-blue-500/10">
+              <Bell size={28} />
             </div>
             <div>
-              <h3 className="font-black text-heading text-lg leading-tight">Notifications</h3>
-              <p className="text-xs font-bold text-muted mt-1">Manage email and SMS notifications for orders and offers.</p>
+              <h3 className="font-black text-heading text-xl leading-tight uppercase tracking-tight">Notifications</h3>
+              <p className="text-[11px] font-bold text-muted mt-2 max-w-sm uppercase tracking-widest leading-relaxed">Manage email and SMS notifications for orders and offers.</p>
             </div>
           </div>
-          <Button variant="outline" onClick={handleNotifications} className="w-full sm:w-auto shrink-0 bg-white">MANAGE</Button>
+          <Button variant="outline" onClick={handleNotifications} className="w-full sm:w-auto shrink-0 border-2 border-border/60 hover:border-primary text-[10px] font-black tracking-widest uppercase px-8">MANAGE</Button>
         </div>
 
-        <div className="card-premium p-6 border-2 border-error/20 bg-error/5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex gap-4 items-center">
-            <div className="w-12 h-12 rounded-xl bg-error/10 flex items-center justify-center text-error shrink-0">
-              <EyeOff size={24} />
+        <div className="bg-card p-8 rounded-[2.5rem] border-2 border-error/20 bg-error/5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-error/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+          <div className="flex gap-6 items-center relative z-10">
+            <div className="w-14 h-14 rounded-2xl bg-error/10 flex items-center justify-center text-error shrink-0 border border-error/20">
+              <EyeOff size={28} />
             </div>
             <div>
-              <h3 className="font-black text-error text-lg leading-tight">Danger Zone</h3>
-              <p className="text-xs font-bold text-error/80 mt-1">Permanently delete your account and all associated data.</p>
+              <h3 className="font-black text-error text-xl leading-tight uppercase tracking-tight">Danger Zone</h3>
+              <p className="text-[11px] font-black text-error/60 mt-2 max-w-sm uppercase tracking-widest leading-relaxed">Permanently delete your account and all associated data.</p>
             </div>
           </div>
-          <button onClick={handleDelete} className="w-full sm:w-auto shrink-0 px-6 py-3 rounded-xl font-black text-xs text-error hover:bg-error hover:text-white border border-error transition-all">
+          <button onClick={handleDelete} className="w-full sm:w-auto shrink-0 px-10 py-4 rounded-2xl font-black text-[10px] tracking-widest uppercase text-error hover:bg-error hover:text-white border-2 border-error/50 transition-all shadow-sm">
             DELETE ACCOUNT
           </button>
         </div>

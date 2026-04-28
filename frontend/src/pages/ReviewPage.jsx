@@ -168,7 +168,7 @@ const ReviewPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] py-12 px-4">
+    <div className="min-h-screen bg-background py-12 px-4">
       <div className="max-w-3xl mx-auto">
         <button 
           onClick={() => navigate(-1)}
@@ -177,11 +177,11 @@ const ReviewPage = () => {
           <ArrowLeft size={14} /> Back
         </button>
 
-        <div className="bg-white p-8 sm:p-12 rounded-2xl shadow-sm border border-border/10">
+        <div className="bg-card p-8 sm:p-12 rounded-2xl shadow-card border border-border/30">
           <div className="mb-10">
             <h1 className="text-3xl font-black text-heading uppercase tracking-tighter mb-2">How was your treat?</h1>
-            {order && <p className="text-xs font-bold text-muted uppercase tracking-widest">Order #{order.orderNumber || order.trackingCode}</p>}
-            <p className="text-xs text-muted mt-2">Rate and review each item from your order</p>
+            {order && <p className="text-[10px] font-black text-muted uppercase tracking-widest">Order #{order.orderNumber || order.trackingCode}</p>}
+            <p className="text-[10px] text-muted font-black uppercase tracking-widest mt-2">Rate and review each item from your order</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-12">
@@ -190,17 +190,17 @@ const ReviewPage = () => {
               return (
                 <div key={productId} className="space-y-6 pb-12 border-b border-border/30 last:border-0 last:pb-0">
                   <div className="flex items-center gap-6">
-                    <img src={item.image} className="w-20 h-20 rounded-xl object-cover border border-border/30" alt={item.name} />
+                    <img src={item.image} className="w-24 h-24 rounded-2xl object-cover border border-border/10 shadow-sm" alt={item.name} />
                     <div>
                       <h3 className="text-lg font-black text-heading uppercase tracking-tighter">{item.name}</h3>
                       {item.selectedFlavor && (
-                        <p className="text-[10px] text-muted">Flavor: {item.selectedFlavor}</p>
+                        <p className="text-[10px] text-muted font-black uppercase tracking-widest mt-1">Flavor: {item.selectedFlavor}</p>
                       )}
                       {item.selectedWeight && (
-                        <p className="text-[10px] text-muted">Weight: {item.selectedWeight}</p>
+                        <p className="text-[10px] text-muted font-black uppercase tracking-widest">Weight: {item.selectedWeight}</p>
                       )}
                       {item.sku && (
-                        <p className="text-[8px] text-muted font-mono">SKU: {item.sku}</p>
+                        <p className="text-[9px] text-muted font-mono mt-1">SKU: {item.sku}</p>
                       )}
                     </div>
                   </div>
@@ -213,9 +213,9 @@ const ReviewPage = () => {
                           key={star}
                           type="button"
                           onClick={() => handleReviewChange(productId, 'rating', star)}
-                          className={`p-2 transition-all ${reviews[productId]?.rating >= star ? 'text-[#D4A017] scale-110' : 'text-border'}`}
+                          className={`p-2 transition-all ${reviews[productId]?.rating >= star ? 'text-star scale-110' : 'text-border-muted opacity-30 hover:opacity-100'}`}
                         >
-                          <Star size={32} fill={reviews[productId]?.rating >= star ? "currentColor" : "none"} />
+                          <Star size={36} fill={reviews[productId]?.rating >= star ? "currentColor" : "none"} />
                         </button>
                       ))}
                     </div>
@@ -228,7 +228,7 @@ const ReviewPage = () => {
                       value={reviews[productId]?.comment || ''}
                       onChange={(e) => handleReviewChange(productId, 'comment', e.target.value)}
                       placeholder="Tell us what you liked about this treat..."
-                      className="w-full bg-muted/5 border-2 border-border/50 rounded-xl p-4 text-sm font-bold outline-none focus:border-primary transition-all min-h-[100px]"
+                      className="w-full bg-surface border-2 border-border/50 rounded-2xl p-6 text-sm font-black text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all min-h-[140px] placeholder:text-muted/40 shadow-sm"
                     />
                   </div>
                 </div>
@@ -238,7 +238,7 @@ const ReviewPage = () => {
             <div className="pt-6">
               <Button 
                 type="submit" 
-                className="w-full py-5 text-sm tracking-[0.2em] shadow-premium"
+                className="w-full py-6 text-sm tracking-[0.2em] shadow-premium bg-primary text-button-text hover:brightness-110 font-black"
                 loading={submitting}
                 icon={Send}
               >

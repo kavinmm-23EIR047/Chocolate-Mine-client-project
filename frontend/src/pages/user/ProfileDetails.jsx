@@ -42,61 +42,66 @@ const ProfileDetails = () => {
   };
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-black text-heading tracking-tight">Profile Details</h1>
-        <p className="text-sm text-muted font-bold mt-1">Manage your personal information</p>
+    <div className="space-y-10">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h1 className="text-4xl font-black text-heading tracking-tighter uppercase">Profile Details</h1>
+          <p className="text-[11px] text-muted font-black mt-1 uppercase tracking-widest">Manage your personal information</p>
+        </div>
+        {!isEditing && (
+          <Button onClick={() => setIsEditing(true)} className="bg-primary text-button-text shadow-premium uppercase tracking-widest text-[11px] font-black px-10 py-5">EDIT PROFILE</Button>
+        )}
       </div>
 
-      <div className="card-premium p-8 border border-border/50 bg-[#FAF9F6]">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black text-muted uppercase tracking-widest ml-2">Full Name</label>
+      <div className="bg-card rounded-[2.5rem] p-8 sm:p-12 border border-border/40 shadow-premium">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
+          <div className="space-y-2.5">
+            <label className="text-[10px] font-black text-muted uppercase tracking-widest ml-2 block">Full Name</label>
             {isEditing ? (
               <input 
                 type="text" 
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
-                className="w-full bg-white border-2 border-secondary/20 p-4 rounded-2xl font-bold text-heading focus:border-secondary outline-none transition-all"
+                className="w-full bg-surface border-2 border-border/50 p-5 rounded-2xl font-black text-heading focus:border-primary outline-none transition-all shadow-sm placeholder:text-muted/40"
                 placeholder="Enter your full name"
                 disabled={loading}
               />
             ) : (
-              <div className="bg-white border border-border/50 p-4 rounded-2xl font-bold text-heading">
+              <div className="bg-surface/30 border border-border/40 p-5 rounded-2xl font-black text-heading shadow-sm min-h-[64px] flex items-center">
                 {formData.name || user?.name || 'Not provided'}
               </div>
             )}
           </div>
           
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black text-muted uppercase tracking-widest ml-2">Email Address</label>
-            <div className="bg-gray-100 border border-border/50 p-4 rounded-2xl font-bold text-muted cursor-not-allowed">
+          <div className="space-y-2.5">
+            <label className="text-[10px] font-black text-muted uppercase tracking-widest ml-2 block">Email Address</label>
+            <div className="bg-background border border-border/30 p-5 rounded-2xl font-black text-muted/60 cursor-not-allowed shadow-sm min-h-[64px] flex items-center overflow-hidden text-ellipsis">
               {user?.email}
             </div>
-            {isEditing && <p className="text-[10px] text-muted ml-2 font-bold">Email cannot be changed.</p>}
+            {isEditing && <p className="text-[10px] text-muted ml-2 font-black uppercase tracking-widest mt-2">Email cannot be changed.</p>}
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black text-muted uppercase tracking-widest ml-2">Phone Number</label>
+          <div className="space-y-2.5">
+            <label className="text-[10px] font-black text-muted uppercase tracking-widest ml-2 block">Phone Number</label>
             {isEditing ? (
               <input 
                 type="tel" 
                 value={formData.phone}
                 onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                className="w-full bg-white border-2 border-secondary/20 p-4 rounded-2xl font-bold text-heading focus:border-secondary outline-none transition-all"
+                className="w-full bg-surface border-2 border-border/50 p-5 rounded-2xl font-black text-heading focus:border-primary outline-none transition-all shadow-sm placeholder:text-muted/40"
                 placeholder="Enter your phone number"
                 disabled={loading}
               />
             ) : (
-              <div className="bg-white border border-border/50 p-4 rounded-2xl font-bold text-heading">
+              <div className="bg-surface/30 border border-border/40 p-5 rounded-2xl font-black text-heading shadow-sm min-h-[64px] flex items-center">
                 {formData.phone || user?.phone || 'Not provided'}
               </div>
             )}
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black text-muted uppercase tracking-widest ml-2">Member Since</label>
-            <div className="bg-white border border-border/50 p-4 rounded-2xl font-bold text-heading">
+          <div className="space-y-2.5">
+            <label className="text-[10px] font-black text-muted uppercase tracking-widest ml-2 block">Member Since</label>
+            <div className="bg-surface/30 border border-border/40 p-5 rounded-2xl font-black text-heading shadow-sm min-h-[64px] flex items-center">
               {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-IN', {
                 year: 'numeric',
                 month: 'long',
@@ -106,30 +111,25 @@ const ProfileDetails = () => {
           </div>
         </div>
 
-        <div className="mt-10 flex justify-end gap-3 pt-6 border-t border-border/50">
-          {isEditing ? (
-            <>
-              <Button 
-                variant="outline" 
-                onClick={handleCancel} 
-                className="bg-white"
-                disabled={loading}
-              >
-                CANCEL
-              </Button>
-              <Button 
-                onClick={handleSave} 
-                loading={loading}
-              >
-                SAVE CHANGES
-              </Button>
-            </>
-          ) : (
-            <Button variant="secondary" onClick={() => setIsEditing(true)} className="shadow-sm">
-              EDIT PROFILE
+        {isEditing && (
+          <div className="mt-12 flex justify-end gap-6 pt-10 border-t border-border/30">
+            <Button 
+              variant="outline" 
+              onClick={handleCancel} 
+              className="px-10 py-5 uppercase tracking-widest text-[11px] font-black border-2 border-border"
+              disabled={loading}
+            >
+              CANCEL
             </Button>
-          )}
-        </div>
+            <Button 
+              onClick={handleSave} 
+              loading={loading}
+              className="bg-primary text-button-text px-10 py-5 shadow-premium uppercase tracking-widest text-[11px] font-black"
+            >
+              SAVE CHANGES
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

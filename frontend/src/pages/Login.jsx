@@ -51,30 +51,30 @@ const Login = () => {
     <div className="min-h-screen flex items-stretch bg-background overflow-hidden">
       
       {/* Left: Illustration (Desktop Only) */}
-      <div className="hidden lg:flex w-1/2 bg-[#1A0F0D] relative items-center justify-center p-20 overflow-hidden border-r border-border/10">
+      <div className="hidden lg:flex w-1/2 bg-footer relative items-center justify-center p-20 overflow-hidden border-r border-border/10">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1511381939415-e44015466834?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center opacity-30 mix-blend-overlay"></div>
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1A0F0D] via-[#1A0F0D]/80 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-footer via-footer/80 to-transparent"></div>
         
-        <div className="relative z-10 text-[#FDF4F2] max-w-lg">
+        <div className="relative z-10 text-footer-text max-w-lg">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
             <h1 className="text-7xl font-black mb-8 leading-[0.9] tracking-tighter">
-              Dive into the <span className="text-[#D4A017]">Sweetest</span> Mine.
+              Dive into the <span className="text-accent">Sweetest</span> Mine.
             </h1>
-            <p className="text-xl font-medium opacity-80 mb-12 leading-relaxed">
+            <p className="text-xl font-medium opacity-80 mb-12 leading-relaxed italic">
               Every bite tells a story of craftsmanship and passion. Log in to continue your journey.
             </p>
             
-            <div className="grid grid-cols-2 gap-8 pt-12 border-t border-[#FDF4F2]/10">
+            <div className="grid grid-cols-2 gap-8 pt-12 border-t border-footer-text/10">
                <div>
-                  <p className="text-4xl font-black text-[#D4A017]">50k+</p>
+                  <p className="text-4xl font-black text-accent">50k+</p>
                   <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-50">Happy Clients</p>
                </div>
                <div>
-                  <p className="text-4xl font-black text-[#D4A017]">100%</p>
+                  <p className="text-4xl font-black text-accent">100%</p>
                   <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-50">Fresh Baked</p>
                </div>
             </div>
@@ -104,56 +104,56 @@ const Login = () => {
         <div className="max-w-md w-full mx-auto">
           
           <div className="mb-12">
-            <Link to="/" className="inline-flex items-center gap-2 text-xs font-black text-muted hover:text-secondary uppercase tracking-widest transition-colors mb-8">
+            <Link to="/" className="inline-flex items-center gap-2 text-xs font-black text-muted hover:text-primary uppercase tracking-widest transition-colors mb-8">
               <ArrowRight className="rotate-180" size={14} /> Back to Shop
             </Link>
-            <h2 className="text-5xl font-black text-heading tracking-tighter mb-4">Welcome Back</h2>
-            <p className="text-muted font-medium">Log in to manage your orders and profile</p>
+            <h2 className="text-5xl font-black text-heading tracking-tighter mb-4 uppercase">Welcome Back</h2>
+            <p className="text-muted font-black text-xs uppercase tracking-widest opacity-60">Log in to manage your orders and profile</p>
           </div>
 
           <div className="space-y-6">
             <button
               onClick={handleGoogleLogin}
-              className="w-full flex items-center justify-center gap-4 py-4 px-6 border-2 border-border rounded-2xl font-black text-heading hover:bg-border/20 transition-all group"
+              className="w-full flex items-center justify-center gap-4 py-4 px-6 border-2 border-border rounded-2xl font-black text-heading hover:bg-surface/5 transition-all group"
             >
               <GoogleIcon />
-              CONTINUE WITH GOOGLE
+              <span className="tracking-widest text-xs uppercase">CONTINUE WITH GOOGLE</span>
             </button>
 
             <div className="relative py-4">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border"></div></div>
-              <div className="relative flex justify-center text-xs font-black text-muted uppercase tracking-widest"><span className="bg-card px-4">Or use Email</span></div>
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border/30"></div></div>
+              <div className="relative flex justify-center text-[10px] font-black text-muted uppercase tracking-[0.3em]"><span className="bg-card px-4">Or use Email</span></div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <label className="text-[10px] font-black text-muted uppercase tracking-widest ml-2">Email Address</label>
                 <div className="relative group">
-                  <Mail className="absolute left-6 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-secondary transition-colors" size={20} />
+                  <Mail className="absolute left-6 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-primary transition-colors" size={20} />
                   <input
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-input border border-input-border text-heading pl-16 pr-6 py-5 rounded-md outline-none focus:border-secondary focus:ring-4 focus:ring-secondary/5 transition-all font-bold"
+                    className="w-full bg-surface/5 border border-border text-heading pl-16 pr-6 py-5 rounded-2xl outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-black text-sm placeholder:text-muted/30"
                     placeholder="name@example.com"
                   />
                 </div>
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <div className="flex justify-between px-2">
                   <label className="text-[10px] font-black text-muted uppercase tracking-widest">Password</label>
-                  <Link to="/forgot-password" title="Forgot Password" className="text-[10px] font-black text-secondary uppercase tracking-widest hover:underline cursor-pointer">Forgot?</Link>
+                  <Link to="/forgot-password" title="Forgot Password" className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline cursor-pointer">Forgot?</Link>
                 </div>
                 <div className="relative group">
-                  <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-secondary transition-colors" size={20} />
+                  <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-primary transition-colors" size={20} />
                   <input
                     type="password"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-input border border-input-border text-heading pl-16 pr-6 py-5 rounded-md outline-none focus:border-secondary focus:ring-4 focus:ring-secondary/5 transition-all font-bold"
+                    className="w-full bg-surface/5 border border-border text-heading pl-16 pr-6 py-5 rounded-2xl outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-black text-sm placeholder:text-muted/30"
                     placeholder="••••••••"
                   />
                 </div>
@@ -162,7 +162,7 @@ const Login = () => {
               <Button
                 type="submit"
                 loading={loading}
-                className="w-full py-5 rounded-md shadow-premium mt-4"
+                className="w-full py-5 rounded-2xl shadow-premium mt-4 bg-primary text-button-text hover:brightness-110 font-black tracking-widest uppercase"
                 size="lg"
                 icon={LogIn}
               >
@@ -171,9 +171,9 @@ const Login = () => {
             </form>
 
             <div className="text-center pt-8">
-              <p className="text-muted font-bold">
+              <p className="text-muted font-black text-[10px] uppercase tracking-widest">
                 New explorer?{' '}
-                <Link to="/register" className="text-secondary font-black hover:underline inline-flex items-center gap-1">
+                <Link to="/register" className="text-primary font-black hover:underline inline-flex items-center gap-1">
                   Create an account <ChevronRight size={14} />
                 </Link>
               </p>

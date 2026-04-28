@@ -3,29 +3,81 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
-  const [isDark, setIsDark] = useState(() => {
-    const saved = localStorage.getItem('theme');
-    return saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  // Mode can be 'light', 'dark', or 'system'
+  const [themeMode, setThemeMode] = useState(() => {
+    const saved = localStorage.getItem('theme-mode');
+    return saved || 'system';
   });
+
+  const [resolvedTheme, setResolvedTheme] = useState('light');
 
   useEffect(() => {
     const root = window.document.documentElement;
-    if (isDark) {
-      root.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      root.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  }, [isDark]);
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
-  const toggleTheme = () => setIsDark(!isDark);
+    const applyTheme = (mode) => {
+      let themeToApply = mode;
+      
+      if (mode === 'system') {
+        themeToApply = mediaQuery.matches ? 'dark' : 'light';
+      }
+
+      setResolvedTheme(themeToApply);
+
+      // Add transition class to prevent layout shift flashes
+      root.classList.add('theme-transition');
+      
+      if (themeToApply === 'dark') {
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark');
+      }
+
+      // Remove transition class after a short delay
+      setTimeout(() => {
+        root.classList.remove('theme-transition');
+      }, 300);
+
+      localStorage.setItem('theme-mode', mode);
+    };
+
+    applyTheme(themeMode);
+
+    // Listener for system theme changes
+    const handleChange = () => {
+      if (themeMode === 'system') {
+        applyTheme('system');
+      }
+    };
+
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, [themeMode]);
+
+  const toggleTheme = (newMode) => {
+    if (newMode) {
+      setThemeMode(newMode);
+    } else {
+      // Cycle logic for simple toggle buttons: Light -> Dark -> System
+      setThemeMode(prev => {
+        if (prev === 'light') return 'dark';
+        if (prev === 'dark') return 'system';
+        return 'light';
+      });
+    }
+  };
 
   return (
-    <ThemeContext.Provider value={{ isDark, toggleTheme }}>
+    <ThemeContext.Provider value={{ themeMode, resolvedTheme, toggleTheme, isDark: resolvedTheme === 'dark' }}>
       {children}
     </ThemeContext.Provider>
   );
 };
 
-export const useTheme = () => useContext(ThemeContext);
+export const useTheme = () => {
+  const context = useContext(ThemeContext);
+  if (!context) {
+    throw new Error('useTheme must be used within a ThemeProvider');
+  }
+  return context;
+};

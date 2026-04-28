@@ -306,15 +306,15 @@ const Home = () => {
                     style={{ objectPosition: 'center 20%' }}
                   />
                   <div
-                    className="absolute inset-0 bg-gradient-to-r from-[#150A08]/90 via-[#150A08]/40 to-transparent sm:from-[#150A08]/95 sm:via-[#150A08]/60"
+                    className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/40 to-transparent sm:from-background/95 sm:via-background/60"
                   />
 
                   {/* Brand Logo Overlay */}
                   <div className="absolute top-4 left-6 sm:top-6 sm:left-12 flex items-center gap-2 opacity-90">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary rounded-xl flex items-center justify-center border border-white/20 shadow-xl rotate-3">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary rounded-xl flex items-center justify-center border border-border/20 shadow-xl rotate-3">
                       <span className="text-[9px] sm:text-[10px] font-black text-button-text">TCM</span>
                     </div>
-                    <span className="text-xs sm:text-sm font-black tracking-tighter text-[#FDE8E4] drop-shadow-md">THE CHOCOLATE MINE</span>
+                    <span className="text-xs sm:text-sm font-black tracking-tighter text-foreground/80 drop-shadow-md">THE CHOCOLATE MINE</span>
                   </div>
 
                   <div className="absolute inset-0 flex flex-col justify-center px-6 sm:px-14 max-w-[650px] pt-12 sm:pt-0">
@@ -323,7 +323,7 @@ const Home = () => {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.2 }}
                       className="inline-block text-[9px] sm:text-[10px] font-black tracking-[0.2em] px-3 py-1 sm:px-4 sm:py-1.5 rounded-full mb-3 sm:mb-4 w-fit shadow-lg"
-                      style={{ background: 'var(--badge-sale)', color: '#fff' }}
+                      style={{ background: 'var(--sale)', color: 'white' }}
                     >
                       {slide.tag}
                     </motion.span>
@@ -331,7 +331,7 @@ const Home = () => {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.3 }}
-                      className="text-2xl sm:text-5xl font-black leading-tight mb-3 tracking-tighter text-[#FDE8E4] drop-shadow-lg"
+                      className="text-2xl sm:text-5xl font-black leading-tight mb-3 tracking-tighter text-foreground drop-shadow-lg"
                     >
                       {slide.title}
                     </motion.h1>
@@ -339,22 +339,22 @@ const Home = () => {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.4 }}
-                      className="text-xs sm:text-base mb-6 text-[#FDE8E4]/90 max-w-[95%] sm:max-w-[85%] font-medium"
+                      className="text-xs sm:text-base mb-6 text-foreground/80 max-w-[95%] sm:max-w-[85%] font-medium"
                     >
                       {slide.sub}
                     </motion.p>
                     <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
                       <button
-                        className="px-6 py-2.5 sm:px-8 sm:py-3 rounded-2xl text-[11px] sm:text-sm font-black active:scale-95 transition-all duration-300 shadow-xl bg-[#FDE8E4] text-[#3D1F1A] hover:bg-white"
+                        className="px-6 py-2.5 sm:px-8 sm:py-3 rounded-2xl text-[11px] sm:text-sm font-black active:scale-95 transition-all duration-300 shadow-xl bg-primary text-button-text hover:bg-primary-hover"
                       >
                         {slide.cta}
                       </button>
                       <button
                         onClick={() => copyCoupon(slide.code)}
-                        className="flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 rounded-2xl text-[10px] sm:text-xs font-black border transition-all duration-300 active:scale-95 bg-white/5 backdrop-blur-md hover:bg-white/10"
+                        className="flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 rounded-2xl text-[10px] sm:text-xs font-black border transition-all duration-300 active:scale-95 bg-surface/10 backdrop-blur-md hover:bg-surface/20"
                         style={{
-                          borderColor: copiedCode === slide.code ? '#66BB6A' : 'rgba(253,232,228,0.4)',
-                          color: copiedCode === slide.code ? '#66BB6A' : '#FDE8E4',
+                          borderColor: copiedCode === slide.code ? 'var(--success)' : 'var(--border)',
+                          color: copiedCode === slide.code ? 'var(--success)' : 'var(--foreground)',
                         }}
                       >
                         <Tag size={12} />
@@ -382,7 +382,7 @@ const Home = () => {
               </div>
 
               {/* slide dots */}
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2.5">
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2.5">
                 {ADS.map((_, i) => (
                   <button
                     key={i}
@@ -391,8 +391,8 @@ const Home = () => {
                     style={{
                       width: activeSlide === i ? 32 : 10,
                       height: 10,
-                      background: activeSlide === i ? '#FDE8E4' : 'rgba(253,232,228,0.3)',
-                      boxShadow: activeSlide === i ? '0 0 10px rgba(253,232,228,0.5)' : 'none'
+                      background: activeSlide === i ? 'var(--primary)' : 'var(--border)',
+                      boxShadow: activeSlide === i ? 'var(--shadow-premium)' : 'none'
                     }}
                   />
                 ))}

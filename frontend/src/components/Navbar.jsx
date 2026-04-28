@@ -12,9 +12,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useDeliveryLocation } from '../context/LocationContext';
 import Logo from './Logo';
 import SearchOverlay from './search/SearchOverlay';
+import ThemeToggle from './ui/ThemeToggle';
 
 const Navbar = () => {
-  const { isDark, toggleTheme } = useTheme();
   const { cart } = useCart();
   const { user } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -51,10 +51,10 @@ const Navbar = () => {
             
             {/* 1. LOGO */}
             <Link to="/" className="flex items-center gap-2 sm:gap-3 shrink-0 group">
-              <Logo className="w-12 h-12 sm:w-14 sm:h-14 bg-white rounded-md p-1 shadow-sm" />
+              <Logo className="w-12 h-12 sm:w-14 sm:h-14 bg-surface rounded-xl p-1 shadow-sm border border-border" />
               <div className="flex flex-col">
-                <span className="text-[12px] sm:text-[15px] font-black text-[#2D1816] dark:text-[#FFF9F5] tracking-tight leading-none uppercase transition-colors">THE CHOCOLATE</span>
-                <span className="text-[9px] sm:text-[11px] font-black text-[#2D1816] dark:text-[#D4A017] tracking-[0.3em] uppercase mt-0.5 transition-colors">Mine</span>
+                <span className="text-[12px] sm:text-[15px] font-black text-primary tracking-tight leading-none uppercase transition-colors">THE CHOCOLATE</span>
+                <span className="text-[9px] sm:text-[11px] font-black text-primary dark:text-accent tracking-[0.3em] uppercase mt-0.5 transition-colors">Mine</span>
               </div>
             </Link>
 
@@ -69,28 +69,28 @@ const Navbar = () => {
                   type="text"
                   readOnly
                   placeholder="Search for cakes, desserts and more"
-                  className="hidden sm:block w-full bg-white text-black pl-4 pr-12 py-2.5 rounded-sm shadow-sm outline-none placeholder:text-gray-500 font-medium text-sm transition-all group-hover:shadow-md"
+                  className="hidden sm:block w-full bg-input text-foreground pl-4 pr-12 py-2.5 rounded-xl border border-input-border outline-none placeholder:text-muted font-medium text-sm transition-all group-hover:shadow-soft focus:border-primary"
                 />
                 <div className="hidden sm:flex absolute right-0 top-0 h-full px-4 items-center bg-transparent">
-                  <Search size={18} className="text-primary font-bold" />
+                  <Search size={18} className="text-primary" />
                 </div>
 
                 {/* Mobile Icon Button */}
-                <div className="sm:hidden w-11 h-9 bg-white rounded-md flex items-center justify-center shadow-sm ml-auto border border-black/5">
-                  <Search size={18} className="text-[#2D1816]" />
+                <div className="sm:hidden w-11 h-9 bg-card rounded-xl flex items-center justify-center shadow-sm ml-auto border border-border">
+                  <Search size={18} className="text-primary" />
                 </div>
               </div>
             </div>
 
             {/* 3. ACTIONS */}
-            <div className="flex items-center gap-2 sm:gap-8 text-navbar-text">
+            <div className="flex items-center gap-2 sm:gap-6 text-navbar-text">
               
-              <div className="hidden lg:relative lg:flex items-center gap-2 cursor-pointer group py-2 px-3 rounded-sm hover:bg-black/10 transition-all"
+              <div className="hidden lg:relative lg:flex items-center gap-2 cursor-pointer group py-2 px-3 rounded-xl hover:bg-primary/5 transition-all"
                 onClick={() => setIsLocationOpen(!isLocationOpen)}
               >
-                <MapPin size={18} className="text-navbar-text" />
+                <MapPin size={18} className="text-primary" />
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-navbar-text/80 leading-none">Deliver to</span>
+                  <span className="text-[10px] font-bold text-muted leading-none">Deliver to</span>
                   <span className="text-xs font-black flex items-center gap-1 group-hover:text-accent transition-colors uppercase">
                     {deliveryCity || 'Select Location'} <ChevronDown size={14} className={isLocationOpen ? 'rotate-180' : ''} />
                   </span>
@@ -100,7 +100,7 @@ const Navbar = () => {
                   <motion.div 
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="absolute top-full left-0 mt-2 w-48 bg-card border border-border shadow-2xl rounded-sm py-2 z-[110]"
+                    className="absolute top-full left-0 mt-2 w-48 bg-card border border-border shadow-premium rounded-2xl py-2 z-[110]"
                   >
                     {['coimbatore', 'chennai', 'bangalore', 'hyderabad'].map(city => (
                       <button
@@ -110,7 +110,7 @@ const Navbar = () => {
                           setDeliveryCity(city);
                           setIsLocationOpen(false);
                         }}
-                        className={`w-full text-left px-4 py-2 text-xs font-black uppercase hover:bg-primary hover:text-white transition-colors ${deliveryCity === city ? 'text-primary' : 'text-heading'}`}
+                        className={`w-full text-left px-4 py-2 text-xs font-black uppercase hover:bg-primary hover:text-button-text transition-colors ${deliveryCity === city ? 'text-accent' : 'text-heading'}`}
                       >
                         {city}
                       </button>
@@ -122,25 +122,25 @@ const Navbar = () => {
               {user ? (
                 <Link 
                   to={user.role === 'admin' ? '/admin/dashboard' : '/account/dashboard'} 
-                  className="hidden sm:flex items-center gap-2 group py-2 px-3 rounded-sm hover:bg-black/10 transition-all"
+                  className="hidden sm:flex items-center gap-2 group py-2 px-3 rounded-xl hover:bg-primary/5 transition-all"
                 >
-                  <User size={20} />
-                  <span className="text-sm font-black uppercase tracking-tight group-hover:text-secondary transition-colors">{user.name.split(' ')[0]}</span>
+                  <User size={20} className="text-primary" />
+                  <span className="text-sm font-black uppercase tracking-tight group-hover:text-primary transition-colors">{user.name.split(' ')[0]}</span>
                   <ChevronDown size={14} className="group-hover:rotate-180 transition-transform" />
                 </Link>
               ) : (
-                <Link to="/login" className="hidden sm:flex items-center gap-2 group py-2 px-3 rounded-sm hover:bg-black/10 transition-all">
-                  <User size={20} />
-                  <span className="text-sm font-black uppercase tracking-tight group-hover:text-secondary transition-colors">Login</span>
+                <Link to="/login" className="hidden sm:flex items-center gap-2 group py-2 px-3 rounded-xl hover:bg-primary/5 transition-all">
+                  <User size={20} className="text-primary" />
+                  <span className="text-sm font-black uppercase tracking-tight group-hover:text-primary transition-colors">Login</span>
                 </Link>
               )}
 
               <Link 
                 to="/cart" 
-                className="relative flex items-center gap-2 group py-2 px-3 rounded-sm hover:bg-black/10 transition-all"
+                className="relative flex items-center gap-2 group py-2 px-3 rounded-xl hover:bg-primary/5 transition-all"
               >
-                <ShoppingCart size={20} />
-                <span className="hidden sm:inline text-sm font-black uppercase tracking-tight group-hover:text-secondary transition-colors">Cart</span>
+                <ShoppingCart size={20} className="text-primary" />
+                <span className="hidden sm:inline text-sm font-black uppercase tracking-tight group-hover:text-primary transition-colors">Cart</span>
                 {cartCount > 0 && (
                   <span className="absolute -top-1 right-0 bg-secondary text-button-text text-[9px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-lg border-2 border-primary">
                     {cartCount}
@@ -148,24 +148,13 @@ const Navbar = () => {
                 )}
               </Link>
 
-              <Link 
-                to="/account/orders" 
-                className="hidden xl:flex items-center gap-2 group py-2 px-3 rounded-sm hover:bg-black/10 transition-all"
-              >
-                <Box size={20} />
-                <span className="text-sm font-black uppercase tracking-tight group-hover:text-secondary transition-colors">Orders</span>
-              </Link>
-
-              <button 
-                onClick={toggleTheme} 
-                className="p-2 rounded-sm hover:bg-black/10 transition-all"
-              >
-                {isDark ? <Sun size={20} className="text-star" /> : <Moon size={20} />}
-              </button>
+              <div className="hidden sm:block">
+                <ThemeToggle />
+              </div>
 
               <button 
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="lg:hidden p-2 text-navbar-text hover:bg-black/10 rounded-sm transition-all"
+                className="lg:hidden p-2 text-primary hover:bg-primary/5 rounded-xl transition-all"
               >
                 <Menu size={24} />
               </button>
@@ -194,15 +183,15 @@ const Navbar = () => {
             >
               <div className="bg-navbar p-6 text-navbar-text">
                 <div className="flex justify-between items-center mb-6">
-                  <Logo className="w-10 h-10 bg-white rounded-sm p-1" />
-                  <button onClick={() => setIsMenuOpen(false)}>
-                    <X size={20} />
+                  <Logo className="w-12 h-12 bg-surface rounded-xl p-1 shadow-sm border border-border" />
+                  <button onClick={() => setIsMenuOpen(false)} className="p-2 hover:bg-primary/10 rounded-full transition-colors">
+                    <X size={24} />
                   </button>
                 </div>
-                <p className="text-sm font-black uppercase tracking-widest">The Chocolate Mine</p>
+                <p className="text-sm font-black uppercase tracking-widest text-primary">The Chocolate Mine</p>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4 space-y-2">
+              <div className="flex-1 overflow-y-auto p-4 space-y-1">
                 {[
                   { label: 'All Categories', icon: Menu, path: '/shop' },
                   { label: 'My Orders', icon: Box, path: '/account/orders' },
@@ -214,10 +203,10 @@ const Navbar = () => {
                   <Link 
                     key={i}
                     to={item.path} 
-                    className="flex items-center gap-4 p-4 rounded-sm hover:bg-muted/10 transition-all border-b border-border/30 last:border-0"
+                    className="flex items-center gap-4 p-4 rounded-xl hover:bg-primary/5 transition-all group"
                   >
-                    <item.icon size={18} className="text-primary" />
-                    <span className="font-black text-heading text-xs uppercase tracking-wide">{item.label}</span>
+                    <item.icon size={20} className="text-primary" />
+                    <span className="font-black text-heading text-xs uppercase tracking-widest group-hover:text-primary transition-colors">{item.label}</span>
                   </Link>
                 ))}
               </div>

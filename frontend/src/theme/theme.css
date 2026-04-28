@@ -1,0 +1,212 @@
+/* ═══════════════════════════════════════════════════════════════
+   THE CHOCOLATE MINE — MASTER THEME FILE
+   ─────────────────────────────────────────────────────────────
+   SINGLE SOURCE OF TRUTH for all brand colors & design tokens.
+   To rebrand: change ONLY the values below.
+   Everything — Tailwind utilities, component classes, dark mode —
+   updates automatically.
+   ═══════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800&family=Nunito+Sans:wght@400;600;700;800&family=Outfit:wght@100;300;400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800;900&display=swap');
+
+/* ───────────────────────────────────────────
+   LIGHT THEME
+   ─────────────────────────────────────────── */
+:root {
+  /* ── Core Surfaces ── */
+  --background: #FFF4F2;
+  --surface: #FFFFFF;
+  --card: #FFFFFF;
+  --card-soft: #FFF9F8;
+
+  /* ── Brand Colors ── */
+  --primary: #3D1F1A;         /* Primary Chocolate Brown */
+  --primary-hover: #5C3530;   /* Rich Cocoa Brown */
+  --primary-active: #280F0B;  /* Deep Espresso */
+  --secondary: #7A4A44;       /* Warm Mocha */
+  --accent: #D4A017;          /* Luxury Gold */
+  --accent-hover: #B8880F;
+
+  /* ── Typography ── */
+  --foreground: #1A0F0D;
+  --heading: #1A0F0D;
+  --body: #3D1F1A;
+  --muted: #8C6A64;
+  --card-text: #1A0F0D;
+
+  /* ── Navigation ── */
+  --navbar: rgba(255, 244, 242, 0.85);
+  --navbar-text: #3D1F1A;
+  --sidebar: #FFFFFF;
+
+  /* ── Footer ── */
+  --footer: #1A0F0D;
+  --footer-text: #FDF4F2;
+
+  /* ── Borders & Inputs ── */
+  --border: #E5D1CD;
+  --border-muted: #D9B9B3;
+  --input: #FFFFFF;
+  --input-border: #D9B9B3;
+  --input-focus: #3D1F1A;
+  --ring: rgba(61, 31, 26, 0.15);
+
+  /* ── Buttons ── */
+  --button-bg: #3D1F1A;
+  --button-text: #FFF4F2;
+  --button-hover: #280F0B;
+  --button-alt-bg: #FFFFFF;
+  --button-alt-text: #3D1F1A;
+  --button-alt-hover: #FDE8E4;
+  --button-buy: #3D1F1A;
+  --button-buy-text: #FFF4F2;
+
+  /* ── Semantic: Success ── */
+  --success: #2E7D32;
+  --success-light: #E8F5E9;
+  --success-text: #1B5E20;
+
+  /* ── Semantic: Error ── */
+  --error: #D32F2F;
+  --error-light: #FFEBEE;
+  --error-text: #B71C1C;
+
+  /* ── Semantic: Warning ── */
+  --warning: #F9A825;
+  --warning-light: #FFF8E1;
+  --warning-text: #E65100;
+
+  /* ── Semantic: Info ── */
+  --info: #0288D1;
+  --info-light: #E1F5FE;
+  --info-text: #01579B;
+
+  /* ── Sale / Discount ── */
+  --sale: #E53935;
+  --sale-dark: #D32F2F;
+  --sale-flash: #FF6F00;
+
+  /* ── Coupon / Savings ── */
+  --coupon: #2E7D32;
+  --coupon-mid: #43A047;
+  --coupon-light: #66BB6A;
+
+  /* ── Stock / Urgency ── */
+  --urgency: #F9A825;
+  --urgency-dark: #FFB300;
+
+  /* ── Ratings ── */
+  --star: #FBC02D;
+
+  /* ── Overlay ── */
+  --overlay: rgba(26, 15, 13, 0.5);
+  --backdrop: rgba(253, 244, 242, 0.85);
+
+  /* ── Skeleton ── */
+  --skeleton: #E5D1CD;
+  --skeleton-shine: #FDE8E4;
+
+  /* ── Shadow tokens (used via box-shadow) ── */
+  --shadow-color: 15deg 30% 20%;
+}
+
+/* ───────────────────────────────────────────
+   DARK THEME
+   ─────────────────────────────────────────── */
+.dark {
+  /* ── Core Surfaces ── */
+  --background: #150A08;
+  --surface: #1A0F0D;
+  --card: #1A0F0D;
+  --card-soft: #221210;
+
+  /* ── Brand Colors ── */
+  --primary: #FDF4F2;
+  --primary-hover: #FFFFFF;
+  --primary-active: #E5D1CD;
+  --secondary: #D9B9B3;
+  --accent: #E6C34A;
+  --accent-hover: #FFD740;
+
+  /* ── Typography ── */
+  --foreground: #FDF4F2;
+  --heading: #FDF4F2;
+  --body: #E5D1CD;
+  --muted: #B99E98;      /* Brightened for dark mode contrast */
+  --card-text: #FDF4F2;
+
+  /* ── Navigation ── */
+  --navbar: rgba(21, 10, 8, 0.88);
+  --navbar-text: #FDF4F2;
+  --sidebar: #1A0F0D;
+
+  /* ── Footer ── */
+  --footer: #0D0504;
+  --footer-text: #FDF4F2;
+
+  /* ── Borders & Inputs ── */
+  --border: #3D1F1A;
+  --border-muted: #5C3530;
+  --input: #1A0F0D;
+  --input-border: #3D1F1A;
+  --input-focus: #FDF4F2;
+  --ring: rgba(253, 244, 242, 0.15);
+
+  /* ── Buttons ── */
+  --button-bg: #FDF4F2;
+  --button-text: #1A0F0D;
+  --button-hover: #FFFFFF;
+  --button-alt-bg: #1A0F0D;
+  --button-alt-text: #FDF4F2;
+  --button-alt-hover: #3D1F1A;
+  --button-buy: #FDF4F2;
+  --button-buy-text: #1A0F0D;
+
+  /* ── Semantic: Success ── */
+  --success: #66BB6A;
+  --success-light: rgba(46, 125, 50, 0.15);
+  --success-text: #81C784;
+
+  /* ── Semantic: Error ── */
+  --error: #EF5350;
+  --error-light: rgba(211, 47, 47, 0.15);
+  --error-text: #EF9A9A;
+
+  /* ── Semantic: Warning ── */
+  --warning: #FFB74D;
+  --warning-light: rgba(249, 168, 37, 0.15);
+  --warning-text: #FFD54F;
+
+  /* ── Semantic: Info ── */
+  --info: #4FC3F7;
+  --info-light: rgba(2, 136, 209, 0.15);
+  --info-text: #81D4FA;
+
+  /* ── Sale / Discount ── */
+  --sale: #FF5252;
+  --sale-dark: #FF1744;
+  --sale-flash: #FF9100;
+
+  /* ── Coupon / Savings ── */
+  --coupon: #66BB6A;
+  --coupon-mid: #81C784;
+  --coupon-light: #A5D6A7;
+
+  /* ── Stock / Urgency ── */
+  --urgency: #FFD740;
+  --urgency-dark: #FFC107;
+
+  /* ── Ratings ── */
+  --star: #FFD740;
+
+  /* ── Overlay ── */
+  --overlay: rgba(0, 0, 0, 0.6);
+  --backdrop: rgba(21, 10, 8, 0.88);
+
+  /* ── Skeleton ── */
+  --skeleton: #3D1F1A;
+  --skeleton-shine: #5C3530;
+
+  /* ── Shadow tokens ── */
+  --shadow-color: 15deg 10% 5%;
+}

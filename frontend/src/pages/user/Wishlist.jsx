@@ -23,29 +23,29 @@ const Wishlist = () => {
 
   if (wishlist.length === 0) {
     return (
-      <div className="py-20 text-center space-y-6 max-w-md mx-auto">
-        <div className="w-24 h-24 bg-secondary/5 rounded-[2rem] flex items-center justify-center text-secondary mx-auto mb-8">
-          <Heart size={48} className="opacity-20" />
+      <div className="py-20 text-center space-y-6 max-w-lg mx-auto">
+        <div className="w-28 h-28 bg-primary/5 rounded-[2.5rem] flex items-center justify-center text-primary mx-auto mb-10 shadow-sm border border-primary/10">
+          <Heart size={48} className="opacity-40" />
         </div>
-        <h2 className="text-2xl font-black text-heading uppercase tracking-tighter">Your wishlist is empty</h2>
-        <p className="text-sm font-medium text-muted leading-relaxed">
-          Seems like you haven't found your sweet match yet. Browse our collection and save what you love!
+        <h2 className="text-3xl font-black text-heading uppercase tracking-tighter">Your wishlist is empty</h2>
+        <p className="text-[11px] font-black text-muted uppercase tracking-[0.2em] leading-loose">
+          Seems like you haven't found your sweet match yet.<br /> Browse our collection and save what you love!
         </p>
-        <Link to="/" className="inline-block pt-4">
-          <Button icon={ShoppingBag}>START SHOPPING</Button>
+        <Link to="/" className="inline-block pt-8">
+          <Button icon={ShoppingBag} className="bg-primary text-button-text px-10 shadow-premium">START SHOPPING</Button>
         </Link>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-black text-heading uppercase tracking-tighter">My Wishlist</h2>
-          <p className="text-xs font-bold text-muted uppercase tracking-widest mt-1">Saved delicacies for later</p>
+          <h2 className="text-3xl font-black text-heading uppercase tracking-tighter">My Wishlist</h2>
+          <p className="text-[10px] font-black text-muted uppercase tracking-widest mt-1">Saved delicacies for later</p>
         </div>
-        <span className="bg-secondary/10 text-secondary px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">
+        <span className="bg-primary text-button-text px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-premium">
           {wishlist.length} Items
         </span>
       </div>
@@ -63,10 +63,9 @@ const Wishlist = () => {
             >
               <ProductCard product={product} />
               
-              {/* Overlays for Wishlist Page actions if needed, or just use the card */}
               <button
                 onClick={() => toggleWishlist(product._id)}
-                className="absolute top-4 right-4 z-10 p-2.5 bg-white/90 backdrop-blur-md text-error rounded-xl shadow-xl opacity-0 group-hover:opacity-100 transition-all hover:scale-110"
+                className="absolute top-4 right-4 z-10 p-3 bg-card/90 backdrop-blur-md text-error rounded-2xl shadow-premium opacity-0 group-hover:opacity-100 transition-all hover:scale-110 border border-border/50"
               >
                 <Trash2 size={16} />
               </button>

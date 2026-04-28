@@ -225,17 +225,17 @@ const Cart = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-10">
+      <div className="bg-card border-b border-border/50 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-2 text-xs text-gray-500">
-            <button onClick={() => navigate("/")} className="hover:text-primary">
+          <div className="flex items-center gap-2 text-xs text-muted">
+            <button onClick={() => navigate("/")} className="hover:text-primary transition-colors">
               Home
             </button>
             <ChevronRight size={14} />
-            <span className="font-medium text-gray-900">Shopping Bag</span>
-            <span className="ml-auto text-sm font-medium">
+            <span className="font-bold text-foreground">Shopping Bag</span>
+            <span className="ml-auto text-sm font-black text-heading uppercase tracking-widest">
               {cartItems.length} {cartItems.length === 1 ? "Item" : "Items"}
             </span>
           </div>
@@ -260,11 +260,11 @@ const Cart = () => {
                   key={item.productId}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-xl shadow-sm border p-6"
+                  className="bg-card rounded-2xl shadow-card border border-border/50 p-6"
                 >
                   <div className="flex gap-6">
                     {/* Product Image */}
-                    <div className="w-32 h-32 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                    <div className="w-32 h-32 rounded-xl overflow-hidden bg-surface flex-shrink-0 border border-border/10">
                       <img
                         src={item.image}
                         alt={item.name}
@@ -276,24 +276,24 @@ const Cart = () => {
                     <div className="flex-1">
                       <div className="flex justify-between items-start">
                         <div>
-                          <p className="text-xs text-gray-500 uppercase mb-1">
+                          <p className="text-[10px] text-muted uppercase font-black tracking-widest mb-1">
                             {item.category}
                           </p>
-                          <h3 className="font-bold text-lg capitalize mb-2">
+                          <h3 className="font-black text-heading text-lg capitalize mb-2">
                             {item.name}
                           </h3>
 
                           {/* Price Display */}
                           <div className="flex items-center gap-2 mb-3">
-                            <span className="text-2xl font-bold text-primary">
+                            <span className="text-2xl font-black text-primary">
                               {formatCurrency(finalPrice)}
                             </span>
                             {hasOffer && (
                               <>
-                                <span className="line-through text-gray-400">
+                                <span className="line-through text-muted/60 font-medium">
                                   {formatCurrency(originalPrice)}
                                 </span>
-                                <span className="text-green-600 text-sm font-medium">
+                                <span className="text-success text-sm font-black">
                                   {Math.round(((originalPrice - finalPrice) / originalPrice) * 100)}% OFF
                                 </span>
                               </>
@@ -303,7 +303,7 @@ const Cart = () => {
                           {/* Coupon Applied Badge */}
                           {appliedCouponCode && item.coupon?.enabled &&
                             appliedCouponCode.toUpperCase() === item.coupon.code.toUpperCase() && (
-                              <div className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 rounded text-xs text-green-600">
+                              <div className="inline-flex items-center gap-1 px-2.5 py-1 bg-success-light rounded-lg text-[10px] font-black text-success-text border border-success/10 uppercase tracking-widest">
                                 <Tag size={12} />
                                 <span>{item.coupon.code} applied</span>
                               </div>
@@ -312,33 +312,33 @@ const Cart = () => {
 
                         <button
                           onClick={() => removeFromCart(item.productId)}
-                          className="text-gray-400 hover:text-red-500 transition"
+                          className="text-muted/40 hover:text-error transition-colors p-2 hover:bg-error-light rounded-full"
                         >
                           <Trash2 size={20} />
                         </button>
                       </div>
 
                       {/* Quantity Controls */}
-                      <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                        <div className="flex items-center gap-3 border rounded-lg">
+                      <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/30">
+                        <div className="flex items-center gap-3 border border-border rounded-xl bg-surface/5">
                           <button
                             onClick={() => handleQuantityUpdate(item.productId, item.qty - 1)}
-                            className="p-2 hover:bg-gray-50 transition rounded-l-lg"
+                            className="p-2 hover:bg-surface/20 transition rounded-l-xl text-foreground"
                           >
                             <Minus size={16} />
                           </button>
-                          <span className="w-12 text-center font-medium">{item.qty}</span>
+                          <span className="w-12 text-center font-black text-foreground">{item.qty}</span>
                           <button
                             onClick={() => handleQuantityUpdate(item.productId, item.qty + 1)}
-                            className="p-2 hover:bg-gray-50 transition rounded-r-lg"
+                            className="p-2 hover:bg-surface/20 transition rounded-r-xl text-foreground"
                           >
                             <Plus size={16} />
                           </button>
                         </div>
 
                         <div className="text-right">
-                          <p className="text-sm text-gray-500">Total</p>
-                          <p className="font-bold text-primary">
+                          <p className="text-[10px] text-muted font-black uppercase tracking-widest">Item Total</p>
+                          <p className="font-black text-heading text-lg">
                             {formatCurrency(finalPrice * item.qty)}
                           </p>
                         </div>
@@ -352,7 +352,7 @@ const Cart = () => {
             {/* Continue Shopping */}
             <Link
               to="/shop"
-              className="inline-flex items-center gap-2 text-primary font-medium hover:gap-3 transition-all mt-4"
+              className="inline-flex items-center gap-2 text-primary font-black uppercase tracking-widest hover:gap-3 transition-all mt-4 text-xs"
             >
               <ArrowRight size={16} />
               Continue Shopping
@@ -364,32 +364,32 @@ const Cart = () => {
             <div className="sticky top-24 space-y-4">
 
               {/* Delivery Address */}
-              <div className="bg-white rounded-xl shadow-sm border p-5">
+              <div className="bg-card rounded-2xl shadow-card border border-border/50 p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold flex items-center gap-2">
+                  <h3 className="font-black text-heading text-xs flex items-center gap-2 uppercase tracking-widest">
                     <MapPin size={18} className="text-primary" />
                     DELIVERY ADDRESS
                   </h3>
                   <button
                     onClick={() => setShowMap(true)}
-                    className="text-xs text-primary font-medium"
+                    className="text-[10px] text-primary font-black uppercase tracking-widest hover:underline"
                   >
                     CHANGE
                   </button>
                 </div>
 
                 {deliveryInfo.address ? (
-                  <div>
-                    <p className="text-sm font-medium">{user?.name || "Guest"}</p>
-                    <p className="text-sm text-gray-600 mt-1">{deliveryInfo.address}</p>
-                    <p className="text-xs text-gray-400 mt-2">
+                  <div className="p-4 bg-surface/5 rounded-xl border border-border/30">
+                    <p className="text-sm font-black text-heading">{user?.name || "Guest"}</p>
+                    <p className="text-xs text-muted mt-1 leading-relaxed">{deliveryInfo.address}</p>
+                    <p className="text-[10px] text-primary font-black uppercase tracking-widest mt-2">
                       {distance > 0 && `${distance.toFixed(1)} km away`}
                     </p>
                   </div>
                 ) : (
                   <button
                     onClick={() => setShowMap(true)}
-                    className="w-full py-3 border-2 border-dashed rounded-lg text-center text-primary font-medium hover:bg-gray-50 transition"
+                    className="w-full py-4 border-2 border-dashed border-border rounded-xl text-center text-primary font-black text-xs uppercase tracking-widest hover:bg-primary/5 transition"
                   >
                     + Add Delivery Address
                   </button>
@@ -398,15 +398,15 @@ const Cart = () => {
                 {/* Saved Addresses */}
                 {savedAddresses.length > 0 && !deliveryInfo.address && (
                   <div className="mt-4 space-y-2">
-                    <p className="text-xs text-gray-500">Saved Addresses</p>
+                    <p className="text-[10px] text-muted font-black uppercase tracking-widest">Saved Addresses</p>
                     {savedAddresses.slice(0, 2).map((addr) => (
                       <button
                         key={addr._id}
                         onClick={() => handleSelectAddress(addr)}
-                        className="w-full text-left p-3 border rounded-lg hover:border-primary transition text-sm"
+                        className="w-full text-left p-4 border border-border rounded-xl hover:border-primary transition-all bg-surface/5"
                       >
-                        <p className="font-medium">{addr.fullName}</p>
-                        <p className="text-gray-500 text-xs mt-1 truncate">
+                        <p className="font-black text-heading text-xs">{addr.fullName}</p>
+                        <p className="text-muted text-[11px] mt-1 truncate">
                           {addr.houseNo}, {addr.street}
                         </p>
                       </button>
@@ -416,20 +416,20 @@ const Cart = () => {
               </div>
 
               {/* Price Summary */}
-              <div className="bg-white rounded-xl shadow-sm border p-5">
-                <h3 className="font-bold mb-4">PRICE DETAILS</h3>
+              <div className="bg-card rounded-2xl shadow-card border border-border/50 p-5">
+                <h3 className="font-black text-heading text-xs uppercase tracking-widest mb-4">PRICE DETAILS</h3>
 
                 <div className="space-y-3 text-sm">
 
                   {/* MRP */}
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Total MRP</span>
-                    <span>{formatCurrency(originalTotal)}</span>
+                  <div className="flex justify-between font-bold">
+                    <span className="text-muted text-[11px] uppercase tracking-widest">Total MRP</span>
+                    <span className="text-heading">{formatCurrency(originalTotal)}</span>
                   </div>
 
                   {/* Offer Discount (offerPrice vs MRP) */}
                   {offerDiscount > 0 && (
-                    <div className="flex justify-between text-green-600">
+                    <div className="flex justify-between text-success font-black text-[11px] uppercase tracking-widest">
                       <span>Offer Discount</span>
                       <span>- {formatCurrency(offerDiscount)}</span>
                     </div>
@@ -437,52 +437,52 @@ const Cart = () => {
 
                   {/* Coupon Discount */}
                   {couponDiscount > 0 && (
-                    <div className="flex justify-between text-green-600">
+                    <div className="flex justify-between text-success font-black text-[11px] uppercase tracking-widest">
                       <span>Coupon ({appliedCouponCode})</span>
                       <span>- {formatCurrency(couponDiscount)}</span>
                     </div>
                   )}
 
-                  <div className="border-t pt-2 flex justify-between font-medium">
-                    <span className="text-gray-700">Subtotal</span>
-                    <span>{formatCurrency(subtotal)}</span>
+                  <div className="border-t border-border/30 pt-2 flex justify-between font-black">
+                    <span className="text-muted text-[11px] uppercase tracking-widest">Subtotal</span>
+                    <span className="text-heading">{formatCurrency(subtotal)}</span>
                   </div>
 
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Delivery Fee</span>
+                  <div className="flex justify-between text-[11px] font-bold">
+                    <span className="text-muted uppercase tracking-widest">Delivery Fee</span>
                     {deliveryFee !== null ? (
-                      <span>{formatCurrency(deliveryFee)}</span>
+                      <span className="text-heading">{formatCurrency(deliveryFee)}</span>
                     ) : (
-                      <span className="text-gray-400">Select address</span>
+                      <span className="text-muted/40 italic">Select address</span>
                     )}
                   </div>
 
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">GST (18%)</span>
-                    <span>{deliveryFee !== null ? formatCurrency(gst) : "--"}</span>
+                  <div className="flex justify-between text-[11px] font-bold">
+                    <span className="text-muted uppercase tracking-widest">GST (18%)</span>
+                    <span className="text-heading">{deliveryFee !== null ? formatCurrency(gst) : "--"}</span>
                   </div>
 
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Convenience Fee</span>
-                    <span>{deliveryFee !== null ? formatCurrency(convenienceFee) : "--"}</span>
+                  <div className="flex justify-between text-[11px] font-bold">
+                    <span className="text-muted uppercase tracking-widest">Convenience Fee</span>
+                    <span className="text-heading">{deliveryFee !== null ? formatCurrency(convenienceFee) : "--"}</span>
                   </div>
 
                   {/* Total savings summary */}
                   {(offerDiscount + couponDiscount) > 0 && (
-                    <div className="bg-green-50 rounded-lg px-3 py-2 flex justify-between text-green-700 font-medium">
+                    <div className="bg-success-light rounded-xl px-4 py-3 flex justify-between text-success-text font-black text-xs uppercase tracking-widest border border-success/10">
                       <span>You Save</span>
                       <span>- {formatCurrency(offerDiscount + couponDiscount)}</span>
                     </div>
                   )}
 
-                  <div className="border-t pt-3 mt-1">
-                    <div className="flex justify-between font-bold text-lg">
-                      <span>Total Amount</span>
-                      <span className="text-primary">
+                  <div className="border-t border-border/30 pt-4 mt-2">
+                    <div className="flex justify-between font-black text-xl tracking-tight">
+                      <span className="text-muted text-[11px] uppercase tracking-widest self-center">Total Amount</span>
+                      <span className="text-heading">
                         {deliveryFee !== null ? formatCurrency(total) : "--"}
                       </span>
                     </div>
-                    <p className="text-xs text-green-600 mt-2">
+                    <p className="text-[10px] text-success font-black uppercase tracking-widest mt-2">
                       Inclusive of all taxes
                     </p>
                   </div>
@@ -491,18 +491,18 @@ const Cart = () => {
                 {/* Checkout Button */}
                 <Button
                   onClick={() => navigate("/checkout")}
-                  className="w-full mt-6"
+                  className="w-full mt-6 bg-secondary text-button-text hover:brightness-110 shadow-premium"
                   disabled={!deliveryInfo.position}
                 >
                   PROCEED TO CHECKOUT
                   <ArrowRight size={16} className="ml-2" />
                 </Button>
 
-                <div className="flex items-center justify-center gap-4 mt-4 text-xs text-gray-400">
-                  <span className="flex items-center gap-1">
+                <div className="flex items-center justify-center gap-4 mt-6 text-[10px] text-muted font-black uppercase tracking-widest">
+                  <span className="flex items-center gap-1.5 opacity-60">
                     <Shield size={14} /> Secure
                   </span>
-                  <span className="flex items-center gap-1">
+                  <span className="flex items-center gap-1.5 opacity-60">
                     <Truck size={14} /> 100% Fresh
                   </span>
                 </div>
@@ -510,16 +510,16 @@ const Cart = () => {
 
               {/* Coupon Section */}
               {hasApplicableCoupons && !appliedCouponCode && (
-                <div className="bg-orange-50 rounded-xl p-4 border border-orange-200">
-                  <div className="flex items-center gap-2 text-orange-600 mb-2">
-                    <Percent size={16} />
-                    <span className="font-medium text-sm">Available Coupons</span>
+                <div className="bg-accent-light/10 rounded-2xl p-5 border border-accent/20 border-dashed">
+                  <div className="flex items-center gap-2 text-accent mb-3">
+                    <Percent size={18} />
+                    <span className="font-black text-xs uppercase tracking-widest">Available Coupons</span>
                   </div>
                   <div className="space-y-2">
                     {[...new Set(cartItems.filter(i => i.coupon?.enabled).map(i => i.coupon.code))].map(code => (
                       <div key={code} className="flex items-center justify-between text-sm">
-                        <span className="font-mono font-medium">{code}</span>
-                        <span className="text-gray-500 text-xs">Apply at checkout</span>
+                        <span className="font-black text-heading font-mono tracking-widest">{code}</span>
+                        <span className="text-muted text-[10px] font-black uppercase tracking-widest">Apply at checkout</span>
                       </div>
                     ))}
                   </div>
@@ -533,16 +533,16 @@ const Cart = () => {
       {/* Map Modal */}
       <AnimatePresence>
         {showMap && (
-          <div className="fixed inset-0 bg-black/60 z-50 flex justify-center items-center p-4">
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex justify-center items-center p-4">
             <motion.div
-              initial={{ scale: 0.95 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.95 }}
-              className="bg-white rounded-2xl w-full max-w-4xl h-[80vh] relative overflow-hidden"
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-card rounded-3xl w-full max-w-4xl h-[80vh] relative overflow-hidden shadow-premium border border-border"
             >
               <button
                 onClick={() => setShowMap(false)}
-                className="absolute top-4 right-4 z-10 bg-white p-2 rounded-full shadow-lg"
+                className="absolute top-4 right-4 z-10 bg-surface p-2.5 rounded-full shadow-premium text-foreground hover:bg-muted/10 transition-colors"
               >
                 <X size={20} />
               </button>

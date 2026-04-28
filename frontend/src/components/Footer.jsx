@@ -26,7 +26,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 mb-20 items-center">
           <div className="space-y-8">
             <Link to="/" className="flex items-center gap-4 group">
-              <Logo className="w-20 h-20 bg-white rounded-md p-1 shadow-md border border-white/10 backdrop-blur-md" />
+              <Logo className="w-20 h-20 bg-surface rounded-2xl p-1 shadow-premium border border-border/10 backdrop-blur-md" />
               <div className="flex flex-col">
                 <span className="text-3xl font-black text-footer-text tracking-tighter leading-none uppercase transition-colors">THE CHOCOLATE</span>
                 <span className="text-sm font-black text-secondary tracking-[0.4em] uppercase mt-1 transition-colors">Mine</span>
@@ -37,14 +37,14 @@ const Footer = () => {
             </p>
             <div className="flex gap-6">
                {[InstagramIcon, Facebook, Twitter, Youtube].map((Icon, i) => (
-                 <a key={i} href="#" className="w-12 h-12 bg-white/5 rounded-md flex items-center justify-center hover:bg-secondary hover:text-white transition-all hover:-translate-y-1 shadow-lg border border-white/5">
+                 <a key={i} href="#" className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center hover:bg-secondary hover:text-button-text transition-all hover:-translate-y-1 shadow-lg border border-white/5">
                    <Icon size={20} />
                  </a>
                ))}
             </div>
           </div>
 
-          <div className="bg-white/5 border border-footer-text/10 p-10 rounded-md shadow-2xl backdrop-blur-xl relative overflow-hidden group">
+          <div className="bg-white/5 border border-footer-text/10 p-10 rounded-3xl shadow-2xl backdrop-blur-xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                <Send size={80} className="-rotate-12" />
             </div>
@@ -54,9 +54,9 @@ const Footer = () => {
               <input
                 type="email"
                 placeholder="Enter your email address"
-                className="flex-1 bg-white/5 border border-footer-text/10 rounded-md px-6 py-4 outline-none focus:border-secondary transition-all font-bold placeholder:text-footer-text/30"
+                className="flex-1 bg-white/5 border border-footer-text/10 rounded-xl px-6 py-4 outline-none focus:border-secondary transition-all font-bold placeholder:text-footer-text/30"
               />
-              <Button className="py-4 px-8 rounded-md shadow-xl bg-secondary text-button-text hover:bg-secondary/80 font-black tracking-widest" icon={Send}>SUBSCRIBE</Button>
+              <Button className="py-4 px-8 rounded-xl shadow-xl bg-secondary text-button-text hover:bg-secondary/80 font-black tracking-widest" icon={Send}>SUBSCRIBE</Button>
             </form>
           </div>
         </div>
@@ -109,7 +109,7 @@ const Footer = () => {
             <h4 className="text-[10px] font-black text-secondary uppercase tracking-[0.4em] mb-8">Experience Us</h4>
             <ul className="space-y-6">
               <li className="flex gap-4 group">
-                <div className="w-12 h-12 bg-white/5 rounded-md flex items-center justify-center shrink-0 border border-white/5 group-hover:bg-secondary/10 transition-colors">
+                <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center shrink-0 border border-white/5 group-hover:bg-secondary/10 transition-colors">
                   <MapPin size={20} className="text-secondary" />
                 </div>
                 <p className="text-xs font-bold text-footer-text/60 leading-relaxed">
@@ -118,7 +118,7 @@ const Footer = () => {
                 </p>
               </li>
               <li className="flex gap-4 group">
-                <div className="w-12 h-12 bg-white/5 rounded-md flex items-center justify-center shrink-0 border border-white/5 group-hover:bg-secondary/10 transition-colors">
+                <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center shrink-0 border border-white/5 group-hover:bg-secondary/10 transition-colors">
                   <Phone size={20} className="text-secondary" />
                 </div>
                 <p className="text-xs font-bold text-footer-text/60 leading-relaxed">
@@ -148,7 +148,7 @@ const Footer = () => {
           </div>
 
           <p className="text-footer-text/30 text-[9px] font-black uppercase tracking-[0.3em] text-center">
-            &copy; 2026 THE CHOCOLATE MINE. CRAFTED BY <a href="#" className="text-secondary">AK WEBFLAIR</a>
+            &copy; 2026 THE CHOCOLATE MINE. CRAFTED BY <a href="#" className="text-secondary hover:underline transition-all">AK WEBFLAIR</a>
           </p>
         </div>
       </div>

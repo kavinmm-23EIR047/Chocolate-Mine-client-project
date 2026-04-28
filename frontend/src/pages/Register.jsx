@@ -58,30 +58,30 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-stretch bg-card overflow-hidden">
+    <div className="min-h-screen flex items-stretch bg-background overflow-hidden">
       
       {/* Left: Illustration (Desktop Only) */}
-      <div className="hidden lg:flex w-1/2 bg-primary relative items-center justify-center p-20 overflow-hidden">
+      <div className="hidden lg:flex w-1/2 bg-footer relative items-center justify-center p-20 overflow-hidden border-r border-border/10">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1558961363-fa8fdf82db35?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center opacity-40 mix-blend-overlay"></div>
-        <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/80 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-footer via-footer/80 to-transparent"></div>
         
-        <div className="relative z-10 text-button-text max-w-lg">
+        <div className="relative z-10 text-footer-text max-w-lg">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <h1 className="text-7xl font-black mb-8 leading-[0.9]">
-              Start your <span className="text-secondary">Sweet</span> Journey.
+            <h1 className="text-7xl font-black mb-8 leading-[0.9] tracking-tighter">
+              Start your <span className="text-accent">Sweet</span> Journey.
             </h1>
-            <p className="text-xl font-medium opacity-70 mb-12">
+            <p className="text-xl font-medium opacity-70 mb-12 italic">
               Join thousands of dessert lovers and get access to exclusive treats and faster delivery.
             </p>
             
             <ul className="space-y-4">
                {['Priority Delivery', 'Member Only Discounts', 'Order Tracking', 'Birthday Rewards'].map((item, i) => (
-                 <li key={i} className="flex items-center gap-3 font-bold opacity-80">
-                    <div className="w-6 h-6 bg-secondary/20 rounded-full flex items-center justify-center text-secondary">
+                 <li key={i} className="flex items-center gap-3 font-black text-xs uppercase tracking-widest opacity-80">
+                    <div className="w-6 h-6 bg-accent/20 rounded-full flex items-center justify-center text-accent">
                        <ChevronRight size={14} />
                     </div>
                     {item}
@@ -105,71 +105,71 @@ const Register = () => {
         <div className="max-w-md w-full mx-auto">
           
           <div className="mb-10">
-            <Link to="/" className="inline-flex items-center gap-2 text-xs font-black text-muted hover:text-secondary uppercase tracking-widest transition-colors mb-8">
+            <Link to="/" className="inline-flex items-center gap-2 text-xs font-black text-muted hover:text-primary uppercase tracking-widest transition-colors mb-8">
               <ArrowRight className="rotate-180" size={14} /> Back to Shop
             </Link>
-            <h2 className="text-5xl font-black text-heading tracking-tighter mb-4">Create Account</h2>
-            <p className="text-muted font-medium">Join the community of premium dessert lovers</p>
+            <h2 className="text-5xl font-black text-heading tracking-tighter mb-4 uppercase">Create Account</h2>
+            <p className="text-muted font-black text-xs uppercase tracking-widest opacity-60">Join the community of premium dessert lovers</p>
           </div>
 
           <div className="space-y-6">
             <button
               onClick={handleGoogleLogin}
-              className="w-full flex items-center justify-center gap-4 py-4 px-6 border-2 border-border rounded-2xl font-black text-heading hover:bg-border/20 transition-all group"
+              className="w-full flex items-center justify-center gap-4 py-4 px-6 border-2 border-border rounded-2xl font-black text-heading hover:bg-surface/5 transition-all group"
             >
               <GoogleIcon />
-              SIGN UP WITH GOOGLE
+              <span className="tracking-widest text-xs uppercase">SIGN UP WITH GOOGLE</span>
             </button>
 
             <div className="relative py-2">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border"></div></div>
-              <div className="relative flex justify-center text-xs font-black text-muted uppercase tracking-widest"><span className="bg-card px-4">Or create manually</span></div>
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border/30"></div></div>
+              <div className="relative flex justify-center text-[10px] font-black text-muted uppercase tracking-[0.3em]"><span className="bg-card px-4">Or create manually</span></div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <label className="text-[10px] font-black text-muted uppercase tracking-widest ml-2">Full Name</label>
                 <div className="relative group">
-                  <User className="absolute left-6 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-secondary transition-colors" size={18} />
+                  <User className="absolute left-6 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-primary transition-colors" size={18} />
                   <input
                     name="name"
                     type="text"
                     required
                     value={formData.name}
                     onChange={handleChange}
-                    className="w-full bg-input border border-input-border text-heading pl-16 pr-6 py-4 rounded-md outline-none focus:border-secondary transition-all font-bold"
+                    className="w-full bg-surface/5 border border-border text-heading pl-16 pr-6 py-4 rounded-2xl outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-black text-sm placeholder:text-muted/30"
                     placeholder="John Doe"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <label className="text-[10px] font-black text-muted uppercase tracking-widest ml-2">Email</label>
                   <div className="relative group">
-                    <Mail className="absolute left-6 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-secondary transition-colors" size={18} />
+                    <Mail className="absolute left-6 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-primary transition-colors" size={18} />
                     <input
                       name="email"
                       type="email"
                       required
                       value={formData.email}
                       onChange={handleChange}
-                      className="w-full bg-input border border-input-border text-heading pl-16 pr-6 py-4 rounded-md outline-none focus:border-secondary transition-all font-bold text-xs"
+                      className="w-full bg-surface/5 border border-border text-heading pl-16 pr-6 py-4 rounded-2xl outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-black text-sm placeholder:text-muted/30"
                       placeholder="email@mine.com"
                     />
                   </div>
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <label className="text-[10px] font-black text-muted uppercase tracking-widest ml-2">Phone</label>
                   <div className="relative group">
-                    <Phone className="absolute left-6 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-secondary transition-colors" size={18} />
+                    <Phone className="absolute left-6 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-primary transition-colors" size={18} />
                     <input
                       name="phone"
                       type="tel"
                       required
                       value={formData.phone}
                       onChange={handleChange}
-                      className="w-full bg-input border border-input-border text-heading pl-16 pr-6 py-4 rounded-md outline-none focus:border-secondary transition-all font-bold text-xs"
+                      className="w-full bg-surface/5 border border-border text-heading pl-16 pr-6 py-4 rounded-2xl outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-black text-sm placeholder:text-muted/30"
                       placeholder="+91 0000000000"
                     />
                   </div>
@@ -177,32 +177,32 @@ const Register = () => {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <label className="text-[10px] font-black text-muted uppercase tracking-widest ml-2">Password</label>
                   <div className="relative group">
-                    <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-secondary transition-colors" size={18} />
+                    <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-primary transition-colors" size={18} />
                     <input
                       name="password"
                       type="password"
                       required
                       value={formData.password}
                       onChange={handleChange}
-                      className="w-full bg-input border border-input-border text-heading pl-16 pr-6 py-4 rounded-md outline-none focus:border-secondary transition-all font-bold text-xs"
+                      className="w-full bg-surface/5 border border-border text-heading pl-16 pr-6 py-4 rounded-2xl outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-black text-sm placeholder:text-muted/30"
                       placeholder="••••••••"
                     />
                   </div>
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <label className="text-[10px] font-black text-muted uppercase tracking-widest ml-2">Confirm</label>
                   <div className="relative group">
-                    <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-secondary transition-colors" size={18} />
+                    <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-primary transition-colors" size={18} />
                     <input
                       name="confirmPassword"
                       type="password"
                       required
                       value={formData.confirmPassword}
                       onChange={handleChange}
-                      className="w-full bg-input border border-input-border text-heading pl-16 pr-6 py-4 rounded-md outline-none focus:border-secondary transition-all font-bold text-xs"
+                      className="w-full bg-surface/5 border border-border text-heading pl-16 pr-6 py-4 rounded-2xl outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-black text-sm placeholder:text-muted/30"
                       placeholder="••••••••"
                     />
                   </div>
@@ -212,7 +212,7 @@ const Register = () => {
               <Button
                 type="submit"
                 loading={loading}
-                className="w-full py-5 rounded-md shadow-premium mt-4"
+                className="w-full py-5 rounded-2xl shadow-premium mt-4 bg-primary text-button-text hover:brightness-110 font-black tracking-widest uppercase"
                 size="lg"
                 icon={UserPlus}
               >
@@ -221,9 +221,9 @@ const Register = () => {
             </form>
 
             <div className="text-center pt-6">
-              <p className="text-muted font-bold">
+              <p className="text-muted font-black text-[10px] uppercase tracking-widest">
                 Already a member?{' '}
-                <Link to="/login" className="text-secondary font-black hover:underline inline-flex items-center gap-1">
+                <Link to="/login" className="text-primary font-black hover:underline inline-flex items-center gap-1">
                   Log in here <ChevronRight size={14} />
                 </Link>
               </p>

@@ -115,18 +115,17 @@ function App() {
                   <Toaster
                     position="bottom-center"
                     toastOptions={{
-                      className: 'glass-toast',
+                      className: 'toast-premium',
                       duration: 4000,
                       style: {
-                        background: 'rgba(59, 26, 15, 0.9)',
-                        color: '#fff',
-                        backdropFilter: 'blur(10px)',
-                        borderRadius: '24px',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        padding: '16px 24px',
-                        fontWeight: '900',
+                        background: 'var(--card)',
+                        color: 'var(--foreground)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '16px',
+                        padding: '12px 20px',
                         fontSize: '14px',
-                        boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
+                        fontWeight: '600',
+                        boxShadow: 'var(--shadow-premium)',
                       }
                     }}
                   />
