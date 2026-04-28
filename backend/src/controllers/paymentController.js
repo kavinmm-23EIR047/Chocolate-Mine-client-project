@@ -38,7 +38,7 @@ const validateAddress = (address) => {
 };
 
 exports.createRazorpayOrder = asyncHandler(async (req, res) => {
-  const { address, discount, deliveryDate, deliverySlot } = req.body;
+  const { address, discount, deliveryDate, deliverySlot, directItem } = req.body;
 
   if (!req.user || !req.user._id) {
     throw new AppError('Unauthorized user', 401);
@@ -71,14 +71,78 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
     normalizedSlot = slotMap[deliverySlot];
   }
 
-  const cartKey = `cart:${req.user._id}`;
-  const cartData = await cacheService.get(cartKey);
+  let cart;
 
-  if (!cartData) {
-    throw new AppError('Cart is empty', 400);
+  if (directItem) {
+    const product = await Product.findById(directItem.productId);
+    if (!product || product.stock < directItem.qty) {
+      throw new AppError(`Stock error: ${product?.name || 'Item'} unavailable`, 400);
+    }
+    
+    // Check variants for cake
+    let salePrice = product.offerPrice && product.offerPrice < product.price ? product.offerPrice : product.price;
+    let variantPrice = null;
+    if (product.hasVariants && product.variants && directItem.selectedFlavor && directItem.selectedWeight) {
+      const variant = product.variants.find(
+        v => v.flavor === directItem.selectedFlavor && v.weight === directItem.selectedWeight
+      );
+      if (variant) {
+        variantPrice = variant.price;
+        salePrice = variant.price;
+      }
+      if (variant && variant.stock < directItem.qty) {
+        throw new AppError(`Stock error: Selected combination unavailable`, 400);
+      }
+    }
+    
+    let finalPrice = salePrice;
+    let activeCouponCode = null;
+    
+    // Check coupon
+    if (directItem.appliedCoupon && product.coupon && product.coupon.enabled && product.coupon.code.toUpperCase() === directItem.appliedCoupon.toUpperCase()) {
+      const now = new Date();
+      const startDate = product.coupon.startDate ? new Date(product.coupon.startDate) : null;
+      const endDate = product.coupon.endDate ? new Date(product.coupon.endDate) : null;
+      
+      const isWithinDateRange = (!startDate || now >= startDate) && (!endDate || now <= endDate);
+      const isWithinUsageLimit = !product.coupon.usageLimit || (product.coupon.usedCount || 0) < product.coupon.usageLimit;
+      
+      if (isWithinDateRange && isWithinUsageLimit) {
+        activeCouponCode = product.coupon.code;
+        if (product.coupon.type === 'flat') {
+          finalPrice = Math.max(0, salePrice - product.coupon.value);
+        } else if (product.coupon.type === 'percent') {
+          finalPrice = Math.max(0, salePrice - Math.round((salePrice * product.coupon.value) / 100));
+        } else if (product.coupon.type === 'price') {
+          finalPrice = product.coupon.value;
+        }
+      }
+    }
+    
+    cart = {
+      items: [{
+        productId: product._id,
+        name: product.name,
+        qty: directItem.qty,
+        price: product.price,
+        image: product.image,
+        finalPrice: finalPrice,
+        activeCouponCode: activeCouponCode,
+        selectedFlavor: directItem.selectedFlavor,
+        selectedWeight: directItem.selectedWeight
+      }],
+      total: finalPrice * directItem.qty
+    };
+  } else {
+    const cartKey = `cart:${req.user._id}`;
+    const cartData = await cacheService.get(cartKey);
+
+    if (!cartData) {
+      throw new AppError('Cart is empty', 400);
+    }
+
+    cart = typeof cartData === 'string' ? JSON.parse(cartData) : cartData;
   }
-
-  const cart = typeof cartData === 'string' ? JSON.parse(cartData) : cartData;
 
   if (!cart.items || cart.items.length === 0) {
     throw new AppError('Cart is empty', 400);
@@ -110,11 +174,13 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
     });
   }
 
-  for (const item of cart.items) {
-    const product = await Product.findById(item.productId);
+  if (!directItem) {
+    for (const item of cart.items) {
+      const product = await Product.findById(item.productId);
 
-    if (!product || product.stock < item.qty) {
-      throw new AppError(`Stock error: ${product?.name || 'Item'} unavailable`, 400);
+      if (!product || product.stock < item.qty) {
+        throw new AppError(`Stock error: ${product?.name || 'Item'} unavailable`, 400);
+      }
     }
   }
 
@@ -148,6 +214,8 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
       originalPrice: item.price ?? 0,
       image: item.image,
       couponCode: item.activeCouponCode,
+      selectedFlavor: item.selectedFlavor,
+      selectedWeight: item.selectedWeight,
       discountAmount: ((item.price ?? 0) - (item.finalPrice ?? item.price ?? 0)) * item.qty
     })),
     subtotal,

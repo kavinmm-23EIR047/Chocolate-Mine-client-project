@@ -14,7 +14,7 @@ import {
 
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 import MapSelector from '../components/MapSelector';
 import ScooterLoader from '../components/ScooterLoader';
@@ -28,6 +28,10 @@ const Checkout = () => {
   const { cart, fetchCart, applyCoupon, removeCoupon, loading: cartLoading } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  const directItem = location.state?.directItem;
+  const [localCoupon, setLocalCoupon] = useState('');
 
   const [showMap, setShowMap] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -154,9 +158,9 @@ const Checkout = () => {
   };
 
   const getItemCouponDiscount = (item) => {
-    const appliedCoupon = cart?.appliedCoupon;
-    if (!appliedCoupon || !item.coupon?.enabled) return 0;
-    if (appliedCoupon.toUpperCase() !== item.coupon.code.toUpperCase()) return 0;
+    const appliedCouponCode = directItem ? localCoupon : cart?.appliedCoupon;
+    if (!appliedCouponCode || !item.coupon?.enabled) return 0;
+    if (appliedCouponCode.toUpperCase() !== item.coupon.code.toUpperCase()) return 0;
 
     const basePrice = getItemBasePrice(item);
 
@@ -228,8 +232,8 @@ const Checkout = () => {
   }, [deliveryInfo.position]);
 
 
-  const cartItems = cart?.items || [];
-  const appliedCoupon = cart?.appliedCoupon;
+  const cartItems = directItem ? [directItem] : (cart?.items || []);
+  const appliedCoupon = directItem ? localCoupon : cart?.appliedCoupon;
 
   const subtotal = cartItems.reduce((sum, item) =>
     sum + getFinalItemPrice(item) * item.qty, 0
@@ -339,6 +343,16 @@ const Checkout = () => {
   const handleApplyCoupon = async () => {
     const code = couponInput.trim().toUpperCase();
     if (!code) return toast.error('Enter coupon code');
+    if (directItem) {
+      if (directItem.coupon?.enabled && directItem.coupon.code.toUpperCase() === code) {
+        setLocalCoupon(directItem.coupon.code.toUpperCase());
+        toast.success(`Coupon ${code} applied!`);
+        setCouponInput('');
+      } else {
+        toast.error('Invalid coupon');
+      }
+      return;
+    }
     try {
       await applyCoupon(code);
       toast.success(`Coupon ${code} applied!`);
@@ -349,6 +363,11 @@ const Checkout = () => {
   };
 
   const handleRemoveCoupon = async () => {
+    if (directItem) {
+      setLocalCoupon('');
+      toast.success('Coupon removed');
+      return;
+    }
     await removeCoupon();
     toast.success('Coupon removed');
   };
@@ -412,6 +431,13 @@ const Checkout = () => {
         },
         deliveryDate: deliveryDate,
         deliverySlot,
+        directItem: directItem ? {
+          productId: directItem.productId,
+          qty: directItem.qty,
+          selectedFlavor: directItem.selectedFlavor,
+          selectedWeight: directItem.selectedWeight,
+          appliedCoupon: localCoupon
+        } : undefined,
       };
 
       const loaded = await loadRazorpayScript();
@@ -428,6 +454,7 @@ const Checkout = () => {
         address: payload.address,
         deliveryDate: payload.deliveryDate,
         deliverySlot: payload.deliverySlot,
+        directItem: payload.directItem,
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });

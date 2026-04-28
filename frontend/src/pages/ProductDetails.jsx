@@ -51,8 +51,8 @@ const ProductDetails = () => {
   const [activeTab, setActiveTab] = useState('description');
   const [reviewStats, setReviewStats] = useState({ avg: 0, total: 0, list: [] });
   const [imgZoom, setImgZoom] = useState(false);
-  const [displayImage, setDisplayImage] = useState('');
-  const [quantity, setQuantity] = useState(1);
+  const [displayImage, setDisplayImage] = useState(null);
+  const quantity = 1; // Fixed quantity for product details page
   const [applyingCoupon, setApplyingCoupon] = useState(false);
   const [addingToCart, setAddingToCart] = useState(false);
   
@@ -69,12 +69,17 @@ const ProductDetails = () => {
   // ─── FETCH ─────────────────────────────────────────────
   useEffect(() => {
     const load = async () => {
+      if (!slug) return;
       try {
         setLoading(true);
         const res = await productService.getBySlug(slug);
-        const prod = res.data.data;
+        const prod = res?.data?.data;
+        
+        if (!prod) {
+          throw new Error('Product not found in database');
+        }
+
         setProduct(prod);
-        setQuantity(1);
         
         // Initialize cake selections if product has variants
         if (prod.category === 'cakes' && prod.hasVariants && prod.flavors && prod.flavors.length > 0) {
@@ -88,18 +93,20 @@ const ProductDetails = () => {
           if (prod.flavors[0].images && prod.flavors[0].images.length > 0) {
             setDisplayImage(prod.flavors[0].images[0]);
           } else {
-            setDisplayImage(prod.image);
+            setDisplayImage(prod.image || null);
           }
         } else {
-          setDisplayImage(prod.image);
+          setDisplayImage(prod.image || null);
         }
 
         const related = await productService.getAll({ category: prod.category, limit: 4 });
-        setRelatedProducts(related.data.data.filter(p => p._id !== prod._id));
+        if (related?.data?.data) {
+          setRelatedProducts(related.data.data.filter(p => p._id !== prod._id));
+        }
 
         try {
           const reviewRes = await reviewService.getProductReviews(prod._id);
-          const list = reviewRes.data.data.reviews || [];
+          const list = reviewRes.data.data?.reviews || [];
           if (list.length) {
             const sum = list.reduce((a, b) => a + b.rating, 0);
             setReviewStats({ 
@@ -110,11 +117,13 @@ const ProductDetails = () => {
           } else {
             setReviewStats({ avg: prod.ratingsAverage || 0, total: prod.ratingsCount || 0, list: [] });
           }
-        } catch {
+        } catch (err) {
+          console.warn('Failed to fetch reviews:', err);
           setReviewStats({ avg: prod.ratingsAverage || 0, total: prod.ratingsCount || 0, list: [] });
         }
-      } catch {
-        toast.error('Product not found');
+      } catch (err) {
+        console.error('Product fetch error:', err);
+        toast.error('Product not found or failed to load');
         navigate('/');
       } finally {
         setLoading(false);
@@ -123,22 +132,14 @@ const ProductDetails = () => {
     load();
   }, [slug, navigate]);
 
-  // Handle quantity change
-  const handleQuantityChange = (newQuantity) => {
-    if (newQuantity < 1) return;
-    if (selectedStock !== null && newQuantity > selectedStock) {
-      toast.error(`Only ${selectedStock} items available`);
-      return;
-    }
-    setQuantity(newQuantity);
-  };
+  // Handle quantity change - removed as per requirements
 
   // Handle flavor change
   const handleFlavorChange = (flavor) => {
     setSelectedFlavor(flavor);
     setShowCustomFlavorInput(false);
     setCustomFlavor('');
-    setQuantity(1);
+    
     
     let variant = product.variants?.find(v => v.flavor === flavor.name && v.weight === selectedWeight);
     if (!variant && product.variants) {
@@ -161,7 +162,7 @@ const ProductDetails = () => {
     setSelectedWeight(weight);
     setShowCustomWeightInput(false);
     setCustomWeight('');
-    setQuantity(1);
+    
     
     const variant = product.variants?.find(v => v.flavor === selectedFlavor?.name && v.weight === weight);
     if (variant) {
@@ -176,7 +177,6 @@ const ProductDetails = () => {
       setSelectedFlavor({ name: customFlavor.trim(), images: [] });
       setShowCustomFlavorInput(false);
       setSelectedPrice(product.variants?.[0]?.price || product.price);
-      setQuantity(1);
     }
   };
   
@@ -185,7 +185,6 @@ const ProductDetails = () => {
     if (customWeight.trim()) {
       setSelectedWeight(customWeight.trim());
       setShowCustomWeightInput(false);
-      setQuantity(1);
     }
   };
 
@@ -338,8 +337,8 @@ const ProductDetails = () => {
         }
       }
       
-      await addToCart(product._id, quantity, options);
-      toast.success(`${quantity} item(s) added to cart!`);
+      await addToCart(product._id, 1, options);
+      toast.success(`Item added to cart!`);
       await fetchCart();
     } catch (err) {
       toast.error('Failed to add to cart');
@@ -355,33 +354,33 @@ const ProductDetails = () => {
       return;
     }
     
+    // Validate cake selections before proceeding
+    if (product?.category === 'cakes') {
+      if (!currentVariantFlavor) {
+        toast.error('Please select flavor');
+        return;
+      }
+      if (!currentVariantWeight) {
+        toast.error('Please select weight');
+        return;
+      }
+    }
+
     setAddingToCart(true);
     try {
-      const options = {};
-      if (product?.category === 'cakes') {
-        if (showCustomFlavorInput && customFlavor) {
-          options.flavor = customFlavor;
-        } else if (selectedFlavor) {
-          options.flavor = selectedFlavor.name;
-        } else {
-          toast.error('Please select flavor');
-          setAddingToCart(false);
-          return;
-        }
-        
-        if (showCustomWeightInput && customWeight) {
-          options.weight = customWeight;
-        } else if (selectedWeight) {
-          options.weight = selectedWeight;
-        } else {
-          toast.error('Please select weight');
-          setAddingToCart(false);
-          return;
-        }
-      }
+      const directItem = {
+        productId: product._id,
+        name: product.name,
+        image: displayImage || product.image,
+        price: product.price,
+        offerPrice: product.offerPrice,
+        qty: 1,
+        selectedFlavor: currentVariantFlavor,
+        selectedWeight: currentVariantWeight,
+        coupon: product.coupon,
+      };
       
-      await addToCart(product._id, quantity, options);
-      navigate('/checkout');
+      navigate('/checkout', { state: { directItem } });
     } catch (err) {
       toast.error('Failed to process. Please try again.');
     } finally {
@@ -395,12 +394,7 @@ const ProductDetails = () => {
     return flavor.images.filter(img => img && !img.startsWith('blob:'));
   };
 
-  // Handle quantity update from cart
-  const handleCartQuantityUpdate = (newQty) => {
-    if (cartItem && product) {
-      updateQuantity(product._id, newQty, currentVariantFlavor, currentVariantWeight);
-    }
-  };
+
 
   // ─── LOADER ────────────────────────────────────────────
   if (loading) {
@@ -441,7 +435,7 @@ const ProductDetails = () => {
                   key={displayImage}
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  src={displayImage}
+                  src={displayImage || undefined}
                   onError={(e) => { e.target.src = product?.image || ''; }}
                   className="w-full aspect-square object-cover transition-transform duration-700 group-hover:scale-105"
                 />
@@ -741,30 +735,7 @@ const ProductDetails = () => {
                   </div>
                 )}
 
-                {/* 3. QUANTITY SECTION */}
-                <div className="flex items-center gap-4">
-                  <span className="text-sm font-black text-muted uppercase tracking-widest">Quantity:</span>
-                  <div className="flex items-center border-2 border-border/30 rounded-xl bg-muted/5">
-                    <button
-                      onClick={() => handleQuantityChange(quantity - 1)}
-                      disabled={quantity <= 1}
-                      className="w-10 h-10 flex items-center justify-center hover:bg-muted/10 transition disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      <Minus size={16} />
-                    </button>
-                    <span className="w-12 text-center font-black text-lg text-heading">{quantity}</span>
-                    <button
-                      onClick={() => handleQuantityChange(quantity + 1)}
-                      disabled={selectedStock !== null && quantity >= selectedStock}
-                      className="w-10 h-10 flex items-center justify-center hover:bg-muted/10 transition disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      <Plus size={16} />
-                    </button>
-                  </div>
-                  {selectedStock && (
-                    <span className="text-xs text-muted">{selectedStock} available</span>
-                  )}
-                </div>
+                {/* 3. QUANTITY SECTION - Removed from Product Details */}
 
                 {/* 4. PRICE BREAKDOWN */}
                 <div className="bg-muted/5 rounded-2xl p-4 space-y-2 text-sm font-bold border border-border/20">
@@ -799,56 +770,51 @@ const ProductDetails = () => {
                     </span>
                   </div>
                   
-                  {cartQty > 0 ? (
-                    <div className="flex items-center border-2 border-border/30 rounded-2xl h-14 bg-muted/5">
-                      <button 
-                        onClick={() => handleCartQuantityUpdate(cartQty - 1)} 
-                        className="w-14 h-full flex items-center justify-center hover:bg-muted/10 transition"
-                      >
-                        <Minus size={20} />
-                      </button>
-                      <span className="flex-1 text-center font-black text-xl text-heading">{cartQty} in cart</span>
-                      <button 
-                        onClick={() => handleCartQuantityUpdate(cartQty + 1)} 
-                        className="w-14 h-full flex items-center justify-center hover:bg-muted/10 transition"
-                      >
-                        <Plus size={20} />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-4">
-                      <button 
-                        onClick={handleAddToCart} 
-                        disabled={!isInStock || addingToCart}
-                        className={`h-14 border-2 border-primary text-primary font-black text-[11px] uppercase tracking-[0.2em] rounded-2xl transition flex items-center justify-center gap-2 ${
-                          !isInStock || addingToCart ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary/5'
-                        }`}
-                      >
-                        {addingToCart ? (
-                          <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          <>
-                            <ShoppingCart size={18} /> Add to Cart
-                          </>
-                        )}
-                      </button>
-                      
-                      <button 
-                        onClick={handleBuyNow} 
-                        disabled={!isInStock || addingToCart}
-                        className={`h-14 font-black text-[11px] uppercase tracking-[0.2em] rounded-2xl transition shadow-md flex items-center justify-center gap-2 ${
-                          isInStock && !addingToCart
-                            ? 'bg-secondary text-white shadow-secondary/20 hover:brightness-110 cursor-pointer'
-                            : 'bg-muted/40 text-muted/60 cursor-not-allowed shadow-none'
-                        }`}
-                      >
-                        {addingToCart ? (
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          <>Buy Now <ArrowRight size={16} /></>
-                        )}
-                      </button>
-                    </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <button 
+                      onClick={handleAddToCart} 
+                      disabled={!isInStock || addingToCart}
+                      className={`h-14 border-2 border-primary text-primary font-black text-[11px] uppercase tracking-[0.2em] rounded-2xl transition flex items-center justify-center gap-2 ${
+                        !isInStock || addingToCart ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary/5'
+                      }`}
+                    >
+                      {addingToCart ? (
+                        <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          <ShoppingCart size={18} /> Add to Cart
+                        </>
+                      )}
+                    </button>
+                    
+                    <button 
+                      onClick={handleBuyNow} 
+                      disabled={!isInStock || addingToCart}
+                      className={`h-14 font-black text-[11px] uppercase tracking-[0.2em] rounded-2xl transition shadow-md flex items-center justify-center gap-2 ${
+                        isInStock && !addingToCart
+                          ? 'bg-secondary text-white shadow-secondary/20 hover:brightness-110 cursor-pointer'
+                          : 'bg-muted/40 text-muted/60 cursor-not-allowed shadow-none'
+                      }`}
+                    >
+                      {addingToCart ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <>Buy Now <ArrowRight size={16} /></>
+                      )}
+                    </button>
+                  </div>
+
+                  {cartQty > 0 && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex items-center justify-center gap-2 py-2 bg-primary/5 rounded-xl border border-primary/10"
+                    >
+                      <CheckCircle2 size={14} className="text-primary" />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-primary">
+                        {cartQty} {cartQty === 1 ? 'item' : 'items'} already in your cart
+                      </span>
+                    </motion.div>
                   )}
                 </div>
               </div>
