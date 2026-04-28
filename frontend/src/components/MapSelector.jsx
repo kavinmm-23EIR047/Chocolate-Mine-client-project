@@ -41,8 +41,12 @@ const LocationMarker = ({ position, setPosition, setAddress }) => {
 };
 
 const MapSelector = ({ onSelect }) => {
-  const [position, setPosition] = useState({ lat: 11.00454, lng: 76.97511 }); 
+  const [position, setPosition] = useState({ 
+    lat: Number(import.meta.env.VITE_SHOP_LAT) || 11.00454, 
+    lng: Number(import.meta.env.VITE_SHOP_LNG) || 76.97511 
+  }); 
   const [address, setAddress] = useState("The Chocolate Mine Shop, Coimbatore");
+
 
   const handleConfirm = () => {
     onSelect({ position, address });

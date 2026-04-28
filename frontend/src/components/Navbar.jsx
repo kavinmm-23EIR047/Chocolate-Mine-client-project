@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Search, ShoppingCart, User, Menu, X, Sun, Moon, 
+import {
+  Search, ShoppingCart, User, Menu, X, Sun, Moon,
   MapPin, Heart, ChevronDown, ShoppingBag, Truck, LogIn,
   Box
 } from 'lucide-react';
@@ -39,19 +39,18 @@ const Navbar = () => {
 
   return (
     <>
-      <nav 
-        className={`sticky top-0 left-0 right-0 z-[100] transition-all duration-300 ${
-          isScrolled 
-            ? 'bg-navbar shadow-lg py-2' 
+      <nav
+        className={`sticky top-0 left-0 right-0 z-[100] transition-all duration-300 ${isScrolled
+            ? 'bg-navbar shadow-lg py-2'
             : 'bg-navbar py-3'
-        }`}
+          }`}
       >
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4 sm:gap-10">
-            
+
             {/* 1. LOGO */}
             <Link to="/" className="flex items-center gap-2 sm:gap-3 shrink-0 group">
-              <Logo className="w-12 h-12 sm:w-14 sm:h-14 bg-surface rounded-xl p-1 shadow-sm border border-border" />
+              <Logo className="w-12 h-12 sm:w-14 sm:h-14 bg-white rounded-md p-1 shadow-sm" />
               <div className="flex flex-col">
                 <span className="text-[12px] sm:text-[15px] font-black text-primary tracking-tight leading-none uppercase transition-colors">THE CHOCOLATE</span>
                 <span className="text-[9px] sm:text-[11px] font-black text-primary dark:text-accent tracking-[0.3em] uppercase mt-0.5 transition-colors">Mine</span>
@@ -59,7 +58,7 @@ const Navbar = () => {
             </Link>
 
             {/* 2. SEARCH BAR */}
-            <div 
+            <div
               className="flex-1 max-w-2xl cursor-pointer flex justify-end sm:block"
               onClick={() => setIsSearchOverlayOpen(true)}
             >
@@ -69,22 +68,24 @@ const Navbar = () => {
                   type="text"
                   readOnly
                   placeholder="Search for cakes, desserts and more"
-                  className="hidden sm:block w-full bg-input text-foreground pl-4 pr-12 py-2.5 rounded-xl border border-input-border outline-none placeholder:text-muted font-medium text-sm transition-all group-hover:shadow-soft focus:border-primary"
+                  className="hidden sm:block w-full bg-white text-black pl-4 pr-12 py-2.5 rounded-sm shadow-sm outline-none placeholder:text-gray-500 font-medium text-sm transition-all group-hover:shadow-md"
                 />
+
                 <div className="hidden sm:flex absolute right-0 top-0 h-full px-4 items-center bg-transparent">
                   <Search size={18} className="text-primary" />
                 </div>
 
                 {/* Mobile Icon Button */}
-                <div className="sm:hidden w-11 h-9 bg-card rounded-xl flex items-center justify-center shadow-sm ml-auto border border-border">
-                  <Search size={18} className="text-primary" />
+                <div className="sm:hidden w-11 h-9 bg-white rounded-md flex items-center justify-center shadow-sm ml-auto border border-black/5">
+                  <Search size={18} className="text-[#2D1816]" />
                 </div>
+
               </div>
             </div>
 
             {/* 3. ACTIONS */}
             <div className="flex items-center gap-2 sm:gap-6 text-navbar-text">
-              
+
               <div className="hidden lg:relative lg:flex items-center gap-2 cursor-pointer group py-2 px-3 rounded-xl hover:bg-primary/5 transition-all"
                 onClick={() => setIsLocationOpen(!isLocationOpen)}
               >
@@ -97,7 +98,7 @@ const Navbar = () => {
                 </div>
 
                 {isLocationOpen && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="absolute top-full left-0 mt-2 w-48 bg-card border border-border shadow-premium rounded-2xl py-2 z-[110]"
@@ -120,8 +121,8 @@ const Navbar = () => {
               </div>
 
               {user ? (
-                <Link 
-                  to={user.role === 'admin' ? '/admin/dashboard' : '/account/dashboard'} 
+                <Link
+                  to={user.role === 'admin' ? '/admin/dashboard' : '/account/dashboard'}
                   className="hidden sm:flex items-center gap-2 group py-2 px-3 rounded-xl hover:bg-primary/5 transition-all"
                 >
                   <User size={20} className="text-primary" />
@@ -135,8 +136,8 @@ const Navbar = () => {
                 </Link>
               )}
 
-              <Link 
-                to="/cart" 
+              <Link
+                to="/cart"
                 className="relative flex items-center gap-2 group py-2 px-3 rounded-xl hover:bg-primary/5 transition-all"
               >
                 <ShoppingCart size={20} className="text-primary" />
@@ -152,7 +153,7 @@ const Navbar = () => {
                 <ThemeToggle />
               </div>
 
-              <button 
+              <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="lg:hidden p-2 text-primary hover:bg-primary/5 rounded-xl transition-all"
               >
@@ -167,14 +168,14 @@ const Navbar = () => {
       <AnimatePresence>
         {isMenuOpen && (
           <>
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsMenuOpen(false)}
               className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110]"
             />
-            <motion.div 
+            <motion.div
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
@@ -183,9 +184,9 @@ const Navbar = () => {
             >
               <div className="bg-navbar p-6 text-navbar-text">
                 <div className="flex justify-between items-center mb-6">
-                  <Logo className="w-12 h-12 bg-surface rounded-xl p-1 shadow-sm border border-border" />
-                  <button onClick={() => setIsMenuOpen(false)} className="p-2 hover:bg-primary/10 rounded-full transition-colors">
-                    <X size={24} />
+                  <Logo className="w-10 h-10 bg-white rounded-sm p-1" />
+                  <button onClick={() => setIsMenuOpen(false)}>
+                    <X size={20} />
                   </button>
                 </div>
                 <p className="text-sm font-black uppercase tracking-widest text-primary">The Chocolate Mine</p>
@@ -200,9 +201,9 @@ const Navbar = () => {
                   { label: 'Wishlist', icon: Heart, path: '/account/dashboard' },
                   { label: 'Login / Register', icon: User, path: '/login' },
                 ].map((item, i) => (
-                  <Link 
+                  <Link
                     key={i}
-                    to={item.path} 
+                    to={item.path}
                     className="flex items-center gap-4 p-4 rounded-xl hover:bg-primary/5 transition-all group"
                   >
                     <item.icon size={20} className="text-primary" />
@@ -215,9 +216,9 @@ const Navbar = () => {
         )}
       </AnimatePresence>
 
-      <SearchOverlay 
-        isOpen={isSearchOverlayOpen} 
-        onClose={() => setIsSearchOverlayOpen(false)} 
+      <SearchOverlay
+        isOpen={isSearchOverlayOpen}
+        onClose={() => setIsSearchOverlayOpen(false)}
       />
     </>
   );

@@ -30,8 +30,8 @@ const userSchema = new mongoose.Schema({
   },
   phone: {
     type: String,
-    sparse: true,
-    unique: true
+    sparse: true
+    // ✅ REMOVED unique: true - Multiple users can now have the same phone number
   },
   role: {
     type: String,

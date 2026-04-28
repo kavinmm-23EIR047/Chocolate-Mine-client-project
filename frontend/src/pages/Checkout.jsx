@@ -14,7 +14,7 @@ import {
 
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 import MapSelector from '../components/MapSelector';
 import ScooterLoader from '../components/ScooterLoader';
@@ -28,14 +28,17 @@ const Checkout = () => {
   const { cart, fetchCart, applyCoupon, removeCoupon, loading: cartLoading } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const directItem = location.state?.directItem;
+  const [localCoupon, setLocalCoupon] = useState('');
 
   const [showMap, setShowMap] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loaderText, setLoaderText] = useState('Preparing your order...');
-  const [currentStep, setCurrentStep] = useState(1);
   const [couponInput, setCouponInput] = useState('');
-  
-  // ✅ Prevent duplicate payment attempts
+
+  // Prevent duplicate payment attempts
   const isProcessingPayment = useRef(false);
 
   const [deliveryInfo, setDeliveryInfo] = useState({
@@ -47,6 +50,7 @@ const Checkout = () => {
   const [distance, setDistance] = useState(0);
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const [deliveryDate, setDeliveryDate] = useState(new Date());
 
   const [addressDetails, setAddressDetails] = useState({
     fullName: user?.name || '',
@@ -55,17 +59,93 @@ const Checkout = () => {
     street: '',
   });
 
-  const SHOP_LAT = 11.004540031168712;
-  const SHOP_LNG = 76.97510955713153;
+  const SHOP_LAT = import.meta.env.VITE_SHOP_LAT || 11.004540031168712;
+  const SHOP_LNG = import.meta.env.VITE_SHOP_LNG || 76.97510955713153;
+  const DELIVERY_RADIUS = import.meta.env.VITE_DELIVERY_RADIUS_KM || 30;
 
+  const [locationValid, setLocationValid] = useState(true);
+  const [locationError, setLocationError] = useState('');
+
+
+  // Define slots with end times for validation
   const slots = [
-    { value: '10am-1pm', label: 'Morning (10 AM - 1 PM)' },
-    { value: '1pm-4pm', label: 'Afternoon (1 PM - 4 PM)' },
-    { value: '4pm-7pm', label: 'Evening (4 PM - 7 PM)' },
-    { value: '7pm-10pm', label: 'Night (7 PM - 10 PM)' },
+    { value: '10am-1pm', label: 'Morning (10 AM - 1 PM)', endHour: 13, endMinute: 0 },
+    { value: '1pm-4pm', label: 'Afternoon (1 PM - 4 PM)', endHour: 16, endMinute: 0 },
+    { value: '4pm-7pm', label: 'Evening (4 PM - 7 PM)', endHour: 19, endMinute: 0 },
+    { value: '7pm-10pm', label: 'Night (7 PM - 10 PM)', endHour: 22, endMinute: 0 },
   ];
 
-  const [deliverySlot, setDeliverySlot] = useState('4pm-7pm');
+  const [deliverySlot, setDeliverySlot] = useState(null);
+
+  // Function to check if a slot is available for a given date
+  const isSlotAvailableForDate = (slot, date) => {
+    const now = new Date();
+    const currentDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const selectedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+    // For future dates (tomorrow or later), all slots are available
+    if (selectedDate > currentDate) {
+      return true;
+    }
+
+    // For today, check based on current time
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const currentTimeDecimal = currentHour + (currentMinute / 60);
+
+    // Slot cutoff time = end time - 1 hour
+    const cutoffTimeDecimal = slot.endHour - 1;
+
+    // Slot is available if current time is before cutoff time
+    return currentTimeDecimal < cutoffTimeDecimal;
+  };
+
+  // Get slots with availability status for current date
+  const getSlotsWithAvailability = () => {
+    const todaySlots = slots.map(slot => ({
+      ...slot,
+      available: isSlotAvailableForDate(slot, deliveryDate)
+    }));
+
+    // Check if any slot is available today
+    const hasAvailableSlot = todaySlots.some(slot => slot.available);
+
+    // If no slots available today, auto-switch to tomorrow
+    if (!hasAvailableSlot && deliveryDate.toDateString() === new Date().toDateString()) {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      setDeliveryDate(tomorrow);
+      return slots.map(slot => ({ ...slot, available: true }));
+    }
+
+    return todaySlots;
+  };
+
+  // Get available slots for current date
+  const availableSlots = getSlotsWithAvailability();
+
+  // Set default available slot when date changes
+  useEffect(() => {
+    const firstAvailableSlot = availableSlots.find(slot => slot.available);
+    if (firstAvailableSlot) {
+      setDeliverySlot(firstAvailableSlot.value);
+    } else {
+      setDeliverySlot(null);
+    }
+  }, [deliveryDate]);
+
+  // Handle date change
+  const handleDateChange = (increment) => {
+    const newDate = new Date(deliveryDate);
+    newDate.setDate(newDate.getDate() + increment);
+    setDeliveryDate(newDate);
+  };
+
+  // Check if today has any available slots
+  const hasAvailableSlotsToday = () => {
+    const todaySlots = slots.map(slot => isSlotAvailableForDate(slot, new Date()));
+    return todaySlots.some(slot => slot);
+  };
 
   // ==================== PRICE CALCULATION ====================
 
@@ -78,9 +158,9 @@ const Checkout = () => {
   };
 
   const getItemCouponDiscount = (item) => {
-    const appliedCoupon = cart?.appliedCoupon;
-    if (!appliedCoupon || !item.coupon?.enabled) return 0;
-    if (appliedCoupon.toUpperCase() !== item.coupon.code.toUpperCase()) return 0;
+    const appliedCouponCode = directItem ? localCoupon : cart?.appliedCoupon;
+    if (!appliedCouponCode || !item.coupon?.enabled) return 0;
+    if (appliedCouponCode.toUpperCase() !== item.coupon.code.toUpperCase()) return 0;
 
     const basePrice = getItemBasePrice(item);
 
@@ -109,7 +189,9 @@ const Checkout = () => {
   };
 
   useEffect(() => {
-    if (deliveryInfo.position) {
+    const validateLocation = async () => {
+      if (!deliveryInfo.position) return;
+
       const dist = calculateDistance(
         SHOP_LAT, SHOP_LNG,
         deliveryInfo.position.lat,
@@ -117,11 +199,41 @@ const Checkout = () => {
       );
       setDistance(dist);
       setDeliveryFee(Math.max(30, Math.round(dist * 4)));
-    }
+
+      // Condition B: Distance Check
+      if (dist > DELIVERY_RADIUS) {
+        setLocationValid(false);
+        setLocationError("Delivery available only inside Coimbatore service area (within 30km).");
+        return;
+      }
+
+      // Condition A: Address Check (Coimbatore)
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${deliveryInfo.position.lat}&lon=${deliveryInfo.position.lng}`);
+        const data = await res.json();
+        const fullAddress = data.display_name || '';
+
+        if (!fullAddress.toLowerCase().includes('coimbatore')) {
+          setLocationValid(false);
+          setLocationError("Delivery available only inside Coimbatore service area.");
+          return;
+        }
+
+        setLocationValid(true);
+        setLocationError('');
+      } catch (error) {
+        console.error("Location validation error:", error);
+        // Fallback to basic check if geocoding fails
+        setLocationValid(true);
+      }
+    };
+
+    validateLocation();
   }, [deliveryInfo.position]);
 
-  const cartItems = cart?.items || [];
-  const appliedCoupon = cart?.appliedCoupon;
+
+  const cartItems = directItem ? [directItem] : (cart?.items || []);
+  const appliedCoupon = directItem ? localCoupon : cart?.appliedCoupon;
 
   const subtotal = cartItems.reduce((sum, item) =>
     sum + getFinalItemPrice(item) * item.qty, 0
@@ -144,6 +256,9 @@ const Checkout = () => {
   const gst = Math.round(subtotal * 0.18);
   const convenienceFee = Math.round(subtotal * 0.02);
   const total = subtotal + deliveryFee + gst + convenienceFee;
+
+  // Check if address is selected
+  const isAddressSelected = deliveryInfo.position !== null;
 
   // ==================== FETCH ADDRESSES ====================
 
@@ -177,6 +292,12 @@ const Checkout = () => {
     });
   };
 
+  // Phone number validation (exactly 10 digits)
+  const validatePhoneNumber = (phone) => {
+    const phoneRegex = /^[0-9]{10}$/;
+    return phoneRegex.test(phone);
+  };
+
   const validateForm = () => {
     if (!addressDetails.fullName.trim()) {
       toast.error('Please enter full name');
@@ -184,6 +305,10 @@ const Checkout = () => {
     }
     if (!addressDetails.phone.trim()) {
       toast.error('Please enter phone number');
+      return false;
+    }
+    if (!validatePhoneNumber(addressDetails.phone.trim())) {
+      toast.error('Please enter a valid 10-digit phone number');
       return false;
     }
     if (!addressDetails.houseNo.trim() && !addressDetails.street.trim() && !deliveryInfo.address) {
@@ -194,12 +319,40 @@ const Checkout = () => {
       toast.error('Please select delivery location on map');
       return false;
     }
+    if (!deliverySlot) {
+      toast.error('Please select a delivery slot');
+      return false;
+    }
+
+    // Final slot availability check before submission
+    const selectedSlot = slots.find(s => s.value === deliverySlot);
+    if (selectedSlot && !isSlotAvailableForDate(selectedSlot, deliveryDate)) {
+      toast.error('Selected delivery slot is no longer available. Please choose another slot.');
+      return false;
+    }
+
+    if (!locationValid) {
+      toast.error(locationError || 'Selected location is outside our service area');
+      return false;
+    }
+
     return true;
   };
+
 
   const handleApplyCoupon = async () => {
     const code = couponInput.trim().toUpperCase();
     if (!code) return toast.error('Enter coupon code');
+    if (directItem) {
+      if (directItem.coupon?.enabled && directItem.coupon.code.toUpperCase() === code) {
+        setLocalCoupon(directItem.coupon.code.toUpperCase());
+        toast.success(`Coupon ${code} applied!`);
+        setCouponInput('');
+      } else {
+        toast.error('Invalid coupon');
+      }
+      return;
+    }
     try {
       await applyCoupon(code);
       toast.success(`Coupon ${code} applied!`);
@@ -210,6 +363,11 @@ const Checkout = () => {
   };
 
   const handleRemoveCoupon = async () => {
+    if (directItem) {
+      setLocalCoupon('');
+      toast.success('Coupon removed');
+      return;
+    }
     await removeCoupon();
     toast.success('Coupon removed');
   };
@@ -224,7 +382,7 @@ const Checkout = () => {
   });
 
   const handlePlaceOrder = async () => {
-    // ✅ Prevent duplicate payment attempts
+    // Prevent duplicate payment attempts
     if (isProcessingPayment.current) {
       toast.error('Payment already in progress. Please wait.');
       return;
@@ -232,14 +390,14 @@ const Checkout = () => {
 
     if (!validateForm()) return;
 
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (!token) {
       toast.error('Session expired. Please login again.');
       navigate('/login');
       return;
     }
 
-    // ✅ Check if Razorpay key is configured
+    // Check if Razorpay key is configured
     const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
     if (!razorpayKey) {
       toast.error('Payment configuration error. Please contact support.');
@@ -251,7 +409,7 @@ const Checkout = () => {
       isProcessingPayment.current = true;
       setLoading(true);
       setLoaderText('Preparing your order...');
-      
+
       const loadingInterval = setInterval(() => {
         setLoaderText(prev => {
           const messages = ['Confirming delivery address...', 'Calculating total...', 'Almost there...'];
@@ -271,8 +429,15 @@ const Checkout = () => {
           lat: deliveryInfo.position?.lat,
           lng: deliveryInfo.position?.lng,
         },
-        deliveryDate: new Date(),
+        deliveryDate: deliveryDate,
         deliverySlot,
+        directItem: directItem ? {
+          productId: directItem.productId,
+          qty: directItem.qty,
+          selectedFlavor: directItem.selectedFlavor,
+          selectedWeight: directItem.selectedWeight,
+          appliedCoupon: localCoupon
+        } : undefined,
       };
 
       const loaded = await loadRazorpayScript();
@@ -284,18 +449,19 @@ const Checkout = () => {
         return;
       }
 
-      // ✅ Create order with backend
+      // Create order with backend
       const res = await api.post('/payment/create-order', {
         address: payload.address,
         deliveryDate: payload.deliveryDate,
         deliverySlot: payload.deliverySlot,
+        directItem: payload.directItem,
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       const { razorpayOrder, orderId } = res.data.data;
 
-      // ✅ Validate order response
+      // Validate order response
       if (!razorpayOrder || !razorpayOrder.id) {
         throw new Error('Invalid order response from server');
       }
@@ -303,12 +469,12 @@ const Checkout = () => {
       clearInterval(loadingInterval);
       setLoading(false);
 
-      // ✅ Get prefill data from selected address or user
+      // Get prefill data from selected address or user
       const prefillName = addressDetails.fullName || user?.name || '';
       const prefillContact = addressDetails.phone || user?.phone || '';
       const prefillEmail = user?.email || '';
 
-      // ✅ Razorpay options with improved payment methods configuration
+      // Razorpay options
       const options = {
         key: razorpayKey,
         amount: razorpayOrder.amount,
@@ -316,45 +482,8 @@ const Checkout = () => {
         name: 'The Chocolate Mine',
         description: 'Order Payment',
         order_id: razorpayOrder.id,
-        // ✅ Explicitly enable all payment methods
-        method: {
-          upi: true,
-          card: true,
-          netbanking: true,
-          wallet: true,
-        },
-        // ✅ Configure display order - UPI first, then Card
-        display: {
-          blocks: {
-            upi: {
-              name: 'Pay with UPI',
-              instruments: [
-                {
-                  method: 'upi',
-                  flows: ['collect', 'intent', 'qr']
-                }
-              ]
-            },
-            cards: {
-              name: 'Credit/Debit Card',
-              instruments: [
-                {
-                  method: 'card',
-                  flows: ['inapp']
-                }
-              ]
-            }
-          },
-          sequence: ['block.upi', 'block.cards'],
-          preference: {
-            show_default_blocks: true
-          }
-        },
         handler: async function (response) {
           try {
-            // ✅ Prevent duplicate verification
-            if (isProcessingPayment.current) return;
-            isProcessingPayment.current = true;
             setLoading(true);
             setLoaderText('Verifying your payment...');
 
@@ -381,7 +510,6 @@ const Checkout = () => {
         },
         modal: {
           ondismiss: async function () {
-            // ✅ Always reset loading state when modal closes
             setLoading(false);
             isProcessingPayment.current = false;
             try {
@@ -395,27 +523,20 @@ const Checkout = () => {
             toast.error('Payment cancelled. You can try again.');
           },
         },
-        // ✅ Safe prefill with fallbacks
         prefill: {
           name: prefillName,
           email: prefillEmail,
           contact: prefillContact,
         },
-        // ✅ Theme color matching existing project
         theme: { color: '#4A2C2A' },
       };
 
       const razorpayInstance = new window.Razorpay(options);
-      
-      // ✅ Allow handler to run
-      isProcessingPayment.current = false;
-      razorpayInstance.open();
 
       razorpayInstance.on('payment.failed', async function (response) {
-        // ✅ Reset all states on payment failure
         setLoading(false);
         isProcessingPayment.current = false;
-        
+
         try {
           await api.post('/payment/log-failure', {
             orderId,
@@ -424,27 +545,26 @@ const Checkout = () => {
         } catch (e) {
           console.error('Failed to log payment failure', e);
         }
-        
+
         toast.error(`Payment failed: ${response.error?.description || 'Please try again'}`);
       });
 
+      // ✅ FIX: Only call open() once
       razorpayInstance.open();
 
     } catch (err) {
-      // ✅ Ensure loading state is reset in all error cases
       setLoading(false);
       isProcessingPayment.current = false;
-      
+
       if (err?.response?.status === 401) {
         toast.error('Session expired. Please login again.');
         navigate('/login');
         return;
       }
-      
+
       console.error('Order creation error:', err);
       toast.error(err?.response?.data?.message || 'Failed to place order. Please try again.');
     } finally {
-      // ✅ Additional safety: reset after 60 seconds if something hangs
       setTimeout(() => {
         if (isProcessingPayment.current) {
           isProcessingPayment.current = false;
@@ -465,12 +585,26 @@ const Checkout = () => {
     return Array.from(coupons);
   }, [cartItems]);
 
+  // Handle phone number input
+  const handlePhoneChange = (e) => {
+    const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+    setAddressDetails({ ...addressDetails, phone: value });
+  };
+
+  // Format date for display
+  const formatDate = (date) => {
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  };
+
+  const isToday = deliveryDate.toDateString() === new Date().toDateString();
+  const showDateSelector = !hasAvailableSlotsToday() && isToday;
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50">
       <ScooterLoader isVisible={loading} text={loaderText} />
 
       {/* Header */}
-      <div className="bg-card border-b border-border/50 sticky top-0 z-10">
+      <div className="bg-white border-b sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center gap-2 text-xs text-muted">
             <button onClick={() => navigate('/cart')} className="hover:text-primary transition-colors flex items-center gap-1">
@@ -490,8 +624,8 @@ const Checkout = () => {
           <div className="lg:col-span-2 space-y-6">
 
             {/* Step 1: Delivery Address */}
-            <div className="bg-card rounded-2xl shadow-card border border-border/50 overflow-hidden">
-              <div className="p-5 border-b border-border/50 bg-surface/5">
+            <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+              <div className="p-5 border-b bg-gray-50">
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-full bg-primary text-button-text flex items-center justify-center text-[10px] font-black">1</div>
                   <h2 className="font-black text-heading text-sm uppercase tracking-widest">Delivery Address</h2>
@@ -503,32 +637,32 @@ const Checkout = () => {
                   <div className="space-y-3">
                     <p className="text-[10px] text-muted font-black uppercase tracking-widest">Saved Addresses</p>
                     <div className="grid gap-3">
-                    {savedAddresses.map((addr) => (
-                      <button
-                        key={addr._id}
-                        onClick={() => handleSelectAddress(addr)}
-                        className={`text-left p-6 border-2 rounded-[1.5rem] transition-all shadow-sm relative overflow-hidden group ${selectedAddressId === addr._id
+                      {savedAddresses.map((addr) => (
+                        <button
+                          key={addr._id}
+                          onClick={() => handleSelectAddress(addr)}
+                          className={`text-left p-6 border-2 rounded-[1.5rem] transition-all shadow-sm relative overflow-hidden group ${selectedAddressId === addr._id
                             ? 'border-accent bg-accent/5'
                             : 'border-border/30 hover:border-accent/30 bg-surface/30'
-                          }`}
-                      >
-                        <div className="flex justify-between items-start relative z-10">
-                          <div>
-                            <span className="font-black text-heading text-base uppercase tracking-tight">{addr.fullName}</span>
-                            <p className="text-[10px] text-muted font-black uppercase tracking-widest mt-1 italic">{addr.phone}</p>
-                          </div>
-                          {selectedAddressId === addr._id && (
-                            <div className="w-6 h-6 bg-accent rounded-full flex items-center justify-center text-primary shadow-sm">
-                              <CheckCircle2 size={14} />
+                            }`}
+                        >
+                          <div className="flex justify-between items-start relative z-10">
+                            <div>
+                              <span className="font-black text-heading text-base uppercase tracking-tight">{addr.fullName}</span>
+                              <p className="text-[10px] text-muted font-black uppercase tracking-widest mt-1 italic">{addr.phone}</p>
                             </div>
+                            {selectedAddressId === addr._id && (
+                              <div className="w-6 h-6 bg-accent rounded-full flex items-center justify-center text-primary shadow-sm">
+                                <CheckCircle2 size={14} />
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted font-bold mt-4 line-clamp-2 leading-relaxed relative z-10">{addr.houseNo}, {addr.street}</p>
+                          {selectedAddressId === addr._id && (
+                            <div className="absolute top-0 right-0 w-20 h-20 bg-accent/5 rounded-full blur-2xl -mr-10 -mt-10" />
                           )}
-                        </div>
-                        <p className="text-xs text-muted font-bold mt-4 line-clamp-2 leading-relaxed relative z-10">{addr.houseNo}, {addr.street}</p>
-                        {selectedAddressId === addr._id && (
-                          <div className="absolute top-0 right-0 w-20 h-20 bg-accent/5 rounded-full blur-2xl -mr-10 -mt-10" />
-                        )}
-                      </button>
-                    ))}
+                        </button>
+                      ))}
                     </div>
                     <div className="relative py-2">
                       <div className="absolute inset-0 flex items-center">
@@ -549,12 +683,13 @@ const Checkout = () => {
                 </button>
 
                 {deliveryInfo.position && (
-                  <div className="mt-4 p-4 bg-success-light rounded-xl border border-success/10">
-                    <p className="text-xs font-black text-success-text uppercase tracking-widest">Delivery Location Selected</p>
-                    <p className="text-[11px] text-success mt-1 font-medium">{deliveryInfo.address}</p>
-                    <p className="text-[10px] text-success/60 mt-1 font-bold">{distance.toFixed(1)} km from our bakery</p>
+                  <div className="mt-4 p-4 bg-green-50 rounded-lg">
+                    <p className="text-sm font-medium text-green-800">Delivery Location Selected</p>
+                    <p className="text-xs text-green-600 mt-1">{deliveryInfo.address}</p>
+                    <p className="text-xs text-green-500 mt-1">{distance.toFixed(1)} km from our bakery</p>
                   </div>
                 )}
+
 
                 <div className="grid md:grid-cols-2 gap-4 pt-6 border-t border-border/30">
                   <div className="space-y-2">
@@ -569,11 +704,16 @@ const Checkout = () => {
                   <div className="space-y-2">
                     <label className="block text-[10px] font-black text-muted uppercase tracking-widest ml-2">Phone Number *</label>
                     <input
-                      className="input-field"
+                      className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                       placeholder="Contact number"
                       value={addressDetails.phone}
-                      onChange={(e) => setAddressDetails({ ...addressDetails, phone: e.target.value })}
+                      onChange={handlePhoneChange}
+                      type="tel"
+                      maxLength={10}
                     />
+                    {addressDetails.phone && !validatePhoneNumber(addressDetails.phone) && (
+                      <p className="text-xs text-red-500 mt-1">Please enter a valid 10-digit phone number</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <label className="block text-[10px] font-black text-muted uppercase tracking-widest ml-2">House/Flat No. *</label>
@@ -598,39 +738,41 @@ const Checkout = () => {
             </div>
 
             {/* Step 2: Delivery Slot */}
-            <div className="bg-card rounded-2xl shadow-card border border-border/50 overflow-hidden">
-              <div className="p-5 border-b border-border/50 bg-surface/5">
+            <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+              <div className="p-5 border-b bg-gray-50">
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-full bg-primary text-button-text flex items-center justify-center text-[10px] font-black">2</div>
                   <h2 className="font-black text-heading text-sm uppercase tracking-widest">Delivery Slot</h2>
                 </div>
               </div>
               <div className="p-5">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {slots.map((slot) => (
                     <button
                       key={slot.value}
                       onClick={() => setDeliverySlot(slot.value)}
-                      className={`p-6 text-center border-2 rounded-2xl transition-all relative overflow-hidden group ${deliverySlot === slot.value
-                          ? 'border-accent bg-accent/5 text-accent shadow-sm'
-                          : 'border-border/30 hover:border-accent/30 bg-surface/30 text-muted'
+                      className={`p-4 text-center border rounded-lg transition-all ${deliverySlot === slot.value
+                        ? 'border-primary bg-primary/5 text-primary'
+                        : 'border-gray-200 hover:border-primary'
                         }`}
                     >
-                      <Clock size={20} className={`mx-auto mb-3 transition-transform group-hover:scale-110 ${deliverySlot === slot.value ? 'text-accent' : 'text-muted'}`} />
-                      <p className="text-[10px] font-black uppercase tracking-widest leading-tight">{slot.label.split(' (')[0]}</p>
-                      <p className="text-[9px] font-bold opacity-60 mt-1">{slot.label.split(' (')[1].replace(')', '')}</p>
-                      {deliverySlot === slot.value && (
-                        <div className="absolute top-0 right-0 w-12 h-12 bg-accent/5 rounded-full blur-xl -mr-6 -mt-6" />
-                      )}
+                      <Clock size={18} className="mx-auto mb-2" />
+                      <p className="text-xs font-medium">{slot.label}</p>
                     </button>
                   ))}
                 </div>
+
+                <p className="text-xs text-gray-500 text-center mt-3">
+                  {deliveryDate.toDateString() === new Date().toDateString()
+                    ? 'Slots available until 1 hour before end time'
+                    : 'All slots available for future dates'}
+                </p>
               </div>
             </div>
 
             {/* Step 3: Payment - Online Only */}
-            <div className="bg-card rounded-2xl shadow-card border border-border/50 overflow-hidden">
-              <div className="p-5 border-b border-border/50 bg-surface/5">
+            <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+              <div className="p-5 border-b bg-gray-50">
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-full bg-primary text-button-text flex items-center justify-center text-[10px] font-black">3</div>
                   <h2 className="font-black text-heading text-sm uppercase tracking-widest">Payment Method</h2>
@@ -655,8 +797,8 @@ const Checkout = () => {
 
                 <div className="max-h-64 overflow-y-auto space-y-4 mb-6 pr-2 custom-scrollbar">
                   {cartItems.map((item) => (
-                    <div 
-                      key={`${item.productId}-${item.selectedFlavor || ''}-${item.selectedWeight || ''}`} 
+                    <div
+                      key={`${item.productId}-${item.selectedFlavor || ''}-${item.selectedWeight || ''}`}
                       className="flex gap-4"
                     >
                       <img src={item.image} className="w-14 h-14 rounded-xl object-cover border border-border/10" />
@@ -705,19 +847,19 @@ const Checkout = () => {
                     <span className="text-heading">{formatCurrency(subtotal)}</span>
                   </div>
 
-                  <div className="flex justify-between text-[11px] font-bold">
-                    <span className="text-muted uppercase tracking-widest">Delivery Fee</span>
-                    <span className="text-heading">{deliveryInfo.position ? formatCurrency(deliveryFee) : '--'}</span>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Delivery Fee</span>
+                    <span>{deliveryInfo.position ? formatCurrency(deliveryFee) : '--'}</span>
                   </div>
 
-                  <div className="flex justify-between text-[11px] font-bold">
-                    <span className="text-muted uppercase tracking-widest">GST (18%)</span>
-                    <span className="text-heading">{deliveryInfo.position ? formatCurrency(gst) : '--'}</span>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">GST (18%)</span>
+                    <span>{deliveryInfo.position ? formatCurrency(gst) : '--'}</span>
                   </div>
 
-                  <div className="flex justify-between text-[11px] font-bold">
-                    <span className="text-muted uppercase tracking-widest">Convenience Fee</span>
-                    <span className="text-heading">{deliveryInfo.position ? formatCurrency(convenienceFee) : '--'}</span>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Convenience Fee</span>
+                    <span>{deliveryInfo.position ? formatCurrency(convenienceFee) : '--'}</span>
                   </div>
 
                   {(offerDiscount + couponDiscount) > 0 && (
@@ -727,13 +869,18 @@ const Checkout = () => {
                     </div>
                   )}
 
-                  <div className="border-t border-border/30 pt-4 mt-2">
-                    <div className="flex justify-between font-black text-xl tracking-tight">
-                      <span className="text-muted text-[11px] uppercase tracking-widest self-center">Total</span>
-                      <span className="text-heading">
+                  <div className="border-t pt-3 mt-1">
+                    <div className="flex justify-between font-bold text-lg">
+                      <span>Total</span>
+                      <span className="text-primary">
                         {deliveryInfo.position ? formatCurrency(total) : '--'}
                       </span>
                     </div>
+                    {!isAddressSelected && (
+                      <p className="text-xs text-orange-600 mt-2 text-center">
+                        Please select delivery address to see complete total
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -778,10 +925,10 @@ const Checkout = () => {
 
                 <Button
                   onClick={handlePlaceOrder}
-                  className="w-full mt-8 bg-secondary text-button-text hover:brightness-110 shadow-premium h-14"
+                  className="w-full mt-6"
                   disabled={!addressDetails.fullName.trim() || !addressDetails.phone.trim() || !deliveryInfo.position}
                 >
-                  {`PAY ${deliveryInfo.position ? formatCurrency(total) : ''}`}
+                  {`PAY ${isAddressSelected ? formatCurrency(total) : '---'}`}
                 </Button>
 
                 <div className="flex items-center justify-center gap-4 mt-6 text-[10px] text-muted/40 font-black uppercase tracking-widest">

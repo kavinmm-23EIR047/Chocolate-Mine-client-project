@@ -24,7 +24,7 @@ const DashboardHome = () => {
           api.get('/users/addresses'),
           api.get('/reviews/my')
         ]);
-        
+
         setStatsData(prev => ({
           ...prev,
           totalOrders: ordersRes.data?.data ? ordersRes.data.data.length : 0,
@@ -59,10 +59,10 @@ const DashboardHome = () => {
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
         {stats.map((stat, index) => (
-          <Link 
-            key={index} 
+          <Link
+            key={index}
             to={stat.title === 'Wishlist' ? '/account/wishlist' : stat.title === 'Total Orders' ? '/account/orders' : stat.title === 'My Reviews' ? '/account/reviews' : '/account/addresses'}
-            className="p-8 rounded-[2rem] border border-border/40 bg-surface/30 hover:bg-surface hover:shadow-premium transition-all group relative overflow-hidden"
+            className="p-5 rounded-2xl border border-border/50 bg-[#FAF9F6] hover:bg-white hover:shadow-md transition-all group"
           >
             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-transform group-hover:scale-110 shadow-sm ${stat.color}`}>
               <stat.icon size={22} />
@@ -75,32 +75,28 @@ const DashboardHome = () => {
       </div>
 
       {/* Quick Links */}
-      <div className="grid md:grid-cols-2 gap-8 pt-4">
-        <div className="bg-card rounded-[2.5rem] p-8 border border-border/40 shadow-premium">
-          <h3 className="text-xs font-black text-heading uppercase tracking-widest mb-8 flex items-center gap-3">
-            <div className="w-8 h-8 bg-primary/5 rounded-lg flex items-center justify-center text-primary">
-              <ShoppingBag size={16} />
-            </div>
+      <div className="grid md:grid-cols-2 gap-6 pt-6">
+        <div className="card-premium p-6 border border-border/50 bg-white">
+          <h3 className="text-sm font-black text-heading uppercase tracking-widest mb-4 flex items-center gap-2">
+            <ShoppingBag size={16} className="text-secondary" />
             Recent Orders
           </h3>
-          <div className="flex flex-col items-center justify-center py-12 text-center bg-surface/30 rounded-[2rem] border-2 border-dashed border-border/40">
-            <p className="text-[11px] font-black text-muted mb-6 uppercase tracking-widest max-w-[200px] leading-relaxed">View your recent purchases and track deliveries.</p>
-            <Link to="/account/orders">
-              <Button variant="outline" className="text-[10px] font-black uppercase tracking-widest px-8">View All Orders</Button>
+          <div className="flex flex-col items-center justify-center py-8 text-center bg-[#FAF9F6] rounded-xl border border-dashed border-border">
+            <p className="text-xs font-bold text-muted mb-4">View your recent purchases and track deliveries.</p>
+            <Link to="/account/orders" className="text-xs font-black text-secondary hover:underline uppercase tracking-widest">
+              View All Orders
             </Link>
           </div>
         </div>
 
-        <div className="bg-card rounded-[2.5rem] p-8 border border-border/40 shadow-premium">
-          <h3 className="text-xs font-black text-heading uppercase tracking-widest mb-8 flex items-center gap-3">
-            <div className="w-8 h-8 bg-primary/5 rounded-lg flex items-center justify-center text-primary">
-              <MapPin size={16} />
-            </div>
+        <div className="card-premium p-6 border border-border/50 bg-white">
+          <h3 className="text-sm font-black text-heading uppercase tracking-widest mb-4 flex items-center gap-2">
+            <MapPin size={16} className="text-secondary" />
             Default Address
           </h3>
-          <div className="p-8 bg-surface/30 rounded-[2rem] border border-border/40">
-            <p className="text-xl font-black text-heading mb-2 uppercase tracking-tighter">{user?.name}</p>
-            <p className="text-[11px] text-muted font-black uppercase tracking-widest leading-relaxed mb-8">
+          <div className="p-5 bg-[#FAF9F6] rounded-xl border border-border/50">
+            <p className="text-sm font-black text-heading mb-1">{user?.name}</p>
+            <p className="text-xs text-muted font-bold line-clamp-2 leading-relaxed mb-4">
               Manage your saved addresses for quicker checkout.
             </p>
             <Link to="/account/addresses">

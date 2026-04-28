@@ -23,6 +23,7 @@ const menuItems = [
   { path: '/staff/orders/history', label: 'Order History', icon: History },
 ];
 
+
 import Logo from '../Logo';
 
 const StaffLayout = () => {
@@ -49,16 +50,17 @@ const StaffLayout = () => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-all duration-200 group ${
+                className={`flex items-center gap-3.5 px-5 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 group ${
                   isActive
-                    ? 'bg-secondary/15 text-secondary shadow-sm'
-                    : 'text-muted hover:bg-border/50 hover:text-heading'
+                    ? 'bg-secondary text-white shadow-lg translate-x-2'
+                    : 'text-muted hover:bg-secondary/5 hover:text-heading border border-transparent hover:border-border/30'
                 }`}
               >
-                <item.icon size={20} />
+                <item.icon size={16} className={isActive ? 'text-white' : 'text-secondary/60 group-hover:text-secondary transition-colors'} />
                 <span>{item.label}</span>
-                {isActive && <ChevronRight size={16} className="ml-auto text-secondary" />}
+                {isActive && <ChevronRight size={14} className="ml-auto opacity-50" />}
               </Link>
+
             );
           })}
         </nav>

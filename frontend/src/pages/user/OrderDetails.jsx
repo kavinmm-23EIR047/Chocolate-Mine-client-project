@@ -28,10 +28,11 @@ const STATUS_ORDER = ["confirmed", "out_for_delivery", "delivered"];
 
 // Status display mapping
 const STATUS_MAP = {
-  confirmed: { label: "Confirmed", color: "text-blue-600 bg-blue-50" },
-  out_for_delivery: { label: "Out for Delivery", color: "text-orange-600 bg-orange-50" },
-  delivered: { label: "Delivered", color: "text-green-600 bg-green-50" }
+  confirmed: { label: "Confirmed", color: "text-blue-600 bg-blue-500/10 border border-blue-200/20" },
+  out_for_delivery: { label: "Out for Delivery", color: "text-orange-600 bg-orange-500/10 border border-orange-200/20" },
+  delivered: { label: "Delivered", color: "text-green-600 bg-green-500/10 border border-green-200/20" }
 };
+
 
 const OrderDetails = () => {
   const { id } = useParams();
@@ -46,7 +47,7 @@ const OrderDetails = () => {
 
   // Initialize socket connection for real-time updates
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (!token || !id) return;
 
     socketRef.current = io(import.meta.env.VITE_API_URL || 'http://localhost:5000', {
@@ -311,14 +312,16 @@ const OrderDetails = () => {
                           {step.description}
                         </p>
                         {step.id === "out_for_delivery" && order.orderStatus === "out_for_delivery" && (
-                          <div className="mt-3 p-2 bg-orange-50 rounded-lg text-xs text-orange-700">
+                          <div className="mt-3 p-3 bg-orange-500/10 rounded-xl text-xs text-orange-600 border border-orange-200/20">
                             📦 Your order is out for delivery! Please keep your phone handy for OTP verification.
                           </div>
+
                         )}
                         {step.id === "delivered" && order.orderStatus === "delivered" && (
-                          <div className="mt-3 p-2 bg-green-50 rounded-lg text-xs text-green-700">
+                          <div className="mt-3 p-3 bg-green-500/10 rounded-xl text-xs text-green-600 border border-green-200/20">
                             ✅ Order delivered successfully! Please share your feedback by clicking the "WRITE REVIEW" button above.
                           </div>
+
                         )}
                       </div>
                     </div>
@@ -368,7 +371,8 @@ const OrderDetails = () => {
                     </div>
                   </div>
                   {expandedItems[idx] && item.customDetails && (
-                    <div className="mt-3 p-3 bg-gray-50 rounded-lg text-xs">
+                    <div className="mt-3 p-4 bg-card-soft rounded-xl text-xs border border-border/30">
+
                       {item.customDetails.flavour && <p><span className="font-medium">Flavor:</span> {item.customDetails.flavour}</p>}
                       {item.customDetails.shape && <p><span className="font-medium">Shape:</span> {item.customDetails.shape}</p>}
                       {item.customDetails.tiers && <p><span className="font-medium">Tiers:</span> {item.customDetails.tiers}</p>}

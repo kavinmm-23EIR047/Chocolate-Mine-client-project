@@ -62,7 +62,7 @@ const SocketInitializer = ({ children }) => {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       if (token) {
         socketService.connect(token);
         
@@ -99,6 +99,7 @@ import AdminStaff from './pages/admin/AdminStaff';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
 import CategoryManager from './pages/admin/CategoryManager';
 import OccasionManager from './pages/admin/OccasionManager';
+import AdminBanner from './pages/admin/AdminBanner';
 import StaffDashboard from './pages/staff/StaffDashboard';
 
 function App() {
@@ -179,6 +180,7 @@ function App() {
                       <Route path="analytics" element={<AdminAnalytics />} />
                       <Route path="categories" element={<CategoryManager />} />
                       <Route path="occasions" element={<OccasionManager />} />
+                      <Route path="banners" element={<AdminBanner />} />
                       <Route path="settings" element={<AdminDashboard />} />
                     </Route>
 
@@ -187,9 +189,10 @@ function App() {
                       <Route index element={<Navigate to="/staff/dashboard" replace />} />
                       <Route path="dashboard" element={<StaffDashboard />} />
                       <Route path="orders/new" element={<StaffDashboard />} />
+                      <Route path="orders/active" element={<StaffDashboard />} />
+                      <Route path="orders/history" element={<StaffDashboard />} />
                       <Route path="orders/out-for-delivery" element={<StaffDashboard />} />
                       <Route path="orders/delivered" element={<StaffDashboard />} />
-                      <Route path="orders/history" element={<StaffDashboard />} />
                     </Route>
                   </Routes>
                 </Router>

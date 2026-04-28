@@ -36,7 +36,7 @@ const sendTokenResponse = (user, statusCode, res) => {
 exports.signup = asyncHandler(async (req, res, next) => {
   const { name, email, password, phone } = req.body;
 
-  const existingUser = await User.findOne({ email });
+  const existingUser = await User.findOne({ email: email.toLowerCase() });
 
   if (existingUser) {
     return next(new AppError('Email already in use', 400));
@@ -44,7 +44,7 @@ exports.signup = asyncHandler(async (req, res, next) => {
 
   const user = await User.create({
     name,
-    email,
+    email: email.toLowerCase(),
     password,
     phone,
     role: 'user',
@@ -189,10 +189,12 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
   await OtpSession.create({
     email,
     hashedOtp,
+    type: 'password_reset',
     expiresAt: new Date(
       Date.now() + 10 * 60 * 1000
     ),
   });
+
 
   await emailService.sendPasswordResetOTP(email, otp);
 
@@ -218,8 +220,10 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
 
   const session = await OtpSession.findOne({
     email,
+    type: 'password_reset',
     isUsed: false,
     expiresAt: { $gt: new Date() }
+
   }).sort('-createdAt');
 
   if (!session) {

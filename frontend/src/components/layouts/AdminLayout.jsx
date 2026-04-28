@@ -16,7 +16,9 @@ import {
   ChevronRight,
   Tag,
   Gift,
+  Image as ImageIcon,
 } from 'lucide-react';
+
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { getInitials } from '../../utils/helpers';
@@ -29,7 +31,9 @@ const menuItems = [
   { path: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
   { path: '/admin/categories', label: 'Categories', icon: Tag },
   { path: '/admin/occasions', label: 'Occasions', icon: Gift },
+  { path: '/admin/banners', label: 'Banners', icon: ImageIcon },
   { path: '/admin/settings', label: 'Settings', icon: Settings },
+
 ];
 
 import Logo from '../Logo';

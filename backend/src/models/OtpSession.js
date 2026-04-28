@@ -8,7 +8,7 @@ const otpSessionSchema = new mongoose.Schema({
     ref: 'Order',
     index: true 
   },
-  otp: { type: String, required: true }, // Plain OTP for delivery (not hashed for delivery staff)
+  otp: { type: String }, // Plain OTP for delivery (not hashed for delivery staff)
   hashedOtp: { type: String }, // For user login/registration (hashed)
   type: { 
     type: String, 

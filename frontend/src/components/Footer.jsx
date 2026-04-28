@@ -66,11 +66,16 @@ const Footer = () => {
           <div>
             <h4 className="text-[10px] font-black text-secondary uppercase tracking-[0.4em] mb-8">Navigation</h4>
             <ul className="space-y-4">
-              {['Home', 'Shop All', 'Bestsellers', 'Gifting', 'Track Order'].map((item, i) => (
+              {[
+                { name: 'Home', path: '/' },
+                { name: 'Shop All', path: '/shop' },
+                { name: 'Bestsellers', path: '/shop?search=bestseller' },
+                { name: 'Gifting', path: '/shop?search=gift' }
+              ].map((item, i) => (
                 <li key={i}>
-                  <Link to="/" className="text-footer-text/50 hover:text-secondary font-bold transition-colors flex items-center gap-2 group text-sm uppercase tracking-wide">
+                  <Link to={item.path} className="text-footer-text/50 hover:text-secondary font-bold transition-colors flex items-center gap-2 group text-sm uppercase tracking-wide">
                     <div className="w-1.5 h-1.5 bg-secondary rounded-full opacity-0 group-hover:opacity-100 transition-all" />
-                    {item}
+                    {item.name}
                   </Link>
                 </li>
               ))}
@@ -80,11 +85,16 @@ const Footer = () => {
           <div>
             <h4 className="text-[10px] font-black text-secondary uppercase tracking-[0.4em] mb-8">Support</h4>
             <ul className="space-y-4">
-              {['Privacy Policy', 'Shipping Policy', 'Returns & Refunds', 'Bulk Orders', 'Contact Us'].map((item, i) => (
+              {[
+                { name: 'My Account', path: '/account/dashboard' },
+                { name: 'My Orders', path: '/account/orders' },
+                { name: 'Wishlist', path: '/account/wishlist' },
+                { name: 'Contact Us', path: '/' }
+              ].map((item, i) => (
                 <li key={i}>
-                  <Link to="/" className="text-footer-text/50 hover:text-secondary font-bold transition-colors flex items-center gap-2 group text-sm uppercase tracking-wide">
+                  <Link to={item.path} className="text-footer-text/50 hover:text-secondary font-bold transition-colors flex items-center gap-2 group text-sm uppercase tracking-wide">
                     <div className="w-1.5 h-1.5 bg-secondary rounded-full opacity-0 group-hover:opacity-100 transition-all" />
-                    {item}
+                    {item.name}
                   </Link>
                 </li>
               ))}
@@ -94,11 +104,16 @@ const Footer = () => {
           <div>
             <h4 className="text-[10px] font-black text-secondary uppercase tracking-[0.4em] mb-8">Quick Shop</h4>
             <ul className="space-y-4">
-              {['Cakes', 'Chocolates', 'Macarons', 'Eggless', 'Combo Packs'].map((item, i) => (
+              {[
+                { name: 'Birthday', path: '/occasion/birthday' },
+                { name: 'Anniversary', path: '/occasion/anniversary' },
+                { name: 'Wedding', path: '/occasion/wedding' },
+                { name: 'Congratulations', path: '/occasion/congratulations' }
+              ].map((item, i) => (
                 <li key={i}>
-                  <Link to="/" className="text-footer-text/50 hover:text-secondary font-bold transition-colors flex items-center gap-2 group text-sm uppercase tracking-wide">
+                  <Link to={item.path} className="text-footer-text/50 hover:text-secondary font-bold transition-colors flex items-center gap-2 group text-sm uppercase tracking-wide">
                     <div className="w-1.5 h-1.5 bg-secondary rounded-full opacity-0 group-hover:opacity-100 transition-all" />
-                    {item}
+                    {item.name}
                   </Link>
                 </li>
               ))}

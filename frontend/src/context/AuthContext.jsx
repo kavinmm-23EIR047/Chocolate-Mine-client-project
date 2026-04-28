@@ -1,6 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../utils/api';
-import authService from '../services/authService';
 
 const AuthContext = createContext();
 
@@ -8,79 +7,111 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const checkAuth = useCallback(async () => {
-    try {
-      // ✅ Read token from 'token' key, fallback to 'auth_user' for OAuth sessions
-      let token = localStorage.getItem('token');
+  // Initialize auth state
+  useEffect(() => {
+    const initializeAuth = async () => {
+      const token = sessionStorage.getItem('token');
+      const storedUser = sessionStorage.getItem('user');
+
+      console.log('🔐 AuthContext: Initializing...', { hasToken: !!token, hasStoredUser: !!storedUser });
 
       if (!token) {
-        const authUser = localStorage.getItem('auth_user');
-        if (authUser) {
-          try {
-            const parsed = JSON.parse(authUser);
-            if (parsed?.token) {
-              token = parsed.token;
-              // Normalize: save it under 'token' key going forward
-              localStorage.setItem('token', token);
-            }
-          } catch (e) {
-            console.error('Failed to parse auth_user', e);
-          }
+        console.log('🔐 AuthContext: No token found, user is guest');
+        setLoading(false);
+        return;
+      }
+
+      // If we have a user in storage, use it immediately for better UX
+      if (storedUser) {
+        try {
+          const parsed = JSON.parse(storedUser);
+          console.log('🔐 AuthContext: Restoring user from storage', parsed.email);
+          setUser(parsed);
+        } catch (err) {
+          console.error('🔐 AuthContext: Failed to parse stored user', err);
         }
       }
 
-      if (token) {
+      // Always verify token and get fresh user data from server
+      try {
+        console.log('🔐 AuthContext: Verifying token with server...');
         const response = await api.get('/auth/me');
-        setUser(response.data.user);
+        const userData = response.data.user;
+        console.log('🔐 AuthContext: Token verified, user:', userData.email);
+        setUser(userData);
+        sessionStorage.setItem('user', JSON.stringify(userData));
+      } catch (err) {
+        const status = err.response?.status || err.status;
+        console.error('🔐 AuthContext: Verification failed', { status, message: err.message });
+        
+        // Only clear if it's a 401/403 error
+        if (status === 401 || status === 403) {
+          console.log('🔐 AuthContext: Clearing session due to auth error');
+          logout();
+        }
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error('Auth check failed:', err);
-      localStorage.removeItem('token');
-      localStorage.removeItem('auth_user');
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
+    };
+
+    initializeAuth();
   }, []);
 
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
-
-  const login = async (credentials) => {
-    const response = await authService.login(credentials);
-    const { token, user: userData } = response.data;
-    localStorage.setItem('token', token);
-    setUser(userData);
-    return userData;
-  };
-
-  const signup = async (data) => {
-    const response = await authService.signup(data);
-    const { token, user: userData } = response.data;
-    localStorage.setItem('token', token);
-    setUser(userData);
-    return userData;
+  const login = async ({ email, password }) => {
+    console.log('🔐 AuthContext: Attempting manual login for:', email);
+    try {
+      const response = await api.post('/auth/login', { email, password });
+      const { user: userData, token } = response.data;
+      
+      console.log('🔐 AuthContext: Manual login successful!', userData.email);
+      setUser(userData);
+      sessionStorage.setItem('user', JSON.stringify(userData));
+      sessionStorage.setItem('token', token);
+      
+      return response.data;
+    } catch (err) {
+      console.error('🔐 AuthContext: Manual login failed', err.response?.data?.message || err.message);
+      throw err;
+    }
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('auth_user');
     setUser(null);
-    window.location.href = '/login';
+    sessionStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    // Clear any other auth related items
+    sessionStorage.removeItem('auth_user');
+    
+    if (window.location.pathname !== '/login') {
+      window.location.href = '/login';
+    }
   };
 
-  const isAdmin = user?.role === 'admin';
-  const isStaff = user?.role === 'staff';
-  const isUser = user?.role === 'user';
+  const updateUser = (userData) => {
+    setUser(userData);
+    sessionStorage.setItem('user', JSON.stringify(userData));
+  };
+
+  const isAuthenticated = !!user;
 
   return (
-    <AuthContext.Provider
-      value={{ user, loading, login, signup, logout, checkAuth, isAdmin, isStaff, isUser }}
-    >
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      isAuthenticated, 
+      login, 
+      logout, 
+      updateUser 
+    }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};

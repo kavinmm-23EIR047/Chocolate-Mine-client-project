@@ -10,11 +10,11 @@ const api = axios.create({
 ---------------------------------------- */
 api.interceptors.request.use(
   (config) => {
-    let token = localStorage.getItem('token');
+    let token = sessionStorage.getItem('token');
 
     // Fallback for OAuth sessions
     if (!token) {
-      const authUser = localStorage.getItem('auth_user');
+      const authUser = sessionStorage.getItem('auth_user');
       if (authUser) {
         try {
           const parsed = JSON.parse(authUser);
@@ -67,8 +67,8 @@ api.interceptors.response.use(
 
       // ✅ Prevent payment flow break during Razorpay verification
       if (!isPaymentRoute) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('user');
 
         if (
           window.location.pathname !== '/login' &&

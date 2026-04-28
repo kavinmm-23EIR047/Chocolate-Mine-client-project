@@ -52,25 +52,19 @@ const Cart = () => {
   const SHOP_LNG = 76.97510955713153;
 
   // ==================== PRICE CALCULATION LOGIC ====================
-  // AJIO Style: First apply offerPrice, then apply coupon discount
-
   const getItemBasePrice = (item) => {
-    // Step 1: Check if offerPrice exists and is valid
     const hasOfferPrice = item.offerPrice !== undefined &&
       item.offerPrice !== null &&
       Number(item.offerPrice) > 0 &&
       Number(item.offerPrice) < Number(item.price);
 
-    // Base price = offerPrice if available, otherwise original price
     return hasOfferPrice ? Number(item.offerPrice) : Number(item.price);
   };
 
   const getItemCouponDiscount = (item) => {
-    // Check if coupon is applied globally and this item has valid coupon
     const appliedCoupon = cart?.appliedCoupon;
     if (!appliedCoupon || !item.coupon?.enabled) return 0;
 
-    // Check if applied coupon matches item's coupon
     if (appliedCoupon.toUpperCase() !== item.coupon.code.toUpperCase()) return 0;
 
     const basePrice = getItemBasePrice(item);
@@ -98,54 +92,6 @@ const Cart = () => {
     return originalPrice - finalPrice;
   };
 
-  // ==================== DISTANCE CALCULATION ====================
-
-  const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371;
-    const dLat = ((lat2 - lat1) * Math.PI) / 180;
-    const dLon = ((lon2 - lon1) * Math.PI) / 180;
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  };
-
-  useEffect(() => {
-    if (deliveryInfo.position) {
-      const dist = calculateDistance(
-        SHOP_LAT,
-        SHOP_LNG,
-        deliveryInfo.position.lat,
-        deliveryInfo.position.lng
-      );
-      setDistance(dist);
-      const fee = Math.max(30, Math.round(dist * 4));
-      setDeliveryFee(fee);
-    }
-  }, [deliveryInfo.position]);
-
-  // ==================== LOAD DEFAULT ADDRESS ====================
-
-  useEffect(() => {
-    const loadAddresses = async () => {
-      try {
-        const res = await api.get("/users/addresses");
-        setSavedAddresses(res.data.data);
-        const defaultAddr = res.data.data.find(addr => addr.isDefault);
-        if (defaultAddr) {
-          setDeliveryInfo({
-            address: `${defaultAddr.houseNo}, ${defaultAddr.street}, ${defaultAddr.city}`,
-            position: { lat: defaultAddr.lat, lng: defaultAddr.lng },
-          });
-        }
-      } catch (err) {
-        console.error("Failed to load addresses");
-      }
-    };
-    if (user) loadAddresses();
-  }, [user]);
-
   // ==================== CART CALCULATIONS ====================
 
   const cartItems = cart?.items || [];
@@ -162,7 +108,7 @@ const Cart = () => {
   // Offer Discount = MRP - offerPrice (before coupon)
   const offerDiscount = cartItems.reduce((sum, item) => {
     const mrp = Number(item.price);
-    const base = getItemBasePrice(item); // offerPrice if valid, else price
+    const base = getItemBasePrice(item);
     return sum + (mrp - base) * item.qty;
   }, 0);
 
@@ -170,11 +116,6 @@ const Cart = () => {
   const couponDiscount = cartItems.reduce((sum, item) => {
     return sum + getItemCouponDiscount(item) * item.qty;
   }, 0);
-
-  const gst = Math.round(subtotal * 0.18);
-  const convenienceFee = Math.round(subtotal * 0.02);
-
-  const total = subtotal + gst + convenienceFee + (deliveryFee || 0);
 
   // Check if any coupon is applicable
   const hasApplicableCoupons = cartItems.some(item => item.coupon?.enabled);
@@ -188,13 +129,6 @@ const Cart = () => {
     } else {
       await updateQuantity(productId, newQty);
     }
-  };
-
-  const handleSelectAddress = (addr) => {
-    setDeliveryInfo({
-      address: `${addr.houseNo}, ${addr.street}, ${addr.city}`,
-      position: { lat: addr.lat, lng: addr.lng },
-    });
   };
 
   // ==================== LOADING ====================
@@ -225,9 +159,9 @@ const Cart = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-card border-b border-border/50 sticky top-0 z-10">
+      <div className="bg-white border-b sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center gap-2 text-xs text-muted">
             <button onClick={() => navigate("/")} className="hover:text-primary transition-colors">
@@ -264,7 +198,7 @@ const Cart = () => {
                 >
                   <div className="flex gap-6">
                     {/* Product Image */}
-                    <div className="w-32 h-32 rounded-xl overflow-hidden bg-surface flex-shrink-0 border border-border/10">
+                    <div className="w-32 h-32 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                       <img
                         src={item.image}
                         alt={item.name}
@@ -283,9 +217,17 @@ const Cart = () => {
                             {item.name}
                           </h3>
 
+                          {/* Variant Info for Cakes */}
+                          {item.selectedFlavor && (
+                            <p className="text-xs text-gray-500">Flavor: {item.selectedFlavor}</p>
+                          )}
+                          {item.selectedWeight && (
+                            <p className="text-xs text-gray-500">Weight: {item.selectedWeight}</p>
+                          )}
+
                           {/* Price Display */}
                           <div className="flex items-center gap-2 mb-3">
-                            <span className="text-2xl font-black text-primary">
+                            <span className="text-2xl font-bold text-primary">
                               {formatCurrency(finalPrice)}
                             </span>
                             {hasOffer && (
@@ -303,7 +245,7 @@ const Cart = () => {
                           {/* Coupon Applied Badge */}
                           {appliedCouponCode && item.coupon?.enabled &&
                             appliedCouponCode.toUpperCase() === item.coupon.code.toUpperCase() && (
-                              <div className="inline-flex items-center gap-1 px-2.5 py-1 bg-success-light rounded-lg text-[10px] font-black text-success-text border border-success/10 uppercase tracking-widest">
+                              <div className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 rounded text-xs text-green-600">
                                 <Tag size={12} />
                                 <span>{item.coupon.code} applied</span>
                               </div>
@@ -359,37 +301,37 @@ const Cart = () => {
             </Link>
           </div>
 
-          {/* RIGHT COLUMN - Order Summary */}
+          {/* RIGHT COLUMN - Order Summary (No Delivery Address) */}
           <div className="lg:col-span-1">
             <div className="sticky top-24 space-y-4">
 
               {/* Delivery Address */}
-              <div className="bg-card rounded-2xl shadow-card border border-border/50 p-5">
+              <div className="bg-white rounded-xl shadow-sm border p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-black text-heading text-xs flex items-center gap-2 uppercase tracking-widest">
+                  <h3 className="font-bold flex items-center gap-2">
                     <MapPin size={18} className="text-primary" />
                     DELIVERY ADDRESS
                   </h3>
                   <button
                     onClick={() => setShowMap(true)}
-                    className="text-[10px] text-primary font-black uppercase tracking-widest hover:underline"
+                    className="text-xs text-primary font-medium"
                   >
                     CHANGE
                   </button>
                 </div>
 
                 {deliveryInfo.address ? (
-                  <div className="p-4 bg-surface/5 rounded-xl border border-border/30">
-                    <p className="text-sm font-black text-heading">{user?.name || "Guest"}</p>
-                    <p className="text-xs text-muted mt-1 leading-relaxed">{deliveryInfo.address}</p>
-                    <p className="text-[10px] text-primary font-black uppercase tracking-widest mt-2">
+                  <div>
+                    <p className="text-sm font-medium">{user?.name || "Guest"}</p>
+                    <p className="text-sm text-gray-600 mt-1">{deliveryInfo.address}</p>
+                    <p className="text-xs text-gray-400 mt-2">
                       {distance > 0 && `${distance.toFixed(1)} km away`}
                     </p>
                   </div>
                 ) : (
                   <button
                     onClick={() => setShowMap(true)}
-                    className="w-full py-4 border-2 border-dashed border-border rounded-xl text-center text-primary font-black text-xs uppercase tracking-widest hover:bg-primary/5 transition"
+                    className="w-full py-3 border-2 border-dashed rounded-lg text-center text-primary font-medium hover:bg-gray-50 transition"
                   >
                     + Add Delivery Address
                   </button>
@@ -398,15 +340,15 @@ const Cart = () => {
                 {/* Saved Addresses */}
                 {savedAddresses.length > 0 && !deliveryInfo.address && (
                   <div className="mt-4 space-y-2">
-                    <p className="text-[10px] text-muted font-black uppercase tracking-widest">Saved Addresses</p>
+                    <p className="text-xs text-gray-500">Saved Addresses</p>
                     {savedAddresses.slice(0, 2).map((addr) => (
                       <button
                         key={addr._id}
                         onClick={() => handleSelectAddress(addr)}
-                        className="w-full text-left p-4 border border-border rounded-xl hover:border-primary transition-all bg-surface/5"
+                        className="w-full text-left p-3 border rounded-lg hover:border-primary transition text-sm"
                       >
-                        <p className="font-black text-heading text-xs">{addr.fullName}</p>
-                        <p className="text-muted text-[11px] mt-1 truncate">
+                        <p className="font-medium">{addr.fullName}</p>
+                        <p className="text-gray-500 text-xs mt-1 truncate">
                           {addr.houseNo}, {addr.street}
                         </p>
                       </button>
@@ -416,8 +358,8 @@ const Cart = () => {
               </div>
 
               {/* Price Summary */}
-              <div className="bg-card rounded-2xl shadow-card border border-border/50 p-5">
-                <h3 className="font-black text-heading text-xs uppercase tracking-widest mb-4">PRICE DETAILS</h3>
+              <div className="bg-white rounded-xl shadow-sm border p-5">
+                <h3 className="font-bold mb-4">PRICE DETAILS</h3>
 
                 <div className="space-y-3 text-sm">
 
@@ -448,23 +390,23 @@ const Cart = () => {
                     <span className="text-heading">{formatCurrency(subtotal)}</span>
                   </div>
 
-                  <div className="flex justify-between text-[11px] font-bold">
-                    <span className="text-muted uppercase tracking-widest">Delivery Fee</span>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Delivery Fee</span>
                     {deliveryFee !== null ? (
-                      <span className="text-heading">{formatCurrency(deliveryFee)}</span>
+                      <span>{formatCurrency(deliveryFee)}</span>
                     ) : (
-                      <span className="text-muted/40 italic">Select address</span>
+                      <span className="text-gray-400">Select address</span>
                     )}
                   </div>
 
-                  <div className="flex justify-between text-[11px] font-bold">
-                    <span className="text-muted uppercase tracking-widest">GST (18%)</span>
-                    <span className="text-heading">{deliveryFee !== null ? formatCurrency(gst) : "--"}</span>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">GST (18%)</span>
+                    <span>{deliveryFee !== null ? formatCurrency(gst) : "--"}</span>
                   </div>
 
-                  <div className="flex justify-between text-[11px] font-bold">
-                    <span className="text-muted uppercase tracking-widest">Convenience Fee</span>
-                    <span className="text-heading">{deliveryFee !== null ? formatCurrency(convenienceFee) : "--"}</span>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Convenience Fee</span>
+                    <span>{deliveryFee !== null ? formatCurrency(convenienceFee) : "--"}</span>
                   </div>
 
                   {/* Total savings summary */}
@@ -475,23 +417,30 @@ const Cart = () => {
                     </div>
                   )}
 
-                  <div className="border-t border-border/30 pt-4 mt-2">
-                    <div className="flex justify-between font-black text-xl tracking-tight">
-                      <span className="text-muted text-[11px] uppercase tracking-widest self-center">Total Amount</span>
-                      <span className="text-heading">
+                  <div className="border-t pt-3 mt-1">
+                    <div className="flex justify-between font-bold text-lg">
+                      <span>Total Amount</span>
+                      <span className="text-primary">
                         {deliveryFee !== null ? formatCurrency(total) : "--"}
                       </span>
                     </div>
-                    <p className="text-[10px] text-success font-black uppercase tracking-widest mt-2">
+                    <p className="text-xs text-green-600 mt-2">
                       Inclusive of all taxes
                     </p>
                   </div>
                 </div>
 
+                {/* Info Box */}
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                  <p className="text-xs text-blue-700 text-center">
+                    📍 Delivery charges, GST, and convenience fee will be calculated at checkout
+                  </p>
+                </div>
+
                 {/* Checkout Button */}
                 <Button
                   onClick={() => navigate("/checkout")}
-                  className="w-full mt-6 bg-secondary text-button-text hover:brightness-110 shadow-premium"
+                  className="w-full mt-6"
                   disabled={!deliveryInfo.position}
                 >
                   PROCEED TO CHECKOUT
@@ -533,16 +482,16 @@ const Cart = () => {
       {/* Map Modal */}
       <AnimatePresence>
         {showMap && (
-          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex justify-center items-center p-4">
+          <div className="fixed inset-0 bg-black/60 z-50 flex justify-center items-center p-4">
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-card rounded-3xl w-full max-w-4xl h-[80vh] relative overflow-hidden shadow-premium border border-border"
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.95 }}
+              className="bg-white rounded-2xl w-full max-w-4xl h-[80vh] relative overflow-hidden"
             >
               <button
                 onClick={() => setShowMap(false)}
-                className="absolute top-4 right-4 z-10 bg-surface p-2.5 rounded-full shadow-premium text-foreground hover:bg-muted/10 transition-colors"
+                className="absolute top-4 right-4 z-10 bg-white p-2 rounded-full shadow-lg"
               >
                 <X size={20} />
               </button>
