@@ -8,7 +8,8 @@ import {
   FaFacebookF as Facebook, 
   FaTwitter as Twitter, 
   FaYoutube as Youtube,
-  FaInstagram as InstagramIcon
+  FaInstagram as InstagramIcon,
+  FaWhatsapp as Whatsapp
 } from 'react-icons/fa';
 import Button from './ui/Button';
 import Logo from './Logo';
@@ -46,17 +47,27 @@ const Footer = () => {
 
           <div className="bg-white/5 border border-footer-text/10 p-10 rounded-3xl shadow-2xl backdrop-blur-xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-               <Send size={80} className="-rotate-12" />
+               <Whatsapp size={80} className="-rotate-12" />
             </div>
-            <h3 className="text-2xl font-black mb-2 text-footer-text uppercase tracking-tighter">Join the Sweet Club</h3>
-            <p className="text-footer-text/50 font-bold text-[10px] mb-8 uppercase tracking-widest">Get 10% off your first luxury order</p>
-            <form className="flex flex-col sm:flex-row gap-4">
+            <h3 className="text-2xl font-black mb-2 text-footer-text uppercase tracking-tighter">Join our WhatsApp Group</h3>
+            <p className="text-footer-text/50 font-bold text-[10px] mb-8 uppercase tracking-widest">Join our WhatsApp group and get exciting offers</p>
+            <form 
+              className="flex flex-col sm:flex-row gap-4"
+              onSubmit={(e) => { 
+                e.preventDefault(); 
+                // Redirect to WhatsApp group invite link
+                window.open('https://chat.whatsapp.com/', '_blank'); 
+              }}
+            >
               <input
-                type="email"
-                placeholder="Enter your email address"
-                className="flex-1 bg-white/5 border border-footer-text/10 rounded-xl px-6 py-4 outline-none focus:border-secondary transition-all font-bold placeholder:text-footer-text/30"
+                type="tel"
+                placeholder="Enter your mobile number"
+                required
+                pattern="[0-9]{10}"
+                title="Please enter a valid 10-digit mobile number"
+                className="flex-1 bg-white/5 border border-footer-text/10 rounded-xl px-6 py-4 outline-none focus:border-[#25D366] transition-all font-bold placeholder:text-footer-text/30"
               />
-              <Button className="py-4 px-8 rounded-xl shadow-xl bg-secondary text-button-text hover:bg-secondary/80 font-black tracking-widest" icon={Send}>SUBSCRIBE</Button>
+              <Button type="submit" className="py-4 px-8 rounded-xl shadow-xl font-black tracking-widest" style={{ background: '#25D366', color: '#ffffff' }} icon={Whatsapp}>JOIN NOW</Button>
             </form>
           </div>
         </div>
@@ -127,19 +138,27 @@ const Footer = () => {
                 <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center shrink-0 border border-white/5 group-hover:bg-secondary/10 transition-colors">
                   <MapPin size={20} className="text-secondary" />
                 </div>
-                <p className="text-xs font-bold text-footer-text/60 leading-relaxed">
-                  123, Luxury Lane, <br />
-                  <span className="text-footer-text">Indiranagar, Bangalore 560038</span>
-                </p>
+                <a 
+                  href="https://www.google.com/maps?gs_lcrp=EgZjaHJvbWUqDggAEEUYJxg7GIAEGIoFMg4IABBFGCcYOxiABBiKBTIHCAEQABiABDIHCAIQABiABDIHCAMQABiABDIHCAQQABiABDIHCAUQABiABDIHCAYQABiABDIHCAcQABiABDIHCAgQABiABDIHCAkQABiABNIBCDUxMDZqMGo3qAIAsAIA&um=1&ie=UTF-8&fb=1&gl=in&sa=X&geocode=KQM_M1MdWag7MfxgOlN9Q_nQ&daddr=No.7,+3,+Race+Course+Rd,+near+Codissia+Office+Building,+Anna+Silai,+Gopalapuram,+Coimbatore,+Tamil+Nadu+641018" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-xs font-bold text-footer-text/60 leading-relaxed hover:text-secondary transition-colors"
+                >
+                  No.7, 3, Race Course Rd, <br />
+                  <span className="text-footer-text">Gopalapuram, Coimbatore 641018</span>
+                </a>
               </li>
               <li className="flex gap-4 group">
                 <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center shrink-0 border border-white/5 group-hover:bg-secondary/10 transition-colors">
                   <Phone size={20} className="text-secondary" />
                 </div>
-                <p className="text-xs font-bold text-footer-text/60 leading-relaxed">
-                  +91 98765 43210 <br />
-                  <span className="text-footer-text">Mon - Sun: 10AM - 11PM</span>
-                </p>
+                <div className="text-xs font-bold text-footer-text/60 leading-relaxed">
+                  <a href="tel:+919150670077" className="hover:text-secondary transition-colors">+91 91506 70077</a>
+                  <div className="mt-2 space-y-0.5 text-[10px] text-footer-text/40 uppercase tracking-wider">
+                    <p><span className="text-footer-text/70">Sun:</span> 10 AM – 10 PM</p>
+                    <p><span className="text-footer-text/70">Mon – Sat:</span> 10 AM – 10:30 PM</p>
+                  </div>
+                </div>
               </li>
             </ul>
           </div>
@@ -163,7 +182,7 @@ const Footer = () => {
           </div>
 
           <p className="text-footer-text/30 text-[9px] font-black uppercase tracking-[0.3em] text-center">
-            &copy; 2026 THE CHOCOLATE MINE. CRAFTED BY <a href="#" className="text-secondary hover:underline transition-all">AK WEBFLAIR</a>
+            &copy; 2026 THE CHOCOLATE MINE. CRAFTED BY <a href="https://akwebflairtechnologies.vercel.app" target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline transition-all">AKWEBFLAIR TECHNOLOGIES</a>
           </p>
         </div>
       </div>

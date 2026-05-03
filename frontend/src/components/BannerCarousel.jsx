@@ -54,32 +54,32 @@ const BannerCarousel = () => {
         {banners.map((banner) => (
           <SwiperSlide key={banner.id}>
             <div className="relative w-full h-full">
-              <img 
-                src={banner.image} 
-                alt={banner.title} 
+              <img
+                src={banner.image}
+                alt={banner.title}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent flex flex-col justify-center px-6 sm:px-16 lg:px-24">
+              <div className="absolute inset-0 bg-gradient-to-r from-footer/70 via-footer/30 to-transparent flex flex-col justify-center px-6 sm:px-16 lg:px-24">
                 <motion.div
                   initial={{ opacity: 0, x: -50 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.8 }}
                   className="max-w-2xl"
                 >
-                  <span className="bg-secondary/80 backdrop-blur-md text-white text-[10px] sm:text-xs font-black px-4 py-2 rounded-xl mb-6 inline-block uppercase tracking-[0.3em]">
+                  <span className="bg-secondary/80 backdrop-blur-md text-button-text text-[10px] sm:text-xs font-black px-4 py-2 rounded-xl mb-6 inline-block uppercase tracking-[0.3em]">
                     {banner.tag}
                   </span>
-                  <h2 className="text-4xl sm:text-6xl lg:text-7xl font-black text-white mb-6 leading-tight tracking-tighter">
+                  <h2 className="text-4xl sm:text-6xl lg:text-7xl font-black text-footer-text mb-6 leading-tight tracking-tighter">
                     {banner.title}
                   </h2>
-                  <p className="text-sm sm:text-xl text-white/80 mb-10 font-medium leading-relaxed max-w-lg">
+                  <p className="text-sm sm:text-xl text-footer-text/80 mb-10 font-medium leading-relaxed max-w-lg">
                     {banner.subtitle}
                   </p>
                   <div className="flex flex-wrap gap-4">
-                    <Button size="lg" className="bg-white text-primary hover:bg-secondary hover:text-white transition-all shadow-2xl">
+                    <Button size="lg" className="bg-primary text-button-text hover:bg-primary-hover transition-all shadow-2xl">
                       SHOP COLLECTION
                     </Button>
-                    <Button variant="outline" size="lg" className="border-white/30 text-white hover:bg-white/10 backdrop-blur-sm">
+                    <Button variant="outline" size="lg" className="border-footer-text/30 text-footer-text hover:bg-footer-text/10 backdrop-blur-sm">
                       LEARN MORE
                     </Button>
                   </div>

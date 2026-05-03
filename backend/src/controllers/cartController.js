@@ -263,6 +263,9 @@ exports.clearCart = asyncHandler(async (req, res) => {
 
 exports.applyCoupon = asyncHandler(async (req, res, next) => {
   const { code } = req.body;
+  if (code == null || String(code).trim() === '') {
+    return next(new AppError('Coupon code is required', 400));
+  }
   const cartKey = `cart:${req.user._id}`;
   const cartData = await cacheService.get(cartKey);
   let cart = typeof cartData === 'string' ? JSON.parse(cartData) : (cartData || { items: [] });
@@ -271,7 +274,7 @@ exports.applyCoupon = asyncHandler(async (req, res, next) => {
     return next(new AppError('Cart is empty', 400));
   }
 
-  const normalizedCode = code.trim().toUpperCase();
+  const normalizedCode = String(code).trim().toUpperCase();
   const now = new Date();
 
   // Find product with matching coupon code (case-insensitive) and validate all conditions

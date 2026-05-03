@@ -72,7 +72,7 @@ const OccasionSection = () => {
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                   />
                   {/* Dark overlay on hover */}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-500" />
+                  <div className="absolute inset-0 bg-footer/0 group-hover:bg-footer/20 transition-colors duration-500" />
                 </div>
                 
                 {/* Title */}
@@ -91,7 +91,7 @@ const OccasionSection = () => {
           <div className="text-center mt-12">
             <button
               onClick={() => navigate('/shop')}
-              className="px-8 py-3 rounded-full border-2 border-primary text-primary font-black text-xs uppercase tracking-wider hover:bg-primary hover:text-white transition-all duration-300"
+              className="px-8 py-3 rounded-full border-2 border-primary text-primary font-black text-xs uppercase tracking-wider hover:bg-primary hover:text-button-text transition-all duration-300 shadow-soft"
             >
               Explore All Occasions
             </button>

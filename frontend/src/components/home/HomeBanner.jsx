@@ -26,14 +26,21 @@ const HomeBanner = () => {
 
   useEffect(() => {
     if (banners.length <= 1) return;
+
     const timer = setInterval(() => {
       setCurrent((prev) => (prev + 1) % banners.length);
     }, 6000);
+
     return () => clearInterval(timer);
   }, [banners.length]);
 
-  const nextSlide = () => setCurrent((prev) => (prev + 1) % banners.length);
-  const prevSlide = () => setCurrent((prev) => (prev - 1 + banners.length) % banners.length);
+  const nextSlide = () => {
+    setCurrent((prev) => (prev + 1) % banners.length);
+  };
+
+  const prevSlide = () => {
+    setCurrent((prev) => (prev - 1 + banners.length) % banners.length);
+  };
 
   const copyCoupon = (code) => {
     navigator.clipboard.writeText(code);
@@ -41,18 +48,21 @@ const HomeBanner = () => {
   };
 
   if (loading) {
-    return <div className="w-full aspect-[21/9] sm:aspect-[3/1] rounded-3xl bg-muted/10 animate-pulse border border-border/20" />;
+    return (
+      <div className="w-full aspect-[21/9] sm:aspect-[3/1] rounded-3xl bg-muted/10 animate-pulse border border-border/20" />
+    );
   }
 
-  // Fallback if no banners are active
+  // Fallback if no banners
   if (banners.length === 0) {
     return (
       <div className="w-full aspect-[21/9] sm:aspect-[3/1] rounded-3xl overflow-hidden relative shadow-lift border border-border/20">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary via-chocolate to-espresso flex items-center justify-center text-white px-8">
-          <div className="text-center">
-            <h2 className="text-2xl sm:text-5xl font-black mb-3 tracking-tighter uppercase">The Chocolate Mine</h2>
-            <p className="text-xs sm:text-base font-black opacity-60 uppercase tracking-[0.3em]">Premium Handcrafted Cakes & Chocolates</p>
-          </div>
+        <div className="absolute inset-0 bg-gradient-to-br from-primary via-chocolate to-espresso flex items-center justify-center px-8">
+          <img
+            src="/logo.png"
+            alt="Logo"
+            className="w-32 sm:w-48 object-contain"
+          />
         </div>
       </div>
     );
@@ -77,7 +87,8 @@ const HomeBanner = () => {
             alt={slide.title}
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#150A08]/90 via-[#150A08]/40 to-transparent sm:from-[#150A08]/95 sm:via-[#150A08]/60" />
+
+          <div className="absolute inset-0 bg-gradient-to-r from-footer/90 via-footer/40 to-transparent sm:from-footer/95 sm:via-footer/60" />
 
           <div className="absolute inset-0 flex flex-col justify-center px-6 sm:px-14 max-w-[650px]">
             <motion.h1
@@ -88,6 +99,7 @@ const HomeBanner = () => {
             >
               {slide.title}
             </motion.h1>
+
             {slide.link && (
               <motion.div
                 initial={{ opacity: 0 }}
@@ -95,7 +107,7 @@ const HomeBanner = () => {
                 transition={{ delay: 0.4 }}
                 className="mt-4"
               >
-                <button className="px-6 py-2.5 sm:px-8 sm:py-3 rounded-2xl text-[11px] sm:text-sm font-black active:scale-95 transition-all duration-300 shadow-xl bg-[#FDE8E4] text-[#3D1F1A] hover:bg-white uppercase tracking-widest">
+                <button className="px-6 py-2.5 sm:px-8 sm:py-3 rounded-2xl text-[11px] sm:text-sm font-black active:scale-95 transition-all duration-300 shadow-xl bg-primary text-button-text hover:bg-primary-hover uppercase tracking-widest">
                   Explore Now
                 </button>
               </motion.div>
@@ -104,37 +116,39 @@ const HomeBanner = () => {
         </motion.div>
       </AnimatePresence>
 
-      {/* Nav Controls */}
       {banners.length > 1 && (
         <>
           <div className="absolute inset-y-0 left-4 right-4 flex items-center justify-between pointer-events-none">
             <button
-              onClick={(e) => { e.stopPropagation(); prevSlide(); }}
-              className="p-2 sm:p-3 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-md transition-all pointer-events-auto opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                prevSlide();
+              }}
+              className="p-2 sm:p-3 rounded-full bg-footer/40 hover:bg-footer/60 text-footer-text backdrop-blur-md transition-all pointer-events-auto opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0"
             >
               <ChevronLeft size={24} />
             </button>
+
             <button
-              onClick={(e) => { e.stopPropagation(); nextSlide(); }}
-              className="p-2 sm:p-3 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-md transition-all pointer-events-auto opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                nextSlide();
+              }}
+              className="p-2 sm:p-3 rounded-full bg-footer/40 hover:bg-footer/60 text-footer-text backdrop-blur-md transition-all pointer-events-auto opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0"
             >
               <ChevronRight size={24} />
             </button>
           </div>
 
-          {/* Dots */}
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2.5">
             {banners.map((_, i) => (
               <button
                 key={i}
-                onClick={(e) => { e.stopPropagation(); setCurrent(i); }}
-                className="rounded-full transition-all duration-500"
-                style={{
-                  width: current === i ? 32 : 10,
-                  height: 10,
-                  background: current === i ? '#FDE8E4' : 'rgba(253,232,228,0.3)',
-                  boxShadow: current === i ? '0 0 10px rgba(253,232,228,0.5)' : 'none'
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrent(i);
                 }}
+                className={`h-2.5 rounded-full transition-all duration-500 ${current === i ? 'w-8 bg-footer-text shadow-soft' : 'w-2.5 bg-footer-text/30'}`}
               />
             ))}
           </div>

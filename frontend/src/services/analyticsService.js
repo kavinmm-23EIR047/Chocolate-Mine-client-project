@@ -1,7 +1,7 @@
 import api from '../utils/api';
 
 const analyticsService = {
-  getDashboard: () => api.get('/analytics/dashboard').catch(err => ({
+  getDashboard: (range = '30days') => api.get(`/analytics/dashboard?range=${range}`).catch(err => ({
     data: {
       success: false,
       data: {

@@ -40,7 +40,7 @@ const MyReviews = () => {
       {reviews.length > 0 ? (
         <div className="grid gap-8">
           {reviews.map((review) => (
-            <div key={review._id} className="card-premium p-6 bg-white border border-border/50 group hover:shadow-xl transition-all duration-500">
+            <div key={review._id} className="card-premium p-6 bg-card border border-border/50 group hover:shadow-xl transition-all duration-500">
               <div className="flex flex-col md:flex-row gap-6">
                 <div className="w-24 h-24 rounded-2xl overflow-hidden border border-border/50 shrink-0 shadow-sm">
                   <img src={review.productId?.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={review.productId?.name} />
@@ -67,7 +67,7 @@ const MyReviews = () => {
                     </div>
                   </div>
 
-                  <div className="bg-[#FAF9F6] p-4 rounded-xl border border-border/30 relative">
+                  <div className="bg-card-soft p-4 rounded-xl border border-border/30 relative">
                     <div className="absolute top-2 right-4 opacity-5 pointer-events-none">
                       <ShoppingBag size={40} />
                     </div>

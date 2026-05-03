@@ -5,6 +5,25 @@ const asyncHandler = require('../utils/asyncHandler');
 
 exports.getDashboard = asyncHandler(async (req, res) => {
   try {
+    const { range } = req.query;
+    let startDate = new Date();
+    if (range === '7days') {
+      startDate.setDate(startDate.getDate() - 7);
+    } else if (range === 'month') {
+      startDate.setMonth(startDate.getMonth() - 1);
+    } else if (range === 'year') {
+      startDate.setFullYear(startDate.getFullYear() - 1);
+    } else if (range === 'all') {
+      startDate = new Date(0); // Beginning of time
+    } else {
+      // default 30 days
+      startDate.setDate(startDate.getDate() - 30);
+    }
+
+    // Match filter for the selected time range
+    const timeFilter = { createdAt: { $gte: startDate } };
+    const paidTimeFilter = { paymentStatus: 'paid', createdAt: { $gte: startDate } };
+
     const [
       ordersCount,
       usersCount,
@@ -16,12 +35,12 @@ exports.getDashboard = asyncHandler(async (req, res) => {
       categoryStats
     ] = await Promise.all([
       // Basic Counts
-      Order.countDocuments(),
-      User.countDocuments({ role: 'user' }),
+      Order.countDocuments(timeFilter),
+      User.countDocuments({ role: 'user', ...timeFilter }),
       
       // Total Revenue
       Order.aggregate([
-        { $match: { paymentStatus: 'paid' } },
+        { $match: paidTimeFilter },
         {
           $group: {
             _id: null,
@@ -49,6 +68,7 @@ exports.getDashboard = asyncHandler(async (req, res) => {
 
       // Payment Stats
       Order.aggregate([
+        { $match: timeFilter },
         {
           $group: {
             _id: '$paymentStatus',
@@ -57,17 +77,12 @@ exports.getDashboard = asyncHandler(async (req, res) => {
         }
       ]),
 
-      // Sales Chart (last 30 days)
+      // Sales Chart
       Order.aggregate([
-        { 
-          $match: { 
-            paymentStatus: 'paid',
-            createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }
-          } 
-        },
+        { $match: paidTimeFilter },
         {
           $group: {
-            _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+            _id: { $dateToString: { format: range === 'year' ? '%Y-%m' : '%Y-%m-%d', date: '$createdAt' } },
             revenue: { $sum: { $ifNull: ['$total', 0] } },
             orders: { $sum: 1 }
           }
@@ -77,7 +92,7 @@ exports.getDashboard = asyncHandler(async (req, res) => {
 
       // Top Selling Products
       Order.aggregate([
-        { $match: { paymentStatus: 'paid' } },
+        { $match: paidTimeFilter },
         { $unwind: { path: '$items', preserveNullAndEmptyArrays: true } },
         {
           $group: {
@@ -110,7 +125,7 @@ exports.getDashboard = asyncHandler(async (req, res) => {
 
       // Category Split
       Order.aggregate([
-        { $match: { paymentStatus: 'paid' } },
+        { $match: paidTimeFilter },
         { $unwind: { path: '$items', preserveNullAndEmptyArrays: true } },
         {
           $lookup: {

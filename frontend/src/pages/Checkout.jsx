@@ -10,17 +10,23 @@ import {
   ChevronRight,
   X,
   Tag,
+  Cake,
 } from 'lucide-react';
 
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 
 import MapSelector from '../components/MapSelector';
 import ScooterLoader from '../components/ScooterLoader';
 import Button from '../components/ui/Button';
 
-import { formatCurrency } from '../utils/helpers';
+import { formatCurrency, getCouponUnitDiscount, normalizeCartCoupon } from '../utils/helpers';
+import {
+  loadCustomCakeRequest,
+  formatCustomCakeNotes,
+  clearCustomCakeRequest,
+} from '../utils/customCake';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
 
@@ -33,10 +39,16 @@ const Checkout = () => {
   const directItem = location.state?.directItem;
   const [localCoupon, setLocalCoupon] = useState('');
 
+  const appliedCouponDisplay = directItem
+    ? normalizeCartCoupon(localCoupon)
+    : normalizeCartCoupon(cart?.appliedCoupon);
+  const hasAppliedCoupon = appliedCouponDisplay !== '';
+
   const [showMap, setShowMap] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loaderText, setLoaderText] = useState('Preparing your order...');
   const [couponInput, setCouponInput] = useState('');
+  const [couponBusy, setCouponBusy] = useState(false);
 
   // Prevent duplicate payment attempts
   const isProcessingPayment = useRef(false);
@@ -76,6 +88,14 @@ const Checkout = () => {
   ];
 
   const [deliverySlot, setDeliverySlot] = useState(null);
+
+  const [customCakeRequest, setCustomCakeRequest] = useState(null);
+  const [orderNotesExtra, setOrderNotesExtra] = useState('');
+
+  useEffect(() => {
+    const saved = loadCustomCakeRequest();
+    if (saved && typeof saved === 'object') setCustomCakeRequest(saved);
+  }, []);
 
   // Function to check if a slot is available for a given date
   const isSlotAvailableForDate = (slot, date) => {
@@ -158,19 +178,12 @@ const Checkout = () => {
   };
 
   const getItemCouponDiscount = (item) => {
-    const appliedCouponCode = directItem ? localCoupon : cart?.appliedCoupon;
-    if (!appliedCouponCode || !item.coupon?.enabled) return 0;
-    if (appliedCouponCode.toUpperCase() !== item.coupon.code.toUpperCase()) return 0;
+    const code = directItem ? normalizeCartCoupon(localCoupon) : normalizeCartCoupon(cart?.appliedCoupon);
+    if (!code || !item.coupon?.enabled) return 0;
+    if (code !== normalizeCartCoupon(item.coupon.code)) return 0;
 
     const basePrice = getItemBasePrice(item);
-
-    if (item.coupon.type === 'percent') {
-      return Math.round((basePrice * item.coupon.value) / 100);
-    }
-    if (item.coupon.type === 'flat') {
-      return Math.min(basePrice, Number(item.coupon.value));
-    }
-    return 0;
+    return getCouponUnitDiscount(basePrice, item.coupon);
   };
 
   const getFinalItemPrice = (item) => {
@@ -233,7 +246,6 @@ const Checkout = () => {
 
 
   const cartItems = directItem ? [directItem] : (cart?.items || []);
-  const appliedCoupon = directItem ? localCoupon : cart?.appliedCoupon;
 
   const subtotal = cartItems.reduce((sum, item) =>
     sum + getFinalItemPrice(item) * item.qty, 0
@@ -261,6 +273,13 @@ const Checkout = () => {
   const isAddressSelected = deliveryInfo.position !== null;
 
   // ==================== FETCH ADDRESSES ====================
+
+  useEffect(() => {
+    if (user && !directItem) {
+      fetchCart();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchCart is stable enough for refresh-on-mount
+  }, [user, directItem]);
 
   useEffect(() => {
     const fetchAddresses = async () => {
@@ -340,25 +359,34 @@ const Checkout = () => {
   };
 
 
-  const handleApplyCoupon = async () => {
-    const code = couponInput.trim().toUpperCase();
+  const handleApplyCoupon = async (presetCode) => {
+    const raw = presetCode != null ? String(presetCode) : couponInput;
+    const code = raw.trim().toUpperCase();
     if (!code) return toast.error('Enter coupon code');
+    if (!directItem && hasAppliedCoupon) {
+      toast.error('Remove the applied coupon before entering another code.');
+      return;
+    }
     if (directItem) {
       if (directItem.coupon?.enabled && directItem.coupon.code.toUpperCase() === code) {
         setLocalCoupon(directItem.coupon.code.toUpperCase());
-        toast.success(`Coupon ${code} applied!`);
+        toast.success(`Coupon ${code} applied`);
         setCouponInput('');
       } else {
-        toast.error('Invalid coupon');
+        toast.error('Invalid coupon for this item');
       }
       return;
     }
+    setCouponBusy(true);
     try {
-      await applyCoupon(code);
-      toast.success(`Coupon ${code} applied!`);
+      const res = await applyCoupon(code);
+      toast.success(res?.message || `Coupon ${code} applied`);
       setCouponInput('');
+      await fetchCart();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Invalid coupon');
+      toast.error(err?.response?.data?.message || err?.message || 'Invalid coupon');
+    } finally {
+      setCouponBusy(false);
     }
   };
 
@@ -368,8 +396,13 @@ const Checkout = () => {
       toast.success('Coupon removed');
       return;
     }
-    await removeCoupon();
-    toast.success('Coupon removed');
+    try {
+      await removeCoupon();
+      toast.success('Coupon removed');
+      await fetchCart();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Could not remove coupon');
+    }
   };
 
   const loadRazorpayScript = () => new Promise((resolve) => {
@@ -450,20 +483,36 @@ const Checkout = () => {
       }
 
       // Create order with backend
+      const cakeMessage = customCakeRequest?.messageOnCake?.trim() || '';
+      const builderNotes = customCakeRequest ? formatCustomCakeNotes(customCakeRequest) : '';
+      const notesMerged = [builderNotes, orderNotesExtra.trim()].filter(Boolean).join('\n\n');
+
       const res = await api.post('/payment/create-order', {
         address: payload.address,
         deliveryDate: payload.deliveryDate,
         deliverySlot: payload.deliverySlot,
         directItem: payload.directItem,
+        notes: notesMerged || undefined,
+        cakeMessage: cakeMessage || undefined,
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      const { razorpayOrder, orderId } = res.data.data;
+      const { razorpayOrder, orderId, pricing } = res.data.data;
 
       // Validate order response
       if (!razorpayOrder || !razorpayOrder.id) {
         throw new Error('Invalid order response from server');
+      }
+
+      // If backend pricing differs (rounding/config), prefer backend as source of truth.
+      // This prevents UI showing a different payable amount than Razorpay.
+      if (pricing?.total !== undefined && deliveryInfo.position) {
+        const backendTotal = Number(pricing.total);
+        const uiTotal = Number(total);
+        if (Number.isFinite(backendTotal) && Math.abs(backendTotal - uiTotal) >= 1) {
+          toast(`Total updated to ${formatCurrency(backendTotal)} (finalized by server)`);
+        }
       }
 
       clearInterval(loadingInterval);
@@ -497,6 +546,7 @@ const Checkout = () => {
             });
 
             await fetchCart();
+            clearCustomCakeRequest();
             setLoading(false);
             isProcessingPayment.current = false;
             toast.success('Payment successful! 🎉');
@@ -600,11 +650,11 @@ const Checkout = () => {
   const showDateSelector = !hasAvailableSlotsToday() && isToday;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <ScooterLoader isVisible={loading} text={loaderText} />
 
       {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-10">
+      <div className="bg-navbar text-navbar-text border-b border-border sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center gap-2 text-xs text-muted">
             <button onClick={() => navigate('/cart')} className="hover:text-primary transition-colors flex items-center gap-1">
@@ -624,8 +674,8 @@ const Checkout = () => {
           <div className="lg:col-span-2 space-y-6">
 
             {/* Step 1: Delivery Address */}
-            <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-              <div className="p-5 border-b bg-gray-50">
+            <div className="bg-card rounded-2xl shadow-card border border-border/50 overflow-hidden">
+              <div className="p-5 border-b border-border/50 bg-card-soft">
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-full bg-primary text-button-text flex items-center justify-center text-[10px] font-black">1</div>
                   <h2 className="font-black text-heading text-sm uppercase tracking-widest">Delivery Address</h2>
@@ -683,10 +733,10 @@ const Checkout = () => {
                 </button>
 
                 {deliveryInfo.position && (
-                  <div className="mt-4 p-4 bg-green-50 rounded-lg">
-                    <p className="text-sm font-medium text-green-800">Delivery Location Selected</p>
-                    <p className="text-xs text-green-600 mt-1">{deliveryInfo.address}</p>
-                    <p className="text-xs text-green-500 mt-1">{distance.toFixed(1)} km from our bakery</p>
+                  <div className="mt-4 p-4 bg-success-light rounded-xl border border-success/10">
+                    <p className="text-sm font-black text-success-text uppercase tracking-widest">Delivery Location Selected</p>
+                    <p className="text-xs text-success-text mt-1 font-medium">{deliveryInfo.address}</p>
+                    <p className="text-xs text-success-text/80 mt-1 font-bold uppercase tracking-widest">{distance.toFixed(1)} km from our bakery</p>
                   </div>
                 )}
 
@@ -704,7 +754,7 @@ const Checkout = () => {
                   <div className="space-y-2">
                     <label className="block text-[10px] font-black text-muted uppercase tracking-widest ml-2">Phone Number *</label>
                     <input
-                      className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="input-field"
                       placeholder="Contact number"
                       value={addressDetails.phone}
                       onChange={handlePhoneChange}
@@ -712,7 +762,7 @@ const Checkout = () => {
                       maxLength={10}
                     />
                     {addressDetails.phone && !validatePhoneNumber(addressDetails.phone) && (
-                      <p className="text-xs text-red-500 mt-1">Please enter a valid 10-digit phone number</p>
+                      <p className="text-xs text-error-text mt-1 font-bold">Please enter a valid 10-digit phone number</p>
                     )}
                   </div>
                   <div className="space-y-2">
@@ -738,8 +788,8 @@ const Checkout = () => {
             </div>
 
             {/* Step 2: Delivery Slot */}
-            <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-              <div className="p-5 border-b bg-gray-50">
+            <div className="bg-card rounded-2xl shadow-card border border-border/50 overflow-hidden">
+              <div className="p-5 border-b border-border/50 bg-card-soft">
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-full bg-primary text-button-text flex items-center justify-center text-[10px] font-black">2</div>
                   <h2 className="font-black text-heading text-sm uppercase tracking-widest">Delivery Slot</h2>
@@ -753,16 +803,16 @@ const Checkout = () => {
                       onClick={() => setDeliverySlot(slot.value)}
                       className={`p-4 text-center border rounded-lg transition-all ${deliverySlot === slot.value
                         ? 'border-primary bg-primary/5 text-primary'
-                        : 'border-gray-200 hover:border-primary'
+                        : 'border-border/50 hover:border-primary/40 bg-surface'
                         }`}
                     >
-                      <Clock size={18} className="mx-auto mb-2" />
-                      <p className="text-xs font-medium">{slot.label}</p>
+                      <Clock size={18} className="mx-auto mb-2 text-muted" />
+                      <p className="text-xs font-black text-heading uppercase tracking-widest">{slot.label}</p>
                     </button>
                   ))}
                 </div>
 
-                <p className="text-xs text-gray-500 text-center mt-3">
+                <p className="text-xs text-muted text-center mt-3 font-bold">
                   {deliveryDate.toDateString() === new Date().toDateString()
                     ? 'Slots available until 1 hour before end time'
                     : 'All slots available for future dates'}
@@ -770,9 +820,58 @@ const Checkout = () => {
               </div>
             </div>
 
+            {/* Custom cake + notes (from builder / optional) */}
+            <div className="bg-card rounded-2xl shadow-card border border-border/50 overflow-hidden">
+              <div className="p-5 border-b border-border/50 bg-card-soft">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-primary text-button-text flex items-center justify-center text-[10px] font-black">
+                    <Cake size={14} strokeWidth={2.5} />
+                  </div>
+                  <h2 className="font-black text-heading text-sm uppercase tracking-widest">Custom cake & notes</h2>
+                </div>
+              </div>
+              <div className="p-5 space-y-4">
+                {customCakeRequest ? (
+                  <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-primary">Saved from custom cake builder</p>
+                      <Link
+                        to="/custom-cake"
+                        className="text-[10px] font-black uppercase tracking-widest text-accent hover:underline shrink-0"
+                      >
+                        Edit
+                      </Link>
+                    </div>
+                    <pre className="text-[11px] text-muted font-medium whitespace-pre-wrap leading-relaxed font-sans">
+                      {formatCustomCakeNotes(customCakeRequest)}
+                    </pre>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted font-medium leading-relaxed">
+                    Want lettering, tiers, or a theme?{' '}
+                    <Link to="/custom-cake" className="font-black text-primary hover:underline">
+                      Open the custom cake form
+                    </Link>{' '}
+                    — your choices attach here automatically when you save.
+                  </p>
+                )}
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-black text-muted uppercase tracking-widest ml-2">
+                    Extra notes for the bakery (optional)
+                  </label>
+                  <textarea
+                    className="input-field min-h-[88px] resize-y py-3 text-sm"
+                    placeholder="Gate code, allergy info, delivery instructions…"
+                    value={orderNotesExtra}
+                    onChange={(e) => setOrderNotesExtra(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* Step 3: Payment - Online Only */}
-            <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-              <div className="p-5 border-b bg-gray-50">
+            <div className="bg-card rounded-2xl shadow-card border border-border/50 overflow-hidden">
+              <div className="p-5 border-b border-border/50 bg-card-soft">
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-full bg-primary text-button-text flex items-center justify-center text-[10px] font-black">3</div>
                   <h2 className="font-black text-heading text-sm uppercase tracking-widest">Payment Method</h2>
@@ -837,7 +936,7 @@ const Checkout = () => {
 
                   {couponDiscount > 0 && (
                     <div className="flex justify-between text-success font-black text-[11px] uppercase tracking-widest">
-                      <span>Coupon ({appliedCoupon})</span>
+                      <span>Coupon ({appliedCouponDisplay})</span>
                       <span>- {formatCurrency(couponDiscount)}</span>
                     </div>
                   )}
@@ -848,18 +947,18 @@ const Checkout = () => {
                   </div>
 
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Delivery Fee</span>
-                    <span>{deliveryInfo.position ? formatCurrency(deliveryFee) : '--'}</span>
+                    <span className="text-muted font-medium">Delivery Fee</span>
+                    <span className="text-heading font-black">{deliveryInfo.position ? formatCurrency(deliveryFee) : '--'}</span>
                   </div>
 
                   <div className="flex justify-between">
-                    <span className="text-gray-600">GST (18%)</span>
-                    <span>{deliveryInfo.position ? formatCurrency(gst) : '--'}</span>
+                    <span className="text-muted font-medium">GST (18%)</span>
+                    <span className="text-heading font-black">{deliveryInfo.position ? formatCurrency(gst) : '--'}</span>
                   </div>
 
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Convenience Fee</span>
-                    <span>{deliveryInfo.position ? formatCurrency(convenienceFee) : '--'}</span>
+                    <span className="text-muted font-medium">Convenience Fee</span>
+                    <span className="text-heading font-black">{deliveryInfo.position ? formatCurrency(convenienceFee) : '--'}</span>
                   </div>
 
                   {(offerDiscount + couponDiscount) > 0 && (
@@ -877,33 +976,47 @@ const Checkout = () => {
                       </span>
                     </div>
                     {!isAddressSelected && (
-                      <p className="text-xs text-orange-600 mt-2 text-center">
+                      <p className="text-xs text-warning-text mt-2 text-center font-bold">
                         Please select delivery address to see complete total
                       </p>
                     )}
                   </div>
                 </div>
 
-                {availableCoupons.length > 0 && !appliedCoupon && (
+                {!hasAppliedCoupon && cartItems.length > 0 && (directItem || !cartLoading) && (
                   <div className="mt-6 pt-6 border-t border-border/30">
                     <div className="flex items-center gap-2 text-xs font-black text-muted uppercase tracking-widest mb-4">
                       <Tag size={16} />
-                      <span>Apply Coupon</span>
+                      <span>Apply coupon</span>
                     </div>
                     <div className="flex gap-2">
                       <input
-                        className="input-field font-black uppercase tracking-widest h-12"
-                        placeholder="COUPON CODE"
+                        className="input-field font-black uppercase tracking-widest h-12 flex-1 min-w-0"
+                        placeholder="ENTER CODE"
                         value={couponInput}
+                        disabled={couponBusy || hasAppliedCoupon}
                         onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                        onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
                       />
-                      <Button onClick={handleApplyCoupon} className="bg-primary text-button-text hover:brightness-110 px-8 h-12">APPLY</Button>
+                      <Button
+                        type="button"
+                        onClick={() => handleApplyCoupon()}
+                        disabled={couponBusy || hasAppliedCoupon}
+                        className="bg-primary text-button-text hover:brightness-110 px-8 h-12 shrink-0"
+                      >
+                        {couponBusy ? '…' : 'APPLY'}
+                      </Button>
                     </div>
-                    <div className="flex flex-wrap gap-2 mt-4">
+                    {availableCoupons.length > 0 && !hasAppliedCoupon && (
+                      <p className="text-[10px] text-muted font-bold mt-3 mb-2 uppercase tracking-widest">Available on this order</p>
+                    )}
+                    <div className="flex flex-wrap gap-2 mt-1">
                       {availableCoupons.map((code) => (
                         <button
                           key={code}
-                          onClick={() => setCouponInput(code)}
+                          type="button"
+                          disabled={couponBusy || hasAppliedCoupon}
+                          onClick={() => handleApplyCoupon(code)}
                           className="px-3 py-1.5 bg-surface/10 rounded-lg text-[10px] font-black text-heading font-mono hover:bg-surface/20 transition-colors uppercase tracking-widest border border-border/10"
                         >
                           {code}
@@ -913,13 +1026,13 @@ const Checkout = () => {
                   </div>
                 )}
 
-                {appliedCoupon && (
+                {hasAppliedCoupon && (
                   <div className="mt-6 p-4 bg-success-light rounded-2xl flex justify-between items-center border border-success/10">
                     <div>
                       <span className="text-[10px] font-black text-success-text uppercase tracking-widest opacity-60">Coupon Applied</span>
-                      <p className="text-sm font-mono font-black text-success-text tracking-widest">{appliedCoupon}</p>
+                      <p className="text-sm font-mono font-black text-success-text tracking-widest">{appliedCouponDisplay}</p>
                     </div>
-                    <button onClick={handleRemoveCoupon} className="text-[10px] font-black text-error uppercase tracking-widest hover:underline">Remove</button>
+                    <button type="button" onClick={handleRemoveCoupon} className="text-[10px] font-black text-error uppercase tracking-widest hover:underline">Remove</button>
                   </div>
                 )}
 

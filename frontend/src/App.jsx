@@ -1,4 +1,4 @@
-import React from 'react'; // VERSION 1.1
+import React, { useState, useEffect, useCallback } from 'react'; // VERSION 1.1
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { ThemeProvider } from './context/ThemeContext';
@@ -40,8 +40,10 @@ import OrderHistory from './pages/user/OrderHistory';
 import OrderDetails from './pages/user/OrderDetails';
 import Wishlist from './pages/user/Wishlist';
 import MyReviews from './pages/user/Reviews';
+import Shop from './pages/Shop';
+import CustomCake from './pages/CustomCake';
+import BrandIntroLoader from './components/BrandIntroLoader.jsx';
 
-import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
 // Import socket service for initialization
@@ -102,6 +104,28 @@ import OccasionManager from './pages/admin/OccasionManager';
 import AdminBanner from './pages/admin/AdminBanner';
 import StaffDashboard from './pages/staff/StaffDashboard';
 
+/** Full-screen premium brand intro once per browser tab session */
+function BrandIntroGate() {
+  const [visible, setVisible] = useState(() => {
+    try {
+      return !sessionStorage.getItem('tcm_brand_intro_done');
+    } catch {
+      return true;
+    }
+  });
+
+  const onIntroDone = useCallback(() => {
+    try {
+      sessionStorage.setItem('tcm_brand_intro_done', '1');
+    } catch {
+      /* ignore */
+    }
+    setVisible(false);
+  }, []);
+
+  return <BrandIntroLoader show={visible} onFinish={onIntroDone} logoHoldMs={2500} />;
+}
+
 function App() {
   return (
     <AuthProvider>
@@ -110,6 +134,7 @@ function App() {
           <CartProvider>
             <WishlistProvider>
               <ThemeProvider>
+                <BrandIntroGate />
                 <Router>
                   <ScrollToTop />
                   <SocketInitializer />
@@ -134,7 +159,8 @@ function App() {
                     {/* Public/User Routes */}
                     <Route element={<UserLayout />}>
                       <Route path="/" element={<Home />} />
-                      <Route path="/shop" element={<Home />} />
+                      <Route path="/shop" element={<Shop />} />
+                      <Route path="/custom-cake" element={<CustomCake />} />
                       <Route path="/product/:slug" element={<ProductDetails />} />
                       <Route path="/occasion/:name" element={<OccasionProducts />} />
                       <Route path="/cart" element={<Cart />} />

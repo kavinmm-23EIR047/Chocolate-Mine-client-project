@@ -10,7 +10,7 @@ import {
   TrendingUp,
   ArrowUpRight,
 } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import adminService from '../../services/adminService';
 import analyticsService from '../../services/analyticsService';
 import { formatCurrency } from '../../utils/helpers';
@@ -30,13 +30,15 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [timeRange, setTimeRange] = useState('30days');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true);
         const [dashRes, analyticsRes] = await Promise.all([
           adminService.getDashboard(),
-          analyticsService.getDashboard().catch(() => null),
+          analyticsService.getDashboard(timeRange).catch(() => null),
         ]);
         setStats(dashRes.data.data);
         if (analyticsRes) setAnalytics(analyticsRes.data.data);
@@ -47,14 +49,11 @@ const AdminDashboard = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [timeRange]);
 
   if (loading) return <DashboardSkeleton />;
 
-  const chartData = analytics?.salesChart?.map((item) => ({
-    date: item._id,
-    revenue: item.revenue,
-  })) || [];
+  const chartData = analytics?.salesChart || [];
 
   return (
     <div className="space-y-6">
@@ -93,27 +92,34 @@ const AdminDashboard = () => {
           transition={{ delay: 0.3 }}
           className="bg-card border border-border rounded-2xl p-6"
         >
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
               <h3 className="text-lg font-bold text-heading">Sales Overview</h3>
-              <p className="text-sm text-muted">Revenue trend for the last 30 days</p>
+              <p className="text-sm text-muted">Revenue trend analysis</p>
             </div>
-            <div className="flex items-center gap-2 text-success text-sm font-bold">
-              <TrendingUp size={16} />
-              <span>Active</span>
+            <div className="flex items-center gap-3">
+               <select 
+                 value={timeRange} 
+                 onChange={(e) => setTimeRange(e.target.value)}
+                 className="text-xs font-black text-heading uppercase tracking-widest bg-card border border-border px-3 py-1.5 rounded-lg outline-none cursor-pointer"
+               >
+                 <option value="7days" className="bg-card text-heading">Last 7 Days</option>
+                 <option value="30days" className="bg-card text-heading">Last 30 Days</option>
+                 <option value="month" className="bg-card text-heading">Last Month</option>
+                 <option value="year" className="bg-card text-heading">Last Year</option>
+                 <option value="all" className="bg-card text-heading">All Time</option>
+               </select>
+              <div className="flex items-center gap-2 text-success text-sm font-bold bg-success/10 px-3 py-1.5 rounded-lg">
+                <TrendingUp size={16} />
+                <span>Active</span>
+              </div>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={chartData}>
-              <defs>
-                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#C47A52" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#C47A52" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis dataKey="date" stroke="var(--muted)" fontSize={12} tickLine={false} />
-              <YAxis stroke="var(--muted)" fontSize={12} tickLine={false} tickFormatter={(v) => `₹${v}`} />
+            <BarChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} opacity={0.5} />
+              <XAxis dataKey="date" stroke="var(--muted)" fontSize={12} tickLine={false} axisLine={false} dy={10} />
+              <YAxis stroke="var(--muted)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v/1000}k`} dx={-10} />
               <Tooltip
                 contentStyle={{
                   backgroundColor: 'var(--card)',
@@ -121,10 +127,11 @@ const AdminDashboard = () => {
                   borderRadius: '12px',
                   fontSize: '13px',
                 }}
+                cursor={{ fill: 'var(--border)', opacity: 0.2 }}
                 formatter={(value) => [formatCurrency(value), 'Revenue']}
               />
-              <Area type="monotone" dataKey="revenue" stroke="#C47A52" strokeWidth={2.5} fillOpacity={1} fill="url(#colorRevenue)" />
-            </AreaChart>
+              <Bar dataKey="revenue" name="Revenue" fill="var(--primary)" radius={[4, 4, 0, 0]} />
+            </BarChart>
           </ResponsiveContainer>
         </motion.div>
       )}

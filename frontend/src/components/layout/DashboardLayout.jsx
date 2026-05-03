@@ -50,13 +50,13 @@ const DashboardLayout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] pt-24 pb-20 lg:pt-32">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-background pt-0 pb-20 lg:pt-32">
+      <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
 
-        {/* Mobile Header Toggle */}
-        <div className="lg:hidden flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm mb-6 border border-border/50">
+        {/* Sticky Profile Header (Mobile) */}
+        <div className="lg:hidden sticky top-0 z-[110] flex items-center justify-between bg-card/95 backdrop-blur-xl p-4 shadow-premium mb-6 border-b border-border/50">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-secondary text-white flex items-center justify-center font-black text-sm">
+            <div className="w-10 h-10 rounded-full bg-secondary text-button-text flex items-center justify-center font-black text-sm">
               {getInitials(user?.name)}
             </div>
             <div>
@@ -76,16 +76,16 @@ const DashboardLayout = () => {
 
           {/* Sidebar Navigation */}
           <aside className={`
-            lg:w-[300px] shrink-0 
+            lg:w-[300px] shrink-0 w-full
             ${mobileMenuOpen ? 'block' : 'hidden lg:block'}
           `}>
-            <div className="sticky top-28 bg-white rounded-[2rem] p-6 shadow-sm border border-border/50 overflow-hidden relative">
+            <div className="sticky top-28 bg-card rounded-2xl lg:rounded-[2rem] p-6 shadow-sm border border-border/50 overflow-hidden relative">
               {/* Decorative Blur */}
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
 
               {/* Desktop User Info */}
               <div className="hidden lg:flex flex-col items-center text-center mb-8 pt-4">
-                <div className="w-20 h-20 rounded-full bg-secondary text-white flex items-center justify-center font-black text-2xl shadow-lg shadow-secondary/20 mb-4 border-4 border-white ring-1 ring-border/50">
+                <div className="w-20 h-20 rounded-full bg-secondary text-button-text flex items-center justify-center font-black text-2xl shadow-lg shadow-secondary/20 mb-4 border-4 border-card ring-1 ring-border/50">
                   {getInitials(user?.name)}
                 </div>
                 <h2 className="text-xl font-black text-heading leading-tight">{user?.name}</h2>
@@ -103,12 +103,12 @@ const DashboardLayout = () => {
                       className={`
                         w-full flex items-center gap-4 px-5 py-3.5 rounded-2xl font-black text-sm transition-all group
                         ${isActive
-                          ? 'bg-secondary text-white shadow-md translate-x-2'
+                          ? 'bg-secondary text-button-text shadow-md translate-x-2'
                           : 'text-muted hover:bg-secondary/5 hover:text-heading'
                         }
                       `}
                     >
-                      <item.icon size={18} className={isActive ? 'text-white' : 'text-secondary/70 group-hover:text-secondary transition-colors'} />
+                      <item.icon size={18} className={isActive ? 'text-button-text' : 'text-secondary/70 group-hover:text-secondary transition-colors'} />
                       {item.label}
                       {isActive && <ChevronRight size={14} className="ml-auto opacity-50" />}
                     </NavLink>
@@ -135,10 +135,10 @@ const DashboardLayout = () => {
               <motion.div
                 key={location.pathname}
                 initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, x: 0 }}
+                animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.2 }}
-                className="bg-white rounded-[2rem] p-6 lg:p-10 shadow-sm border border-border/50 min-h-[600px]"
+                className="bg-card rounded-2xl lg:rounded-[2.5rem] p-4 sm:p-6 lg:p-10 shadow-sm border border-border/50 min-h-[600px]"
               >
                 <Outlet />
               </motion.div>

@@ -1,11 +1,45 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { User, Mail, Phone, MapPin, Calendar, Edit3 } from 'lucide-react';
 import Button from '../../components/ui/Button';
+import toast from 'react-hot-toast';
+import api from '../../utils/api';
 
 const ProfileDetails = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
+  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    name: user?.name || '',
+    phone: user?.phone || ''
+  });
+
+  const handleCancel = () => {
+    setFormData({
+      name: user?.name || '',
+      phone: user?.phone || ''
+    });
+    setIsEditing(false);
+  };
+
+  const handleSave = async () => {
+    if (!formData.name.trim()) return toast.error("Name is required");
+
+    try {
+      setLoading(true);
+      const res = await api.put('/users/profile', formData);
+      if (res.data?.data) {
+        updateUser(res.data.data);
+        toast.success("Profile updated!");
+        setIsEditing(false);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to update profile");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const defaultAddress = user?.addresses?.find(addr => addr.isDefault) || user?.addresses?.[0];
 
@@ -32,7 +66,7 @@ const ProfileDetails = () => {
         <p className="text-sm text-muted font-bold mt-1">Manage your personal information</p>
       </div>
 
-      <div className="card-premium p-8 border border-border/50 bg-[#FAF9F6]">
+      <div className="card-premium p-8 border border-border/50 bg-card shadow-card">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-1.5">
             <label className="text-[10px] font-black text-muted uppercase tracking-widest ml-2">Full Name</label>
@@ -41,12 +75,12 @@ const ProfileDetails = () => {
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full bg-white border-2 border-secondary/20 p-4 rounded-2xl font-bold text-heading focus:border-secondary outline-none transition-all"
+                className="w-full bg-input border-2 border-secondary/20 p-4 rounded-2xl font-bold text-heading focus:border-secondary outline-none transition-all"
                 placeholder="Enter your full name"
                 disabled={loading}
               />
             ) : (
-              <div className="bg-white border border-border/50 p-4 rounded-2xl font-bold text-heading">
+              <div className="bg-surface border border-border/50 p-4 rounded-2xl font-bold text-heading">
                 {formData.name || user?.name || 'Not provided'}
               </div>
             )}
@@ -54,7 +88,7 @@ const ProfileDetails = () => {
 
           <div className="space-y-1.5">
             <label className="text-[10px] font-black text-muted uppercase tracking-widest ml-2">Email Address</label>
-            <div className="bg-gray-100 border border-border/50 p-4 rounded-2xl font-bold text-muted cursor-not-allowed">
+            <div className="bg-card-soft border border-border/50 p-4 rounded-2xl font-bold text-muted cursor-not-allowed">
               {user?.email}
             </div>
             {isEditing && <p className="text-[10px] text-muted ml-2 font-bold">Email cannot be changed.</p>}
@@ -67,12 +101,12 @@ const ProfileDetails = () => {
                 type="tel"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full bg-white border-2 border-secondary/20 p-4 rounded-2xl font-bold text-heading focus:border-secondary outline-none transition-all"
+                className="w-full bg-input border-2 border-secondary/20 p-4 rounded-2xl font-bold text-heading focus:border-secondary outline-none transition-all"
                 placeholder="Enter your phone number"
                 disabled={loading}
               />
             ) : (
-              <div className="bg-white border border-border/50 p-4 rounded-2xl font-bold text-heading">
+              <div className="bg-surface border border-border/50 p-4 rounded-2xl font-bold text-heading">
                 {formData.phone || user?.phone || 'Not provided'}
               </div>
             )}
@@ -80,7 +114,7 @@ const ProfileDetails = () => {
 
           <div className="space-y-1.5">
             <label className="text-[10px] font-black text-muted uppercase tracking-widest ml-2">Member Since</label>
-            <div className="bg-white border border-border/50 p-4 rounded-2xl font-bold text-heading">
+            <div className="bg-surface border border-border/50 p-4 rounded-2xl font-bold text-heading">
               {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-IN', {
                 year: 'numeric',
                 month: 'long',
@@ -96,7 +130,7 @@ const ProfileDetails = () => {
               <Button
                 variant="outline"
                 onClick={handleCancel}
-                className="bg-white"
+                className="bg-button-alt-bg text-button-alt-text"
                 disabled={loading}
               >
                 CANCEL

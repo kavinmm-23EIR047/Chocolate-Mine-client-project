@@ -5,6 +5,13 @@ import {
   ChevronRight, Star, Search, SlidersHorizontal,
   MapPin, Clock, Tag, Truck, ShieldCheck, Phone, ChevronLeft
 } from 'lucide-react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Pagination, Autoplay, Navigation } from 'swiper/modules';
+
+// Import Swiper styles
+import 'swiper/css';
+import 'swiper/css/pagination';
+import 'swiper/css/navigation';
 import productService from '../services/productService';
 import reviewService from '../services/reviewService';
 import toast from 'react-hot-toast';
@@ -20,12 +27,13 @@ const MINI_ADS = [
   {
     img: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=600&q=80',
     label: 'Same Day Delivery',
-    sub: 'Order before 3 PM',
+    sub: 'Same day delivery',
   },
   {
     img: 'https://images.unsplash.com/photo-1548365328-8c6db3220e4c?w=600&q=80',
     label: 'Custom Cakes',
     sub: 'Your design, our craft',
+    to: '/custom-cake',
   },
   {
     img: 'https://images.unsplash.com/photo-1614707267537-b85aaf00c4b7?w=600&q=80',
@@ -37,9 +45,40 @@ const MINI_ADS = [
 const TRUST = [
   { icon: <Truck size={15} />, label: 'Free delivery above ₹699' },
   { icon: <MapPin size={15} />, label: 'Coimbatore only · Fresh & local' },
-  { icon: <Clock size={15} />, label: 'Same-day delivery · Order by 3 PM' },
+  { icon: <Clock size={15} />, label: 'Same-day delivery available' },
   { icon: <ShieldCheck size={15} />, label: 'RazorPay secure checkout' },
   { icon: <Phone size={15} />, label: '24×7 WhatsApp support' },
+];
+
+const ADS = [
+  {
+    id: 1,
+    img: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=1400&q=80',
+    title: 'Pure Belgian Chocolate Cakes',
+    tag: 'NEW ARRIVAL',
+    sub: 'Experience the rich, velvety texture of authentic Belgian chocolate in every bite.',
+    cta: 'Order Now',
+    code: 'CHOCO20'
+  },
+  {
+    id: 2,
+    img: 'https://images.unsplash.com/photo-1550617931-e17a7b70dce2?w=1400&q=80',
+    title: 'Artisan Truffle Collection',
+    tag: 'BESTSELLER',
+    sub: 'Handcrafted truffles made with organic ingredients and premium cocoa.',
+    cta: 'View Collection',
+    code: 'MINE10'
+  },
+  {
+    id: 3,
+    img: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=1400&q=80',
+    title: 'Celebrate with Custom Cakes',
+    tag: 'CELEBRATION',
+    sub: 'Make your special moments unforgettable with our personalized cake designs.',
+    cta: 'Customize Now',
+    code: 'PARTY15',
+    ctaLink: '/custom-cake',
+  }
 ];
 
 const fadeUp = {
@@ -81,7 +120,7 @@ const Home = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  /* auto-rotate hero & ticker */
+  /* auto-rotate ticker */
   useEffect(() => {
     const trustTimer = setInterval(() => setActiveTrustIndex(s => (s + 1) % TRUST.length), 4000);
     return () => {
@@ -205,11 +244,13 @@ const Home = () => {
       <div className="bg-navbar border-b border-border">
         <div className="max-w-7xl mx-auto px-4 py-3">
           {/* Desktop Grid */}
-          <div className="hidden lg:flex items-center justify-between gap-10">
+          <div className="hidden lg:flex items-center justify-between gap-8">
             {TRUST.map((t, i) => (
-              <div key={i} className="flex items-center gap-2.5 whitespace-nowrap shrink-0 opacity-90">
-                <span className="text-primary">{t.icon}</span>
-                <span className="text-[11px] font-black uppercase tracking-wider text-navbar-text">{t.label}</span>
+              <div key={i} className="flex items-center gap-3 whitespace-nowrap shrink-0 group">
+                <div className="w-8 h-8 rounded-xl bg-primary/5 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-button-text transition-all duration-500 shadow-sm">
+                  {t.icon}
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted/80 group-hover:text-primary transition-colors">{t.label}</span>
               </div>
             ))}
           </div>
@@ -219,23 +260,25 @@ const Home = () => {
             <div className="overflow-hidden">
               <motion.div
                 animate={{ x: `-${activeTrustIndex * 100}%` }}
-                className="flex"
+                className="flex transition-all duration-700 ease-in-out"
               >
                 {TRUST.map((t, i) => (
-                  <div key={i} className="min-w-full flex items-center justify-center gap-3 py-1">
-                    <span className="text-primary">{t.icon}</span>
-                    <span className="text-[11px] font-black uppercase tracking-widest text-navbar-text text-center">{t.label}</span>
+                  <div key={i} className="min-w-full flex items-center justify-center gap-4 py-1">
+                    <div className="w-9 h-9 rounded-xl bg-primary/5 flex items-center justify-center text-primary shadow-sm">
+                      {t.icon}
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary text-center leading-none">{t.label}</span>
                   </div>
                 ))}
               </motion.div>
             </div>
             {/* Pagination dots for Ticker */}
-            <div className="flex justify-center gap-1.5 mt-3">
+            <div className="flex justify-center gap-2 mt-4">
               {TRUST.map((_, i) => (
                 <button
                   key={i}
                   onClick={() => setActiveTrustIndex(i)}
-                  className={`w-1.5 h-1.5 rounded-full transition-all ${activeTrustIndex === i ? 'bg-primary w-4' : 'bg-border'
+                  className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${activeTrustIndex === i ? 'bg-primary w-5' : 'bg-primary/10'
                     }`}
                 />
               ))}
@@ -249,154 +292,44 @@ const Home = () => {
 
         {!query ? (
           <>
-            {/* ── HERO BANNER with Swiper Controls ─────────────────────── */}
-            <section
-              className="rounded-3xl overflow-hidden relative group shadow-lift border border-border/20"
-              style={{ height: isMobile ? '280px' : 'clamp(400px, 50vw, 520px)' }}
-            >
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={slide.id}
-                  initial={{ opacity: 0, scale: 1.05 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
-                  transition={{ duration: 0.6 }}
-                  className="absolute inset-0"
-                >
-                  <img
-                    src={slide.img}
-                    alt={slide.title}
-                    className="w-full h-full object-cover"
-                    style={{ objectPosition: 'center 20%' }}
-                  />
-                  <div
-                    className="absolute inset-0 bg-gradient-to-r from-[#150A08]/90 via-[#150A08]/40 to-transparent sm:from-[#150A08]/95 sm:via-[#150A08]/60"
-                  />
-
-                  {/* Brand Logo Overlay */}
-                  <div className="absolute top-4 left-6 sm:top-6 sm:left-12 flex items-center gap-2 opacity-90">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary rounded-xl flex items-center justify-center border border-white/20 shadow-xl rotate-3">
-                      <span className="text-[9px] sm:text-[10px] font-black text-button-text">TCM</span>
-                    </div>
-                    <span className="text-xs sm:text-sm font-black tracking-tighter text-[#FDE8E4] drop-shadow-md">THE CHOCOLATE MINE</span>
-                  </div>
-
-                  <div className="absolute inset-0 flex flex-col justify-center px-6 sm:px-14 max-w-[650px] pt-12 sm:pt-0">
-                    <motion.span
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.2 }}
-                      className="inline-block text-[9px] sm:text-[10px] font-black tracking-[0.2em] px-3 py-1 sm:px-4 sm:py-1.5 rounded-full mb-3 sm:mb-4 w-fit shadow-lg"
-                      style={{ background: 'var(--badge-sale)', color: '#fff' }}
-                    >
-                      {slide.tag}
-                    </motion.span>
-                    <motion.h1
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3 }}
-                      className="text-2xl sm:text-5xl font-black leading-tight mb-3 tracking-tighter text-[#FDE8E4] drop-shadow-lg"
-                    >
-                      {slide.title}
-                    </motion.h1>
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.4 }}
-                      className="text-xs sm:text-base mb-6 text-[#FDE8E4]/90 max-w-[95%] sm:max-w-[85%] font-medium"
-                    >
-                      {slide.sub}
-                    </motion.p>
-                    <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
-                      <button
-                        className="px-6 py-2.5 sm:px-8 sm:py-3 rounded-2xl text-[11px] sm:text-sm font-black active:scale-95 transition-all duration-300 shadow-xl bg-[#FDE8E4] text-[#3D1F1A] hover:bg-white"
-                      >
-                        {slide.cta}
-                      </button>
-                      <button
-                        onClick={() => copyCoupon(slide.code)}
-                        className="flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 rounded-2xl text-[10px] sm:text-xs font-black border transition-all duration-300 active:scale-95 bg-white/5 backdrop-blur-md hover:bg-white/10"
-                        style={{
-                          borderColor: copiedCode === slide.code ? '#66BB6A' : 'rgba(253,232,228,0.4)',
-                          color: copiedCode === slide.code ? '#66BB6A' : '#FDE8E4',
-                        }}
-                      >
-                        <Tag size={12} />
-                        {copiedCode === slide.code ? 'COPIED!' : `CODE: ${slide.code}`}
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              </AnimatePresence>
-
-              {/* Swiper Controls */}
-              <div className="absolute inset-y-0 left-4 right-4 flex items-center justify-between pointer-events-none">
-                <button
-                  onClick={prevSlide}
-                  className="p-3 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-md transition-all pointer-events-auto opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0"
-                >
-                  <ChevronLeft size={24} />
-                </button>
-                <button
-                  onClick={nextSlide}
-                  className="p-3 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-md transition-all pointer-events-auto opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0"
-                >
-                  <ChevronRight size={24} />
-                </button>
-              </div>
-
-              {/* slide dots */}
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2.5">
-                {ADS.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveSlide(i)}
-                    className="rounded-full transition-all duration-500"
-                    style={{
-                      width: activeSlide === i ? 32 : 10,
-                      height: 10,
-                      background: activeSlide === i ? '#FDE8E4' : 'rgba(253,232,228,0.3)',
-                      boxShadow: activeSlide === i ? '0 0 10px rgba(253,232,228,0.5)' : 'none'
-                    }}
-                  />
-                ))}
-              </div>
+            <section className="mb-4">
+              <HomeBanner />
             </section>
 
             {/* ── DYNAMIC CATEGORY CIRCLES FROM BACKEND ────────────────── */}
-            <section className="pt-6 pb-4">
+            <section className="py-10">
               {categoriesLoading ? (
-                <div className="flex flex-wrap justify-center gap-4 sm:gap-10 px-2">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <div key={i} className="flex flex-col items-center gap-3">
-                      <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-full bg-muted/20 animate-pulse" />
-                      <div className="w-12 h-3 bg-muted/20 rounded animate-pulse" />
+                <div className="flex flex-wrap justify-center gap-6 sm:gap-12 px-4">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <div key={i} className="flex flex-col items-center gap-4">
+                      <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-3xl bg-muted/10 animate-pulse" />
+                      <div className="w-14 h-3 bg-muted/10 rounded-full animate-pulse" />
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="flex flex-wrap justify-center gap-4 sm:gap-10 px-2">
+                <div className="flex flex-wrap justify-center gap-6 sm:gap-12 px-4">
                   {categories.map((cat) => (
                     <button
                       key={cat.name}
                       onClick={() => handleCategory(cat.name)}
-                      className="flex flex-col items-center gap-3 group outline-none shrink-0"
+                      className="flex flex-col items-center gap-4 group outline-none shrink-0"
                     >
-                      <div className={`w-16 h-16 sm:w-24 sm:h-24 rounded-full border-2 p-0.5 transition-all duration-500 overflow-hidden shadow-md ${activeCategory === cat.name
-                        ? 'border-primary ring-4 ring-primary/10'
-                        : 'border-border group-hover:border-primary/50'
+                      <div className={`w-20 h-20 sm:w-28 sm:h-28 rounded-[2rem] border-2 p-1 transition-all duration-500 overflow-hidden shadow-xl ${activeCategory === cat.name
+                        ? 'border-primary ring-8 ring-primary/5 shadow-primary/20 scale-110'
+                        : 'border-border/40 group-hover:border-primary/40 group-hover:scale-105'
                         }`}>
                         <img
                           src={cat.image}
                           alt={cat.name}
-                          className={`w-full h-full object-cover rounded-full transition-transform duration-700 ${activeCategory === cat.name ? 'scale-110' : 'group-hover:scale-110'
+                          className={`w-full h-full object-cover rounded-[1.8rem] transition-transform duration-700 ${activeCategory === cat.name ? 'scale-110' : 'group-hover:scale-110'
                             }`}
                           onError={(e) => {
                             e.target.src = 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=200&q=80';
                           }}
                         />
                       </div>
-                      <span className={`text-[10px] sm:text-xs font-black uppercase tracking-widest transition-colors ${activeCategory === cat.name ? 'text-primary' : 'text-muted group-hover:text-primary'
+                      <span className={`text-[11px] sm:text-xs font-black uppercase tracking-[0.2em] transition-all duration-300 ${activeCategory === cat.name ? 'text-primary' : 'text-muted/60 group-hover:text-primary group-hover:tracking-[0.3em]'
                         }`}>
                         {cat.name}
                       </span>
@@ -408,71 +341,88 @@ const Home = () => {
 
             {/* ── DELIVERY STRIP ───────────────────────────────────────── */}
             <section
-              className="rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-sm border-2 border-border overflow-hidden relative"
+              className="rounded-[2.5rem] p-8 sm:p-12 flex flex-col lg:flex-row items-center justify-between gap-10 shadow-2xl shadow-primary/5 border border-border/40 overflow-hidden relative group"
               style={{ background: 'var(--card)' }}
             >
-              {/* Subtle background glow to make the strip pop */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+              {/* Animated background glow */}
+              <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/5 rounded-full blur-[100px] group-hover:bg-primary/10 transition-colors duration-1000" />
+              <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-accent/5 rounded-full blur-[100px] group-hover:bg-accent/10 transition-colors duration-1000" />
 
-              <div className="flex items-center gap-6 relative z-10">
-                <div className="relative shrink-0 w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center p-1 rounded-full border-4 border-card bg-primary/5 shadow-inner">
-                  <img
-                    src="https://assets-v2.lottiefiles.com/a/2fb1820a-7b6b-48ef-8719-d055a442e43a/pj49dgWhuA.gif"
-                    alt="Delivery Scooter"
-                    className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-screen"
-                  />
-                  <div className="absolute top-2 right-2 w-3.5 h-3.5 bg-green-500 rounded-full animate-pulse border-2 border-card shadow-sm" />
+              <div className="flex flex-col sm:flex-row items-center gap-10 relative z-10 text-center sm:text-left">
+                <div className="relative shrink-0">
+                  <div className="w-28 h-28 sm:w-40 sm:h-40 flex items-center justify-center p-3 rounded-[3rem] bg-gradient-to-br from-primary/5 to-accent/5 border border-border/30 shadow-inner group-hover:scale-105 transition-transform duration-700">
+                    <img
+                      src="https://assets-v2.lottiefiles.com/a/2fb1820a-7b6b-48ef-8719-d055a442e43a/pj49dgWhuA.gif"
+                      alt="Delivery Scooter"
+                      className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-screen"
+                    />
+                  </div>
+                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full animate-ping border-4 border-card" />
+                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full border-4 border-card shadow-sm" />
                 </div>
 
-                <div>
-                  <h3 className="font-black text-xl sm:text-2xl tracking-tight uppercase" style={{ color: 'var(--card-text)' }}>
-                    Exclusive Local Delivery
+                <div className="max-w-xl">
+                  <h3 className="font-black text-3xl sm:text-5xl tracking-tighter uppercase leading-tight" style={{ color: 'var(--card-text)' }}>
+                    Exclusive Local <span className="text-primary">Delivery</span>
                   </h3>
-                  <p className="text-sm font-black mt-1 uppercase tracking-[0.15em] flex items-center gap-1 text-primary">
-                    <MapPin size={16} /> Delivering across {deliveryCity}
-                  </p>
-                  <p className="text-[11px] sm:text-xs font-bold opacity-60 uppercase tracking-widest mt-2 max-w-sm" style={{ color: 'var(--card-text)' }}>
-                    We bake fresh and hand-deliver straight to your door to guarantee quality in {deliveryCity}. Order before 3 PM for same-day dispatch.
+                  <div className="flex items-center justify-center sm:justify-start gap-3 mt-3">
+                    <div className="h-[3px] w-10 bg-accent rounded-full" />
+                    <p className="text-xs font-black uppercase tracking-[0.3em] text-primary">
+                      Delivering fresh across {deliveryCity}
+                    </p>
+                  </div>
+                  <p className="text-base font-medium opacity-60 mt-6 leading-relaxed" style={{ color: 'var(--card-text)' }}>
+                    We bake fresh every morning and hand-deliver straight to your door to guarantee the luxury quality you deserve. Same-day delivery available across {deliveryCity}.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 shrink-0 px-6 py-4 rounded-2xl bg-background border-2 border-border shadow-inner relative z-10">
-                <MapPin size={20} className="text-green-600 animate-bounce" />
+              <div className="flex items-center gap-5 shrink-0 px-10 py-6 rounded-[2.5rem] bg-background/50 backdrop-blur-xl border border-border shadow-2xl relative z-10 group-hover:border-primary/20 transition-all duration-500">
+                <div className="w-14 h-14 rounded-2xl bg-green-500/10 flex items-center justify-center text-green-600 shadow-inner">
+                  <MapPin size={28} className="animate-bounce" />
+                </div>
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Delivering to</span>
-                  <span className="text-sm font-black uppercase tracking-widest text-green-600 capitalize">{deliveryCity}</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">Active Zone</span>
+                  <span className="text-xl font-black uppercase tracking-[0.1em] text-green-600 capitalize">{deliveryCity}</span>
                 </div>
               </div>
             </section>
 
             {/* ── MINI ADS GRID ────────────────────────────────────────── */}
             <section className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              {MINI_ADS.map((ad, i) => (
-                <motion.div
-                  key={i}
-                  variants={fadeUp}
-                  initial="hidden"
-                  whileInView="show"
-                  viewport={{ once: true }}
-                  custom={i}
-                  className="relative rounded-3xl overflow-hidden group cursor-pointer shadow-md hover:shadow-2xl transition-all duration-700 border border-border/10"
-                  style={{ height: 160 }}
-                >
-                  <img
-                    src={ad.img}
-                    alt={ad.label}
-                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                  />
-                  <div
-                    className="absolute inset-0 flex flex-col justify-end p-6"
-                    style={{ background: 'linear-gradient(0deg,rgba(21,10,8,0.9) 0%,transparent 70%)' }}
+              {MINI_ADS.map((ad, i) => {
+                const card = (
+                  <motion.div
+                    variants={fadeUp}
+                    initial="hidden"
+                    whileInView="show"
+                    viewport={{ once: true }}
+                    custom={i}
+                    className="relative rounded-3xl overflow-hidden group cursor-pointer shadow-md hover:shadow-2xl transition-all duration-700 border border-border/10"
+                    style={{ height: 160 }}
                   >
-                    <p className="font-black text-lg leading-tight text-[#FDE8E4] drop-shadow-sm">{ad.label}</p>
-                    <p className="text-[11px] mt-1 text-[#FDE8E4]/70 font-bold uppercase tracking-widest">{ad.sub}</p>
-                  </div>
-                </motion.div>
-              ))}
+                    <img
+                      src={ad.img}
+                      alt={ad.label}
+                      className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                    />
+                    <div
+                      className="absolute inset-0 flex flex-col justify-end p-6"
+                      style={{ background: 'linear-gradient(0deg,rgba(21,10,8,0.9) 0%,transparent 70%)' }}
+                    >
+                      <p className="font-black text-lg leading-tight text-[#FDE8E4] drop-shadow-sm">{ad.label}</p>
+                      <p className="text-[11px] mt-1 text-[#FDE8E4]/70 font-bold uppercase tracking-widest">{ad.sub}</p>
+                    </div>
+                  </motion.div>
+                );
+                return ad.to ? (
+                  <Link key={i} to={ad.to} className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-3xl">
+                    {card}
+                  </Link>
+                ) : (
+                  <div key={i}>{card}</div>
+                );
+              })}
             </section>
 
             <OccasionSection />
@@ -492,7 +442,7 @@ const Home = () => {
                     Explore All
                   </Link>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 gap-10">
                   {bestsellers.map((p, i) => (
                     <motion.div
                       key={p._id}
@@ -546,7 +496,7 @@ const Home = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8">
+          <div className="grid grid-cols-1 gap-10">
             {loading && products.length === 0 ? (
               Array(10).fill(0).map((_, i) => <CardSkeleton key={i} />)
             ) : products.length > 0 ? (
@@ -609,74 +559,134 @@ const Home = () => {
         {/* ── REVIEWS with Swiper Controls ─────────────────────────── */}
         {!query && (
           <section
-            className="rounded-[3rem] border-2 p-10 shadow-sm overflow-hidden group/rev"
-            style={{ background: 'var(--card)', borderColor: 'var(--border)' }}
+            className="rounded-[3.5rem] border border-border/40 p-6 sm:p-16 shadow-2xl relative overflow-hidden group"
+            style={{ background: 'var(--card)' }}
           >
-            <div className="flex flex-col sm:flex-row items-center justify-between mb-12 gap-6">
-              <div className="text-center sm:text-left">
-                <h2 className="text-3xl font-black tracking-tighter uppercase" style={{ color: 'var(--card-text)' }}>Customer Stories</h2>
-                <p className="text-xs font-black opacity-40 uppercase tracking-[0.3em] mt-3">What they say about the mine</p>
+            <style>{`
+              .reviews-swiper-wrapper .swiper-pagination {
+                bottom: 0px !important;
+              }
+              .reviews-swiper-wrapper .swiper-pagination-bullet {
+                width: 8px;
+                height: 8px;
+                background: var(--primary);
+                opacity: 0.25;
+                transition: all 0.3s ease;
+              }
+              .reviews-swiper-wrapper .swiper-pagination-bullet-active {
+                opacity: 1;
+                width: 28px;
+                border-radius: 4px;
+              }
+            `}</style>
+            {/* Background decorative elements */}
+            <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] -mr-64 -mt-64 group-hover:bg-primary/10 transition-colors duration-1000" />
+            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-accent/5 rounded-full blur-[100px] -ml-48 -mb-48 group-hover:bg-accent/10 transition-colors duration-1000" />
+            <div className="flex flex-col lg:flex-row items-center justify-between mb-16 gap-10 relative z-10">
+              <div className="text-center lg:text-left">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/10 mb-6">
+                  <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Testimonials</span>
+                </div>
+                <h2 className="text-4xl sm:text-6xl font-black tracking-tighter uppercase leading-tight" style={{ color: 'var(--card-text)' }}>
+                  Customer <br /> <span className="text-primary">Stories</span>
+                </h2>
+                <p className="text-sm font-bold opacity-40 uppercase tracking-[0.4em] mt-6">Voices of the sweet community</p>
               </div>
-              <div className="flex flex-col sm:flex-row items-center gap-8 bg-card px-8 py-6 rounded-[2rem] border-2 border-border shadow-sm">
-                <div className="flex items-center gap-4">
-                  <span className="text-5xl font-black tracking-tighter">
-                    {(reviews.reduce((acc, r) => acc + r.rating, 0) / (reviews.length || 1)).toFixed(1)}
-                  </span>
+
+              <div className="flex flex-col sm:flex-row items-center gap-10 bg-card/60 backdrop-blur-xl px-10 py-8 rounded-[3rem] border border-border/50 shadow-2xl relative overflow-hidden group/rating">
+                <div className="absolute inset-0 bg-gradient-to-br from-card/40 to-transparent pointer-events-none" />
+                <div className="flex items-center gap-6 relative z-10">
+                  <div className="text-center">
+                    <span className="text-6xl sm:text-7xl font-black tracking-tighter text-primary">
+                      {(reviews.reduce((acc, r) => acc + r.rating, 0) / (reviews.length || 1)).toFixed(1)}
+                    </span>
+                  </div>
                   <div className="flex flex-col">
-                    <div className="flex gap-0.5">
+                    <div className="flex gap-1 mb-1">
                       {[...Array(5)].map((_, i) => (
-                        <Star key={i} size={14} fill={i < Math.floor((reviews.reduce((acc, r) => acc + r.rating, 0) / (reviews.length || 1))) ? "var(--primary)" : "none"} className={i < Math.floor((reviews.reduce((acc, r) => acc + r.rating, 0) / (reviews.length || 1))) ? "text-primary" : "text-border"} />
+                        <Star
+                          key={i}
+                          size={18}
+                          fill={i < Math.floor((reviews.reduce((acc, r) => acc + r.rating, 0) / (reviews.length || 1))) ? "var(--primary)" : "none"}
+                          className={i < Math.floor((reviews.reduce((acc, r) => acc + r.rating, 0) / (reviews.length || 1))) ? "text-primary" : "text-border"}
+                        />
                       ))}
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest opacity-40 mt-1">
+                    <span className="text-xs font-black uppercase tracking-widest text-primary/60">
                       {reviews.length} Verified Reviews
                     </span>
                   </div>
                 </div>
-                <div className="hidden sm:block w-[2px] h-12 bg-border/50" />
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 max-w-[200px] leading-relaxed">
-                  Real stories from our sweet community
+                <div className="hidden sm:block w-[1px] h-16 bg-primary/10" />
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary/40 max-w-[180px] leading-relaxed relative z-10">
+                  Exceptional taste, verified by our premium members
                 </p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-              {reviews.map((r, i) => (
-                <div
-                  key={i}
-                  className="rounded-3xl border-2 p-5 sm:p-8 flex flex-col transition-all hover:border-primary/30 hover:shadow-xl"
-                  style={{ background: 'var(--background)', borderColor: 'var(--border)' }}
-                >
-                  <div className="flex gap-1 mb-4 sm:mb-6">
-                    {[...Array(5)].map((_, j) => (
-                      <Star
-                        key={j}
-                        size={14}
-                        fill={j < r.rating ? 'var(--primary)' : 'none'}
-                        style={{ color: j < r.rating ? 'var(--primary)' : 'var(--border)' }}
-                      />
-                    ))}
-                  </div>
-                  <p className="text-sm sm:text-base leading-relaxed mb-6 flex-1 font-medium italic opacity-90" style={{ color: 'var(--body)' }}>
-                    "{r.comment}"
-                  </p>
-                  <div
-                    className="flex items-center gap-4 pt-4 border-t-2"
-                    style={{ borderColor: 'var(--border)' }}
-                  >
-                    <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black shrink-0 shadow-lg"
-                      style={{ background: 'var(--primary)', color: 'var(--button-text)' }}
+            <div className="relative z-10 reviews-swiper-wrapper">
+              <Swiper
+                modules={[Pagination, Autoplay]}
+                spaceBetween={24}
+                slidesPerView={1}
+                pagination={{ clickable: true, dynamicBullets: true }}
+                autoplay={{ delay: 6000, disableOnInteraction: false }}
+                breakpoints={{
+                  768: { slidesPerView: 2 },
+                  1280: { slidesPerView: 3 },
+                }}
+                className="pb-16"
+              >
+                {reviews.map((r, i) => (
+                  <SwiperSlide key={i} className="h-auto pb-4">
+                    <motion.div
+                      whileHover={{ y: -6 }}
+                      className="rounded-[2.5rem] border border-border/30 p-8 flex flex-col h-full transition-all duration-500 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] hover:border-primary/20 group/card relative overflow-hidden bg-gradient-to-br from-card-soft to-card"
                     >
-                      {r.userName?.charAt(0) || 'U'}
-                    </div>
-                    <div>
-                      <p className="text-sm font-black tracking-tight" style={{ color: 'var(--heading)' }}>{r.userName}</p>
-                      <p className="text-[9px] font-black uppercase tracking-widest opacity-40">Verified Customer</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                      <div className="absolute top-4 right-6 opacity-[0.04] group-hover/card:opacity-[0.08] transition-opacity duration-700">
+                        <Star size={120} />
+                      </div>
+
+                      <div className="flex gap-1 mb-6 relative z-10">
+                        {[...Array(5)].map((_, j) => (
+                          <Star
+                            key={j}
+                            size={16}
+                            fill={j < r.rating ? 'var(--primary)' : 'none'}
+                            className={j < r.rating ? 'text-primary' : 'text-border'}
+                          />
+                        ))}
+                      </div>
+
+                      <div className="relative flex-1 mb-8">
+                        <span className="absolute -top-6 -left-2 text-6xl font-serif text-primary/10 leading-none">"</span>
+                        <p className="text-base sm:text-lg leading-relaxed font-semibold italic text-heading/90 relative z-10 px-2">
+                          {r.comment}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-5 pt-8 border-t border-border/40">
+                        <div className="relative shrink-0">
+                          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary-hover flex items-center justify-center text-xl font-black text-button-text shadow-xl shadow-primary/20 ring-4 ring-primary/5">
+                            {r.userName?.charAt(0) || 'U'}
+                          </div>
+                          <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-success rounded-full border-4 border-background flex items-center justify-center">
+                            <ShieldCheck size={10} className="text-button-text" />
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-base font-black tracking-tight text-heading">{r.userName}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted/60">Verified Order</p>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </SwiperSlide>
+                ))}
+              </Swiper>
             </div>
 
 
@@ -686,7 +696,7 @@ const Home = () => {
 
         {/* ── BOTTOM BANNER ────────────────────────────────────────── */}
         {!query && (
-          <section className="rounded-[3rem] overflow-hidden relative shadow-2xl border-4 border-white/10" style={{ height: 200 }}>
+          <section className="rounded-[3rem] overflow-hidden relative shadow-2xl border border-border/20" style={{ height: 200 }}>
             <img
               src="https://images.unsplash.com/photo-1550617931-e17a7b70dce2?w=1400&q=80"
               alt="The Chocolate Mine"
@@ -694,12 +704,12 @@ const Home = () => {
             />
             <div
               className="absolute inset-0 flex flex-col items-center justify-center text-center px-8"
-              style={{ background: 'rgba(21,10,8,0.85)' }}
+              style={{ background: 'rgb(var(--footer-rgb) / 0.85)' }}
             >
-              <h3 className="font-black text-2xl sm:text-4xl mb-3 text-[#FDE8E4] tracking-tighter uppercase">
+              <h3 className="font-black text-2xl sm:text-4xl mb-3 text-footer-text tracking-tighter uppercase">
                 Freshly Baked. Securely Paid.
               </h3>
-              <p className="text-[11px] sm:text-xs font-black uppercase tracking-[0.4em] text-[#FDE8E4]/50">
+              <p className="text-[11px] sm:text-xs font-black uppercase tracking-[0.4em] text-footer-text/50">
                 Coimbatore · RazorPay · Fresh Daily
               </p>
             </div>

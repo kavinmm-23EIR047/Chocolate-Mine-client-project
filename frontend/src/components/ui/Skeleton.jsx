@@ -14,14 +14,18 @@ export const Skeleton = ({ className = '', count = 1 }) => {
 };
 
 export const CardSkeleton = () => (
-  <div className="card-premium p-0">
-    <Skeleton className="aspect-square w-full rounded-b-none" />
-    <div className="p-4 space-y-3">
-      <Skeleton className="h-5 w-3/4" />
-      <Skeleton className="h-4 w-1/2" />
-      <div className="flex justify-between items-center">
-        <Skeleton className="h-6 w-20" />
-        <Skeleton className="h-10 w-10 rounded-lg" />
+  <div className="bg-card border border-border/40 rounded-[2.5rem] overflow-hidden flex flex-col md:flex-row w-full h-[400px] md:h-[350px]">
+    <Skeleton className="h-full w-full md:w-[35%] rounded-none" />
+    <div className="p-8 md:p-10 flex-1 space-y-6">
+      <div className="space-y-3">
+        <Skeleton className="h-4 w-20" />
+        <Skeleton className="h-10 w-3/4" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-5/6" />
+      </div>
+      <div className="mt-auto pt-8 border-t border-border/30 flex justify-between items-center">
+        <Skeleton className="h-10 w-32" />
+        <Skeleton className="h-14 w-40 rounded-2xl" />
       </div>
     </div>
   </div>

@@ -41,6 +41,32 @@ export const getInitials = (name) => {
 
 export const cn = (...classes) => classes.filter(Boolean).join(' ');
 
+/** Unit discount for one item (matches backend cart pricing). basePrice = offer/sale price before coupon. */
+export const getCouponUnitDiscount = (basePrice, coupon) => {
+  if (!coupon?.enabled || basePrice == null || Number.isNaN(Number(basePrice))) return 0;
+  const bp = Number(basePrice);
+  const t = coupon.type;
+  if (t === 'percent') {
+    return Math.round((bp * Number(coupon.value)) / 100);
+  }
+  if (t === 'flat') {
+    return Math.min(bp, Number(coupon.value));
+  }
+  if (t === 'price') {
+    return Math.max(0, bp - Number(coupon.value));
+  }
+  return 0;
+};
+
+export const idsMatch = (a, b) => String(a ?? '') === String(b ?? '');
+
+/** Normalize coupon code from API/state (trim + uppercase). Empty string if missing. */
+export const normalizeCartCoupon = (raw) => {
+  if (raw == null) return '';
+  const s = String(raw).trim();
+  return s === '' ? '' : s.toUpperCase();
+};
+
 export const calculateDistance = (lat1, lon1, lat2, lon2) => {
   const R = 6371; // Earth radius in km
   const dLat = (lat2 - lat1) * (Math.PI / 180);

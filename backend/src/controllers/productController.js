@@ -44,7 +44,21 @@ const applyCoupon = (product) => {
 };
 
 exports.getProducts = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10, sort, featured, bestseller, category, location, occasion } = req.query;
+  const { 
+    page = 1, 
+    limit = 10, 
+    sort, 
+    featured, 
+    bestseller, 
+    category, 
+    location, 
+    occasion,
+    rating,
+    minPrice,
+    maxPrice,
+    q
+  } = req.query;
+
   let query = { isActive: true };
 
   if (featured) query.featured = featured === 'true';
@@ -57,9 +71,32 @@ exports.getProducts = asyncHandler(async (req, res) => {
     query.occasion = { $in: [occasionName] };
   }
 
+  // Filter by rating
+  if (rating) {
+    query.ratingsAverage = { $gte: parseFloat(rating) };
+  }
+
+  // Filter by price
+  if (minPrice || maxPrice) {
+    query.price = {};
+    if (minPrice) query.price.$gte = parseFloat(minPrice);
+    if (maxPrice) query.price.$lte = parseFloat(maxPrice);
+  }
+
+  // Integrated search
+  if (q) {
+    query.$or = [
+      { name: { $regex: q, $options: 'i' } },
+      { description: { $regex: q, $options: 'i' } },
+      { shortDescription: { $regex: q, $options: 'i' } }
+    ];
+  }
+
   let sortQuery = '-createdAt';
   if (sort === 'price-low') sortQuery = 'price';
   if (sort === 'price-high') sortQuery = '-price';
+  if (sort === 'rating') sortQuery = '-ratingsAverage';
+  if (sort === 'newest') sortQuery = '-createdAt';
 
   const rawProducts = await Product.find(query)
     .sort(sortQuery)

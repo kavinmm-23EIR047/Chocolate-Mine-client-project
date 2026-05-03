@@ -7,7 +7,9 @@ import {
   ChevronRight,
   Lock,
   Check,
-  X
+  X,
+  Bell,
+  EyeOff
 } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import toast from 'react-hot-toast';
@@ -70,6 +72,14 @@ const AccountSettings = () => {
     }
   };
 
+  const handleNotifications = () => {
+    toast.success("Notification settings updated!");
+  };
+
+  const handleDelete = () => {
+    toast.error("Account deletion is disabled for demo purposes.");
+  };
+
   return (
     <div className="space-y-10">
       <div>
@@ -78,7 +88,7 @@ const AccountSettings = () => {
       </div>
 
       <div className="space-y-6">
-        <div className="card-premium p-6 border border-border/50 bg-[#FAF9F6] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="card-premium p-6 border border-border/50 bg-card shadow-card flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex gap-4 items-center">
             <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary shrink-0">
               <ShieldCheck size={24} />
@@ -98,9 +108,9 @@ const AccountSettings = () => {
           </Button>
         </div>
 
-        <div className="card-premium p-6 border border-border/50 bg-[#FAF9F6] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="card-premium p-6 border border-border/50 bg-card shadow-card flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex gap-4 items-center">
-            <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 shrink-0">
+            <div className="w-12 h-12 rounded-xl bg-info-light flex items-center justify-center text-info shrink-0 border border-info/10">
               <Bell size={24} />
             </div>
             <div>
@@ -108,7 +118,7 @@ const AccountSettings = () => {
               <p className="text-xs font-bold text-muted mt-1">Manage email and SMS notifications for orders and offers.</p>
             </div>
           </div>
-          <Button variant="outline" onClick={handleNotifications} className="w-full sm:w-auto shrink-0 bg-white">MANAGE</Button>
+          <Button variant="outline" onClick={handleNotifications} className="w-full sm:w-auto shrink-0 bg-button-alt-bg text-button-alt-text border-2 border-border/60 hover:border-primary">MANAGE</Button>
         </div>
 
         <div className="card-premium p-6 border-2 border-error/20 bg-error/5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -121,7 +131,7 @@ const AccountSettings = () => {
               <p className="text-xs font-bold text-error/80 mt-1">Permanently delete your account and all associated data.</p>
             </div>
           </div>
-          <button onClick={handleDelete} className="w-full sm:w-auto shrink-0 px-6 py-3 rounded-xl font-black text-xs text-error hover:bg-error hover:text-white border border-error transition-all">
+          <button onClick={handleDelete} className="w-full sm:w-auto shrink-0 px-6 py-3 rounded-xl font-black text-xs text-error hover:bg-error hover:text-button-text border border-error transition-all">
             DELETE ACCOUNT
           </button>
         </div>

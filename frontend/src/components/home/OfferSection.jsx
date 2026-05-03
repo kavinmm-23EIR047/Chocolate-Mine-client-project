@@ -10,7 +10,7 @@ const OfferSection = () => {
         initial={{ opacity: 0, x: -30 }}
         whileInView={{ opacity: 1, x: 0 }}
         viewport={{ once: true }}
-        className="relative bg-[#2D1816] text-white p-10 rounded-[1.5rem] overflow-hidden group"
+        className="relative bg-primary text-button-text p-10 rounded-[1.5rem] overflow-hidden group shadow-card border border-border/10"
       >
         <div className="absolute top-0 right-0 w-48 h-48 bg-secondary/10 rounded-full blur-3xl -mr-24 -mt-24 group-hover:bg-secondary/20 transition-colors" />
         <div className="relative z-10">
@@ -35,9 +35,9 @@ const OfferSection = () => {
         initial={{ opacity: 0, x: 30 }}
         whileInView={{ opacity: 1, x: 0 }}
         viewport={{ once: true }}
-        className="relative bg-secondary text-button-text p-10 rounded-[1.5rem] overflow-hidden group"
+        className="relative bg-secondary text-button-text p-10 rounded-[1.5rem] overflow-hidden group shadow-card border border-border/10"
       >
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full blur-3xl -ml-24 -mb-24 group-hover:bg-white/20 transition-colors" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-button-text/10 rounded-full blur-3xl -ml-24 -mb-24 group-hover:bg-button-text/20 transition-colors" />
         <div className="relative z-10">
           <div className="flex items-center gap-3 text-button-text mb-6">
             <Zap size={24} />
@@ -45,7 +45,7 @@ const OfferSection = () => {
           </div>
           <h2 className="text-3xl sm:text-4xl font-black mb-4 leading-tight">Same Day Celebration</h2>
           <p className="text-sm font-bold opacity-70 mb-8 max-w-sm">Order any cake before 2 PM and get it delivered fresh by evening.</p>
-          <Button variant="outline" className="border-button-text text-button-text hover:bg-white hover:text-secondary shadow-xl">
+          <Button variant="outline" className="border-button-text text-button-text hover:bg-button-text/10 shadow-xl">
             CHECK DELIVERY TIME
           </Button>
         </div>

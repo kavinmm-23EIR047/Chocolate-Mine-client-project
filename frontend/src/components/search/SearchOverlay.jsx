@@ -61,125 +61,83 @@ const SearchOverlay = ({ isOpen, onClose }) => {
             className="fixed top-0 left-0 right-0 bg-navbar z-[210] p-6 shadow-2xl"
           >
             <div className="max-w-4xl mx-auto">
-              {/* Search Input Bar */}
-              <div className="relative flex items-center gap-4">
-                <div className="relative flex-1 group">
-                  <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-secondary transition-colors" />
+              {/* Amazon Style Search Bar */}
+              <div className="relative flex items-center gap-0 bg-card shadow-lg rounded-lg overflow-hidden border border-border/50 focus-within:border-secondary transition-all">
+                <div className="flex-1 relative flex items-center">
                   <input
                     autoFocus
                     type="text"
                     value={query}
                     onChange={(e) => handleSearch(e.target.value)}
-                    placeholder="Search for your favorite dessert..."
-                    className="w-full bg-muted/5 border-2 border-border/50 rounded-md pl-14 pr-6 py-4 text-lg font-black text-heading outline-none focus:border-secondary focus:ring-4 focus:ring-secondary/5 transition-all placeholder:text-muted/40"
+                    onKeyDown={(e) => e.key === 'Enter' && onSelect(query)}
+                    placeholder="Search for desserts, cakes, and chocolates..."
+                    className="w-full bg-transparent pl-6 pr-12 py-4 text-base font-bold text-heading outline-none placeholder:text-muted/40 placeholder:font-medium"
                   />
                   {loading && (
-                    <div className="absolute right-5 top-1/2 -translate-y-1/2">
-                      <div className="w-5 h-5 border-2 border-secondary border-t-transparent rounded-full animate-spin" />
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                      <div className="w-4 h-4 border-2 border-secondary border-t-transparent rounded-full animate-spin" />
                     </div>
                   )}
                 </div>
                 <button 
-                  onClick={onClose}
-                  className="p-4 hover:bg-muted/10 rounded-md transition-all text-muted hover:text-heading"
+                  onClick={() => onSelect(query)}
+                  className="bg-secondary text-button-text px-8 py-4 hover:bg-secondary/90 transition-all flex items-center justify-center border-l border-border/20 group"
                 >
-                  <X size={24} />
+                  <Search size={22} className="group-hover:scale-110 transition-transform" />
+                </button>
+                <button 
+                  onClick={onClose}
+                  className="bg-surface text-muted p-4 hover:bg-muted/10 transition-all border-l border-border/20"
+                >
+                  <X size={22} />
                 </button>
               </div>
 
               {/* Suggestions / Results Area */}
-              <div className="mt-10 grid grid-cols-1 md:grid-cols-[1fr_280px] gap-12 pb-10">
+              <div className="mt-8 pb-10">
                 
                 {/* Main Results */}
-                <div>
+                <div className="max-w-3xl mx-auto">
                   {query.length > 0 ? (
                     <div className="space-y-4">
-                      <h3 className="text-[10px] font-black text-muted uppercase tracking-[0.3em] mb-6">Search Results</h3>
+                      <div className="flex items-center justify-between mb-6 border-b border-border/30 pb-2">
+                        <h3 className="text-[10px] font-black text-muted uppercase tracking-[0.3em]">Search Results ({results.length})</h3>
+                        {results.length > 0 && <button onClick={() => navigate(`/shop?search=${encodeURIComponent(query)}`)} className="text-[10px] font-black text-secondary uppercase tracking-widest hover:underline">View All</button>}
+                      </div>
+                      
                       {results.length > 0 ? (
-                        results.map((p) => (
-                          <div 
-                            key={p._id}
-                            onClick={() => navigate(`/product/${p.slug}`)}
-                            className="flex items-center gap-4 p-3 rounded-md hover:bg-muted/5 border border-transparent hover:border-border/30 cursor-pointer transition-all group"
-                          >
-                            <img src={p.image} alt={p.name} className="w-16 h-16 rounded-md object-cover border border-border/50" />
-                            <div>
-                              <p className="font-black text-heading group-hover:text-secondary transition-colors">{p.name}</p>
-                              <p className="text-xs text-muted font-bold uppercase tracking-widest">{p.category}</p>
+                        <div className="grid grid-cols-1 gap-3">
+                          {results.map((p) => (
+                            <div 
+                              key={p._id}
+                              onClick={() => navigate(`/product/${p.slug}`)}
+                              className="flex items-center gap-4 p-4 bg-card rounded-xl border border-border/30 hover:border-secondary cursor-pointer transition-all group shadow-sm hover:shadow-md"
+                            >
+                              <img src={p.image} alt={p.name} className="w-16 h-16 rounded-lg object-cover" />
+                              <div className="flex-1">
+                                <p className="font-black text-heading group-hover:text-secondary transition-colors">{p.name}</p>
+                                <p className="text-[10px] text-muted font-black uppercase tracking-widest">{p.category}</p>
+                              </div>
+                              <div className="text-right">
+                                <p className="font-black text-primary">₹{p.finalPrice || p.price}</p>
+                                <ArrowRight size={16} className="ml-auto mt-1 text-secondary opacity-50 group-hover:opacity-100 transition-all" />
+                              </div>
                             </div>
-                            <div className="ml-auto text-right">
-                              <p className="font-black text-primary">₹{p.finalPrice || p.price}</p>
-                              <ArrowRight size={16} className="ml-auto mt-1 opacity-0 group-hover:opacity-100 transition-opacity text-secondary" />
-                            </div>
-                          </div>
-                        ))
+                          ))}
+                        </div>
                       ) : (
-                        <div className="py-10 text-center opacity-50">
-                          <Sparkles size={40} className="mx-auto mb-4 text-muted/30" />
-                          <p className="font-black text-muted uppercase tracking-widest text-xs">Looking for something sweet...</p>
+                        <div className="py-20 text-center">
+                          <p className="font-black text-muted uppercase tracking-widest text-xs opacity-50">No matching desserts found</p>
                         </div>
                       )}
                     </div>
                   ) : (
-                    <div className="space-y-10">
-                      {recentSearches.length > 0 && (
-                        <div>
-                          <h3 className="text-[10px] font-black text-muted uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
-                            <Clock size={14} /> Recent Searches
-                          </h3>
-                          <div className="flex flex-wrap gap-3">
-                            {recentSearches.map((s, i) => (
-                              <button 
-                                key={i}
-                                onClick={() => onSelect(s)}
-                                className="px-5 py-2 bg-muted/5 border border-border/50 rounded-full text-xs font-black text-heading hover:border-secondary transition-all"
-                              >
-                                {s}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      <div>
-                        <h3 className="text-[10px] font-black text-muted uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
-                          <TrendingUp size={14} /> Popular Near You
-                        </h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {trending.map((t, i) => (
-                            <button 
-                              key={i}
-                              onClick={() => onSelect(t)}
-                              className="flex items-center justify-between p-4 bg-card border border-border/50 rounded-md text-sm font-black text-heading hover:bg-secondary hover:text-white transition-all group"
-                            >
-                              {t}
-                              <ArrowRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-                            </button>
-                          ))}
-                        </div>
-                      </div>
+                    <div className="text-center py-20">
+                       <Search size={48} className="mx-auto mb-6 text-muted/20" />
+                       <p className="text-[10px] font-black text-muted uppercase tracking-[0.3em]">Start typing to search our collections</p>
                     </div>
                   )}
                 </div>
-
-                {/* Categories / Quick Links Sidebar */}
-                <div className="hidden md:block border-l border-border/50 pl-12">
-                   <h3 className="text-[10px] font-black text-muted uppercase tracking-[0.3em] mb-6">Quick Discover</h3>
-                   <div className="space-y-6">
-                      {['Best Offers', 'New Arrivals', 'Combos', 'Gift Cards'].map((link) => (
-                        <button key={link} className="block w-full text-left font-black text-heading hover:text-secondary transition-colors text-sm uppercase tracking-wide">
-                          {link}
-                        </button>
-                      ))}
-                   </div>
-                   
-                   <div className="mt-12 p-6 bg-primary rounded-md text-white text-center shadow-xl">
-                      <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Weekend Special</p>
-                      <h4 className="text-lg font-black mb-4">FREE DELIVERY</h4>
-                      <p className="text-[9px] font-bold opacity-60">On orders above ₹599</p>
-                   </div>
-                </div>
-
               </div>
             </div>
           </motion.div>

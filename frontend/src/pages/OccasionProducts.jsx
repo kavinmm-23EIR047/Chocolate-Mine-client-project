@@ -83,14 +83,14 @@ const OccasionProducts = () => {
 
         {/* Products Grid */}
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {Array(8)
+          <div className="grid grid-cols-1 gap-8">
+            {Array(4)
               .fill(0)
               .map((_, i) => <CardSkeleton key={i} />)
           }
           </div>
         ) : products.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 gap-8">
             {products.map((product, i) => (
               <motion.div
                 key={product._id}

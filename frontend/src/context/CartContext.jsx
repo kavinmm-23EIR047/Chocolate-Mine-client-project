@@ -88,9 +88,11 @@ export const CartProvider = ({ children }) => {
   const removeCoupon = async () => {
     try {
       const response = await api.post('/cart/remove-coupon');
-      setCart(response.data.data);
+      setCart(response.data.data || { items: [], total: 0 });
+      return response.data;
     } catch (err) {
       console.error('Failed to remove coupon:', err);
+      throw err;
     }
   };
 

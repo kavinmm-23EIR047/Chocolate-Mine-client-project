@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  User, Package, LogOut, ExternalLink, ShieldCheck, 
-  MapPin, Settings, Bell, CreditCard, ChevronRight, 
+import {
+  User, Package, LogOut, ExternalLink, ShieldCheck,
+  MapPin, Settings, Bell, CreditCard, ChevronRight,
   ShoppingBag, Star, Heart, Trash2
 } from 'lucide-react';
 import api from '../utils/api';
@@ -96,7 +96,7 @@ const Profile = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-20">
       <div className="flex flex-col lg:flex-row gap-12">
-        
+
         {/* Sidebar Navigation */}
         <div className="lg:w-80 shrink-0">
           <div className="card-premium p-8 sticky top-28">
@@ -118,20 +118,19 @@ const Profile = () => {
                 <button
                   key={tab.id}
                   onClick={() => tab.id === 'orders' ? navigate('/orders') : setActiveTab(tab.id)}
-                  className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-black text-[11px] transition-all uppercase tracking-widest ${
-                    activeTab === tab.id 
-                      ? 'bg-primary text-button-text shadow-premium translate-x-1' 
+                  className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-black text-[11px] transition-all uppercase tracking-widest ${activeTab === tab.id
+                      ? 'bg-primary text-button-text shadow-premium translate-x-1'
                       : 'text-muted/80 hover:bg-surface hover:text-primary'
-                  }`}
+                    }`}
                 >
                   <tab.icon size={18} className={activeTab === tab.id ? 'text-button-text' : 'text-muted'} />
                   {tab.label}
                   {(activeTab === tab.id || tab.id === 'orders') && <ChevronRight size={14} className="ml-auto opacity-50" />}
                 </button>
               ))}
-              
+
               <div className="pt-6 mt-6 border-t border-border/50">
-                <button 
+                <button
                   onClick={handleLogout}
                   className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-black text-[11px] text-error hover:bg-error-light transition-all uppercase tracking-widest"
                 >
@@ -178,13 +177,13 @@ const Profile = () => {
                     {addresses.map((addr) => (
                       <div key={addr._id} className={`bg-card rounded-3xl p-8 border-2 transition-all shadow-card group ${addr.isDefault ? 'border-primary' : 'border-border/40 hover:border-primary/30'}`}>
                         <div className="flex justify-between items-start mb-6">
-                           <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${addr.isDefault ? 'bg-primary text-button-text' : 'bg-surface text-muted border border-border shadow-sm'}`}>
-                             {addr.type}
-                           </div>
-                           <div className="flex gap-2">
-                             <button onClick={() => { setEditingAddress(addr); setShowAddressForm(true); }} className="p-2.5 bg-surface hover:bg-primary/10 rounded-xl text-primary transition-all border border-border/50 shadow-sm"><Settings size={16} /></button>
-                             <button onClick={() => handleDeleteAddress(addr._id)} className="p-2.5 bg-error-light hover:bg-error text-error hover:text-white rounded-xl transition-all border border-error/10 shadow-sm"><Trash2 size={16} /></button>
-                           </div>
+                          <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${addr.isDefault ? 'bg-primary text-button-text' : 'bg-surface text-muted border border-border shadow-sm'}`}>
+                            {addr.type}
+                          </div>
+                          <div className="flex gap-2">
+                            <button onClick={() => { setEditingAddress(addr); setShowAddressForm(true); }} className="p-2.5 bg-surface hover:bg-primary/10 rounded-xl text-primary transition-all border border-border/50 shadow-sm"><Settings size={16} /></button>
+                            <button onClick={() => handleDeleteAddress(addr._id)} className="p-2.5 bg-error-light hover:bg-error text-error hover:text-button-text rounded-xl transition-all border border-error/10 shadow-sm"><Trash2 size={16} /></button>
+                          </div>
                         </div>
                         <h4 className="font-black text-heading text-xl mb-1">{addr.fullName}</h4>
                         <p className="text-[10px] text-muted font-black uppercase tracking-widest mb-6">{addr.phone}</p>
@@ -239,27 +238,27 @@ const Profile = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                   <div className="bg-card rounded-3xl p-8 flex flex-col items-center text-center shadow-card border border-border/20">
-                      <div className="w-14 h-14 bg-info-light text-info rounded-2xl flex items-center justify-center mb-4 border border-info/10">
-                        <ShieldCheck size={28} />
-                      </div>
-                      <p className="font-black text-sm text-heading uppercase tracking-widest">Verified</p>
-                      <p className="text-[10px] text-muted font-black uppercase tracking-widest mt-1">Identity secure</p>
-                   </div>
-                   <div className="bg-card rounded-3xl p-8 flex flex-col items-center text-center shadow-card border border-border/20">
-                      <div className="w-14 h-14 bg-warning-light text-warning rounded-2xl flex items-center justify-center mb-4 border border-warning/10">
-                        <Star size={28} />
-                      </div>
-                      <p className="font-black text-sm text-heading uppercase tracking-widest">Gold Member</p>
-                      <p className="text-[10px] text-muted font-black uppercase tracking-widest mt-1">12 orders completed</p>
-                   </div>
-                   <div className="bg-card rounded-3xl p-8 flex flex-col items-center text-center shadow-card border border-border/20">
-                      <div className="w-14 h-14 bg-primary/5 text-primary rounded-2xl flex items-center justify-center mb-4 border border-primary/10">
-                        <CreditCard size={28} />
-                      </div>
-                      <p className="font-black text-sm text-heading uppercase tracking-widest">TCM Wallet</p>
-                      <p className="text-[10px] text-muted font-black uppercase tracking-widest mt-1">₹450.00 Balance</p>
-                   </div>
+                  <div className="bg-card rounded-3xl p-8 flex flex-col items-center text-center shadow-card border border-border/20">
+                    <div className="w-14 h-14 bg-info-light text-info rounded-2xl flex items-center justify-center mb-4 border border-info/10">
+                      <ShieldCheck size={28} />
+                    </div>
+                    <p className="font-black text-sm text-heading uppercase tracking-widest">Verified</p>
+                    <p className="text-[10px] text-muted font-black uppercase tracking-widest mt-1">Identity secure</p>
+                  </div>
+                  <div className="bg-card rounded-3xl p-8 flex flex-col items-center text-center shadow-card border border-border/20">
+                    <div className="w-14 h-14 bg-warning-light text-warning rounded-2xl flex items-center justify-center mb-4 border border-warning/10">
+                      <Star size={28} />
+                    </div>
+                    <p className="font-black text-sm text-heading uppercase tracking-widest">Gold Member</p>
+                    <p className="text-[10px] text-muted font-black uppercase tracking-widest mt-1">12 orders completed</p>
+                  </div>
+                  <div className="bg-card rounded-3xl p-8 flex flex-col items-center text-center shadow-card border border-border/20">
+                    <div className="w-14 h-14 bg-primary/5 text-primary rounded-2xl flex items-center justify-center mb-4 border border-primary/10">
+                      <CreditCard size={28} />
+                    </div>
+                    <p className="font-black text-sm text-heading uppercase tracking-widest">The Chocolate Mine Wallet</p>
+                    <p className="text-[10px] text-muted font-black uppercase tracking-widest mt-1">₹450.00 Balance</p>
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -269,9 +268,9 @@ const Profile = () => {
 
       {/* Address Form Modal */}
       {showAddressForm && (
-        <AddressModal 
-          address={editingAddress} 
-          onClose={() => setShowAddressForm(false)} 
+        <AddressModal
+          address={editingAddress}
+          onClose={() => setShowAddressForm(false)}
           onSuccess={() => { setShowAddressForm(false); fetchAddresses(); }}
         />
       )}
@@ -303,7 +302,7 @@ const AddressModal = ({ address, onClose, onSuccess }) => {
 
   return (
     <div className="fixed inset-0 z-[200] bg-background/80 backdrop-blur-md flex items-center justify-center p-4">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         className="bg-card rounded-[3rem] w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-premium border border-border"
@@ -312,7 +311,7 @@ const AddressModal = ({ address, onClose, onSuccess }) => {
           <h3 className="text-2xl font-black text-heading uppercase tracking-tighter">
             {address ? 'Edit Address' : 'Add New Address'}
           </h3>
-          <button onClick={onClose} className="w-12 h-12 rounded-full bg-surface shadow-premium flex items-center justify-center hover:bg-error hover:text-white transition-all border border-border/50">
+          <button onClick={onClose} className="w-12 h-12 rounded-full bg-surface shadow-premium flex items-center justify-center hover:bg-error hover:text-button-text transition-all border border-border/50">
             <X size={20} />
           </button>
         </div>
@@ -339,27 +338,27 @@ const AddressModal = ({ address, onClose, onSuccess }) => {
 
             <div className="space-y-2">
               <label className="text-[10px] font-black text-muted uppercase tracking-widest ml-2">Full Name</label>
-              <input className="input-field" value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} placeholder="Recipient Name" required />
+              <input className="input-field" value={formData.fullName} onChange={e => setFormData({ ...formData, fullName: e.target.value })} placeholder="Recipient Name" required />
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black text-muted uppercase tracking-widest ml-2">Phone Number</label>
-              <input className="input-field" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="Contact Number" required />
+              <input className="input-field" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} placeholder="Contact Number" required />
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black text-muted uppercase tracking-widest ml-2">House/Flat No</label>
-              <input className="input-field" value={formData.houseNo} onChange={e => setFormData({...formData, houseNo: e.target.value})} placeholder="e.g. 102, Green Apartments" required />
+              <input className="input-field" value={formData.houseNo} onChange={e => setFormData({ ...formData, houseNo: e.target.value })} placeholder="e.g. 102, Green Apartments" required />
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black text-muted uppercase tracking-widest ml-2">Street/Landmark</label>
-              <input className="input-field" value={formData.street} onChange={e => setFormData({...formData, street: e.target.value})} placeholder="e.g. Opp. Central Mall" required />
+              <input className="input-field" value={formData.street} onChange={e => setFormData({ ...formData, street: e.target.value })} placeholder="e.g. Opp. Central Mall" required />
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black text-muted uppercase tracking-widest ml-2">Pincode</label>
-              <input className="input-field" value={formData.pincode} onChange={e => setFormData({...formData, pincode: e.target.value})} placeholder="6-digit code" required />
+              <input className="input-field" value={formData.pincode} onChange={e => setFormData({ ...formData, pincode: e.target.value })} placeholder="6-digit code" required />
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black text-muted uppercase tracking-widest ml-2">Address Type</label>
-              <select className="input-field appearance-none" value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})}>
+              <select className="input-field appearance-none" value={formData.type} onChange={e => setFormData({ ...formData, type: e.target.value })}>
                 <option value="Home">Home (Personal)</option>
                 <option value="Work">Work (Office)</option>
                 <option value="Other">Other</option>
@@ -368,10 +367,10 @@ const AddressModal = ({ address, onClose, onSuccess }) => {
           </div>
 
           <div className="mt-8 flex items-center gap-3 bg-surface/5 p-4 rounded-2xl border border-border/30">
-            <input type="checkbox" id="isDefault" checked={formData.isDefault} onChange={e => setFormData({...formData, isDefault: e.target.checked})} className="w-5 h-5 accent-primary rounded-lg border-border" />
+            <input type="checkbox" id="isDefault" checked={formData.isDefault} onChange={e => setFormData({ ...formData, isDefault: e.target.checked })} className="w-5 h-5 accent-primary rounded-lg border-border" />
             <label htmlFor="isDefault" className="text-[10px] font-black text-heading uppercase tracking-widest">Make this my primary delivery address</label>
           </div>
-          
+
           <div className="mt-12 flex gap-6">
             <Button type="button" variant="outline" className="flex-1 py-5 uppercase tracking-widest text-xs font-black border-2 border-border" onClick={onClose}>CANCEL</Button>
             <Button type="submit" className="flex-1 py-5 bg-primary text-button-text hover:brightness-110 shadow-premium uppercase tracking-widest text-xs font-black">SAVE ADDRESS</Button>
@@ -381,16 +380,16 @@ const AddressModal = ({ address, onClose, onSuccess }) => {
         <AnimatePresence>
           {showMap && (
             <div className="fixed inset-0 z-[300] bg-background/90 backdrop-blur-xl p-4 flex items-center justify-center">
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }} 
-                animate={{ opacity: 1, scale: 1 }} 
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
                 className="bg-card rounded-[3rem] w-full max-w-5xl h-[85vh] overflow-hidden relative shadow-premium border border-border"
               >
                 <MapSelector onSelect={(data) => {
                   setFormData({ ...formData, lat: data.position.lat, lng: data.position.lng, street: data.address });
                   setShowMap(false);
                 }} />
-                <button onClick={() => setShowMap(false)} className="absolute top-6 right-6 z-10 w-12 h-12 bg-surface rounded-full shadow-premium flex items-center justify-center hover:bg-error hover:text-white transition-all border border-border/50">
+                <button onClick={() => setShowMap(false)} className="absolute top-6 right-6 z-10 w-12 h-12 bg-surface rounded-full shadow-premium flex items-center justify-center hover:bg-error hover:text-button-text transition-all border border-border/50">
                   <X size={24} />
                 </button>
               </motion.div>

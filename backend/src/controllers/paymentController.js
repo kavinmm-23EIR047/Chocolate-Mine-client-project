@@ -18,6 +18,51 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
+// Keep backend pricing consistent with frontend checkout.
+// Frontend uses:
+// - deliveryFee = max(30, round(distanceKm * 4))
+// - convenienceFee = round(subtotal * 0.02)
+// - gst = round(subtotal * 0.18)
+// and totals are in INR (Razorpay expects paise).
+const SHOP_LAT = Number(process.env.SHOP_LAT ?? 11.004540031168712);
+const SHOP_LNG = Number(process.env.SHOP_LNG ?? 76.97510955713153);
+const DELIVERY_MIN_FEE = Number(process.env.DELIVERY_MIN_FEE ?? 30);
+const DELIVERY_PER_KM_RATE = Number(process.env.DELIVERY_PER_KM_RATE ?? 4);
+
+const calculateDistanceKm = (lat1, lon1, lat2, lon2) => {
+  const R = 6371; // km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
+
+const computePricing = ({ cartItems, addressLat, addressLng, discount = 0 }) => {
+  const subtotal = cartItems.reduce((sum, item) => {
+    const unitPrice = Number(item.finalPrice ?? item.price ?? 0);
+    const qty = Number(item.qty ?? 0);
+    return sum + unitPrice * qty;
+  }, 0);
+
+  let deliveryCharge = 0;
+  if (Number.isFinite(addressLat) && Number.isFinite(addressLng)) {
+    const distanceKm = calculateDistanceKm(SHOP_LAT, SHOP_LNG, addressLat, addressLng);
+    deliveryCharge = Math.max(DELIVERY_MIN_FEE, Math.round(distanceKm * DELIVERY_PER_KM_RATE));
+  }
+
+  const convenienceFee = Math.round(subtotal * 0.02);
+  const gst = Math.round(subtotal * 0.18);
+  const total = subtotal + deliveryCharge + convenienceFee + gst - (Number(discount) || 0);
+
+  return { subtotal, deliveryCharge, convenienceFee, gst, total };
+};
+
 const generateOrderNumber = () => {
   const timestamp = Date.now();
   const random = Math.floor(1000 + Math.random() * 9000);
@@ -38,7 +83,7 @@ const validateAddress = (address) => {
 };
 
 exports.createRazorpayOrder = asyncHandler(async (req, res) => {
-  const { address, discount, deliveryDate, deliverySlot, directItem } = req.body;
+  const { address, discount, deliveryDate, deliverySlot, directItem, notes, cakeMessage } = req.body;
 
   if (!req.user || !req.user._id) {
     throw new AppError('Unauthorized user', 401);
@@ -184,11 +229,12 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
     }
   }
 
-  const subtotal = cart.total;
-  const deliveryCharge = 50;
-  const convenienceFee = subtotal * 0.02;
-  const gst = convenienceFee * 0.18;
-  const total = subtotal + deliveryCharge + convenienceFee + gst - (discount || 0);
+  const { subtotal, deliveryCharge, convenienceFee, gst, total } = computePricing({
+    cartItems: cart.items,
+    addressLat: Number(address?.lat),
+    addressLng: Number(address?.lng),
+    discount: discount ?? 0,
+  });
 
   let razorpayOrder;
 
@@ -239,6 +285,11 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
     },
     deliveryDate: deliveryDate || new Date(),
     deliverySlot: normalizedSlot,
+    notes: typeof notes === 'string' && notes.trim() ? notes.trim() : undefined,
+    cakeMessage:
+      typeof cakeMessage === 'string' && cakeMessage.trim()
+        ? cakeMessage.trim().slice(0, 500)
+        : undefined,
     razorpayOrderId: razorpayOrder.id,
     paymentAttemptAt: new Date(),
     orderNumber: generateOrderNumber(),

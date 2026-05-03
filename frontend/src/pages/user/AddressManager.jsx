@@ -68,7 +68,7 @@ const AddressManager = () => {
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
           {addresses.map((addr) => (
-            <div key={addr._id} className={`card-premium p-6 border-2 transition-all bg-white ${addr.isDefault ? 'border-secondary' : 'border-border/50 hover:border-secondary/30'}`}>
+            <div key={addr._id} className={`card-premium p-6 border-2 transition-all bg-card ${addr.isDefault ? 'border-secondary' : 'border-border/50 hover:border-secondary/30'}`}>
               <div className="flex justify-between items-start mb-4">
                 <Badge variant={addr.isDefault ? 'secondary' : 'outline'}>{addr.type}</Badge>
                 <div className="flex gap-2">
@@ -131,9 +131,9 @@ const AddressModal = ({ address, onClose, onSuccess }) => {
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-white rounded-[2.5rem] w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
+        className="bg-card rounded-[2.5rem] w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
       >
-        <div className="p-8 border-b border-border/50 flex justify-between items-center bg-[#FAF9F6]">
+        <div className="p-8 border-b border-border/50 flex justify-between items-center bg-card-soft">
           <h3 className="text-2xl font-black text-heading uppercase tracking-tighter">
             {address ? 'Edit Address' : 'Add New Address'}
           </h3>
@@ -147,7 +147,7 @@ const AddressModal = ({ address, onClose, onSuccess }) => {
             <button
               type="button"
               onClick={() => setShowMap(true)}
-              className="md:col-span-2 w-full bg-[#FAF9F6] border-2 border-dashed border-secondary/20 rounded-2xl p-6 hover:bg-secondary/5 transition-all group"
+              className="md:col-span-2 w-full bg-card-soft border-2 border-dashed border-secondary/20 rounded-2xl p-6 hover:bg-secondary/5 transition-all group"
             >
 
               <div className="flex items-center justify-center gap-4">

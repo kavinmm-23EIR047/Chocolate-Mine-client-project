@@ -1,110 +1,117 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import confetti from 'canvas-confetti';
 import {
-  CheckCircle2,
+  Check,
   ArrowRight,
   Package,
   Download,
   Share2,
+  Copy,
+  Sparkles,
 } from 'lucide-react';
 import { Link, useSearchParams, useLocation, useNavigate } from 'react-router-dom';
-import Button from '../components/ui/Button';
+import toast from 'react-hot-toast';
 import orderService from '../services/orderService';
 
-/* ─────────────────────────────────────────────
-   Inline SVG Scooter (no emoji – clean vectors)
-   Colours pulled from CSS variables so it works
-   in both dark and light themes.
-───────────────────────────────────────────── */
-const ScooterSVG = () => (
+/** Calm, static illustration — no looping motion on a “done” screen */
+const DeliveryIllustration = () => (
   <svg
-    viewBox="0 0 200 110"
+    viewBox="0 0 120 72"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
-    className="w-full h-full"
+    className="w-40 sm:w-48 h-auto mx-auto text-primary"
     aria-hidden="true"
   >
-    {/* Rear wheel */}
-    <motion.circle
-      cx="52" cy="88" r="16"
-      stroke="var(--primary)" strokeWidth="4" fill="var(--surface)"
-      animate={{ rotate: 360 }}
-      transition={{ repeat: Infinity, duration: 0.55, ease: 'linear' }}
-      style={{ transformOrigin: '52px 88px' }}
+    <circle cx="28" cy="56" r="10" stroke="currentColor" strokeWidth="2" fill="var(--card)" />
+    <circle cx="28" cy="56" r="3" fill="currentColor" />
+    <circle cx="92" cy="56" r="10" stroke="currentColor" strokeWidth="2" fill="var(--card)" />
+    <circle cx="92" cy="56" r="3" fill="currentColor" />
+    <path
+      d="M34 52h52c4 0 7 2 8 6l2 6H36l-2-5z"
+      fill="var(--card)"
+      stroke="var(--border)"
+      strokeWidth="1.2"
+      strokeLinejoin="round"
     />
-    <circle cx="52" cy="88" r="4" fill="var(--primary)" />
-    <line x1="52" y1="72" x2="52" y2="104" stroke="var(--border)" strokeWidth="1.5" />
-    <line x1="36" y1="88" x2="68" y2="88" stroke="var(--border)" strokeWidth="1.5" />
-
-    {/* Front wheel */}
-    <motion.circle
-      cx="152" cy="88" r="16"
-      stroke="var(--primary)" strokeWidth="4" fill="var(--surface)"
-      animate={{ rotate: 360 }}
-      transition={{ repeat: Infinity, duration: 0.55, ease: 'linear' }}
-      style={{ transformOrigin: '152px 88px' }}
+    <rect x="38" y="40" width="22" height="12" rx="2" fill="currentColor" opacity="0.85" />
+    <rect x="56" y="34" width="28" height="14" rx="3" fill="var(--secondary)" />
+    <circle cx="78" cy="24" r="9" fill="var(--accent)" opacity="0.9" />
+    <path d="M86 30h10" stroke="var(--foreground)" strokeWidth="2" strokeLinecap="round" />
+    <path
+      d="M0 62h120"
+      stroke="var(--border)"
+      strokeWidth="1"
+      strokeLinecap="round"
+      opacity="0.5"
     />
-    <circle cx="152" cy="88" r="4" fill="var(--primary)" />
-    <line x1="152" y1="72" x2="152" y2="104" stroke="var(--border)" strokeWidth="1.5" />
-    <line x1="136" y1="88" x2="168" y2="88" stroke="var(--border)" strokeWidth="1.5" />
-
-    {/* Body */}
-    <rect x="55" y="84" width="90" height="8" rx="4" fill="var(--card)" />
-    <path d="M58 84 C58 70 68 58 80 56 L120 54 C134 54 148 62 152 72 L152 84 Z"
-      fill="var(--card)" stroke="var(--border)" strokeWidth="1.5" />
-    <rect x="75" y="46" width="52" height="10" rx="5" fill="var(--secondary)" />
-    <line x1="148" y1="72" x2="144" y2="58" stroke="var(--border)" strokeWidth="3" strokeLinecap="round" />
-    <line x1="140" y1="52" x2="150" y2="52" stroke="var(--foreground)" strokeWidth="3" strokeLinecap="round" />
-    {/* headlight */}
-    <circle cx="160" cy="66" r="5" fill="var(--warning)" stroke="var(--warning-light)" strokeWidth="1.5" />
-
-    {/* Delivery box */}
-    <rect x="60" y="40" width="32" height="22" rx="3" fill="var(--primary)" />
-    <rect x="62" y="42" width="28" height="18" rx="2" fill="var(--primary-hover)" />
-    <line x1="76" y1="42" x2="76" y2="60" stroke="var(--primary)" strokeWidth="1.5" />
-    <line x1="60" y1="51" x2="92" y2="51" stroke="var(--primary)" strokeWidth="1.5" />
-
-    {/* Rider – torso */}
-    <rect x="108" y="32" width="28" height="24" rx="6" fill="var(--secondary)" />
-    <rect x="119" y="32" width="4" height="24" rx="1" fill="var(--accent)" opacity="0.7" />
-    {/* arm */}
-    <path d="M136 40 C142 38 146 44 144 52" stroke="var(--secondary)" strokeWidth="5" strokeLinecap="round" fill="none" />
-    <circle cx="144" cy="52" r="3" fill="var(--foreground)" />
-    {/* leg */}
-    <path d="M108 52 C104 60 100 66 96 72" stroke="var(--secondary)" strokeWidth="6" strokeLinecap="round" fill="none" />
-    <ellipse cx="94" cy="74" rx="6" ry="3" fill="var(--foreground)" />
-    {/* helmet */}
-    <ellipse cx="122" cy="26" rx="16" ry="14" fill="var(--accent)" />
-    <path d="M108 28 Q114 36 136 30" stroke="var(--card)" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.6" />
-    <ellipse cx="116" cy="18" rx="4" ry="2.5" fill="white" opacity="0.25" transform="rotate(-20 116 18)" />
   </svg>
 );
 
-/* ─────────────────────────────────────────────
-   Confetti
-───────────────────────────────────────────── */
-const CONFETTI_COLORS = ['#D4A017', '#3D1F1A', '#EF5350', '#66BB6A', '#FDF4F2'];
-const Confetti = () => {
-  const particles = Array.from({ length: 40 });
-  return (
-    <div className="fixed inset-0 pointer-events-none z-[60] overflow-hidden">
-      {particles.map((_, i) => (
-        <motion.div
-          key={i}
-          initial={{ top: '-10%', left: `${Math.random() * 100}%`, scale: Math.random() * 0.5 + 0.5, rotate: 0, opacity: 1 }}
-          animate={{ top: '110%', rotate: 360 * (Math.random() > 0.5 ? 1 : -1), opacity: [1, 1, 0] }}
-          transition={{ duration: Math.random() * 3 + 2, repeat: Infinity, ease: 'linear', delay: Math.random() * 5 }}
-          className="absolute w-3 h-3 rounded-sm"
-          style={{ backgroundColor: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)] }}
-        />
-      ))}
-    </div>
-  );
+const formatOrderRef = (raw) => {
+  if (!raw) return null;
+  const s = String(raw).replace(/\s+/g, '');
+  if (s.length <= 20) return s;
+  return s.replace(/(.{4})/g, '$1 ').trim();
 };
 
-/* ─────────────────────────────────────────────
-   OrderSuccess
-───────────────────────────────────────────── */
+/** Festive cracker-style bursts (left / right cannons + centre blast) */
+const CRACKER_COLORS = ['#5c3d36', '#c9a227', '#66BB6A', '#f59e0b', '#fcd34d', '#fda4af', '#fef3c7'];
+
+function fireSuccessCrackerBlast() {
+  if (typeof window === 'undefined') return;
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+
+  const shoot = (
+    originX,
+    opts = {}
+  ) => {
+    confetti({
+      particleCount: opts.particleCount ?? 72,
+      spread: opts.spread ?? 52,
+      startVelocity: opts.startVelocity ?? 42,
+      ticks: opts.ticks ?? 320,
+      gravity: opts.gravity ?? 1.05,
+      decay: opts.decay ?? 0.92,
+      scalar: opts.scalar ?? 1,
+      origin: { x: originX, y: opts.originY ?? 0.62 },
+      colors: CRACKER_COLORS,
+      ...opts.extra,
+    });
+  };
+
+  shoot(0.08, { spread: 38, particleCount: 55, startVelocity: 48 });
+  shoot(0.92, { spread: 38, particleCount: 55, startVelocity: 48 });
+
+  window.setTimeout(() => {
+    shoot(0.5, {
+      particleCount: 110,
+      spread: 78,
+      startVelocity: 52,
+      scalar: 1.05,
+    });
+  }, 160);
+
+  window.setTimeout(() => {
+    shoot(0.28, { particleCount: 45, spread: 65, startVelocity: 35 });
+    shoot(0.72, { particleCount: 45, spread: 65, startVelocity: 35 });
+  }, 340);
+
+  window.setTimeout(() => {
+    confetti({
+      particleCount: 55,
+      spread: 360,
+      startVelocity: 28,
+      ticks: 240,
+      gravity: 0.95,
+      origin: { x: 0.5, y: 0.35 },
+      colors: CRACKER_COLORS,
+      shapes: ['circle', 'square'],
+      scalar: 0.85,
+    });
+  }, 520);
+}
+
 const OrderSuccess = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
@@ -113,190 +120,195 @@ const OrderSuccess = () => {
   const orderId = searchParams.get('id') || location.state?.orderId || null;
   const orderNumber = location.state?.orderNumber || orderId;
 
-  const [showConfetti, setShowConfetti] = useState(true);
+  const displayRef = useMemo(() => formatOrderRef(orderNumber), [orderNumber]);
+  const fullRef = orderNumber ? String(orderNumber).replace(/\s+/g, '') : '';
+
   useEffect(() => {
-    const t = setTimeout(() => setShowConfetti(false), 5000);
-    return () => clearTimeout(t);
+    fireSuccessCrackerBlast();
   }, []);
 
   const handleViewDetails = () => {
     if (orderId) navigate(`/account/orders/${orderId}`);
+    else toast.error('Order reference not available');
+  };
+
+  const handleCopyId = async () => {
+    if (!fullRef) return;
+    try {
+      await navigator.clipboard.writeText(fullRef);
+      toast.success('Order ID copied');
+    } catch {
+      toast.error('Could not copy');
+    }
   };
 
   const handleDownloadInvoice = async () => {
-    if (!orderId) { alert('Order ID missing'); return; }
+    if (!orderId) {
+      toast.error('Order ID missing');
+      return;
+    }
     try {
       const res = await orderService.downloadInvoice(orderId);
       const url = window.URL.createObjectURL(res.data);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Invoice-${orderNumber}.pdf`;
+      link.download = `Invoice-${displayRef || orderId}.pdf`;
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
+      toast.success('Invoice downloaded');
     } catch (err) {
       console.error('Invoice download failed:', err);
-      alert('Unable to download invoice');
+      toast.error('Unable to download invoice');
     }
   };
 
   const handleShareOrder = async () => {
+    if (!orderId) {
+      toast.error('Order reference not available');
+      return;
+    }
     const orderUrl = `${window.location.origin}/account/orders/${orderId}`;
     try {
       if (navigator.share) {
-        await navigator.share({ title: 'My Order - The Chocolate Mine', text: `View order ${orderNumber}`, url: orderUrl });
+        await navigator.share({
+          title: 'The Chocolate Mine — Order',
+          text: `Order ${displayRef || orderId}`,
+          url: orderUrl,
+        });
       } else {
         await navigator.clipboard.writeText(orderUrl);
-        alert('Order link copied');
+        toast.success('Link copied');
       }
     } catch (err) {
-      console.error('Share failed:', err);
+      if (err?.name !== 'AbortError') console.error('Share failed:', err);
     }
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden">
-      {showConfetti && <Confetti />}
-
-      {/* Background glows */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/2 left-1/4 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-primary/10 rounded-full blur-[100px] sm:blur-[120px] -translate-y-1/2" />
-        <div className="absolute top-1/2 right-1/4 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-accent/5 rounded-full blur-[100px] sm:blur-[120px] -translate-y-1/2" />
-      </div>
-
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 sm:p-8">
       <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 30 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: 'easeOut' }}
-        className="bg-card w-full max-w-lg relative z-10 rounded-[2rem] sm:rounded-[3rem] border border-border/40 shadow-premium overflow-hidden"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        className="w-full max-w-xl sm:max-w-2xl"
       >
-        {/* Inner padding */}
-        <div className="px-6 sm:px-10 pt-8 sm:pt-12 pb-8 sm:pb-10 flex flex-col items-center text-center">
-
-          {/* Success icon */}
-          <motion.div
-            initial={{ scale: 0, rotate: -20 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: 'spring', damping: 12, stiffness: 100, delay: 0.2 }}
-            className="relative w-20 h-20 sm:w-28 sm:h-28 mx-auto mb-6 sm:mb-10"
-          >
-            <div className="absolute inset-0 bg-success/20 rounded-[1.5rem] sm:rounded-[2.5rem] animate-ping opacity-20" />
-            <div className="w-full h-full bg-success/10 rounded-[1.5rem] sm:rounded-[2.5rem] flex items-center justify-center text-success border border-success/20 shadow-xl shadow-success/10 relative z-10">
-              <CheckCircle2 size={40} className="sm:hidden" />
-              <CheckCircle2 size={56} className="hidden sm:block" />
-            </div>
-          </motion.div>
-
-          {/* Heading */}
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-heading uppercase tracking-tighter mb-4 sm:mb-6 leading-none">
-            Order <br /><span className="text-primary">Confirmed!</span>
-          </h1>
-
-          <p className="text-[10px] sm:text-[11px] font-black text-muted uppercase tracking-[0.25em] sm:tracking-[0.3em] mb-8 sm:mb-10 leading-relaxed max-w-xs mx-auto opacity-80">
-            Payment successful. Your delicacies are being prepared with love.
-          </p>
-
-          {/* ── Scooter delivery animation ── */}
-          <div className="mb-8 sm:mb-12 relative w-full max-w-[280px] sm:max-w-xs mx-auto">
-            {/* Road */}
-            <div className="absolute bottom-3 left-0 right-0 h-[2px] bg-border/30 rounded-full overflow-hidden">
-              <motion.div
-                className="h-full flex gap-4"
-                animate={{ x: ['0%', '-50%'] }}
-                transition={{ repeat: Infinity, duration: 0.7, ease: 'linear' }}
-                style={{ width: '200%' }}
-              >
-                {Array.from({ length: 16 }).map((_, i) => (
-                  <div key={i} className="h-full w-6 rounded-full bg-border/60 flex-shrink-0" />
-                ))}
-              </motion.div>
-            </div>
-
-            {/* Scooter bobbing */}
+        <div className="rounded-2xl border border-border/50 bg-card shadow-[0_20px_50px_-24px_rgba(0,0,0,0.15)] overflow-hidden">
+          <div className="px-6 pt-8 pb-6 sm:px-8 sm:pt-10 sm:pb-8 text-center">
             <motion.div
-              className="relative h-20 sm:h-24"
-              animate={{ y: [0, -3, 0, -2, 0] }}
-              transition={{ repeat: Infinity, duration: 0.45, ease: 'easeInOut' }}
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 28, delay: 0.05 }}
+              className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-success-light text-success border border-success/20"
             >
-              <ScooterSVG />
+              <Check strokeWidth={2.5} className="h-7 w-7" aria-hidden />
             </motion.div>
 
-            {/* Speed lines */}
-            {[{ w: 18, t: '20%' }, { w: 26, t: '40%' }, { w: 14, t: '60%' }].map((l, i) => (
-              <motion.div
-                key={i}
-                className="absolute left-0 rounded-full bg-border/40"
-                style={{ height: 2, width: l.w, top: l.t }}
-                animate={{ x: [4, -40], opacity: [0, 0.7, 0] }}
-                transition={{ repeat: Infinity, duration: 0.5, ease: 'linear', delay: i * 0.15 }}
-              />
-            ))}
-
-            <p className="absolute bottom-0 left-0 right-0 text-[7px] sm:text-[8px] font-black text-muted uppercase tracking-[0.4em] sm:tracking-[0.5em] opacity-40 text-center">
-              Delivering Happiness
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted mb-2">
+              Thank you
             </p>
+            <h1 className="text-2xl sm:text-[1.75rem] font-bold text-heading tracking-tight leading-tight">
+              Order confirmed
+            </h1>
+            <p className="mt-3 text-sm text-muted leading-relaxed max-w-lg mx-auto">
+              Payment went through. We’re preparing your order with care — you’ll get updates on the way.
+            </p>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.15 }}
+              className="mt-8 mb-2"
+            >
+              <DeliveryIllustration />
+              <p className="mt-4 flex items-center justify-center gap-1.5 text-xs font-medium text-muted">
+                <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" aria-hidden />
+                On its way to you soon
+              </p>
+            </motion.div>
           </div>
 
-          {/* Order info card */}
-          <div className="bg-surface/50 border border-border/40 rounded-2xl sm:rounded-[2rem] p-5 sm:p-8 mb-6 sm:mb-10 flex flex-col sm:flex-row gap-5 sm:gap-8 w-full text-left">
-            <div className="flex-1 sm:border-r border-border/20 pb-4 sm:pb-0 sm:pr-8 border-b sm:border-b-0">
-              <p className="text-[9px] sm:text-[10px] font-black text-muted uppercase tracking-widest mb-1.5 opacity-60">
-                Order Number
-              </p>
-              <p className="text-lg sm:text-2xl font-black text-heading uppercase tracking-tight break-all">
-                {orderNumber || 'Pending'}
-              </p>
-            </div>
-            <div className="flex-1 sm:pl-4">
-              <p className="text-[9px] sm:text-[10px] font-black text-muted uppercase tracking-widest mb-1.5 opacity-60">
-                Status
-              </p>
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-success animate-pulse shadow-[0_0_10px_rgba(102,187,106,0.5)] flex-shrink-0" />
-                <p className="text-lg sm:text-2xl font-black text-success uppercase tracking-tight">Confirmed</p>
+          <div className="border-t border-border/40 bg-surface/40 px-6 py-5 sm:px-8">
+            <div className="rounded-xl border border-border/50 bg-card px-4 py-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 text-left flex-1">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted mb-1">
+                    Order reference
+                  </p>
+                  <p
+                    className="font-mono text-sm font-semibold text-heading break-all leading-snug"
+                    title={fullRef || undefined}
+                  >
+                    {displayRef || '—'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopyId}
+                  disabled={!fullRef}
+                  className="shrink-0 rounded-lg p-2 text-muted hover:text-primary hover:bg-primary/5 border border-transparent hover:border-border/60 transition-colors disabled:opacity-40"
+                  aria-label="Copy order ID"
+                >
+                  <Copy className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="mt-4 flex items-center gap-2 pt-4 border-t border-border/30">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-success-light px-2.5 py-1 text-[11px] font-semibold text-success-text border border-success/15">
+                  <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
+                  Confirmed
+                </span>
               </div>
             </div>
-          </div>
 
-          {/* Action buttons */}
-          <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-8 sm:mb-12 w-full">
-            {[
-              { icon: Package, label: 'Details', action: handleViewDetails },
-              { icon: Download, label: 'Invoice', action: handleDownloadInvoice },
-              { icon: Share2, label: 'Share', action: handleShareOrder },
-            ].map(({ icon: Icon, label, action }) => (
+            <div className="mt-4 grid grid-cols-3 gap-2">
               <button
-                key={label}
-                onClick={action}
-                className="p-4 sm:p-5 rounded-xl sm:rounded-2xl border-2 border-border/30 bg-surface/30 hover:border-primary hover:bg-primary/5 transition-all group"
+                type="button"
+                onClick={handleViewDetails}
+                className="flex flex-col items-center gap-1.5 rounded-xl border border-border/60 bg-card py-3 px-2 text-muted hover:border-primary/40 hover:text-primary hover:bg-primary/[0.04] transition-colors"
               >
-                <Icon size={18} className="mx-auto mb-1.5 sm:mb-2 text-muted group-hover:text-primary transition-colors sm:hidden" />
-                <Icon size={22} className="mx-auto mb-1.5 sm:mb-2 text-muted group-hover:text-primary transition-colors hidden sm:block" />
-                <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-muted group-hover:text-primary transition-colors">
-                  {label}
+                <Package className="h-4 w-4" />
+                <span className="text-[10px] font-semibold uppercase tracking-wide">
+                  Details
                 </span>
               </button>
-            ))}
+              <button
+                type="button"
+                onClick={handleDownloadInvoice}
+                className="flex flex-col items-center gap-1.5 rounded-xl border border-border/60 bg-card py-3 px-2 text-muted hover:border-primary/40 hover:text-primary hover:bg-primary/[0.04] transition-colors"
+              >
+                <Download className="h-4 w-4" />
+                <span className="text-[10px] font-semibold uppercase tracking-wide">
+                  Invoice
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={handleShareOrder}
+                className="flex flex-col items-center gap-1.5 rounded-xl border border-border/60 bg-card py-3 px-2 text-muted hover:border-primary/40 hover:text-primary hover:bg-primary/[0.04] transition-colors"
+              >
+                <Share2 className="h-4 w-4" />
+                <span className="text-[10px] font-semibold uppercase tracking-wide">
+                  Share
+                </span>
+              </button>
+            </div>
           </div>
 
-          {/* CTA row */}
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 w-full">
-            <Link to="/account/orders" className="flex-1">
-              <Button
-                variant="outline"
-                className="w-full h-12 sm:h-14 border-2 border-border/60 hover:border-primary text-[9px] sm:text-[10px] font-black tracking-widest uppercase px-2"
-              >
-                VIEW ALL ORDERS
-              </Button>
-            </Link>
-            <Link to="/" className="flex-1">
-              <Button
-                className="w-full h-12 sm:h-14 bg-primary text-button-text shadow-premium text-[9px] sm:text-[10px] font-black tracking-widest uppercase px-2"
-                icon={ArrowRight}
-              >
-                CONTINUE SHOPPING
-              </Button>
+          <div className="p-6 sm:p-8 pt-2 space-y-3 bg-card">
+            <button
+              type="button"
+              onClick={() => navigate('/')}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary text-button-text py-3.5 text-sm font-semibold shadow-sm hover:opacity-95 active:scale-[0.99] transition-all"
+            >
+              Continue shopping
+              <ArrowRight className="h-4 w-4" />
+            </button>
+            <Link
+              to="/account/orders"
+              className="block w-full text-center text-sm font-medium text-muted hover:text-primary py-2 transition-colors"
+            >
+              View all orders
             </Link>
           </div>
         </div>

@@ -33,15 +33,17 @@ import 'swiper/css/navigation';
 import productService from '../services/productService';
 import reviewService from '../services/reviewService';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { useWishlist } from '../context/WishlistContext';
 import ProductCard from '../components/ProductCard';
-import { formatCurrency } from '../utils/helpers';
+import { formatCurrency, getCouponUnitDiscount, idsMatch } from '../utils/helpers';
 import toast from 'react-hot-toast';
 
 const ProductDetails = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
 
+  const { user } = useAuth();
   const { cart, addToCart, updateQuantity, applyCoupon, removeCoupon, fetchCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
 
@@ -132,6 +134,10 @@ const ProductDetails = () => {
     load();
   }, [slug, navigate]);
 
+  useEffect(() => {
+    if (user && slug) fetchCart();
+  }, [user, slug, fetchCart]);
+
   // Handle quantity change - removed as per requirements
 
   // Handle flavor change
@@ -198,7 +204,7 @@ const ProductDetails = () => {
 
   // Find cart item with same variant
   const cartItem = cart?.items?.find(i =>
-    i.productId === product?._id &&
+    idsMatch(i.productId, product?._id) &&
     (product.category !== 'cakes' || (i.selectedFlavor === currentVariantFlavor && i.selectedWeight === currentVariantWeight))
   );
   const cartQty = cartItem?.qty || 0;
@@ -217,18 +223,21 @@ const ProductDetails = () => {
   const offerDiscount = currentPrice - basePrice;
   const offerPct = currentPrice > 0 ? Math.round((offerDiscount / currentPrice) * 100) : 0;
 
-  // Check if coupon is applied to cart
-  const isCouponApplied = cart?.appliedCoupon &&
-    product?.coupon?.code &&
-    cart.appliedCoupon.toUpperCase() === product.coupon.code.toUpperCase();
+  const normalizeCouponCode = (c) => (c != null && String(c).trim() !== '' ? String(c).trim().toUpperCase() : '');
+
+  // Cart coupon matches this product's offer (server stores uppercase code)
+  const isCouponApplied =
+    !!normalizeCouponCode(cart?.appliedCoupon) &&
+    !!normalizeCouponCode(product?.coupon?.code) &&
+    normalizeCouponCode(cart?.appliedCoupon) === normalizeCouponCode(product?.coupon?.code);
+
+  const hasAnyCartCoupon = !!normalizeCouponCode(cart?.appliedCoupon);
+  const otherCouponBlocksApply = hasAnyCartCoupon && !isCouponApplied && !!product?.coupon?.enabled;
 
   // Calculate discount per unit
   const getCouponSavingsPerUnit = () => {
     if (!isCouponApplied || !product?.coupon?.enabled) return 0;
-    const c = product.coupon;
-    if (c.type === 'percent') return Math.round((basePrice * c.value) / 100);
-    if (c.type === 'flat') return Math.min(basePrice, Number(c.value));
-    return 0;
+    return getCouponUnitDiscount(basePrice, product.coupon);
   };
 
   const couponSavingsPerUnit = getCouponSavingsPerUnit();
@@ -243,6 +252,10 @@ const ProductDetails = () => {
   const totalSavings = totalOriginalPrice - totalFinalPrice;
   const totalSavingsPct = totalOriginalPrice > 0 ? Math.round((totalSavings / totalOriginalPrice) * 100) : 0;
 
+  // For UI display consistency
+  const finalPrice = totalFinalPrice;
+  const couponSavings = totalCouponDiscount;
+
   // Check if variant is in stock
   const isInStock = product?.category === 'cakes'
     ? (selectedStock > 0)
@@ -254,12 +267,16 @@ const ProductDetails = () => {
       toast.error('No coupon available for this product');
       return;
     }
+    if (otherCouponBlocksApply) {
+      toast.error('Remove the active coupon from your cart to use this code.');
+      return;
+    }
 
     setApplyingCoupon(true);
 
     try {
       const isInCart = cart?.items?.some(item =>
-        item.productId === product._id &&
+        idsMatch(item.productId, product._id) &&
         (product.category !== 'cakes' ||
           (item.selectedFlavor === currentVariantFlavor &&
             item.selectedWeight === currentVariantWeight))
@@ -283,13 +300,13 @@ const ProductDetails = () => {
         toast.success(`${quantity} item(s) added to cart`);
       }
 
-      await applyCoupon(product.coupon.code);
-      toast.success(`🎉 ${product.coupon.code} applied!`);
+      const res = await applyCoupon(product.coupon.code);
+      toast.success(res?.message || `${product.coupon.code} applied`);
       await fetchCart();
 
     } catch (err) {
       console.error('Coupon application error:', err);
-      toast.error(err?.response?.data?.message || 'Failed to apply coupon. Please try again.');
+      toast.error(err?.response?.data?.message || err?.message || 'Failed to apply coupon. Please try again.');
     } finally {
       setApplyingCoupon(false);
     }
@@ -442,14 +459,14 @@ const ProductDetails = () => {
               </AnimatePresence>
 
               {offerPct > 0 && (
-                <div className="absolute top-6 left-6 bg-sale text-white text-xs font-black px-4 py-2 rounded-xl shadow-lg z-10 uppercase tracking-widest">
+                <div className="absolute top-6 left-6 bg-sale text-button-text text-xs font-black px-4 py-2 rounded-xl shadow-lg z-10 uppercase tracking-widest">
                   {offerPct}% OFF
                 </div>
               )}
 
               <button
                 onClick={(e) => { e.stopPropagation(); toggleWishlist(product._id); }}
-                className="absolute top-6 right-6 bg-white/90 backdrop-blur-md shadow-xl p-3 rounded-full hover:scale-110 transition-all z-10 group/heart"
+                className="absolute top-6 right-6 bg-card/85 backdrop-blur-md shadow-xl p-3 rounded-full hover:scale-110 transition-all z-10 group/heart border border-border/50"
               >
 
                 <Heart
@@ -511,8 +528,8 @@ const ProductDetails = () => {
                 <div className="grid grid-cols-2 gap-y-5 gap-x-6">
                   {['Freshly Baked', 'Premium Quality', 'Eggless Available', 'No Preservatives', 'Secure Packing', 'Fast Delivery'].map(item => (
                     <div key={item} className="flex items-center gap-3">
-                      <div className="w-6 h-6 rounded-full bg-green-50 flex items-center justify-center border border-green-100 flex-shrink-0">
-                        <CheckCircle2 size={12} className="text-green-500" />
+                      <div className="w-6 h-6 rounded-full bg-success-light flex items-center justify-center border border-success/10 flex-shrink-0">
+                        <CheckCircle2 size={12} className="text-success" />
                       </div>
                       <span className="text-[11px] font-black uppercase tracking-wider text-heading">{item}</span>
                     </div>
@@ -525,18 +542,18 @@ const ProductDetails = () => {
           {/* ── RIGHT — DETAILS ── */}
           <div className="w-full lg:sticky lg:top-24 space-y-6 px-1 lg:px-0">
             {/* Main Header Card */}
-            <div className="bg-white rounded-[2.5rem] border border-gray-100 p-6 lg:p-10 shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-card rounded-[2.5rem] border border-border/50 p-6 lg:p-10 shadow-card hover:shadow-premium transition-shadow">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-[11px] font-black text-primary uppercase bg-primary/5 px-4 py-1.5 rounded-full tracking-widest border border-primary/10">
                   {product.category}
                 </span>
-                <button className="p-2.5 text-muted hover:text-primary transition-colors bg-surface/10 rounded-full"><Share2 size={18} /></button>
+                <button className="p-2.5 text-muted hover:text-primary transition-colors bg-card-soft rounded-full border border-border/40 shadow-soft"><Share2 size={18} /></button>
               </div>
 
               <h1 className="text-3xl lg:text-4xl font-black text-heading leading-[1.1] mb-4 capitalize tracking-tight">{product.name}</h1>
 
               <div className="flex items-center gap-4 mb-8">
-                <div className="flex items-center gap-1.5 bg-success text-white px-3 py-1 rounded-xl text-xs font-black shadow-sm">
+                <div className="flex items-center gap-1.5 bg-success text-button-text px-3 py-1 rounded-xl text-xs font-black shadow-sm">
                   {reviewStats.avg} <Star size={12} fill="currentColor" />
                 </div>
                 <span className="text-xs text-muted font-black uppercase tracking-widest">{reviewStats.total} verified ratings</span>
@@ -559,8 +576,8 @@ const ProductDetails = () => {
                               key={idx}
                               onClick={() => handleFlavorChange(flavor)}
                               className={`px-5 py-2.5 rounded-xl text-sm font-black uppercase tracking-wide transition-all ${selectedFlavor?.name === flavor.name
-                                  ? 'bg-primary text-white shadow-lg scale-105'
-                                  : 'bg-muted/10 text-heading border-2 border-border hover:border-primary/50'
+                                ? 'bg-primary text-button-text shadow-lg scale-105'
+                                : 'bg-muted/10 text-heading border-2 border-border hover:border-primary/50'
                                 }`}
                             >
                               {flavor.name}
@@ -587,7 +604,7 @@ const ProductDetails = () => {
                         />
                         <button
                           onClick={handleCustomFlavorSubmit}
-                          className="px-4 py-2 bg-primary text-white rounded-xl text-xs font-black"
+                          className="px-4 py-2 bg-primary text-button-text rounded-xl text-xs font-black"
                         >
                           Add
                         </button>
@@ -616,8 +633,8 @@ const ProductDetails = () => {
                               key={idx}
                               onClick={() => handleWeightChange(weight.value)}
                               className={`px-5 py-2.5 rounded-xl text-sm font-black uppercase tracking-wide transition-all ${selectedWeight === weight.value
-                                  ? 'bg-primary text-white shadow-lg scale-105'
-                                  : 'bg-muted/10 text-heading border-2 border-border hover:border-primary/50'
+                                ? 'bg-primary text-button-text shadow-lg scale-105'
+                                : 'bg-muted/10 text-heading border-2 border-border hover:border-primary/50'
                                 }`}
                             >
                               {weight.value}
@@ -644,7 +661,7 @@ const ProductDetails = () => {
                         />
                         <button
                           onClick={handleCustomWeightSubmit}
-                          className="px-4 py-2 bg-primary text-white rounded-xl text-xs font-black"
+                          className="px-4 py-2 bg-primary text-button-text rounded-xl text-xs font-black"
                         >
                           Add
                         </button>
@@ -660,7 +677,7 @@ const ProductDetails = () => {
                   </div>
 
                   {!isInStock && (
-                    <div className="text-center py-2 bg-red-50 text-red-600 rounded-xl text-xs font-black">
+                    <div className="text-center py-2 bg-error-light text-error-text border border-error/10 rounded-xl text-xs font-black uppercase tracking-widest">
                       Out of Stock for this combination
                     </div>
 
@@ -677,7 +694,7 @@ const ProductDetails = () => {
                     <span className="text-xl line-through text-muted/40 font-black tracking-tighter">{formatCurrency(currentPrice)}</span>
                   )}
                   {totalSavingsPct > 0 && (
-                    <span className="text-base font-black text-green-600 bg-green-50 px-3 py-1 rounded-lg uppercase tracking-wide">
+                    <span className="text-base font-black text-success-text bg-success-light px-3 py-1 rounded-lg uppercase tracking-wide border border-success/10">
                       {totalSavingsPct}% off
                     </span>
                   )}
@@ -689,13 +706,13 @@ const ProductDetails = () => {
                     <span>{formatCurrency(currentPrice)}</span>
                   </div>
                   {offerDiscount > 0 && (
-                    <div className="flex justify-between text-green-600 uppercase text-[10px] tracking-widest">
+                    <div className="flex justify-between text-success-text uppercase text-[10px] tracking-widest">
                       <span>Offer Savings</span>
                       <span>- {formatCurrency(offerDiscount)}</span>
                     </div>
                   )}
                   {couponSavings > 0 && (
-                    <div className="flex justify-between text-green-600 uppercase text-[10px] tracking-widest">
+                    <div className="flex justify-between text-success-text uppercase text-[10px] tracking-widest">
                       <span>Coupon Discount ({product.coupon.code})</span>
                       <span>- {formatCurrency(couponSavings)}</span>
                     </div>
@@ -714,32 +731,61 @@ const ProductDetails = () => {
                 <div className="absolute -top-4 -right-4 p-2 opacity-[0.03] rotate-12 transition-transform group-hover/coupon:rotate-45 duration-700">
                   <Percent size={120} />
                 </div>
-                <p className="text-[10px] font-black text-muted uppercase tracking-[0.2em] mb-4">Available Exclusive Offer</p>
-                <div className="flex items-center justify-between bg-orange-50/40 border border-orange-100 border-dashed rounded-[1.5rem] p-5 lg:p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-white p-3 rounded-2xl shadow-sm border border-orange-50"><Tag size={20} className="text-orange-500" /></div>
-                    <div>
+                <p className="text-[10px] font-black text-muted uppercase tracking-[0.2em] mb-4">
+                  {isCouponApplied ? 'Coupon applied to your order' : 'Available Exclusive Offer'}
+                </p>
+                <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-coupon/10 border border-coupon/20 border-dashed rounded-[1.5rem] p-5 lg:p-6 ${isCouponApplied ? 'border-success/30 bg-success-light/40' : ''}`}>
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="bg-card p-3 rounded-2xl shadow-soft border border-border/50 flex-shrink-0">
+                      {isCouponApplied ? (
+                        <CheckCircle2 size={20} className="text-success" />
+                      ) : (
+                        <Tag size={20} className="text-coupon" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
                       <p className="font-black text-heading text-lg font-mono tracking-widest">{product.coupon.code}</p>
-                      <p className="text-[11px] font-black text-orange-600/70 uppercase tracking-wider">
-                        {product.coupon.type === 'percent' ? `${product.coupon.value}% Instant OFF` : `Flat ₹${product.coupon.value} OFF`}
-                      </p>
+                      {isCouponApplied && (
+                        <p className="text-[10px] font-black text-success-text uppercase tracking-widest mt-1 flex items-center gap-1">
+                          <Sparkles size={12} className="text-success" />
+                          Applied — savings reflected above
+                        </p>
+                      )}
+                      {!isCouponApplied && (
+                        <p className="text-[11px] font-black text-coupon uppercase tracking-wider opacity-80">
+                          {product.coupon.type === 'percent'
+                            ? `${product.coupon.value}% Instant OFF`
+                            : product.coupon.type === 'price'
+                              ? `Special price ₹${product.coupon.value}`
+                              : `Flat ₹${product.coupon.value} OFF`}
+                        </p>
+                      )}
                     </div>
                   </div>
-                  <button
-                    onClick={isCouponApplied ? handleRemoveCoupon : handleApplyCoupon}
-                    className={`text-[11px] font-black px-6 py-3 rounded-xl transition-all uppercase tracking-widest shadow-sm ${isCouponApplied ? 'bg-white text-red-600 border border-red-100 hover:bg-red-50' : 'bg-primary text-white hover:brightness-110 shadow-primary/20'}`}
-                  >
-                    {isCouponApplied ? 'Remove' : 'Apply'}
-                  </button>
+                  <div className="flex flex-col items-stretch sm:items-end gap-2 shrink-0">
+                    {otherCouponBlocksApply && (
+                      <p className="text-[10px] text-muted font-bold uppercase tracking-wider text-center sm:text-right max-w-[220px] sm:max-w-[200px]">
+                        Cart already has <span className="font-mono text-heading">{cart.appliedCoupon}</span>. Remove it in the cart to use this code.
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      disabled={applyingCoupon || (otherCouponBlocksApply && !isCouponApplied)}
+                      onClick={isCouponApplied ? handleRemoveCoupon : handleApplyCoupon}
+                      className={`text-[11px] font-black px-6 py-3 rounded-xl transition-all uppercase tracking-widest shadow-sm disabled:opacity-50 disabled:pointer-events-none ${isCouponApplied ? 'bg-card text-error border border-error/20 hover:bg-error-light' : 'bg-primary text-button-text hover:bg-primary-hover shadow-primary/20'}`}
+                    >
+                      {applyingCoupon ? '…' : isCouponApplied ? 'Remove coupon' : 'Apply'}
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* Buttons Section */}
-            <div className="grid grid-cols-2 gap-4 bg-card rounded-[2.5rem] border p-6 lg:p-8 shadow-sm">
+            {/* Buttons Section — Desktop Only */}
+            <div className="hidden lg:grid grid-cols-2 gap-4 bg-card rounded-[2.5rem] border p-8 shadow-sm">
               <div className="col-span-2 mb-2 flex items-center gap-2">
-                <CheckCircle2 size={16} className={isInStock ? 'text-green-600' : 'text-red-500'} />
-                <span className={`text-[11px] font-black uppercase tracking-widest ${isInStock ? 'text-green-600' : 'text-red-500'}`}>
+                <CheckCircle2 size={16} className={isInStock ? 'text-success' : 'text-error'} />
+                <span className={`text-[11px] font-black uppercase tracking-widest ${isInStock ? 'text-success-text' : 'text-error-text'}`}>
                   {isInStock ? 'In Stock & Ready to Ship' : 'Out of Stock'}
                 </span>
               </div>
@@ -764,8 +810,8 @@ const ProductDetails = () => {
                 onClick={handleBuyNow}
                 disabled={!isInStock}
                 className={`h-16 font-black text-[11px] uppercase tracking-[0.2em] rounded-2xl transition shadow-xl flex items-center justify-center gap-3 ${isInStock
-                    ? 'bg-secondary text-white shadow-secondary/20 hover:brightness-110 cursor-pointer'
-                    : 'bg-muted/40 text-muted/60 cursor-not-allowed shadow-none'
+                  ? 'bg-secondary text-button-text shadow-secondary/20 hover:brightness-110 cursor-pointer'
+                  : 'bg-muted/40 text-muted/60 cursor-not-allowed shadow-none'
                   }`}
               >
                 {isInStock ? 'Buy Now' : 'Out of Stock'} <ArrowRight size={20} />
@@ -808,97 +854,135 @@ const ProductDetails = () => {
           </div>
         </div>
       </div>
-    </div>
-        </div >
 
-  {/* ── RATINGS & REVIEWS SECTION ── */ }
-  < div className = "mt-12 lg:mt-16 bg-card rounded-[2.5rem] border border-border/50 p-6 lg:p-10 shadow-sm" >
-    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-      <div>
-        <h2 className="text-2xl lg:text-3xl font-black text-heading mb-2 uppercase tracking-tight">Ratings & Reviews</h2>
-        <div className="flex items-center gap-3 mt-1">
-          <div className="flex items-center gap-1 bg-success text-white px-3 py-1.5 rounded-lg text-lg font-black shadow-sm">
-            {reviewStats.avg} <Star size={16} fill="currentColor" />
-          </div>
-          <span className="text-sm font-bold text-muted uppercase tracking-widest">{reviewStats.total} Verified Reviews</span>
-        </div>
-      </div>
-    </div>
-
-{
-  reviewStats.list.length > 0 ? (
-    <div className="relative">
-      <Swiper
-        modules={[Pagination, Autoplay, Navigation]}
-        spaceBetween={20}
-        slidesPerView={1}
-        pagination={{ clickable: true, dynamicBullets: true }}
-        autoplay={{ delay: 4000, disableOnInteraction: false }}
-        breakpoints={{
-          640: { slidesPerView: 2 },
-          1024: { slidesPerView: 3 },
-          1280: { slidesPerView: 4 },
-        }}
-        className="pb-16"
-      >
-        {reviewStats.list.map((rev, i) => (
-          <SwiperSlide key={i}>
-            <div className="bg-surface border border-border/30 rounded-[2rem] p-6 h-full flex flex-col shadow-card hover:shadow-premium transition-shadow duration-300">
-              <div className="flex items-center justify-between mb-5">
-                <div className="flex items-center gap-1">
-                  {[...Array(5)].map((_, idx) => (
-                    <Star key={idx} size={14} fill={idx < rev.rating ? "var(--star)" : "none"} className={idx < rev.rating ? "text-star" : "text-muted/20"} />
-                  ))}
-                </div>
-                {rev.rating >= 4 && (
-                  <span className="text-[9px] font-black text-success-text bg-success-light border border-success/10 px-2.5 py-1 rounded-full flex items-center gap-1 uppercase tracking-widest">
-                    <CheckCircle2 size={10} /> Verified
-                  </span>
-                )}
+      {/* ── RATINGS & REVIEWS SECTION ── */}
+      <div className="mt-12 lg:mt-16 bg-card rounded-[2.5rem] border border-border/50 p-6 lg:p-10 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div>
+            <h2 className="text-2xl lg:text-3xl font-black text-heading mb-2 uppercase tracking-tight">Ratings & Reviews</h2>
+            <div className="flex items-center gap-3 mt-1">
+              <div className="flex items-center gap-1 bg-success text-button-text px-3 py-1.5 rounded-lg text-lg font-black shadow-sm">
+                {reviewStats.avg} <Star size={16} fill="currentColor" />
               </div>
-              <p className="text-sm text-heading font-medium italic leading-relaxed line-clamp-4 mb-6 flex-1 opacity-90">
-                "{rev.comment}"
-              </p>
-              <div className="flex items-center gap-3 pt-4 border-t border-border/20">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-black text-sm">
-                  {rev.userName?.charAt(0) || 'C'}
-                </div>
-                <div>
-                  <p className="text-xs font-black text-heading capitalize">{rev.userName || 'Verified Customer'}</p>
-                  <p className="text-[9px] text-muted font-bold uppercase tracking-widest mt-0.5">Purchased recently</p>
-                </div>
-              </div>
+              <span className="text-sm font-bold text-muted uppercase tracking-widest">{reviewStats.total} Verified Reviews</span>
             </div>
-          </SwiperSlide>
-        ))}
-      </Swiper>
-    </div>
-  ) : (
-  <div className="text-center py-20 bg-surface/5 rounded-[2.5rem] border border-dashed border-border/50">
-    <Info className="mx-auto text-muted/30 mb-4" size={48} />
-    <p className="text-lg font-black text-heading uppercase tracking-widest opacity-30">No reviews yet for this delight</p>
-    <p className="text-sm text-muted mt-2">Be the first to share your experience!</p>
-  </div>
-)
-}
-        </div >
+          </div>
+        </div>
 
-  {/* Related Products */ }
-{
-  relatedProducts.length > 0 && (
-    <div className="mt-20 lg:mt-24 px-5 lg:px-0">
-      <div className="flex items-center justify-between mb-10">
-        <h2 className="text-2xl lg:text-3xl font-black text-heading uppercase tracking-tight">You might also love</h2>
-        <Link to="/shop" className="text-xs font-black text-primary uppercase tracking-[0.2em] border-b-2 border-primary/20 pb-1 hover:border-primary transition-all">View All Delights</Link>
+        {reviewStats.list.length > 0 ? (
+          <div className="relative reviews-swiper-wrapper">
+            <style>{`
+              .reviews-swiper-wrapper .swiper-pagination {
+                bottom: 0px !important;
+              }
+              .reviews-swiper-wrapper .swiper-pagination-bullet {
+                width: 8px;
+                height: 8px;
+                background: var(--primary);
+                opacity: 0.25;
+                transition: all 0.3s ease;
+              }
+              .reviews-swiper-wrapper .swiper-pagination-bullet-active {
+                opacity: 1;
+                width: 24px;
+                border-radius: 4px;
+              }
+            `}</style>
+            <Swiper
+              modules={[Pagination, Autoplay]}
+              spaceBetween={20}
+              slidesPerView={1}
+              pagination={{ clickable: true, dynamicBullets: true }}
+              autoplay={{ delay: 4000, disableOnInteraction: false }}
+              breakpoints={{
+                640: { slidesPerView: 2 },
+                1024: { slidesPerView: 3 },
+              }}
+              className="pb-16"
+            >
+              {reviewStats.list.map((rev, i) => (
+                <SwiperSlide key={i}>
+                  <div className="bg-surface border border-border/30 rounded-[2rem] p-6 h-full flex flex-col shadow-card hover:shadow-premium transition-shadow duration-300">
+                    <div className="flex items-center justify-between mb-5">
+                      <div className="flex items-center gap-1">
+                        {[...Array(5)].map((_, idx) => (
+                          <Star key={idx} size={14} fill={idx < rev.rating ? "var(--star)" : "none"} className={idx < rev.rating ? "text-star" : "text-muted/20"} />
+                        ))}
+                      </div>
+                      {rev.rating >= 4 && (
+                        <span className="text-[9px] font-black text-success-text bg-success-light border border-success/10 px-2.5 py-1 rounded-full flex items-center gap-1 uppercase tracking-widest">
+                          <CheckCircle2 size={10} /> Verified
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-heading font-medium italic leading-relaxed line-clamp-4 mb-6 flex-1 opacity-90">
+                      "{rev.comment}"
+                    </p>
+                    <div className="flex items-center gap-3 pt-4 border-t border-border/20">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-black text-sm">
+                        {rev.userName?.charAt(0) || 'C'}
+                      </div>
+                      <div>
+                        <p className="text-xs font-black text-heading capitalize">{rev.userName || 'Verified Customer'}</p>
+                        <p className="text-[9px] text-muted font-bold uppercase tracking-widest mt-0.5">Purchased recently</p>
+                      </div>
+                    </div>
+                  </div>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          </div>
+        ) : (
+          <div className="text-center py-20 bg-surface/5 rounded-[2.5rem] border border-dashed border-border/50">
+            <Info className="mx-auto text-muted/30 mb-4" size={48} />
+            <p className="text-lg font-black text-heading uppercase tracking-widest opacity-30">No reviews yet for this delight</p>
+            <p className="text-sm text-muted mt-2">Be the first to share your experience!</p>
+          </div>
+        )}
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-10">
-        {relatedProducts.map(p => <ProductCard key={p._id} product={p} />)}
+
+      {/* Related Products */}
+      {relatedProducts.length > 0 && (
+        <div className="mt-20 lg:mt-24 px-5 lg:px-0">
+          <div className="flex items-center justify-between mb-10">
+            <h2 className="text-2xl lg:text-3xl font-black text-heading uppercase tracking-tight">You might also love</h2>
+            <Link to="/shop" className="text-xs font-black text-primary uppercase tracking-[0.2em] border-b-2 border-primary/20 pb-1 hover:border-primary transition-all">View All Delights</Link>
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-10">
+            {relatedProducts.map(p => <ProductCard key={p._id} product={p} />)}
+          </div>
+        </div>
+      )}
+      {/* ── MOBILE FIXED ACTION BAR (Flipkart Style) ── */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[110] bg-card border-t border-border p-3 grid grid-cols-2 gap-3 shadow-[0_-10px_30px_rgba(0,0,0,0.1)]">
+        {cartQty > 0 ? (
+          <div className="flex items-center border-2 border-border/30 rounded-xl h-14 bg-muted/5">
+            <button onClick={() => updateQuantity(product._id, cartQty - 1)} className="w-12 h-full flex items-center justify-center hover:bg-muted/10 transition"><Minus size={18} /></button>
+            <span className="flex-1 text-center font-black text-lg text-heading">{cartQty}</span>
+            <button onClick={() => updateQuantity(product._id, cartQty + 1)} className="w-12 h-full flex items-center justify-center hover:bg-muted/10 transition"><Plus size={18} /></button>
+          </div>
+        ) : (
+          <button
+            onClick={handleAddToCart}
+            disabled={!isInStock}
+            className={`h-14 border-2 border-primary text-primary font-black text-[10px] uppercase tracking-widest rounded-xl transition flex items-center justify-center gap-2 ${!isInStock ? 'opacity-50' : 'active:scale-95'}`}
+          >
+            <ShoppingCart size={18} /> {isInStock ? 'Add to Cart' : 'Sold Out'}
+          </button>
+        )}
+
+        <button
+          onClick={handleBuyNow}
+          disabled={!isInStock}
+          className={`h-14 font-black text-[10px] uppercase tracking-widest rounded-xl transition shadow-lg flex items-center justify-center gap-2 ${isInStock
+            ? 'bg-secondary text-button-text shadow-secondary/20 active:scale-95'
+            : 'bg-muted/40 text-muted/60 cursor-not-allowed'
+            }`}
+        >
+          {isInStock ? 'Buy Now' : 'Out of Stock'} <ArrowRight size={18} />
+        </button>
       </div>
     </div>
-  )
-}
-      </div >
-    </div >
   );
 };
 

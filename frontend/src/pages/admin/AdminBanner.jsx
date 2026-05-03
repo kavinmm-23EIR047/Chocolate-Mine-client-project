@@ -120,7 +120,7 @@ const AdminBanner = () => {
         </div>
         <button
           onClick={() => { resetForm(); setShowForm(true); }}
-          className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-black text-sm uppercase tracking-widest hover:brightness-110 transition-all shadow-lg"
+          className="flex items-center gap-2 bg-primary text-button-text px-5 py-2.5 rounded-xl font-black text-sm uppercase tracking-widest hover:brightness-110 transition-all shadow-lg"
         >
           <Plus size={16} /> New Banner
         </button>
@@ -204,7 +204,7 @@ const AdminBanner = () => {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-xl font-black text-sm uppercase tracking-widest hover:brightness-110 disabled:opacity-60 transition-all shadow-md"
+                  className="flex items-center gap-2 bg-primary text-button-text px-6 py-2.5 rounded-xl font-black text-sm uppercase tracking-widest hover:brightness-110 disabled:opacity-60 transition-all shadow-md"
                 >
                   <Check size={16} /> {saving ? 'Saving...' : 'Save Banner'}
                 </button>
