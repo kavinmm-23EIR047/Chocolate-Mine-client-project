@@ -143,13 +143,64 @@ exports.getProducts = asyncHandler(async (req, res) => {
     });
   }
 
-  // Integrated search
-  if (q) {
-    query.$or = [
-      { name: { $regex: q, $options: 'i' } },
-      { description: { $regex: q, $options: 'i' } },
-      { shortDescription: { $regex: q, $options: 'i' } }
-    ];
+  const searchParam = (req.query.search || req.query.q || req.query.query || '').trim();
+
+  // Integrated MongoDB Atlas Search
+  if (searchParam && searchParam.length >= 2) {
+    const { results: rawAtlasProducts, total: atlasTotal } = await executeProductAtlasSearch(searchParam, query, { page, limit, sort });
+
+    const BENTO_FLAVOR_PRICES = {
+      'White Forest': 380,
+      'Butterscotch': 390,
+      'Rose Milk': 410,
+      'Honey & Almond': 410,
+      'Black Forest': 380,
+      'Choco Fudge': 390,
+      'Choco Truffle': 410,
+      'Choco Oreo': 410,
+      'Choco Caramel': 420,
+      'Death by Chocolate': 450,
+      'Red Velvet': 470,
+      'Lotus Biscoff': 480,
+      'Choco Pistachio': 480,
+    };
+
+    const getFlavorPriceHelper = (flavor) => {
+      if (!flavor) return 0;
+      if (flavor.price && Number(flavor.price) > 0) return Number(flavor.price);
+      if (flavor.name && BENTO_FLAVOR_PRICES[flavor.name]) return BENTO_FLAVOR_PRICES[flavor.name];
+      return 0;
+    };
+
+    const products = rawAtlasProducts.map(p => {
+      const couponData = applyCoupon(p);
+      const isBento = Array.isArray(p.category) ? p.category.some(c => typeof c === 'string' && c.toLowerCase().includes('bento')) : (p.category || '').toLowerCase().includes('bento');
+
+      let defaultFlavorPrice = 0;
+      if (p.flavors && Array.isArray(p.flavors) && p.flavors.length > 0) {
+        defaultFlavorPrice = getFlavorPriceHelper(p.flavors[0]);
+      } else if (isBento) {
+        defaultFlavorPrice = 380;
+      }
+
+      let sellingPrice;
+      if (p.hasVariants && p.variants && p.variants.length > 0) {
+        sellingPrice = p.variants[0].price;
+      } else {
+        sellingPrice = ((p.offerPrice && p.offerPrice < p.price) ? p.offerPrice : p.price) + defaultFlavorPrice;
+      }
+
+      return {
+        ...p,
+        couponAvailable: !!couponData,
+        finalPrice: sellingPrice,
+        discountText: couponData ? couponData.discountText : null,
+        activeCouponCode: couponData ? couponData.code : null,
+        priceWithCoupon: couponData ? couponData.finalPrice : sellingPrice
+      };
+    });
+
+    return res.status(200).json({ status: 'success', total: atlasTotal, data: products });
   }
 
   let sortQuery = '-createdAt _id';
@@ -745,75 +796,184 @@ exports.getProductsByCategory = asyncHandler(async (req, res) => {
   return exports.getProducts(req, res);
 });
 
-exports.searchProducts = asyncHandler(async (req, res) => {
-  const { q, admin, limit } = req.query;
-  
-  let query = {};
-  if (admin !== 'true') {
-    query.isActive = true;
-  }
-  
-  let queryWords = [];
-  let lowerQ = '';
-  
-  if (q) {
-    lowerQ = q.toLowerCase().trim();
-    queryWords = lowerQ.split(/\s+/).filter(Boolean);
-    
-    if (queryWords.length > 0) {
-      const regexConditions = queryWords.map(word => ({
-        $or: [
-          { name: { $regex: word, $options: 'i' } },
-          { description: { $regex: word, $options: 'i' } },
-          { shortDescription: { $regex: word, $options: 'i' } }
-        ]
-      }));
-      query.$or = regexConditions;
-    }
-  }
-  
-  const rawProducts = await Product.find(query);
+/**
+ * Helper function to execute MongoDB Atlas Search ($search) aggregation pipeline.
+ * Collection: products
+ * Index: default
+ * Search fields: name, description, category, subCategory, tags
+ * Supports: Full-text search, Partial matching, Fuzzy typo tolerance (maxEdits: 2, prefixLength: 1, maxExpansions: 50), Ranked relevance score.
+ * Preserves Mongoose populate() and formatting.
+ * 
+ * @param {String} q - Search query term
+ * @param {Object} extraMatch - Additional MongoDB filter criteria
+ * @param {Object} options - Pagination (page, limit) and Sort options
+ * @returns {Promise<{results: Array, total: Number}>} Matching products and total count
+ */
+const executeProductAtlasSearch = async (q, extraMatch = {}, options = {}) => {
+  const searchTerm = (q || '').trim();
+  if (!searchTerm) return { results: [], total: 0 };
 
-  let products = rawProducts.map(p => {
-    const couponData = applyCoupon(p);
-    let sellingPrice;
-    if (p.hasVariants && p.variants && p.variants.length > 0) {
-      sellingPrice = p.variants[0].price;
-    } else {
-      sellingPrice = p.price;
+  const page = parseInt(options.page) || 1;
+  const limit = parseInt(options.limit) || 2000;
+  const sort = options.sort;
+
+  try {
+    const pipeline = [
+      {
+        $search: {
+          index: 'default',
+          compound: {
+            should: [
+              {
+                text: {
+                  query: searchTerm,
+                  path: ['name', 'description', 'category', 'subCategory', 'tags'],
+                  fuzzy: {
+                    maxEdits: 2,
+                    prefixLength: 1,
+                    maxExpansions: 50
+                  }
+                }
+              },
+              {
+                phrase: {
+                  query: searchTerm,
+                  path: ['name', 'description', 'category', 'subCategory', 'tags']
+                }
+              },
+              {
+                wildcard: {
+                  query: `*${searchTerm}*`,
+                  path: ['name', 'description', 'category', 'subCategory', 'tags'],
+                  allowAnalyzedField: true
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        $addFields: {
+          score: { $meta: 'searchScore' }
+        }
+      }
+    ];
+
+    if (extraMatch && Object.keys(extraMatch).length > 0) {
+      pipeline.push({ $match: extraMatch });
     }
+
+    let sortStage = { score: -1 };
+    if (sort === 'price-low') sortStage = { price: 1, score: -1 };
+    else if (sort === 'price-high') sortStage = { price: -1, score: -1 };
+    else if (sort === 'rating') sortStage = { ratingsAverage: -1, score: -1 };
+    else if (sort === 'newest') sortStage = { createdAt: -1, score: -1 };
+
+    pipeline.push({ $sort: sortStage });
+
+    const allMatches = await Product.aggregate(pipeline);
+    
+    if (allMatches && allMatches.length > 0) {
+      // Preserve populated reference fields if present in schema
+      await Product.populate(allMatches, [
+        { path: 'categoryId' },
+        { path: 'occasionIds' }
+      ]);
+
+      const total = allMatches.length;
+      const startIndex = (page - 1) * limit;
+      const results = limit >= 2000 ? allMatches : allMatches.slice(startIndex, startIndex + limit);
+
+      return { results, total };
+    }
+  } catch (err) {
+    console.warn('⚠️ Atlas Search unavailable or failed, falling back to regex:', err.message);
+  }
+
+  // Helper function to create fuzzy regex pattern for typo tolerance fallback matching
+  const buildFuzzyRegex = (term) => {
+    const clean = (term || '').toLowerCase().trim();
+    if (!clean) return new RegExp('.*', 'i');
+    if (clean.length <= 2) return new RegExp(clean, 'i');
+    const flexPattern = clean.split('').join('[a-z0-9]*');
+    return new RegExp(`(${clean}|${flexPattern})`, 'i');
+  };
+
+  // Fallback for partial term search or if Atlas Search returned 0 results / failed
+  const queryWords = searchTerm.toLowerCase().split(/\s+/).filter(Boolean);
+  const regexConditions = queryWords.map(word => {
+    const fuzzyRx = buildFuzzyRegex(word);
     return {
-      ...p.toObject(),
-      couponAvailable: !!couponData,
-      finalPrice: sellingPrice
+      $or: [
+        { name: fuzzyRx },
+        { description: fuzzyRx },
+        { shortDescription: fuzzyRx },
+        { category: fuzzyRx },
+        { subCategory: fuzzyRx },
+        { tags: fuzzyRx }
+      ]
     };
   });
 
-  if (lowerQ) {
-    products.sort((a, b) => {
-      const aName = (a.name || '').toLowerCase();
-      const bName = (b.name || '').toLowerCase();
-      
-      const getScore = (nameStr) => {
-        if (nameStr === lowerQ) return 0;
-        if (nameStr.startsWith(lowerQ)) return 1;
-        if (nameStr.includes(lowerQ) && !nameStr.endsWith(lowerQ)) return 2;
-        if (nameStr.endsWith(lowerQ)) return 3;
-        
-        for (const word of queryWords) {
-           if (nameStr.startsWith(word)) return 4;
-        }
-        return 5;
-      };
-      
-      return getScore(aName) - getScore(bName);
-    });
-  }
-  
-  const limitNum = parseInt(limit);
-  if (limitNum && !isNaN(limitNum)) {
-    products = products.slice(0, limitNum);
+  const fallbackQuery = { ...extraMatch, $and: regexConditions };
+  let sortQuery = '-createdAt';
+  if (sort === 'price-low') sortQuery = 'price';
+  if (sort === 'price-high') sortQuery = '-price';
+  if (sort === 'rating') sortQuery = '-ratingsAverage';
+  if (sort === 'newest') sortQuery = '-createdAt';
+
+  const total = await Product.countDocuments(fallbackQuery);
+  const results = await Product.find(fallbackQuery)
+    .populate('categoryId')
+    .populate('occasionIds')
+    .sort(sortQuery)
+    .skip((page - 1) * limit)
+    .limit(limit)
+    .lean();
+
+  return { results, total };
+};
+
+exports.executeProductAtlasSearch = executeProductAtlasSearch;
+
+/**
+ * Controller endpoint to handle product search using MongoDB Atlas Search ($search).
+ * Endpoint: GET /api/search?q= or GET /api/v1/products/search?q=
+ * Collection: products
+ * Index: default
+ */
+exports.searchProducts = asyncHandler(async (req, res) => {
+  const q = req.query.q || req.query.query || req.query.search || '';
+  const { admin, limit = 2000, page = 1, sort } = req.query;
+  const searchTerm = q.trim();
+
+  if (!searchTerm || searchTerm.length < 2) {
+    return res.status(200).json({ status: 'success', total: 0, data: [] });
   }
 
-  res.status(200).json({ status: 'success', total: products.length, data: products });
+  const extraMatch = admin !== 'true' ? { isActive: true } : {};
+
+  try {
+    const { results: rawProducts, total } = await executeProductAtlasSearch(searchTerm, extraMatch, { page, limit, sort });
+
+    let products = rawProducts.map(p => {
+      const couponData = applyCoupon(p);
+      let sellingPrice;
+      if (p.hasVariants && p.variants && p.variants.length > 0) {
+        sellingPrice = p.variants[0].price;
+      } else {
+        sellingPrice = p.price;
+      }
+      return {
+        ...p,
+        couponAvailable: !!couponData,
+        finalPrice: sellingPrice
+      };
+    });
+
+    res.status(200).json({ status: 'success', total, data: products });
+  } catch (error) {
+    console.error('Atlas Search Product Error:', error);
+    res.status(500).json({ status: 'error', message: 'Failed to search products via Atlas Search' });
+  }
 });

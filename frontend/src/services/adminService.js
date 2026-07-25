@@ -98,6 +98,7 @@ const adminService = {
      Custom Cake Themes
   ---------------------------------------- */
   getCustomCakeThemes: () => api.get(`/custom-cakes/themes?t=${Date.now()}`),
+  searchCustomCakeThemes: (q) => api.get('/customcakethemes/search', { params: { q } }),
   createCustomCakeTheme: (data) => api.post('/custom-cakes/themes', data),
   updateCustomCakeTheme: (id, data) => api.put(`/custom-cakes/themes/${id}`, data),
   deleteCustomCakeTheme: (id) => api.delete(`/custom-cakes/themes/${id}`),

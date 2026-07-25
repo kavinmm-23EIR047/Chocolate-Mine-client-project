@@ -7,6 +7,7 @@ const upload = require('../middleware/upload');
 // Public routes
 router.get('/flavours', customCakeController.getFlavours);
 router.get('/flavours/:id', customCakeController.getFlavourById);
+router.get('/themes/search', customCakeController.searchThemesAtlas);
 router.get('/themes', customCakeController.getThemes);
 router.get('/colors', customCakeController.getColors);
 router.get('/theme-colors', customCakeController.getThemeColors);

@@ -450,4 +450,154 @@ exports.deleteThemeColor = asyncHandler(async (req, res, next) => {
   res.status(204).json({ status: 'success', data: null });
 });
 
+/**
+ * Helper function to execute MongoDB Atlas Search ($search) aggregation pipeline on CustomCakeTheme collection.
+ * Collection: customcakethemes
+ * Index: default
+ * Search fields: name, description, category, flavors, colors
+ * Supports: Full-text search, Partial matching, Typo tolerance, Ranked relevance score.
+ * 
+ * @param {String} q - Search query term
+ * @returns {Promise<Array>} Custom cake theme documents matching Atlas Search criteria
+ */
+const executeThemeAtlasSearch = async (q) => {
+  const searchTerm = (q || '').trim();
+  if (!searchTerm) return [];
+
+  try {
+    const pipeline = [
+      {
+        $search: {
+          index: 'default',
+          compound: {
+            should: [
+              {
+                text: {
+                  query: searchTerm,
+                  path: ['name', 'description', 'category', 'flavors.name', 'colors.name'],
+                  fuzzy: {
+                    maxEdits: 2,
+                    prefixLength: 1,
+                    maxExpansions: 50
+                  }
+                }
+              },
+              {
+                phrase: {
+                  query: searchTerm,
+                  path: ['name', 'description', 'category', 'flavors.name', 'colors.name']
+                }
+              },
+              {
+                wildcard: {
+                  query: `*${searchTerm}*`,
+                  path: ['name', 'description', 'category', 'flavors.name', 'colors.name'],
+                  allowAnalyzedField: true
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        $addFields: {
+          score: { $meta: 'searchScore' }
+        }
+      },
+      {
+        $sort: { score: -1 }
+      }
+    ];
+
+    const results = await CustomCakeTheme.aggregate(pipeline);
+    if (results && results.length > 0) {
+      return results;
+    }
+  } catch (err) {
+    console.warn('⚠️ Atlas Search unavailable for themes, falling back to regex:', err.message);
+  }
+
+  const buildFuzzyRegex = (term) => {
+    const clean = (term || '').toLowerCase().trim();
+    if (!clean) return new RegExp('.*', 'i');
+    if (clean.length <= 2) return new RegExp(clean, 'i');
+    const flexPattern = clean.split('').join('[a-z0-9]*');
+    return new RegExp(`(${clean}|${flexPattern})`, 'i');
+  };
+
+  const regex = buildFuzzyRegex(searchTerm);
+  const results = await CustomCakeTheme.find({
+    $or: [
+      { name: regex },
+      { description: regex },
+      { category: regex },
+      { 'flavors.name': regex },
+      { 'colors.name': regex }
+    ]
+  }).lean();
+  return results;
+};
+
+exports.executeThemeAtlasSearch = executeThemeAtlasSearch;
+
+/**
+ * Controller endpoint to handle Custom Cake Themes search using MongoDB Atlas Search ($search).
+ * Endpoint: GET /api/customcakethemes/search?q= or GET /api/v1/custom-cakes/themes/search?q=
+ * Collection: customcakethemes
+ * Index: default
+ */
+exports.searchThemesAtlas = asyncHandler(async (req, res) => {
+  const q = req.query.q || req.query.query || req.query.search || '';
+  const searchTerm = q.trim();
+
+  if (!searchTerm || searchTerm.length < 2) {
+    return res.status(200).json({ status: 'success', total: 0, data: [] });
+  }
+
+  try {
+    const themes = await executeThemeAtlasSearch(searchTerm);
+
+    const activeFlavors = await CustomCakeFlavor.find({ isActive: true }).lean();
+    const activeColors = await CustomCakeColor.find({ isActive: true }).lean();
+
+    const formattedThemes = themes.map(theme => {
+      const finalFlavors = [...(theme.flavors || [])];
+      activeFlavors.forEach(masterFlavor => {
+        if (!finalFlavors.some(f => f.name === masterFlavor.name)) {
+          finalFlavors.push({
+            name: masterFlavor.name,
+            category: masterFlavor.category,
+            weights: masterFlavor.weights,
+            isActive: masterFlavor.isActive
+          });
+        }
+      });
+
+      const finalColors = [...(theme.colors || [])];
+      activeColors.forEach(masterColor => {
+        if (!finalColors.some(c => c.name === masterColor.name)) {
+          finalColors.push({
+            name: masterColor.name,
+            hexCode: masterColor.hexCode,
+            images: { tier1: null, tier2: null, tier3: null },
+            price: 0,
+            isActive: masterColor.isActive
+          });
+        }
+      });
+
+      return {
+        ...theme,
+        flavors: finalFlavors,
+        colors: finalColors
+      };
+    });
+
+    res.status(200).json({ status: 'success', total: formattedThemes.length, data: formattedThemes });
+  } catch (error) {
+    console.error('Atlas Search Custom Cake Themes Error:', error);
+    res.status(500).json({ status: 'error', message: 'Failed to search custom cake themes via Atlas Search' });
+  }
+});
+
 

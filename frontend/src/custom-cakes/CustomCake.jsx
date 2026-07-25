@@ -144,8 +144,13 @@ export default function CustomCake() {
     const loadDbData = async () => {
       try {
         setLoading(true);
+        const searchQ = (themeSearchFilter || '').trim();
+        const themesUrl = searchQ.length >= 2 
+          ? `/customcakethemes/search?q=${encodeURIComponent(searchQ)}` 
+          : '/custom-cakes/themes';
+
         const [themesRes, catsRes] = await Promise.all([
-          api.get('/custom-cakes/themes'),
+          api.get(themesUrl),
           api.get('/categories', { params: { activeOnly: true, type: 'custom' } })
         ]);
 
@@ -161,8 +166,13 @@ export default function CustomCake() {
         setLoading(false);
       }
     };
-    loadDbData();
-  }, []);
+
+    const timer = setTimeout(() => {
+      loadDbData();
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [themeSearchFilter]);
 
   const themeIdToKeep = useRef(searchParams.get('theme'));
 
@@ -200,9 +210,12 @@ export default function CustomCake() {
         return Boolean(t.tiers[`tier${numTier}`]?.isActive);
       })
       .filter(t => {
-        if (!themeSearchFilter) return true;
+        if (!themeSearchFilter || themeSearchFilter.trim().length < 2) return true;
         const q = themeSearchFilter.toLowerCase().trim();
-        return (t.name || '').toLowerCase().includes(q) || (t.description || '').toLowerCase().includes(q);
+        const nameMatch = (t.name || '').toLowerCase().includes(q) || (t.description || '').toLowerCase().includes(q);
+        // If exact substring matches, include it; otherwise trust Atlas Search returned results
+        if (nameMatch) return true;
+        return dbThemes.length > 0;
       })
       .filter(t => {
         if (!categoryFilter) return true;

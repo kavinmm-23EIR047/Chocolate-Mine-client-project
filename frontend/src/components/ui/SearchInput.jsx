@@ -9,7 +9,7 @@ const SearchInput = ({
 }) => {
   const [query, setQuery] = useState('');
 
-  const debouncedQuery = useDebounce(query, 400);
+  const debouncedQuery = useDebounce(query, 300);
 
   /* ----------------------------------------------------------
      SAFE SEARCH TRIGGER

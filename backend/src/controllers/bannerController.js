@@ -81,7 +81,8 @@ exports.getAllBanners = asyncHandler(async (req, res) => {
 
 // GET /api/v1/banners/active - Get Active Banners
 exports.getActiveBanners = asyncHandler(async (req, res) => {
-  const banners = await Banner.find({ isActive: true }).sort({ displayOrder: 1 });
+  let banners = await Banner.find({ isActive: true }).sort({ displayOrder: 1 });
+  banners = banners.filter(b => b.image && !b.image.includes('ns8kawg4u9prindspal0'));
   res.status(200).json({ status: 'success', data: banners });
 });
 
