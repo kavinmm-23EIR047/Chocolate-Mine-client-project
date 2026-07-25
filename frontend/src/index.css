@@ -99,6 +99,12 @@
     transform: scale(0.96);
   }
 
+  /* Prevent active scale on absolutely-positioned toggle buttons (e.g. password eye icons)
+     where scale conflicts with translate-y positioning and causes visual flicker */
+  button.touch-compact:active {
+    transform: none !important;
+  }
+
   /* Smooth theme transitions (opt-in via ThemeContext) */
   .theme-transition,
   .theme-transition * {

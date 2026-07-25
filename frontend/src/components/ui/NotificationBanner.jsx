@@ -78,8 +78,20 @@ const NotificationBanner = () => {
     try {
       setIsLoading(true);
 
-      // Request native browser system-level permission
-      const result = await window.Notification.requestPermission();
+      // Request native browser system-level permission safely
+      const result = await new Promise((resolve) => {
+        try {
+          const promise = window.Notification.requestPermission((res) => {
+            resolve(res);
+          });
+          if (promise && typeof promise.then === 'function') {
+            promise.then(resolve).catch(() => resolve('default'));
+          }
+        } catch (e) {
+          resolve(window.Notification.permission);
+        }
+      });
+      
       setPermissionState(result);
 
       if (result === 'granted') {
@@ -115,7 +127,7 @@ const NotificationBanner = () => {
           { duration: 8000 }
         );
       } else {
-        toast.error("Please allow notification permissions when prompted.");
+        toast.error("You need to click 'Allow' on the browser prompt to receive notifications.");
       }
     } catch (err) {
       toast.error("Failed to enable background notifications.");
