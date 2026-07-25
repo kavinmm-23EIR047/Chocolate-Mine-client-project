@@ -28,8 +28,16 @@ const getItemPriceDetails = (product, selectedFlavor = null, selectedWeight = nu
   const isCake = categoryStr.includes('cake');
   const isBento = categoryStr.includes('bento-cakes');
 
+  // Check if product has custom weight prices defined
+  const customWeightMatch = (product.hasCustomWeights || (product.customWeightPrices && product.customWeightPrices.length > 0)) && selectedWeight
+    ? product.customWeightPrices?.find(c => String(c.weight).toLowerCase().trim() === String(selectedWeight).toLowerCase().trim())
+    : null;
+
   // If this is a cake with variants and we have selected flavor/weight
-  if (product.hasVariants && product.variants && product.variants.length > 0 && selectedFlavor && selectedWeight) {
+  if (customWeightMatch && customWeightMatch.price !== undefined && customWeightMatch.price !== null) {
+    salePrice = Number(customWeightMatch.price);
+    variantPrice = salePrice;
+  } else if (product.hasVariants && product.variants && product.variants.length > 0 && selectedFlavor && selectedWeight) {
     const variant = product.variants.find(
       v => v.flavor === selectedFlavor && v.weight === selectedWeight
     );

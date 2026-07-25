@@ -371,6 +371,7 @@ exports.createProduct = asyncHandler(async (req, res, next) => {
   // FIX: Normalize boolean fields first (critical for CastError fix)
   body.hasVariants = normalizeBoolean(body.hasVariants);
   body.hasWeights = normalizeBoolean(body.hasWeights);
+  body.hasCustomWeights = normalizeBoolean(body.hasCustomWeights);
   body.allowCustomFlavor = normalizeBoolean(body.allowCustomFlavor);
   body.allowCustomWeight = normalizeBoolean(body.allowCustomWeight);
   
@@ -402,7 +403,7 @@ exports.createProduct = asyncHandler(async (req, res, next) => {
         body[key] = true;
       } else if (trimmed === 'false') {
         body[key] = false;
-      } else if (trimmed !== '' && !isNaN(trimmed) && !['name', 'slug', 'description', 'shortDescription', 'image', 'occasion', 'flavors', 'weights', 'variants', 'category', 'subCategory'].includes(key)) {
+      } else if (trimmed !== '' && !isNaN(trimmed) && !['name', 'slug', 'description', 'shortDescription', 'image', 'occasion', 'flavors', 'weights', 'variants', 'category', 'subCategory', 'customWeightPrices', 'weightPrices'].includes(key)) {
         body[key] = Number(trimmed);
       } else {
         body[key] = trimmed;
@@ -461,6 +462,15 @@ exports.createProduct = asyncHandler(async (req, res, next) => {
     delete body.hasVariants;
     delete body.allowCustomFlavor;
     delete body.allowCustomWeight;
+  }
+
+  // Parse customWeightPrices for all product categories
+  if (body.customWeightPrices !== undefined) {
+    if (typeof body.customWeightPrices === 'string') {
+      try {
+        body.customWeightPrices = JSON.parse(body.customWeightPrices);
+      } catch (e) {}
+    }
   }
 
   // Handle nested coupon object
@@ -547,9 +557,11 @@ exports.updateProduct = asyncHandler(async (req, res, next) => {
   // FIX: Normalize boolean fields first (critical for CastError fix)
   const hasVariants = normalizeBoolean(body.hasVariants);
   const hasWeights = normalizeBoolean(body.hasWeights);
+  const hasCustomWeights = normalizeBoolean(body.hasCustomWeights);
   const allowCustomFlavor = normalizeBoolean(body.allowCustomFlavor);
   const allowCustomWeight = normalizeBoolean(body.allowCustomWeight);
-  if (body.hasWeights !== undefined) body.hasWeights = hasWeights;
+  if (body.hasWeights !== undefined) product.hasWeights = hasWeights;
+  if (body.hasCustomWeights !== undefined) product.hasCustomWeights = hasCustomWeights;
   
   // FIX: Normalize category to lowercase and trim (for dynamic category support)
   if (body.category !== undefined) {
@@ -644,6 +656,20 @@ exports.updateProduct = asyncHandler(async (req, res, next) => {
     product.hasVariants = false;
     product.allowCustomFlavor = false;
     product.allowCustomWeight = false;
+  }
+
+  // Always update customWeightPrices and hasCustomWeights for any product category
+  if (body.customWeightPrices !== undefined) {
+    if (typeof body.customWeightPrices === 'string') {
+      try {
+        product.customWeightPrices = JSON.parse(body.customWeightPrices);
+      } catch (e) {}
+    } else {
+      product.customWeightPrices = body.customWeightPrices;
+    }
+  }
+  if (body.hasCustomWeights !== undefined) {
+    product.hasCustomWeights = hasCustomWeights;
   }
 
   // Handle nested coupon object

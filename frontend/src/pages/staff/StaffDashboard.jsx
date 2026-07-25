@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChefHat, ShoppingBag, Clock, CheckCircle, Printer, RefreshCw, Eye, Flame, Truck, Package, X, KeyRound, Phone, ChevronDown, ChevronUp, ChevronRight, LayoutDashboard, History, ClipboardList, MapPin, CreditCard, Calendar, Hash, Search, Plus, Minus, Trash2, Store, ShoppingCart, User, Cake, Filter } from 'lucide-react';
+import { ChefHat, ShoppingBag, Clock, CheckCircle, Printer, RefreshCw, Eye, Flame, Truck, Package, X, KeyRound, Phone, ChevronDown, ChevronUp, ChevronRight, LayoutDashboard, History, ClipboardList, MapPin, CreditCard, Calendar, Hash, Search, Plus, Minus, Trash2, Store, ShoppingCart, User, Cake, Filter, Volume2, VolumeX } from 'lucide-react';
 import staffService from '../../services/staffService';
 import productService from '../../services/productService';
 import { OrderStatusBadge } from '../../components/ui/StatusBadge';
@@ -14,6 +14,8 @@ import { useLocation, useNavigate, Link } from 'react-router-dom';
 import io from 'socket.io-client';
 import orderService from '../../services/orderService';
 import api from '../../utils/api';
+import useNotificationSound from '../../hooks/useNotificationSound';
+import { isWithinServiceHours, getServiceHoursMessage } from '../../utils/serviceHours';
 
 const BENTO_FLAVOR_PRICES = {
   'White Forest': 380,
@@ -986,12 +988,15 @@ const StaffDashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const socketRef = useRef(null);
+  const { playSound, toggleMute, isMuted, testSounds } = useNotificationSound();
 
   const [orders, setOrders] = useState([]);
   const [stats, setStats] = useState({ confirmedOrders: 0, outForDeliveryOrders: 0, deliveredOrders: 0, inShopOrdersCount: 0 });
   const [loading, setLoading] = useState(true);
   const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [notificationsMuted, setNotificationsMuted] = useState(false);
+  const [serviceHoursInfo, setServiceHoursInfo] = useState(null);
 
   useEffect(() => {
     const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
@@ -1004,6 +1009,10 @@ const StaffDashboard = () => {
       console.error('Failed to parse user session in StaffDashboard', e);
     }
 
+    // Check service hours on mount
+    const hoursInfo = isWithinServiceHours();
+    setServiceHoursInfo(hoursInfo);
+
     socketRef.current = io(import.meta.env.VITE_API_URL || (import.meta.env.PROD ? window.location.origin : 'http://localhost:5000'), {
       transports: ['websocket'],
       withCredentials: true
@@ -1014,10 +1023,28 @@ const StaffDashboard = () => {
       }
       socketRef.current.emit('join_admin_room');
     });
+
+    // Listen for new orders coming in (payment verified)
+    socketRef.current.on('new_order_confirmed', (data) => {
+      console.log('🎵 New order received at staff:', data);
+      
+      // Play notification sound if within service hours and not muted
+      if (isWithinServiceHours().isWithinHours && !notificationsMuted) {
+        playSound('order');
+        toast.success(`New Order #${data.orderNumber} received!`, {
+          duration: 5,
+          position: 'top-right'
+        });
+      }
+      
+      // Refresh orders list
+      fetchData();
+    });
+
     socketRef.current.on('assigned_order_updated', () => fetchData());
     socketRef.current.on('dashboard_needs_refresh', () => fetchData());
     return () => { if (socketRef.current) socketRef.current.disconnect(); };
-  }, []);
+  }, [notificationsMuted]);
 
   const getPageType = (path) => {
     if (path.includes('orders/create-inshop')) return 'create-inshop';

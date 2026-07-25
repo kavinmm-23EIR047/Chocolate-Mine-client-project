@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingBag, Eye, Filter, Download, RefreshCw, Info, Package, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { ShoppingBag, Eye, Filter, Download, RefreshCw, Info, Package, ChevronDown, ChevronUp, X, Volume2, VolumeX } from 'lucide-react';
 import adminService from '../../services/adminService';
 import { formatCurrency } from '../../utils/helpers';
 import Button from '../../components/ui/Button';
@@ -12,6 +12,8 @@ import Pagination from '../../components/ui/Pagination';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
+import useNotificationSound from '../../hooks/useNotificationSound';
+import { isWithinServiceHours, getServiceHoursMessage } from '../../utils/serviceHours';
 
 const getDisplayFlavor = (item) => {
   if (item.isCustomCake) return item.selectedFlavor || 'Custom';
@@ -204,6 +206,7 @@ const OrderDetailsModal = ({ order, onClose }) => {
 const AdminOrders = () => {
   const navigate = useNavigate();
   const socketRef = useRef(null);
+  const { playSound, toggleMute, isMuted, testSounds } = useNotificationSound();
   
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -212,11 +215,17 @@ const AdminOrders = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [notificationsMuted, setNotificationsMuted] = useState(false);
+  const [serviceHoursInfo, setServiceHoursInfo] = useState(null);
 
   // Initialize socket connection for real-time updates
   useEffect(() => {
     const userStr = sessionStorage.getItem('user');
     if (!userStr) return;
+
+    // Check service hours on mount
+    const hoursInfo = isWithinServiceHours();
+    setServiceHoursInfo(hoursInfo);
 
     socketRef.current = io(import.meta.env.VITE_API_URL || (import.meta.env.PROD ? window.location.origin : 'http://localhost:5000'), {
       transports: ['websocket'],
@@ -226,6 +235,23 @@ const AdminOrders = () => {
     socketRef.current.on('connect', () => {
       console.log('Admin socket connected');
       socketRef.current.emit('join_admin_room');
+    });
+
+    // Listen for new orders coming in (payment verified)
+    socketRef.current.on('new_order_confirmed', (data) => {
+      console.log('🎵 New order received:', data);
+      
+      // Play notification sound if within service hours and not muted
+      if (isWithinServiceHours().isWithinHours && !notificationsMuted) {
+        playSound('order');
+        toast.success(`New Order #${data.orderNumber} received!`, {
+          duration: 5,
+          position: 'top-right'
+        });
+      }
+      
+      // Refresh orders list
+      fetchOrders();
     });
 
     socketRef.current.on('order_status_updated', (data) => {
@@ -242,7 +268,7 @@ const AdminOrders = () => {
         socketRef.current.disconnect();
       }
     };
-  }, []);
+  }, [notificationsMuted]);
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -321,6 +347,44 @@ const AdminOrders = () => {
              <option value="">All Statuses</option>
              {statusOptions.map(s => <option key={s} value={s}>{s.replace(/_/g, ' ').toUpperCase()}</option>)}
            </select>
+        </div>
+
+        {/* Notification Sound Controls */}
+        <div className="flex items-center gap-2 bg-card border border-border px-3 py-2 rounded-xl">
+          {/* Service Hours Status */}
+          <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-card-soft/50">
+            <div className={`w-2 h-2 rounded-full ${serviceHoursInfo?.isWithinHours ? 'bg-success' : 'bg-warning'}`} />
+            <span className="text-xs font-bold text-muted">{getServiceHoursMessage()}</span>
+          </div>
+
+          {/* Mute Toggle Button */}
+          <button
+            onClick={() => {
+              const newMuted = toggleMute();
+              setNotificationsMuted(newMuted);
+              toast.success(newMuted ? '🔇 Notifications Muted' : '🔊 Notifications Enabled', { duration: 2 });
+            }}
+            className={`p-2 rounded-lg transition-all ${
+              notificationsMuted 
+                ? 'bg-warning/10 text-warning border border-warning/20' 
+                : 'bg-success/10 text-success border border-success/20'
+            }`}
+            title={notificationsMuted ? 'Notifications Muted' : 'Notifications Enabled'}
+          >
+            {notificationsMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+          </button>
+
+          {/* Test Sounds Button */}
+          <button
+            onClick={() => {
+              testSounds();
+              toast.success('Testing all notification sounds...', { duration: 2 });
+            }}
+            className="px-3 py-2 text-xs font-bold rounded-lg bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors"
+            title="Test all notification sounds"
+          >
+            🎵 Test
+          </button>
         </div>
         
         {/* Info Badge - Admin cannot edit */}

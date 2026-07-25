@@ -63,6 +63,8 @@ const productSchema = new mongoose.Schema({
   }],
   allowCustomFlavor: { type: Boolean, default: false },
   allowCustomWeight: { type: Boolean, default: false },
+  hasCustomWeights: { type: Boolean, default: false },
+  customWeightPrices: [{ weight: { type: String }, price: { type: Number, min: 0 } }],
 
   description: { type: String, required: true },
   shortDescription: { type: String, required: true },

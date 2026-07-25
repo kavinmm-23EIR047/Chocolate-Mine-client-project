@@ -23,16 +23,46 @@ const ProductVariants = ({
   const hasVariants = product?.hasVariants || false;
 
   const isBento = (Array.isArray(product?.category) ? product.category.some(c => typeof c === 'string' && c.toLowerCase().includes('bento')) : (product?.category || '').toLowerCase().includes('bento')) || product?.cakeType?.toLowerCase().includes('bento');
-  const weights = isBento
-    ? [{ value: '250g' }]
-    : [
-        { value: '500g' },
-        { value: '1kg' },
-        { value: '1.5kg' },
-        { value: '2kg' },
-        { value: '2.5kg' },
-        { value: '3kg' }
-      ];
+  
+  let weights = [];
+  const hasCustom = (product?.hasCustomWeights || (Array.isArray(product?.customWeightPrices) && product.customWeightPrices.length > 0));
+  const hasStandard = product?.hasWeights || isCake;
+
+  if (hasCustom) {
+    const customList = (product?.customWeightPrices || []).map(c => ({ value: c.weight, price: c.price }));
+    if (hasStandard) {
+      const standardList = isBento
+        ? [{ value: '250g' }]
+        : [
+            { value: '500g' },
+            { value: '1kg' },
+            { value: '1.5kg' },
+            { value: '2kg' },
+            { value: '2.5kg' },
+            { value: '3kg' }
+          ];
+      const customSet = new Set(customList.map(c => String(c.value).toLowerCase().trim()));
+      standardList.forEach(s => {
+        if (!customSet.has(String(s.value).toLowerCase().trim())) {
+          customList.push(s);
+        }
+      });
+    }
+    weights = customList;
+  } else {
+    weights = isBento
+      ? [{ value: '250g' }]
+      : [
+          { value: '500g' },
+          { value: '1kg' },
+          { value: '1.5kg' },
+          { value: '2kg' },
+          { value: '2.5kg' },
+          { value: '3kg' }
+        ];
+  }
+
+  const showWeightSection = hasCustom || hasStandard || (Array.isArray(product?.weights) && product.weights.length > 0) || (Array.isArray(product?.weightPrices) && product.weightPrices.length > 0);
 
   return (
     <div className="space-y-6 mb-6">
@@ -106,7 +136,7 @@ const ProductVariants = ({
       )}
 
       {/* Select Weight Section */}
-      {(product?.hasWeights === true || (Array.isArray(product?.weights) && product.weights.length > 0) || (Array.isArray(product?.weightPrices) && product.weightPrices.length > 0) || isCake) && (
+      {showWeightSection && (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Scale size={16} className="text-primary" />
@@ -123,7 +153,7 @@ const ProductVariants = ({
                   : 'bg-muted/10 text-heading border-2 border-border hover:border-primary/50'
                   }`}
               >
-                {weight.value}
+                {weight.value} {weight.price ? `(₹${weight.price})` : ''}
               </button>
             ))}
           </div>

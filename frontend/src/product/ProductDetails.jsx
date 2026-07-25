@@ -173,13 +173,23 @@ const ProductDetails = () => {
   // ─── INITIALIZE SELECTIONS ─────────────────────────────
   useEffect(() => {
     if (product) {
-      if (isCake) {
-        const isBento = (Array.isArray(product?.category) ? product.category.some(c => typeof c === 'string' && c.toLowerCase().includes('bento')) : (product?.category || '').toLowerCase().includes('bento')) || product?.cakeType?.toLowerCase().includes('bento');
-        const defaultWeight = isBento ? '250g' : '500g';
-        setSelectedWeight(defaultWeight);
-        
-        const basePriceVal = Number(product.price || 0);
-        setSelectedPrice(basePriceVal);
+      const hasCustom = product.hasCustomWeights || (Array.isArray(product.customWeightPrices) && product.customWeightPrices.length > 0);
+      const isBento = (Array.isArray(product?.category) ? product.category.some(c => typeof c === 'string' && c.toLowerCase().includes('bento')) : (product?.category || '').toLowerCase().includes('bento')) || product?.cakeType?.toLowerCase().includes('bento');
+      
+      const defaultWeight = hasCustom && product.customWeightPrices?.[0]?.weight
+        ? product.customWeightPrices[0].weight
+        : (isBento ? '250g' : '500g');
+      setSelectedWeight(defaultWeight);
+
+      let initialWeightPrice = Number(product.price || 0);
+      if (hasCustom && product.customWeightPrices?.[0]?.price !== undefined) {
+        initialWeightPrice = Number(product.customWeightPrices[0].price);
+      } else {
+        const mult = getWeightMultiplier(defaultWeight);
+        initialWeightPrice = initialWeightPrice * mult;
+      }
+
+      if (isCake || hasCustom) {
         setSelectedStock(product.stock !== undefined ? product.stock : true);
 
         if (product.flavors && product.flavors.length > 0) {
@@ -187,7 +197,7 @@ const ProductDetails = () => {
           setSelectedFlavor(initialFlavor);
           
           const flavorPrice = getFlavorPrice(initialFlavor);
-          setSelectedPrice(basePriceVal + flavorPrice);
+          setSelectedPrice(initialWeightPrice + flavorPrice);
 
           if (initialFlavor.images && initialFlavor.images.length > 0) {
             setDisplayImage(initialFlavor.images[0]);
@@ -196,11 +206,13 @@ const ProductDetails = () => {
           }
         } else {
           setSelectedFlavor({ name: 'Standard' });
+          setSelectedPrice(initialWeightPrice);
           setDisplayImage(product.image || null);
         }
       } else {
         setDisplayImage(product.image || null);
         setSelectedStock(product.stock);
+        setSelectedPrice(Number(product.price || 0));
       }
     }
   }, [product]);
@@ -221,12 +233,18 @@ const ProductDetails = () => {
     setShowCustomFlavorInput(false);
     setCustomFlavor('');
 
-    const basePriceVal = Number(product.price || 0);
     const flavorPrice = getFlavorPrice(flavor);
-    
-    // Only update selectedPrice if we are not relying on weight multiplier.
-    // For bento cakes (where weight is fixed or hidden), this correctly adds flavor price.
-    setSelectedPrice(basePriceVal + flavorPrice);
+    const customMatch = (product?.hasCustomWeights || (Array.isArray(product?.customWeightPrices) && product.customWeightPrices.length > 0)) && selectedWeight
+      ? product?.customWeightPrices?.find(c => String(c.weight).toLowerCase().trim() === String(selectedWeight).toLowerCase().trim())
+      : null;
+
+    if (customMatch && customMatch.price !== undefined && customMatch.price !== null) {
+      setSelectedPrice(Number(customMatch.price) + flavorPrice);
+    } else {
+      const multiplier = getWeightMultiplier(selectedWeight);
+      const basePriceVal = Number(product?.price || 0);
+      setSelectedPrice((basePriceVal * multiplier) + flavorPrice);
+    }
 
     if (flavor.images && flavor.images.length > 0) {
       setDisplayImage(flavor.images[0]);
@@ -238,10 +256,19 @@ const ProductDetails = () => {
     setShowCustomWeightInput(false);
     setCustomWeight('');
 
-    const multiplier = getWeightMultiplier(weight);
-    const basePriceVal = Number(product.price || 0);
-    setSelectedPrice(basePriceVal * multiplier);
-    setSelectedStock(product.stock !== undefined ? product.stock : true);
+    const flavorPrice = getFlavorPrice(selectedFlavor);
+    const customMatch = (product?.hasCustomWeights || (Array.isArray(product?.customWeightPrices) && product.customWeightPrices.length > 0))
+      ? product?.customWeightPrices?.find(c => String(c.weight).toLowerCase().trim() === String(weight).toLowerCase().trim())
+      : null;
+
+    if (customMatch && customMatch.price !== undefined && customMatch.price !== null) {
+      setSelectedPrice(Number(customMatch.price) + flavorPrice);
+    } else {
+      const multiplier = getWeightMultiplier(weight);
+      const basePriceVal = Number(product?.price || 0);
+      setSelectedPrice((basePriceVal * multiplier) + flavorPrice);
+    }
+    setSelectedStock(product?.stock !== undefined ? product.stock : true);
   };
 
   const handleCustomFlavorSubmit = () => {
@@ -302,29 +329,36 @@ const ProductDetails = () => {
   const displayCategoryObj = getCleanCategoryDisplay();
   const productCategory = displayCategoryObj.main;
 
-  const currentVariantFlavor = isCake
-    ? (showCustomFlavorInput ? customFlavor : selectedFlavor?.name)
-    : null;
-  const currentVariantWeight = isCake
-    ? (showCustomWeightInput ? customWeight : selectedWeight)
-    : null;
+  const hasCustomWeights = product?.hasCustomWeights || (Array.isArray(product?.customWeightPrices) && product.customWeightPrices.length > 0);
+  const isCakeWithVariants = isCake || hasCustomWeights || product?.hasWeights;
 
-  const cartItem = cartItems?.find(i =>
-    idsMatch(i.productId, productId) &&
-    (!isCake || (i.options?.flavor === currentVariantFlavor && i.options?.weight === currentVariantWeight))
-  );
+  const targetFlavor = (showCustomFlavorInput ? customFlavor : selectedFlavor?.name);
+  const targetFlavorClean = (targetFlavor && targetFlavor !== 'Standard') ? String(targetFlavor).toLowerCase().trim() : null;
+  const targetWeightClean = (showCustomWeightInput ? customWeight : selectedWeight) ? String(showCustomWeightInput ? customWeight : selectedWeight).toLowerCase().trim() : null;
+
+  const cartItem = cartItems?.find(i => {
+    if (!idsMatch(i.productId, productId)) return false;
+    if (!isCakeWithVariants) return true;
+
+    const itemFlavor = (i.options?.flavor || i.selectedFlavor || null);
+    const itemFlavorClean = (itemFlavor && itemFlavor !== 'Standard') ? String(itemFlavor).toLowerCase().trim() : null;
+    const itemWeightClean = (i.options?.weight || i.selectedWeight) ? String(i.options?.weight || i.selectedWeight).toLowerCase().trim() : null;
+
+    const flavorMatch = !targetFlavorClean || itemFlavorClean === targetFlavorClean;
+    const weightMatch = !targetWeightClean || itemWeightClean === targetWeightClean;
+    return flavorMatch && weightMatch;
+  });
   const cartQty = cartItem?.qty || 0;
   const isWishlisted = product ? isInWishlist(productId) : false;
 
   // ─── PRICE LOGIC ───────────────────────────────────────
   const getCurrentPrice = () => {
-    return isCake && selectedPrice
+    return isCakeWithVariants && selectedPrice
       ? selectedPrice
       : productPrice;
   };
 
   const currentPrice = getCurrentPrice();
-  const isCakeWithVariants = isCake;
   const hasOffer = !isCakeWithVariants && productOfferPrice > 0 && productOfferPrice < currentPrice;
   const basePrice = hasOffer ? productOfferPrice : currentPrice;
   const offerDiscount = currentPrice - basePrice;
@@ -354,7 +388,7 @@ const ProductDetails = () => {
   const finalPrice = totalFinalPrice + addonSum;
   const couponSavings = couponSavingsPerUnit * quantity;
 
-  const isInStock = isCake ? (selectedStock !== false) : productAvailable;
+  const isInStock = isCakeWithVariants ? (selectedStock !== false) : productAvailable;
 
   // ─── ACTIONS ───────────────────────────────────────────
   const handleApplyCoupon = async () => {
@@ -367,14 +401,14 @@ const ProductDetails = () => {
     try {
       const isInCart = cartItems?.some(item =>
         idsMatch(item.productId, product._id) &&
-        (!isCake ||
+        (!isCakeWithVariants ||
           (item.selectedFlavor === currentVariantFlavor &&
             item.selectedWeight === currentVariantWeight))
       );
 
       if (!isInCart && quantity > 0) {
         const options = {};
-        if (isCake) {
+        if (isCakeWithVariants) {
           if (showCustomFlavorInput && customFlavor) options.flavor = customFlavor;
           else if (selectedFlavor) options.flavor = selectedFlavor.name;
           
@@ -401,7 +435,7 @@ const ProductDetails = () => {
   };
 
   const handleUpdateQuantity = (id, newQty) => {
-    if (newQty < 1) return;
+    if (newQty < 0) return;
     dispatch(updateCartQty({ productId: id, qty: newQty }));
   };
 
@@ -413,10 +447,9 @@ const ProductDetails = () => {
 
     setAddingToCart(true);
     const options = {};
-    if (isCake) {
+    if (isCakeWithVariants) {
       if (showCustomFlavorInput && customFlavor) options.flavor = customFlavor;
-      else if (selectedFlavor) options.flavor = selectedFlavor.name;
-      else { toast.error('Please select flavor'); setAddingToCart(false); return; }
+      else if (selectedFlavor?.name && selectedFlavor.name !== 'Standard') options.flavor = selectedFlavor.name;
 
       if (showCustomWeightInput && customWeight) options.weight = customWeight;
       else if (selectedWeight) options.weight = selectedWeight;
@@ -434,25 +467,26 @@ const ProductDetails = () => {
       return;
     }
 
-    const options = {};
-    if (isCake) {
-      if (showCustomFlavorInput && customFlavor) options.flavor = customFlavor;
-      else if (selectedFlavor) options.flavor = selectedFlavor.name;
-      else { toast.error('Please select flavor'); return; }
+    if (cartQty === 0) {
+      const options = {};
+      if (isCakeWithVariants) {
+        if (showCustomFlavorInput && customFlavor) options.flavor = customFlavor;
+        else if (selectedFlavor?.name && selectedFlavor.name !== 'Standard') options.flavor = selectedFlavor.name;
 
-      if (showCustomWeightInput && customWeight) options.weight = customWeight;
-      else if (selectedWeight) options.weight = selectedWeight;
-      else { toast.error('Please select weight'); return; }
+        if (showCustomWeightInput && customWeight) options.weight = customWeight;
+        else if (selectedWeight) options.weight = selectedWeight;
+        else { toast.error('Please select weight'); return; }
+      }
+
+      dispatch(addToCart({ 
+        product, 
+        qty: quantity, 
+        options, 
+        variantPrice: isCakeWithVariants ? currentPrice : null, 
+        addons: selectedAddons 
+      }));
     }
 
-    dispatch(addToCart({ 
-      product, 
-      qty: quantity, 
-      options, 
-      variantPrice: isCakeWithVariants ? currentPrice : null, 
-      addons: selectedAddons 
-    }));
-    toast.success('Item added to bag!');
     navigate('/cart');
   };
 

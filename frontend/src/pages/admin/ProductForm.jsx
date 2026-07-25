@@ -53,6 +53,7 @@ const ProductForm = () => {
     isActive: true,
     hasVariants: false,
     hasWeights: false,
+    hasCustomWeights: false,
     allowCustomFlavor: false,
     allowCustomWeight: false,
     coupon: {
@@ -68,6 +69,9 @@ const ProductForm = () => {
   const [weights, setWeights] = useState([]);
   const [variants, setVariants] = useState([]);
   const [weightPrices, setWeightPrices] = useState([]);
+  const [customWeightPrices, setCustomWeightPrices] = useState([]);
+  const [newCustomWeight, setNewCustomWeight] = useState('');
+  const [newCustomPrice, setNewCustomPrice] = useState('');
   
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState('');
@@ -121,6 +125,7 @@ const ProductForm = () => {
             isActive: p.isActive !== false,
             hasVariants: p.hasVariants || false,
             hasWeights: p.hasWeights || (Array.isArray(p.weights) && p.weights.length > 0) || (Array.isArray(p.weightPrices) && p.weightPrices.length > 0) || (Array.isArray(p.category) && p.category.some(c => typeof c === 'string' && (c.toLowerCase().includes('bento') || c.toLowerCase().includes('cake')))),
+            hasCustomWeights: p.hasCustomWeights || (Array.isArray(p.customWeightPrices) && p.customWeightPrices.length > 0),
             allowCustomFlavor: p.allowCustomFlavor || false,
             allowCustomWeight: p.allowCustomWeight || false,
             coupon: {
@@ -131,6 +136,7 @@ const ProductForm = () => {
             }
           });
           setPreview(p.image);
+          setCustomWeightPrices(p.customWeightPrices || []);
           if (Array.isArray(p.category) ? p.category.some(c => typeof c === 'string' && c.toLowerCase().includes('bento')) : (p.category || '').toLowerCase().includes('bento')) {
             // Enrich loaded flavors with prices from DEFAULT_FLAVORS if missing
             const enrichedFlavors = (p.flavors || []).map(flavor => {
@@ -160,6 +166,27 @@ const ProductForm = () => {
     }
     return () => {};
   }, [id, isEdit, navigate]);
+
+  const handleAddCustomWeightPrice = () => {
+    if (!newCustomWeight.trim() || !newCustomPrice || isNaN(newCustomPrice)) {
+      toast.error('Please enter a valid weight label and price');
+      return;
+    }
+    const weightLabel = newCustomWeight.trim();
+    const priceVal = Number(newCustomPrice);
+    if (customWeightPrices.some(c => c.weight.toLowerCase() === weightLabel.toLowerCase())) {
+      toast.error('This weight option already exists');
+      return;
+    }
+    setCustomWeightPrices(prev => [...prev, { weight: weightLabel, price: priceVal }]);
+    setNewCustomWeight('');
+    setNewCustomPrice('');
+    toast.success(`Added ${weightLabel} - ₹${priceVal}`);
+  };
+
+  const handleRemoveCustomWeightPrice = (index) => {
+    setCustomWeightPrices(prev => prev.filter((_, i) => i !== index));
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -408,14 +435,24 @@ const ProductForm = () => {
         } else if (key === 'stock') {
           // Send stock as boolean
           data.append('stock', formData.stock ? 'true' : 'false');
-        } else if (key === 'hasVariants' || key === 'allowCustomFlavor' || key === 'allowCustomWeight') {
-          // Skip these boolean fields here - they will be handled in cake section
+        } else if (key === 'hasVariants' || key === 'allowCustomFlavor' || key === 'allowCustomWeight' || key === 'hasCustomWeights') {
+          // Skip these boolean fields here - they will be handled explicitly
           return;
         } else {
           data.append(key, formData[key]);
         }
       });
       
+      data.set('hasCustomWeights', formData.hasCustomWeights ? 'true' : 'false');
+      data.set('customWeightPrices', JSON.stringify(customWeightPrices));
+
+      // Auto-set base price from starting custom weight price if left blank
+      let priceVal = formData.price;
+      if ((priceVal === '' || priceVal === null || priceVal === undefined) && formData.hasCustomWeights && customWeightPrices.length > 0) {
+        priceVal = customWeightPrices[0].price;
+        data.set('price', String(priceVal));
+      }
+
       // Add variant data for cake category
       if (formData.category.some(c => c.includes('bento'))) {
         // Prepare flavors with images array
@@ -574,15 +611,28 @@ const ProductForm = () => {
               {/* Price fields for all products */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-xs font-black text-muted uppercase tracking-widest">Original Price (₹)</label>
+                    <label className="text-xs font-black text-muted uppercase tracking-widest flex items-center justify-between">
+                      <span>Original Price (₹)</span>
+                      {formData.hasCustomWeights && customWeightPrices.length > 0 && (
+                        <span className="text-[10px] text-primary font-bold lowercase">
+                          (starts from ₹{customWeightPrices[0].price})
+                        </span>
+                      )}
+                    </label>
                     <input 
                       name="price" 
                       type="number" 
                       value={formData.price} 
                       onChange={handleChange} 
-                      required 
+                      required={!formData.hasCustomWeights && !formData.hasWeights} 
+                      placeholder={formData.hasCustomWeights && customWeightPrices.length > 0 ? `e.g. ${customWeightPrices[0].price}` : "e.g. 450"}
                       className="w-full bg-input border border-input-border px-4 py-3 rounded-xl focus:ring-2 focus:ring-secondary outline-none font-bold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
+                    {formData.hasCustomWeights && (
+                      <p className="text-[10px] text-muted">
+                        Optional when custom weights are enabled. If left blank, it will automatically use your starting weight price (₹{customWeightPrices[0]?.price || '...'}).
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-black text-muted uppercase tracking-widest">Offer Price (Optional)</label>
@@ -637,16 +687,21 @@ const ProductForm = () => {
             </div>
 
             {/* Enable / Disable Weight Options Card */}
-            <div className="card-premium p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-black text-heading uppercase tracking-widest text-sm flex items-center gap-2">
-                    <Scale size={18} className="text-primary" />
-                    Weight Options & Pricing
-                  </h3>
-                  <p className="text-xs text-muted">Enable weight selections (500g, 1kg, 2kg, etc.) for products like cakes or chocolates by weight.</p>
-                </div>
+            <div className="card-premium p-6 space-y-6">
+              <div className="border-b border-border pb-4">
+                <h3 className="font-black text-heading uppercase tracking-widest text-sm flex items-center gap-2">
+                  <Scale size={18} className="text-primary" />
+                  Weight Options & Pricing Config
+                </h3>
+                <p className="text-xs text-muted">Configure standard weight multipliers or custom weight & specific price combinations.</p>
+              </div>
 
+              {/* Standard Weight Options Toggle */}
+              <div className="flex items-center justify-between p-4 bg-card-soft rounded-2xl border border-border/50">
+                <div>
+                  <h4 className="font-black text-xs uppercase tracking-wider text-heading">Standard Weight Multipliers</h4>
+                  <p className="text-[11px] text-muted">Enable standard weight choices (500g, 1kg, 2kg, 3kg, etc.) scaling with base price.</p>
+                </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
                     type="checkbox"
@@ -657,7 +712,7 @@ const ProductForm = () => {
                       setFormData(prev => ({
                         ...prev,
                         hasWeights: checked,
-                        hasVariants: checked
+                        hasVariants: checked || prev.hasCustomWeights
                       }));
                     }}
                     className="sr-only peer"
@@ -668,6 +723,82 @@ const ProductForm = () => {
                   </span>
                 </label>
               </div>
+
+              {/* Custom Weight & Pricing Toggle */}
+              <div className="flex items-center justify-between p-4 bg-card-soft rounded-2xl border border-border/50">
+                <div>
+                  <h4 className="font-black text-xs uppercase tracking-wider text-heading">Custom Weight & Price Options</h4>
+                  <p className="text-[11px] text-muted">Set specific weights with custom fixed prices (e.g. 0.5kg = ₹1020, 0.75kg = ₹1450).</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="hasCustomWeights"
+                    checked={formData.hasCustomWeights}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setFormData(prev => ({
+                        ...prev,
+                        hasCustomWeights: checked,
+                        hasVariants: checked || prev.hasWeights
+                      }));
+                    }}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  <span className={`ml-3 text-xs font-black uppercase ${formData.hasCustomWeights ? 'text-primary' : 'text-muted'}`}>
+                    {formData.hasCustomWeights ? 'Enabled' : 'Disabled'}
+                  </span>
+                </label>
+              </div>
+
+              {/* Custom Weight Prices List & Manager */}
+              {formData.hasCustomWeights && (
+                <div className="p-4 bg-primary/5 rounded-2xl border border-primary/20 space-y-4">
+                  <h4 className="font-black text-xs uppercase tracking-wider text-primary">Custom Weight & Price List</h4>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <input
+                      type="text"
+                      value={newCustomWeight}
+                      onChange={(e) => setNewCustomWeight(e.target.value)}
+                      placeholder="Weight (e.g. 0.5kg, 0.75kg)"
+                      className="bg-input border border-input-border px-3 py-2 rounded-xl text-sm font-bold"
+                    />
+                    <input
+                      type="number"
+                      value={newCustomPrice}
+                      onChange={(e) => setNewCustomPrice(e.target.value)}
+                      placeholder="Price in ₹ (e.g. 1020)"
+                      className="bg-input border border-input-border px-3 py-2 rounded-xl text-sm font-bold"
+                    />
+                    <Button type="button" onClick={handleAddCustomWeightPrice} icon={Plus} size="sm">
+                      Add Custom Option
+                    </Button>
+                  </div>
+
+                  {customWeightPrices.length > 0 ? (
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      {customWeightPrices.map((item, idx) => (
+                        <div key={idx} className="flex items-center gap-2 px-3 py-2 bg-card border border-border rounded-xl shadow-sm text-xs font-black text-heading">
+                          <span className="text-primary">{item.weight}</span>
+                          <span className="text-muted">→</span>
+                          <span className="text-success font-black">₹{item.price}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveCustomWeightPrice(idx)}
+                            className="ml-1 text-muted hover:text-error transition-colors"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted italic">No custom weight options added yet. Add options above (e.g. 0.5kg - ₹1020).</p>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Cake-specific Variant Section with Multiple Images */}

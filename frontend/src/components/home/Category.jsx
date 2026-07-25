@@ -178,57 +178,25 @@ export const CategoryCircles = ({ activeCategory, setActiveCategory }) => {
                     }
                   }
                 }}
-                className="snap-start shrink-0 flex flex-col items-center group cursor-pointer select-none w-[110px] sm:w-[130px] md:w-[150px]"
+                className="snap-start shrink-0 flex flex-col items-center cursor-pointer select-none w-[110px] sm:w-[130px] md:w-[150px]"
               >
-                {/* Image Ring Avatar Container */}
-                <div className="relative mb-3.5 flex items-center justify-center">
-
-                  {/* Subtle active / hover ambient glow */}
-                  <div
-                    className={`absolute -inset-1.5 rounded-full transition-all duration-300 blur-sm ${isActive
-                        ? 'bg-[var(--primary)]/30 opacity-100 scale-105'
-                        : 'bg-[var(--primary)]/0 group-hover:bg-[var(--primary)]/15 opacity-0 group-hover:opacity-100'
-                      }`}
+                <div className={`w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full border border-[var(--border)]/40 bg-[var(--card)] shadow-sm overflow-hidden transition-transform duration-300 ${isActive ? 'scale-105 border-[var(--primary)]/70 shadow-md' : 'hover:scale-[1.03]'}`}>
+                  <img
+                    src={categoryImageUrl}
+                    alt={displayName}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = FALLBACK_IMAGE;
+                    }}
                   />
-
-                  {/* Outer Border Ring */}
-                  <div
-                    className={`relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full p-1 transition-all duration-300 ${isActive
-                        ? 'bg-gradient-to-tr from-[var(--primary)] via-[var(--primary)]/70 to-[var(--primary)]/30 shadow-md scale-105'
-                        : 'bg-[var(--border)]/60 group-hover:bg-[var(--primary)]/50 group-hover:scale-105'
-                      }`}
-                  >
-                    {/* Inner Glass Frame */}
-                    <div className="w-full h-full rounded-full bg-[var(--card)] p-2.5 flex items-center justify-center overflow-hidden border border-[var(--border)]/20 shadow-inner">
-                      <img
-                        src={categoryImageUrl}
-                        alt={displayName}
-                        className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110 drop-shadow-sm"
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src = FALLBACK_IMAGE;
-                        }}
-                      />
-                    </div>
-                  </div>
                 </div>
 
-                {/* Title & Selection Marker */}
-                <div className="flex flex-col items-center text-center px-1 max-w-full">
-                  <span
-                    className={`text-xs sm:text-sm font-semibold tracking-wide transition-colors duration-200 line-clamp-2 ${isActive
-                        ? 'text-[var(--primary)] font-bold'
-                        : 'text-[var(--heading)] group-hover:text-[var(--primary)]'
-                      }`}
-                  >
+                <div className="flex flex-col items-center text-center px-1 max-w-full mt-3">
+                  <span className={`text-sm font-semibold tracking-wide transition-colors duration-200 ${isActive ? 'text-[var(--primary)]' : 'text-[var(--heading)]'}`}>
                     {displayName}
                   </span>
-
-                  {/* Active Indicator Bar */}
-                  <span
-                    className={`h-0.5 rounded-full bg-[var(--primary)] mt-1.5 transition-all duration-300 ${isActive ? 'w-6 opacity-100' : 'w-0 opacity-0 group-hover:w-3 group-hover:opacity-50'
-                      }`}
-                  />
+                  <span className={`mt-2 h-1.5 rounded-full bg-[var(--primary)] transition-all duration-300 ${isActive ? 'w-8 opacity-100' : 'w-0 opacity-0'}`} />
                 </div>
               </div>
             );

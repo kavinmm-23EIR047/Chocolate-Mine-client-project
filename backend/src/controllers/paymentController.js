@@ -285,7 +285,13 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
       let salePrice = product.offerPrice && product.offerPrice < product.price ? product.offerPrice : product.price;
       const isCake = categoryStr.includes('cake');
       const isBento = categoryStr.includes('bento-cakes');
-      if (isCake && !isCustomCake) {
+      const customWeightMatch = (product.hasCustomWeights || (product.customWeightPrices && product.customWeightPrices.length > 0)) && (directItem.selectedWeight || directItem.options?.weight)
+        ? product.customWeightPrices?.find(c => String(c.weight).toLowerCase().trim() === String(directItem.selectedWeight || directItem.options?.weight).toLowerCase().trim())
+        : null;
+
+      if (customWeightMatch && customWeightMatch.price !== undefined && customWeightMatch.price !== null) {
+        salePrice = Number(customWeightMatch.price);
+      } else if (isCake && !isCustomCake) {
         const selectedWeight = directItem.selectedWeight || (directItem.options && directItem.options.weight) || (isBento ? '250g' : '500g');
         const multiplier = getWeightMultiplier(selectedWeight);
         salePrice = product.price * multiplier;
@@ -366,7 +372,13 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
         let salePrice = product.offerPrice && product.offerPrice < product.price ? product.offerPrice : product.price;
         const isCake = categoryStr.includes('cake');
         const isBento = categoryStr.includes('bento-cakes');
-        if (isCake && !isCustomCake) {
+        const customWeightMatch = (product.hasCustomWeights || (product.customWeightPrices && product.customWeightPrices.length > 0)) && (item.options?.weight || item.selectedWeight)
+          ? product.customWeightPrices?.find(c => String(c.weight).toLowerCase().trim() === String(item.options?.weight || item.selectedWeight).toLowerCase().trim())
+          : null;
+
+        if (customWeightMatch && customWeightMatch.price !== undefined && customWeightMatch.price !== null) {
+          salePrice = Number(customWeightMatch.price);
+        } else if (isCake && !isCustomCake) {
           const selectedWeight = item.options?.weight || item.selectedWeight || (isBento ? '250g' : '500g');
           const multiplier = getWeightMultiplier(selectedWeight);
           salePrice = product.price * multiplier;
