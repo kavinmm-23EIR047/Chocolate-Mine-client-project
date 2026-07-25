@@ -135,7 +135,11 @@ const MapSelector = ({ onSelect, onClose }) => {
       setIsLoadingSuggestions(true);
       try {
         const q = searchQuery.trim();
-        const searchUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=6&addressdetails=1`;
+        // Bias search results toward current map position and India for better relevance
+        const lat = position?.lat || defaultLat;
+        const lng = position?.lng || defaultLng;
+        const viewbox = `${lng - 1},${lat - 1},${lng + 1},${lat + 1}`;
+        const searchUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=8&addressdetails=1&countrycodes=in&viewbox=${viewbox}&bounded=0`;
         const res = await fetch(searchUrl);
         const data = await res.json();
 
@@ -174,37 +178,69 @@ const MapSelector = ({ onSelect, onClose }) => {
     }
     setIsLocatingUser(true);
     setIsGeocoding(true);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const { latitude, longitude } = pos.coords;
-        const newPos = { lat: latitude, lng: longitude };
-        setPosition(newPos);
 
-        try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`);
-          const data = await res.json();
-          if (data) {
-            setAddress(formatCleanAddress(data));
-            setPincode(extractPincode(data));
-          } else {
-            setAddress(`Current Location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
-          }
-        } catch (err) {
-          console.error("Reverse geocoding error:", err);
+    const onSuccess = async (pos) => {
+      const { latitude, longitude, accuracy } = pos.coords;
+      console.log(`[GPS] lat: ${latitude}, lng: ${longitude}, accuracy: ${accuracy}m`);
+      const newPos = { lat: latitude, lng: longitude };
+      setPosition(newPos);
+
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`);
+        const data = await res.json();
+        if (data) {
+          setAddress(formatCleanAddress(data));
+          setPincode(extractPincode(data));
+        } else {
           setAddress(`Current Location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
-        } finally {
-          setIsLocatingUser(false);
-          setIsGeocoding(false);
+        }
+      } catch (err) {
+        console.error("Reverse geocoding error:", err);
+        setAddress(`Current Location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
+      } finally {
+        setIsLocatingUser(false);
+        setIsGeocoding(false);
+      }
+    };
+
+    const onError = (err) => {
+      console.error("Geolocation error:", err);
+      alert("Could not fetch current location. Please allow location permissions in your browser.");
+      setIsLocatingUser(false);
+      setIsGeocoding(false);
+    };
+
+    const geoOptions = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
+
+    // Use watchPosition for better accuracy - take the first high-accuracy reading then stop
+    let resolved = false;
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        // Accept if accuracy is good enough or after first reading
+        if (!resolved && (pos.coords.accuracy < 200 || !resolved)) {
+          resolved = true;
+          navigator.geolocation.clearWatch(watchId);
+          onSuccess(pos);
         }
       },
       (err) => {
-        console.error("Geolocation error:", err);
-        alert("Could not fetch current location. Please allow location permissions in your browser.");
-        setIsLocatingUser(false);
-        setIsGeocoding(false);
+        if (!resolved) {
+          resolved = true;
+          navigator.geolocation.clearWatch(watchId);
+          onError(err);
+        }
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      geoOptions
     );
+
+    // Safety timeout: if watchPosition hasn't resolved in 15s, fall back to getCurrentPosition
+    setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        navigator.geolocation.clearWatch(watchId);
+        navigator.geolocation.getCurrentPosition(onSuccess, onError, { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 });
+      }
+    }, 15000);
   };
 
   const handleConfirm = () => {
