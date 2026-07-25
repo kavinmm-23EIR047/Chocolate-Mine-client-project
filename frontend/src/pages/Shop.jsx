@@ -644,7 +644,7 @@ const Shop = () => {
         />
         {localSearchTerm && (
           <button 
-            onClick={handleSearchClear} 
+            onClick={handleClearSearch} 
             className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[var(--heading)]"
           >
             <X size={16} />
@@ -771,7 +771,7 @@ const Shop = () => {
                   <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/60" />
                   {localSearchTerm && (
                     <button 
-                      onClick={handleSearchClear} 
+                      onClick={handleClearSearch} 
                       className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
                     >
                       <X size={16} />
