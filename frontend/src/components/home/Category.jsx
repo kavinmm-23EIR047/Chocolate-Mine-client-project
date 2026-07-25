@@ -169,13 +169,10 @@ export const CategoryCircles = ({ activeCategory, setActiveCategory }) => {
                 onClick={() => {
                   if (cat.isCustom) {
                     navigate('/custom-cake');
+                  } else if (cat.name === 'All') {
+                    navigate('/shop');
                   } else {
-                    setActiveCategory(cat.name);
-                    const el = document.getElementById('main-catalog');
-                    if (el) {
-                      const offset = el.getBoundingClientRect().top + window.pageYOffset - 100;
-                      window.scrollTo({ top: offset, behavior: 'smooth' });
-                    }
+                    navigate(`/shop?category=${encodeURIComponent(cat.name)}`);
                   }
                 }}
                 className="snap-start shrink-0 flex flex-col items-center group cursor-pointer select-none w-[110px] sm:w-[130px] md:w-[150px]"
