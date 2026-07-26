@@ -127,6 +127,14 @@ app.get('/health', (req, res) => {
    API ROUTES (ORDER MATTERS - specific before general)
 ================================== */
 
+// MongoDB Atlas Search endpoints
+const productController = require('./src/controllers/productController');
+const customCakeController = require('./src/controllers/customCakeController');
+app.get('/api/search', productController.searchProducts);
+app.get('/api/v1/search', productController.searchProducts);
+app.get('/api/customcakethemes/search', customCakeController.searchThemesAtlas);
+app.get('/api/v1/customcakethemes/search', customCakeController.searchThemesAtlas);
+
 // Public routes first
 app.use('/api/v1/auth', require('./src/routes/authRoutes'));
 app.use('/api/auth', require('./src/routes/authRoutes'));

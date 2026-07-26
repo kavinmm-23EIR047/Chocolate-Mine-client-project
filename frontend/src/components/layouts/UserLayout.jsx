@@ -27,7 +27,7 @@ const UserLayout = () => {
       </header>
 
       {/* ── RESPONSIVE INFO BANNER ── */}
-      <div className="bg-[#4E2820] dark:bg-[#E8D3CB] py-2.5 px-4 overflow-hidden border-b border-border/10 transition-colors duration-300">
+      <div className="bg-[#4E2820] dark:bg-[#E8D3CB] py-1 px-4 overflow-hidden border-b border-border/10 transition-colors duration-300">
 
         {/* DESKTOP/TABLET LAYOUT (md and up) */}
         <div className="hidden md:flex items-center justify-between responsive-container">

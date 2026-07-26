@@ -344,6 +344,7 @@ const Shop = () => {
   const { data: productRes, isLoading, isFetching } = useGetProductsQuery({ 
     page: 1, 
     limit: 2000,
+    search: searchQuery || undefined,
     category: activeCategories.length > 0 ? activeCategories.join(',') : undefined,
     subCategory: activeSubCategory || undefined,
     occasion: activeOccasion !== 'all' ? activeOccasion : undefined,
@@ -468,13 +469,13 @@ const Shop = () => {
       return price >= priceRange[0] && price <= priceRange[1];
     });
 
-    // Search Filter with relevance scoring
+    // Search Filter with relevance scoring (Atlas Search handles backend ranking & fuzzy matching)
     if (searchQuery) {
       const q = searchQuery.toLowerCase().trim();
       const queryWords = q.split(/\s+/).filter(Boolean);
       
-      // Filter products that match any search term
-      products = products.filter(p => {
+      // Filter products that match any search term (or rely on Atlas Search results)
+      const exactOrFuzzyMatches = products.filter(p => {
         const name = p.name?.toLowerCase() || '';
         const desc = p.description?.toLowerCase() || '';
         const category = Array.isArray(p.category) ? p.category.join(' ').toLowerCase() : (p.category || '').toLowerCase();
@@ -482,6 +483,11 @@ const Shop = () => {
         const searchableText = `${name} ${desc} ${category} ${tags}`;
         return queryWords.some(word => searchableText.includes(word));
       });
+
+      // If exact substring filtering has matches, use them; otherwise use Atlas Search fuzzy results
+      if (exactOrFuzzyMatches.length > 0) {
+        products = exactOrFuzzyMatches;
+      }
       
       // Sort by relevance with priority scoring
       products.sort((a, b) => {
@@ -644,7 +650,7 @@ const Shop = () => {
         />
         {localSearchTerm && (
           <button 
-            onClick={handleSearchClear} 
+            onClick={handleClearSearch} 
             className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[var(--heading)]"
           >
             <X size={16} />
@@ -771,7 +777,7 @@ const Shop = () => {
                   <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/60" />
                   {localSearchTerm && (
                     <button 
-                      onClick={handleSearchClear} 
+                      onClick={handleClearSearch} 
                       className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
                     >
                       <X size={16} />

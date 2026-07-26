@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, Key, ArrowRight, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Mail, Lock, Key, ArrowRight, ShieldCheck, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import api from '../utils/api';
@@ -15,6 +15,7 @@ const ForgotPassword = () => {
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
 
   // If redirected from AccountSettings with email pre-filled, skip to step 2
   useEffect(() => {
@@ -148,14 +149,22 @@ const ForgotPassword = () => {
                     <div className="relative group">
                       <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-secondary transition-colors" size={20} />
                       <input
-                        type="password"
+                        type={showNewPassword ? 'text' : 'password'}
                         required
                         minLength={6}
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        className="w-full bg-input border border-border text-heading pl-16 pr-6 py-5 rounded-2xl outline-none focus:border-secondary transition-all font-bold"
+                        className="w-full bg-input border border-border text-heading pl-16 pr-14 py-5 rounded-2xl outline-none focus:border-secondary transition-all font-bold"
                         placeholder="••••••••"
                       />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword((prev) => !prev)}
+                        className="touch-compact absolute right-2 top-0 bottom-0 my-auto z-10 w-10 h-10 flex items-center justify-center rounded-full text-muted hover:text-primary hover:bg-white/5 active:bg-white/10 transition-colors focus:outline-none cursor-pointer"
+                        aria-label={showNewPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
                     </div>
                   </div>
 

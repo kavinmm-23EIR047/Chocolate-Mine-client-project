@@ -12,6 +12,7 @@ const ImageWithSkeleton = ({
   style = {},
   imgStyle = {},
   fallback,
+  showSparkles,
   ...props
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);

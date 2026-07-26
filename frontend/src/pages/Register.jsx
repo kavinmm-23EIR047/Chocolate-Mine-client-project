@@ -119,7 +119,7 @@ const Register = () => {
                   <div className="relative group">
                     <Lock className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-primary transition-colors" size={16} />
                     <input name="password" type={showPassword ? 'text' : 'password'} required value={formData.password} onChange={handleChange} className="w-full bg-surface/5 border border-border text-heading pl-12 sm:pl-16 pr-12 sm:pr-14 py-3 sm:py-4 rounded-xl sm:rounded-2xl outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-black text-sm placeholder:text-muted/30" placeholder="••••••••" />
-                    <button type="button" onClick={() => setShowPassword((prev) => !prev)} className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-muted hover:text-primary hover:bg-white/5 active:bg-white/10 transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer">
+                    <button type="button" onClick={() => setShowPassword((prev) => !prev)} className="touch-compact absolute right-1 sm:right-2 top-0 bottom-0 my-auto z-10 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-muted hover:text-primary hover:bg-white/5 active:bg-white/10 transition-colors focus:outline-none cursor-pointer">
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
@@ -129,7 +129,7 @@ const Register = () => {
                   <div className="relative group">
                     <Lock className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-primary transition-colors" size={16} />
                     <input name="confirmPassword" type={showConfirmPassword ? 'text' : 'password'} required value={formData.confirmPassword} onChange={handleChange} className="w-full bg-surface/5 border border-border text-heading pl-12 sm:pl-16 pr-12 sm:pr-14 py-3 sm:py-4 rounded-xl sm:rounded-2xl outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-black text-sm placeholder:text-muted/30" placeholder="••••••••" />
-                    <button type="button" onClick={() => setShowConfirmPassword((prev) => !prev)} className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-muted hover:text-primary hover:bg-white/5 active:bg-white/10 transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer">
+                    <button type="button" onClick={() => setShowConfirmPassword((prev) => !prev)} className="touch-compact absolute right-1 sm:right-2 top-0 bottom-0 my-auto z-10 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-muted hover:text-primary hover:bg-white/5 active:bg-white/10 transition-colors focus:outline-none cursor-pointer">
                       {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>

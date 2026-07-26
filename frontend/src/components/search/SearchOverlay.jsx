@@ -34,22 +34,42 @@ const SearchOverlay = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleSearch = async (val) => {
-    setQuery(val);
-    if (val.length < 2) {
+  // Debounced MongoDB Atlas Search with request cancellation
+  useEffect(() => {
+    const trimmedQuery = query.trim();
+
+    if (trimmedQuery.length < 2) {
       setResults([]);
+      setLoading(false);
       return;
     }
 
     setLoading(true);
-    try {
-      const res = await productService.search({ q: val, limit: 6 });
-      setResults(res.data.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await productService.search({ q: trimmedQuery, limit: 6 });
+        setResults(res.data?.data || []);
+      } catch (err) {
+        if (err.name !== 'CanceledError' && err.name !== 'AbortError') {
+          console.error('Atlas Search error:', err);
+        }
+      } finally {
+        setLoading(false);
+      }
+    }, 300);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [query]);
+
+  const handleInputChange = (e) => {
+    setQuery(e.target.value);
+  };
+
+  const handleClearInput = () => {
+    setQuery('');
+    setResults([]);
   };
 
   const onSelect = (q) => {
@@ -101,20 +121,29 @@ const SearchOverlay = ({ isOpen, onClose }) => {
                     autoFocus
                     type="text"
                     value={query}
-                    onChange={(e) => handleSearch(e.target.value)}
+                    onChange={handleInputChange}
                     onKeyDown={(e) => e.key === 'Enter' && onSelect(query)}
                     placeholder="Search for premium delicacies..."
-                    className="w-full bg-card/80 border-0 text-sm sm:text-xl font-black text-heading pl-12 sm:pl-16 pr-12 py-3.5 sm:py-5 rounded-2xl sm:rounded-[2rem] outline-none transition-all shadow-[inset_4px_4px_8px_rgba(0,0,0,0.6),inset_-2px_-2px_6px_rgba(255,255,255,0.04)] focus:shadow-[inset_6px_6px_12px_rgba(0,0,0,0.8),inset_-2px_-2px_8px_rgba(255,255,255,0.06)] placeholder:text-muted/30 uppercase tracking-tight"
+                    className="w-full bg-card/80 border-0 text-sm sm:text-xl font-black text-heading pl-12 sm:pl-16 pr-14 py-3.5 sm:py-5 rounded-2xl sm:rounded-[2rem] outline-none transition-all shadow-[inset_4px_4px_8px_rgba(0,0,0,0.6),inset_-2px_-2px_6px_rgba(255,255,255,0.04)] focus:shadow-[inset_6px_6px_12px_rgba(0,0,0,0.8),inset_-2px_-2px_8px_rgba(255,255,255,0.06)] placeholder:text-muted/30 uppercase tracking-tight"
                   />
-                  {loading && (
-                    <div className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2">
+                  <div className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                    {loading && (
                       <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 sm:border-3 border-primary border-t-transparent rounded-full animate-spin" />
-                    </div>
-                  )}
+                    )}
+                    {query && (
+                      <button
+                        onClick={handleClearInput}
+                        className="p-1 text-muted hover:text-heading transition-colors"
+                        title="Clear search"
+                      >
+                        <X size={16} />
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <button 
                   onClick={onClose}
-                  className="flex w-12 h-12 sm:w-16 sm:h-16 items-center justify-center rounded-2xl sm:rounded-[2rem] bg-card text-primary transition-all duration-300 shadow-[4px_4px_10px_rgba(0,0,0,0.6),-3px_-3px_8px_rgba(255,255,255,0.04)] active:shadow-[inset_4px_4px_8px_rgba(0,0,0,0.6),inset_-3px_-3px_8px_rgba(255,255,255,0.04)]"
+                  className="flex w-12 h-12 sm:w-16 sm:h-16 items-center justify-center rounded-2xl sm:rounded-[2rem] bg-card text-primary transition-all duration-300 shadow-[4px_4px_10px_rgba(0,0,0,0.6),-3px_-3px_8px_rgba(255,255,255,0.04)] active:shadow-[inset_4px_4px_8px_rgba(0,0,0,0.6),inset_-3px_-3px_8px_rgba(255,255,255,0.04)] cursor-pointer"
                 >
                   <X size={20} className="sm:w-7 sm:h-7" />
                 </button>
