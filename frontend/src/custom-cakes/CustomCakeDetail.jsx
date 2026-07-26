@@ -95,9 +95,9 @@ export default function CustomCakeDetail({
 
   const renderPersonalizeForm = () => (
     <div className="space-y-5">
-      <div className="flex items-center gap-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-4 py-2.5">
+      <div className="flex items-center gap-2.5 bg-[#008539] border border-[#007030] rounded-xl px-4 py-2.5 shadow-sm">
         <VegIcon />
-        <span className="text-xs sm:text-sm font-black text-emerald-500 dark:text-emerald-400 uppercase tracking-wider">
+        <span className="text-xs sm:text-sm font-black text-white uppercase tracking-wider">
           100% Pure Veg & Eggless
         </span>
       </div>
@@ -142,13 +142,13 @@ export default function CustomCakeDetail({
           <div className="relative">
             <input
               type="text" maxLength={20}
-              placeholder="e.g. 'Happy Birthday, name' or 'My Life'"
+              placeholder="e.g. Happy Birthday Alex"
               value={customerName}
               onChange={e => setCustomerName(e.target.value)}
               className="w-full bg-[var(--input)] border border-[var(--input-border)] text-[var(--foreground)] placeholder:text-[var(--muted)] rounded-xl px-4 py-3 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[var(--primary)] pr-14 transition-all font-bold"
             />
             <span className="absolute right-3.5 top-3.5 text-xs text-[var(--muted)] font-bold">{customerName.length}/20</span>
-            <p className="mt-2 text-xs text-[var(--muted)]">Use this for the exact text to appear on cake — short names or titles (e.g. "Happy Birthday, name" or "My Life").</p>
+            <p className="mt-2 text-xs text-[var(--muted)]">Enter the exact name or short title to be written on top of the cake.</p>
           </div>
         </div>
         <div>
@@ -174,13 +174,13 @@ export default function CustomCakeDetail({
         <div className="relative">
           <input
             type="text" maxLength={60}
-            placeholder="e.g. Less sugar, less cream — important notes"
+            placeholder="e.g. Wish you a very Happy Birthday! / Less sugar"
             value={message}
             onChange={e => setMessage(e.target.value)}
             className="w-full bg-[var(--input)] border border-[var(--input-border)] text-[var(--foreground)] placeholder:text-[var(--muted)] rounded-xl px-4 py-3 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[var(--primary)] pr-16 transition-all font-bold"
           />
           <span className="absolute right-3.5 top-3.5 text-xs text-[var(--muted)] font-bold">{message.length}/60</span>
-          <p className="mt-2 text-xs text-[var(--muted)]">Add special requests or important notes (e.g., less sugar, less cream, allergy info, delivery instructions).</p>
+          <p className="mt-2 text-xs text-[var(--muted)]">Add greeting card message or special baking instructions (e.g. less sugar, allergy info, delivery notes).</p>
         </div>
       </div>
     </div>
@@ -466,6 +466,9 @@ export default function CustomCakeDetail({
             .slice(0, 12)
             .map(t => ({
               _id: t.id,
+              id: t.id,
+              isTheme: true,
+              isCustom: true,
               name: t.name,
               image: (t.flavors && t.flavors[0] && t.flavors[0].image) || t.image,
               price: t.basePrice || 0,

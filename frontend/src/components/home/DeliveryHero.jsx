@@ -142,7 +142,7 @@ const DeliveryHero = () => {
               className="text-2xl sm:text-3xl lg:text-3xl xl:text-4xl tv:text-5xl font-black leading-[1.2] tracking-tight mb-3"
               style={{ color: 'var(--heading)' }}
             >
-              The Best of <span style={{ color: 'var(--accent)' }}>Coimbatore</span>
+              The Best of <span className="text-[#3B1E08] dark:text-amber-400">Coimbatore</span>
               <br />
               At Your Doorstep in 3 Hours
             </motion.h2>
@@ -242,7 +242,7 @@ const DeliveryHero = () => {
                 Pay securely with
               </span>
               <div className="flex items-center gap-1.5">
-                <Zap size={14} style={{ color: 'var(--accent)' }} />
+                <Zap size={14} className="text-[#3B1E08] dark:text-amber-400" />
                 <span className="text-sm font-black tracking-tight" style={{ color: 'var(--heading)' }}>Razorpay</span>
               </div>
             </div>
@@ -254,7 +254,7 @@ const DeliveryHero = () => {
                 { icon: <Zap size={12} />, label: 'Instant', sub: 'Confirm' },
               ].map(({ icon, label, sub }) => (
                 <div key={label} className="flex items-center gap-2">
-                  <span style={{ color: 'var(--accent)' }}>{icon}</span>
+                  <span className="text-[#3B1E08] dark:text-amber-400">{icon}</span>
                   <div>
                     <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-tight leading-none mb-0.5" style={{ color: 'var(--heading)' }}>{label}</p>
                     <p className="text-[8px] sm:text-[9px] leading-tight" style={{ color: 'var(--muted)' }}>{sub}</p>
@@ -297,7 +297,7 @@ const DeliveryHero = () => {
         }}
       >
         <div className="px-6 pt-8 pb-4 text-center lg:text-left">
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] mb-1.5" style={{ color: 'var(--accent)' }}>
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] mb-1.5 text-[#3B1E08] dark:text-amber-400">
             Custom Cakes
           </p>
           <h3 className="text-2xl sm:text-3xl font-black leading-tight tracking-tight mb-2" style={{ color: 'var(--heading)' }}>
@@ -394,8 +394,8 @@ const DeliveryHero = () => {
             <div key={label} className="flex items-start gap-3 group cursor-default">
               <div
                 className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-110 ${highlight
-                  ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
-                  : 'bg-background text-accent border-border'
+                  ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+                  : 'bg-white/80 dark:bg-white/10 text-[#27190e] dark:text-amber-400 border border-[var(--border)]/40 shadow-sm'
                   }`}
               >
                 {icon}

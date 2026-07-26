@@ -52,13 +52,11 @@ const Navbar = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Using imported Logo component instead of inline LogoMark
-
   return (
     <>
       <nav className={`relative w-full z-[200] transition-all duration-300 bg-navbar text-heading lg:rounded-none ${isScrolled ? 'shadow-md' : ''}`}>
 
-        {/* MOBILE WATERMARK BACKGROUND PATTERN (Subtle themed watermarks) */}
+        {/* MOBILE WATERMARK BACKGROUND PATTERN */}
         <div className="absolute inset-0 lg:hidden pointer-events-none overflow-hidden z-0 opacity-[0.05]">
           <div className="absolute top-3 left-24"><Cake size={24} strokeWidth={1.2} className="text-heading" /></div>
           <div className="absolute top-14 left-10"><Sparkles size={14} strokeWidth={1.2} className="text-heading" /></div>
@@ -113,13 +111,13 @@ const Navbar = () => {
               </div>
             </div>
 
-            {/* Desktop Search Bar */}
+            {/* Desktop Search Bar (Uses card background) */}
             <div className="flex flex-1 max-w-md xl:max-w-xl tv:max-w-3xl mx-auto cursor-pointer px-3" onClick={() => setIsSearchOverlayOpen(true)}>
               <div className="relative w-full">
                 <Search size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--primary)]" />
                 <input
                   type="text" readOnly placeholder="Search for cakes, desserts and more..."
-                  className="w-full bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--body)] font-medium pl-11 pr-11 py-2 rounded-full outline-none text-xs sm:text-sm shadow-sm hover:border-[var(--primary)] transition-all cursor-pointer"
+                  className="w-full bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--body)] font-medium pl-11 pr-11 py-2 rounded-full outline-none text-xs sm:text-sm hover:border-[var(--primary)] transition-all cursor-pointer shadow-sm"
                 />
                 <button className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--primary)] hover:scale-110 transition-transform p-1">
                   <SlidersHorizontal size={16} />
@@ -130,7 +128,7 @@ const Navbar = () => {
             {/* Desktop Navigation Panels */}
             <div className="flex items-center gap-1 shrink-0">
               {user ? (
-                <NotificationDropdown 
+                <NotificationDropdown
                   buttonClass="flex flex-col items-center gap-0.5 px-2 py-0.5 rounded-xl hover:bg-primary/8 group transition-colors min-w-[52px] relative cursor-pointer"
                   iconClass="text-heading group-hover:text-primary transition-colors"
                   showLabel={true}
@@ -154,7 +152,7 @@ const Navbar = () => {
                 {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-accent text-[#120807] text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full leading-none px-1">{cartCount}</span>}
                 <span className="text-[10px] font-bold text-muted group-hover:text-primary uppercase tracking-wide transition-colors">Cart</span>
               </Link>
-              <ThemeToggle 
+              <ThemeToggle
                 buttonClass="flex flex-col items-center gap-0.5 px-2 py-0.5 rounded-xl hover:bg-primary/8 group transition-colors min-w-[52px] relative cursor-pointer"
                 iconClass="text-heading group-hover:text-primary transition-colors"
                 showLabel={true}
@@ -167,7 +165,6 @@ const Navbar = () => {
 
             {/* Top Row: Menu + Logo + Actions */}
             <div className="flex items-center justify-between w-full px-1">
-              {/* Left Side: Menu + Logo */}
               <div className="flex items-center gap-2">
                 <button onClick={() => setIsMenuOpen(true)} className="p-1 rounded-lg transition-colors flex-shrink-0">
                   <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-heading">
@@ -181,7 +178,6 @@ const Navbar = () => {
                 </Link>
               </div>
 
-              {/* Right Side: Actions */}
               <div className="flex items-center gap-3">
                 {user ? (
                   <NotificationDropdown iconClass="text-heading" />
@@ -202,8 +198,10 @@ const Navbar = () => {
                 className="flex items-center gap-2 px-4 py-2 rounded-full border border-[var(--border)] bg-[var(--card)] text-[var(--heading)] transition-all text-[12px] font-black tracking-wider uppercase shadow-sm cursor-pointer"
               >
                 <MapPin size={15} className="text-[var(--primary)]" />
-                <span>{deliveryCity === 'pan india' ? 'PAN INDIA' : (deliveryCity?.toUpperCase() || 'COIMBATORE')}</span>
-                <ChevronDown size={14} className="text-[var(--primary)] transition-transform duration-200" style={{ transform: isLocationOpen ? 'rotate(180deg)' : 'none' }} />
+                <span className="flex items-center gap-1">
+                  {deliveryCity === 'pan india' ? 'PAN INDIA' : (deliveryCity?.toUpperCase() || 'SELECT CITY')}
+                  <ChevronDown size={12} className={`transition-transform duration-200 text-[var(--primary)] ${isLocationOpen ? 'rotate-180' : ''}`} />
+                </span>
               </button>
 
               <AnimatePresence>
@@ -225,9 +223,9 @@ const Navbar = () => {
               </AnimatePresence>
             </div>
 
-            {/* Themed Search Pill with High Contrast */}
+            {/* Mobile Search Pill (Uses card background) */}
             <div
-              className="relative w-full mt-0.5 cursor-pointer flex items-center pl-12 pr-12 py-3 rounded-full bg-[var(--card)] border border-[var(--border)] shadow-sm min-h-[48px] select-none hover:border-[var(--primary)] transition-all"
+              className="relative w-full mt-0.5 cursor-pointer flex items-center pl-12 pr-12 py-3 rounded-full bg-[var(--card)] border border-[var(--border)] min-h-[48px] select-none hover:border-[var(--primary)] transition-all shadow-sm"
               onClick={() => setIsSearchOverlayOpen(true)}
             >
               <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--primary)]" />
@@ -260,37 +258,33 @@ const Navbar = () => {
       <AnimatePresence>
         {isMenuOpen && (
           <>
-            <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }} 
-              onClick={() => setIsMenuOpen(false)} 
-              className="fixed inset-0 bg-black/60 backdrop-blur-md z-[210]" 
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMenuOpen(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-md z-[210]"
             />
-            
-            <motion.div 
-              initial={{ x: '-100%' }} 
-              animate={{ x: 0 }} 
-              exit={{ x: '-100%' }} 
-              transition={{ type: 'spring', damping: 26, stiffness: 220 }} 
+
+            <motion.div
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 26, stiffness: 220 }}
               className="fixed top-2 bottom-2 left-0 w-[85%] max-w-[340px] bg-card border border-l-0 border-border/30 rounded-r-[28px] z-[220] shadow-2xl flex flex-col overflow-hidden"
             >
-              {/* Drawer Header */}
               <div className="p-4 sm:p-5 border-b border-border/15 flex items-center justify-between bg-surface/50">
                 <Logo className="w-[120px] h-auto object-contain" />
-                <button 
-                  onClick={() => setIsMenuOpen(false)} 
-                  className="w-9 h-9 rounded-full bg-border/20 hover:bg-border/40 text-heading transition-all flex items-center justify-center active:scale-95" 
+                <button
+                  onClick={() => setIsMenuOpen(false)}
+                  className="w-9 h-9 rounded-full bg-border/20 hover:bg-border/40 text-heading transition-all flex items-center justify-center active:scale-95"
                   aria-label="Close menu"
                 >
                   <X size={18} />
                 </button>
               </div>
 
-              {/* Drawer Content */}
               <div className="flex-1 overflow-y-auto p-4 space-y-5 custom-scrollbar">
-                
-                {/* SECTION 1: MAIN MENU */}
                 <div>
                   <span className="text-[10px] font-black uppercase tracking-widest text-primary/80 mb-2 block px-2">
                     Explore Menu
@@ -303,7 +297,6 @@ const Navbar = () => {
                       <span className="font-extrabold text-sm text-heading group-hover:text-primary transition-colors">Shop All Cakes</span>
                     </Link>
 
-                    {/* Custom Cakes with Sub Tiers */}
                     <div className="rounded-xl border border-primary/20 bg-primary/5 p-2 space-y-1.5 mt-1">
                       <Link to="/custom-cake" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between px-2 py-1">
                         <div className="flex items-center gap-2.5">
@@ -312,7 +305,7 @@ const Navbar = () => {
                         </div>
                         <span className="text-[9px] font-black px-2 py-0.5 rounded bg-primary/20 text-primary border border-primary/30">✨ DEDICATED</span>
                       </Link>
-                      
+
                       <div className="grid grid-cols-3 gap-1 pt-1 border-t border-primary/15">
                         <Link to="/custom-cake?tier=1" onClick={() => setIsMenuOpen(false)} className="text-[10px] font-bold text-center py-1 rounded bg-card/60 hover:bg-primary/20 text-heading hover:text-primary transition-colors">1 Tier</Link>
                         <Link to="/custom-cake?tier=2" onClick={() => setIsMenuOpen(false)} className="text-[10px] font-bold text-center py-1 rounded bg-card/60 hover:bg-primary/20 text-heading hover:text-primary transition-colors">2 Tiers</Link>
@@ -346,7 +339,6 @@ const Navbar = () => {
                   </div>
                 </div>
 
-                {/* SECTION 2: MY ACCOUNT & BAG */}
                 <div className="pt-3 border-t border-border/15">
                   <span className="text-[10px] font-black uppercase tracking-widest text-primary/80 mb-2 block px-2">
                     My Account
@@ -382,11 +374,10 @@ const Navbar = () => {
                   </div>
                 </div>
 
-                {/* SECTION 3: AUTH ACTION */}
                 <div className="pt-3 border-t border-border/15">
                   {user ? (
-                    <button 
-                      onClick={async () => { setIsMenuOpen(false); await logout(); }} 
+                    <button
+                      onClick={async () => { setIsMenuOpen(false); await logout(); }}
                       className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-500 font-extrabold text-sm transition-colors"
                     >
                       <div className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center shrink-0">
@@ -395,9 +386,9 @@ const Navbar = () => {
                       <span>Logout Account</span>
                     </button>
                   ) : (
-                    <Link 
-                      to="/login" 
-                      onClick={() => setIsMenuOpen(false)} 
+                    <Link
+                      to="/login"
+                      onClick={() => setIsMenuOpen(false)}
                       className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-primary text-button-text font-extrabold text-sm transition-colors justify-center shadow-md"
                     >
                       <LogIn size={16} />
@@ -408,7 +399,6 @@ const Navbar = () => {
 
               </div>
 
-              {/* Drawer Footer */}
               <div className="p-3.5 border-t border-border/15 bg-surface/50 text-[11px] font-extrabold text-muted flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <MapPin size={13} className="text-primary" />

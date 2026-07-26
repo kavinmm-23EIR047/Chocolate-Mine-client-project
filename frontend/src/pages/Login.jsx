@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Lock, LogIn, ArrowRight, ChevronRight, Eye, EyeOff, Cake, Candy } from 'lucide-react';
-import Button from '../components/ui/Button';
+import { Mail, Lock, LogIn, ArrowLeft, Eye, EyeOff, Sparkles, Cake, Candy, ShieldCheck } from 'lucide-react';
 import { signInWithGoogle } from '../firebase';
+import toast from 'react-hot-toast';
 
-const GoogleIcon = ({ size = 20 }) => (
+const GoogleIcon = ({ size = 18 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
@@ -14,7 +14,6 @@ const GoogleIcon = ({ size = 20 }) => (
     <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
   </svg>
 );
-import toast from 'react-hot-toast';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -31,141 +30,287 @@ const Login = () => {
     }
   }, [searchParams]);
 
-const handleGoogleLogin = async () => {
-  try {
-    setLoading(true);
-
-    console.log("===== GOOGLE LOGIN STARTED =====");
-
-    const user = await signInWithGoogle();
-
-    console.log("Firebase User:", user);
-
-    toast.success(`Welcome back, ${user.displayName || "Explorer"}!`);
-
-    navigate("/");
-  } catch (err) {
-    console.log("============== FIREBASE ERROR ==============");
-    console.log("Error Code:", err.code);
-    console.log("Error Message:", err.message);
-    console.log("Custom Data:", err.customData);
-    console.log("Email:", err.customData?.email);
-    console.log("Credential:", err.credential);
-    console.log("Complete Error:", err);
-
-    toast.error(err.message || "Google Authentication Failed");
-  } finally {
-    setLoading(false);
-  }
-};
+  const handleGoogleLogin = async () => {
+    try {
+      setLoading(true);
+      const user = await signInWithGoogle();
+      toast.success(`Welcome back, ${user.displayName || "Explorer"}!`);
+      navigate("/");
+    } catch (err) {
+      toast.error(err.message || "Google Authentication Failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       setLoading(true);
       await login({ email, password });
-      toast.success('Welcome back to the Mine!');
+      toast.success('Welcome back to The Chocolate Mine!');
       navigate('/');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Invalid credentials');
+      toast.error(err.response?.data?.message || 'Invalid email or password');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-stretch bg-background overflow-hidden">
-      {/* Left Illustration (Desktop) */}
-      <div className="hidden lg:flex w-1/2 bg-footer relative items-center justify-center p-20 overflow-hidden border-r border-border/10">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1511381939415-e44015466834?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center opacity-30 mix-blend-overlay"></div>
-        <div className="absolute inset-0 bg-gradient-to-br from-footer via-footer/80 to-transparent"></div>
-        <div className="relative z-10 text-footer-text max-w-lg">
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-            <h1 className="text-7xl font-black mb-8 leading-[0.9] tracking-tighter">
-              Dive into the <span className="text-accent">Sweetest</span> Mine.
-            </h1>
-            <p className="text-xl font-medium opacity-80 mb-12 leading-relaxed italic">
-              Every bite tells a story of craftsmanship and passion. Log in to continue your journey.
-            </p>
-            <div className="grid grid-cols-2 gap-8 pt-12 border-t border-footer-text/10">
-              <div><p className="text-4xl font-black text-accent">50k+</p><p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-50">Happy Clients</p></div>
-              <div><p className="text-4xl font-black text-accent">100%</p><p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-50">Fresh Baked</p></div>
-            </div>
-          </motion.div>
-        </div>
-        <motion.div animate={{ y: [0, -20, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} className="absolute top-20 right-20 text-9xl opacity-20">
-          <Cake size={128} strokeWidth={1} className="text-current" />
-        </motion.div>
-        <motion.div animate={{ y: [0, 20, 0] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }} className="absolute bottom-20 left-20 text-9xl opacity-20">
-          <Candy size={128} strokeWidth={1} className="text-current" />
-        </motion.div>
-      </div>
+    <div className="min-h-screen w-full flex items-center justify-center bg-[var(--background)] p-4 sm:p-6 lg:p-10 relative">
+      {/* Background Glow */}
+      <div className="absolute top-10 left-10 w-96 h-96 bg-[var(--accent)]/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-10 right-10 w-96 h-96 bg-[var(--primary)]/10 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Right Form - Responsive with fixed button width */}
-      <div className="flex-1 flex flex-col justify-center px-5 sm:px-8 lg:px-24 py-10 sm:py-20 relative bg-card">
-        <div className="max-w-md w-full mx-auto">
-          <div className="mb-8 sm:mb-12 text-center sm:text-left">
-            <Link to="/" className="inline-flex items-center gap-2 text-[10px] sm:text-xs font-black text-muted hover:text-primary uppercase tracking-widest transition-colors mb-6 sm:mb-8 justify-center sm:justify-start">
-              <ArrowRight className="rotate-180" size={12} /> Back to Shop
+      {/* 2-Column Split Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: 'easeOut' }}
+        className="w-full max-w-5xl bg-[var(--card)] border-2 border-[var(--border)] rounded-3xl shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 relative z-10"
+      >
+        {/* Left Side: Real Website Content & Brand Panel */}
+        <div className="lg:col-span-5 bg-gradient-to-br from-[#2A160E] via-[#1C0E09] to-[#120806] p-8 sm:p-10 text-white flex flex-col justify-between relative overflow-hidden border-b lg:border-b-0 lg:border-r-2 border-[var(--border)]">
+          {/* Subtle overlay background */}
+          <div className="absolute inset-0 bg-[url('https://res.cloudinary.com/djkfvoxpx/image/upload/v1784865898/categories/uo822q9gaftknwyldjtg.png')] bg-cover bg-center opacity-15 mix-blend-luminosity pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#120806] via-[#1C0E09]/85 to-[#2A160E]/80 pointer-events-none" />
+
+          {/* Floating subtle background icons */}
+          <motion.div
+            animate={{ y: [0, -10, 0] }}
+            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+            className="absolute top-10 right-6 text-amber-400/20 pointer-events-none"
+          >
+            <Cake size={90} strokeWidth={1} />
+          </motion.div>
+          <motion.div
+            animate={{ y: [0, 10, 0] }}
+            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+            className="absolute bottom-16 left-6 text-amber-500/20 pointer-events-none"
+          >
+            <Candy size={76} strokeWidth={1} />
+          </motion.div>
+
+          {/* Top Back Link */}
+          <div className="relative z-10">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-[#DDB68A] hover:text-[#FAF0E6] transition-colors"
+            >
+              <ArrowLeft size={16} /> Back to Shop
             </Link>
-            <h2 className="text-3xl sm:text-5xl font-black text-heading tracking-tighter mb-2 sm:mb-4 uppercase">Welcome Back</h2>
-            <p className="text-[10px] sm:text-xs font-black text-muted uppercase tracking-widest opacity-60">Log in to manage your orders and profile</p>
           </div>
 
-          <div className="space-y-5 sm:space-y-6">
-            <button onClick={handleGoogleLogin} className="w-full flex items-center justify-center gap-3 sm:gap-4 py-3 sm:py-4 px-4 sm:px-6 border-2 border-border rounded-xl sm:rounded-2xl font-black text-heading hover:bg-surface/5 transition-all group">
-              <GoogleIcon size={16} />
-              <span className="tracking-widest text-[10px] sm:text-xs uppercase">CONTINUE WITH GOOGLE</span>
-            </button>
-
-            <div className="relative py-2 sm:py-4">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border/30"></div></div>
-              <div className="relative flex justify-center text-[10px] font-black text-muted uppercase tracking-[0.3em]"><span className="bg-card px-4">Or use Email</span></div>
+          {/* Main Website Content */}
+          <div className="relative z-10 my-6 space-y-5">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#4A2C18]/60 border border-[#8C5124]/60 text-[#F5E6D3] text-xs font-bold uppercase tracking-wider">
+              <Sparkles size={14} className="animate-pulse text-[#DDB68A]" />
+              <span>The Chocolate Mine</span>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight leading-tight text-white uppercase">
+              Handcrafted <br />
+              <span className="bg-gradient-to-r from-[#F5E6D3] via-[#DDB68A] to-[#C89D5A] bg-clip-text text-transparent">
+                Special Cakes & Bento Delights
+              </span>
+            </h1>
+
+            <p className="text-xs sm:text-sm font-medium text-white/80 leading-relaxed">
+              Order fresh custom birthday cakes, bento treats (250g), and signature cocoa creations online.
+            </p>
+
+            {/* Real Store Product Categories */}
+            <div className="pt-2 space-y-2.5">
+              <p className="text-[10px] font-black uppercase tracking-widest text-[#DDB68A]">
+                Explore Popular Categories:
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  to="/shop?category=special cakes"
+                  className="px-3 py-1 rounded-xl bg-white/10 hover:bg-[#8C5124]/40 border border-white/15 text-xs font-bold text-[#F5E6D3] transition-all"
+                >
+                  ⭐ Special Cakes
+                </Link>
+                <Link
+                  to="/shop?category=birthday cakes"
+                  className="px-3 py-1 rounded-xl bg-white/10 hover:bg-[#8C5124]/40 border border-white/15 text-xs font-bold text-[#F5E6D3] transition-all"
+                >
+                  🎂 Birthday Cakes
+                </Link>
+                <Link
+                  to="/shop?category=bento cakes"
+                  className="px-3 py-1 rounded-xl bg-white/10 hover:bg-[#8C5124]/40 border border-white/15 text-xs font-bold text-[#F5E6D3] transition-all"
+                >
+                  🍰 Bento Cakes (250g)
+                </Link>
+              </div>
+            </div>
+
+            {/* Bakery Service Features */}
+            <div className="pt-3 border-t border-white/10 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-bold text-white/90">
+                <ShieldCheck size={15} className="text-[#DDB68A] shrink-0" />
+                <span>Custom Weight Pricing (250g, 500g, 1kg+)</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs font-bold text-white/90">
+                <ShieldCheck size={15} className="text-[#DDB68A] shrink-0" />
+                <span>Fresh Local Delivery & Live Order Tracking</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Security & Brand Footer */}
+          <div className="relative z-10 pt-4 border-t border-white/10 flex items-center justify-between text-[11px] text-white/60 font-semibold">
+            <span className="flex items-center gap-1.5">
+              <ShieldCheck size={15} className="text-emerald-400" /> 256-bit Secure
+            </span>
+            <span className="font-extrabold text-[#DDB68A]">The Chocolate Mine</span>
+          </div>
+        </div>
+
+        {/* Right Side: Form Panel */}
+        <div className="lg:col-span-7 p-6 sm:p-10 lg:p-12 bg-[var(--card)] flex flex-col justify-center">
+          <div className="max-w-md w-full mx-auto space-y-7">
+            
+            {/* Form Header */}
+            <div className="flex items-center justify-between gap-4 pb-4 border-b border-[var(--border)]/40">
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-black text-[var(--heading)] tracking-tight uppercase">
+                  Sign In
+                </h2>
+                <p className="text-xs font-bold text-[var(--muted)] mt-1">
+                  Log in to manage your orders & profile
+                </p>
+              </div>
+
+              {/* Horizontal Pill Switcher */}
+              <div className="flex items-center bg-[var(--background)] p-1 rounded-xl border border-[var(--border)] shrink-0">
+                <span className="px-3.5 py-1.5 rounded-lg text-xs font-black bg-[var(--primary)] text-[var(--button-text)] shadow-sm whitespace-nowrap">
+                  Sign In
+                </span>
+                <Link
+                  to="/register"
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-[var(--muted)] hover:text-[var(--heading)] transition-colors whitespace-nowrap"
+                >
+                  Register
+                </Link>
+              </div>
+            </div>
+
+            {/* Google Sign-in Button */}
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              disabled={loading}
+              className="w-full py-3.5 px-4 rounded-xl bg-[#DED0BD] dark:bg-[#1A0E0A] border-2 border-[var(--border)] hover:border-[var(--primary)] text-[#27190e] dark:text-[#F5E6D3] font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-3 shadow-sm hover:shadow-md transition-all active:scale-[0.99] cursor-pointer"
+            >
+              <GoogleIcon size={18} />
+              <span>Continue with Google</span>
+            </button>
+
+            {/* Divider */}
+            <div className="relative flex items-center justify-center my-2">
+              <div className="w-full border-t border-[var(--border)]/40" />
+              <span className="absolute bg-[var(--card)] px-4 text-[10px] font-black uppercase tracking-widest text-[var(--muted)]">
+                OR WITH EMAIL
+              </span>
+            </div>
+
+            {/* Login Form */}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              
+              {/* Email Input */}
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-muted uppercase tracking-widest ml-2">Email Address</label>
-                <div className="relative group">
-                  <Mail className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-primary transition-colors" size={16} />
-                  <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-surface/5 border border-border text-heading pl-12 sm:pl-16 pr-4 sm:pr-6 py-3 sm:py-5 rounded-xl sm:rounded-2xl outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-black text-sm placeholder:text-muted/30" placeholder="name@example.com" />
+                <label className="text-[11px] font-black uppercase tracking-wider text-[var(--heading)] block ml-1">
+                  Email Address
+                </label>
+                <div className="relative flex items-center">
+                  <Mail className="absolute left-3.5 text-[#4E321E] dark:text-amber-400/80 pointer-events-none" size={16} />
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@example.com"
+                    className="w-full bg-[#DED0BD] focus:bg-[#E6D9C8] dark:bg-[#1A0E0A] border-2 border-[#A88D6F]/70 dark:border-amber-900/40 text-[#27190e] dark:text-[#F5E6D3] pl-10 pr-4 py-3 rounded-xl outline-none font-bold text-sm focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/20 transition-all placeholder:text-[#665040]/70 dark:placeholder:text-white/40 shadow-inner"
+                  />
                 </div>
               </div>
 
+              {/* Password Input */}
               <div className="space-y-1.5">
-                <div className="flex justify-between px-2">
-                  <label className="text-[10px] font-black text-muted uppercase tracking-widest">Password</label>
-                  <Link to="/forgot-password" className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">Forgot?</Link>
+                <div className="flex items-center justify-between px-1">
+                  <label className="text-[11px] font-black uppercase tracking-wider text-[var(--heading)]">
+                    Password
+                  </label>
+                  <Link
+                    to="/forgot-password"
+                    className="text-[11px] font-black text-[var(--primary)] hover:underline uppercase tracking-wider"
+                  >
+                    Forgot Password?
+                  </Link>
                 </div>
-                <div className="relative group">
-                  <Lock className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-primary transition-colors" size={16} />
-                  <input type={showPassword ? 'text' : 'password'} required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-surface/5 border border-border text-heading pl-12 sm:pl-16 pr-12 sm:pr-14 py-3 sm:py-5 rounded-xl sm:rounded-2xl outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-black text-sm placeholder:text-muted/30" placeholder="••••••••" />
-                  <button type="button" onClick={() => setShowPassword((prev) => !prev)} className="touch-compact absolute right-1 sm:right-2 top-0 bottom-0 my-auto z-10 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-muted hover:text-primary hover:bg-white/5 active:bg-white/10 transition-colors focus:outline-none cursor-pointer" aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                <div className="relative flex items-center">
+                  <Lock className="absolute left-3.5 text-[#4E321E] dark:text-amber-400/80 pointer-events-none" size={16} />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full bg-[#DED0BD] focus:bg-[#E6D9C8] dark:bg-[#1A0E0A] border-2 border-[#A88D6F]/70 dark:border-amber-900/40 text-[#27190e] dark:text-[#F5E6D3] pl-10 pr-10 py-3 rounded-xl outline-none font-bold text-sm focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/20 transition-all placeholder:text-[#665040]/70 dark:placeholder:text-white/40 shadow-inner"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 text-[#4E321E] dark:text-amber-400 hover:text-[var(--heading)] transition-colors p-1"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
               </div>
 
-              <div className="flex justify-center pt-2 sm:pt-4">
-                <Button type="submit" loading={loading} className="w-full sm:w-64 py-3 sm:py-4 rounded-xl sm:rounded-2xl shadow-premium bg-primary text-button-text hover:brightness-110 font-black tracking-widest uppercase text-sm sm:text-base" icon={LogIn}>
-                  SIGN IN
-                </Button>
+              {/* Submit Button */}
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3.5 px-6 rounded-xl bg-[var(--primary)] text-[var(--button-text)] hover:brightness-110 font-black text-xs uppercase tracking-widest shadow-md hover:shadow-lg active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  {loading ? (
+                    <span>Signing In...</span>
+                  ) : (
+                    <>
+                      <LogIn size={16} />
+                      <span>Sign In</span>
+                    </>
+                  )}
+                </button>
               </div>
             </form>
 
-            <div className="text-center pt-4 sm:pt-8">
-              <p className="text-muted font-black text-[10px] uppercase tracking-widest">
+            {/* Footer Redirect */}
+            <div className="text-center pt-3 border-t border-[var(--border)]/30">
+              <p className="text-xs font-bold text-[var(--muted)]">
                 New explorer?{' '}
-                <Link to="/register" className="text-primary font-black hover:underline inline-flex items-center gap-1">
-                  Create an account <ChevronRight size={12} />
+                <Link
+                  to="/register"
+                  className="font-black text-[var(--primary)] hover:underline uppercase tracking-wider ml-1"
+                >
+                  Create an account →
                 </Link>
               </p>
             </div>
+
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };
 
 export default Login;
+
+

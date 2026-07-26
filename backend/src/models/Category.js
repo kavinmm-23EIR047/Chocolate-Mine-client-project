@@ -39,7 +39,7 @@ const categorySchema = new mongoose.Schema({
 // ==========================================
 const excelService = require('../services/excelService');
 
-categorySchema.post('save', async function(doc) {
+categorySchema.post('save', async function (doc) {
   try {
     if (doc) await excelService.appendToExcel(this.constructor.modelName || this.modelName, doc);
   } catch (err) {
@@ -47,7 +47,7 @@ categorySchema.post('save', async function(doc) {
   }
 });
 
-categorySchema.post(['findOneAndUpdate', 'updateOne', 'findByIdAndUpdate'], async function(doc) {
+categorySchema.post(['findOneAndUpdate', 'updateOne', 'findByIdAndUpdate'], async function (doc) {
   try {
     const modelName = this.model.modelName;
     const query = this.getQuery();
@@ -62,7 +62,7 @@ categorySchema.post(['findOneAndUpdate', 'updateOne', 'findByIdAndUpdate'], asyn
   }
 });
 
-categorySchema.post(['findOneAndDelete', 'deleteOne', 'findByIdAndDelete'], async function(doc) {
+categorySchema.post(['findOneAndDelete', 'deleteOne', 'findByIdAndDelete'], async function (doc) {
   try {
     const modelName = this.model.modelName;
     if (doc && doc._id) {
@@ -70,7 +70,7 @@ categorySchema.post(['findOneAndDelete', 'deleteOne', 'findByIdAndDelete'], asyn
     } else {
       const query = this.getQuery();
       if (query && query._id) {
-         await excelService.deleteFromExcel(modelName, query._id);
+        await excelService.deleteFromExcel(modelName, query._id);
       }
     }
   } catch (err) {

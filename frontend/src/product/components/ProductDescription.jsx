@@ -39,8 +39,8 @@ const ProductDescription = ({ product, isMobile = false }) => {
           <div className="grid grid-cols-2 gap-2.5">
             {allHighlights.map(item => (
               <div key={item} className="flex items-center gap-2.5 p-2.5 rounded-xl bg-card-soft/60 border border-border/30">
-                <div className="w-5.5 h-5.5 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shrink-0">
-                  <CheckCircle2 size={12} className="text-emerald-500" />
+                <div className="w-5.5 h-5.5 rounded-full bg-[#008539] flex items-center justify-center border border-[#007030] shrink-0 shadow-sm">
+                  <CheckCircle2 size={13} className="text-white" />
                 </div>
                 <span className="text-[11px] font-bold uppercase tracking-wider text-heading truncate">{item}</span>
               </div>
@@ -73,8 +73,8 @@ const ProductDescription = ({ product, isMobile = false }) => {
         <div className="grid grid-cols-2 gap-3.5">
           {allHighlights.map(item => (
             <div key={item} className="flex items-center gap-3 p-3 rounded-2xl bg-card-soft/50 border border-border/30 hover:border-primary/20 transition-all">
-              <div className="w-7 h-7 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shrink-0">
-                <CheckCircle2 size={14} className="text-emerald-500" />
+              <div className="w-7 h-7 rounded-xl bg-[#008539] flex items-center justify-center border border-[#007030] shrink-0 shadow-sm">
+                <CheckCircle2 size={15} className="text-white" />
               </div>
               <span className="text-xs font-bold uppercase tracking-wider text-heading">{item}</span>
             </div>

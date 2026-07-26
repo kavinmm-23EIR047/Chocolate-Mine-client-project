@@ -3,20 +3,21 @@ import React from 'react';
 const PureVegLabel = ({ size = 12, className = '', hideText = false }) => {
   return (
     <span
-      className={`inline-flex items-center ${hideText ? '' : 'gap-1.5 px-2 py-0.5'} bg-white text-[#008539] rounded ${hideText ? '' : 'border border-[#008539]/20 shadow-sm'} font-sans shrink-0 select-none ${className}`}
+      className={`inline-flex items-center ${hideText ? 'p-1' : 'gap-1.5 px-2.5 py-1'
+        } bg-[#008539] text-white rounded-full font-sans shrink-0 select-none shadow-sm ${className}`}
     >
-      {/* Official FSSAI Veg Symbol: Green Square with Green Dot on White Background */}
+      {/* Veg Symbol: White Outer Square with White Inner Dot */}
       <span
         style={{ width: `${size}px`, height: `${size}px` }}
-        className="flex items-center justify-center border-2 border-[#008539] bg-white rounded-[2px] shrink-0 p-[2px]"
+        className="flex items-center justify-center border-2 border-white rounded-[2px] shrink-0 p-[2px]"
       >
-        {/* Solid Green Inner Dot */}
-        <span className="w-full h-full bg-[#008539] rounded-full" />
+        {/* Solid White Inner Dot */}
+        <span className="w-full h-full bg-white rounded-full" />
       </span>
 
-      {/* Bold Block Text */}
+      {/* Bold White Text */}
       {!hideText && (
-        <span className="text-[9px] font-black uppercase tracking-wider leading-none">
+        <span className="text-[10px] font-black uppercase tracking-wider leading-none text-white">
           Pure Veg
         </span>
       )}

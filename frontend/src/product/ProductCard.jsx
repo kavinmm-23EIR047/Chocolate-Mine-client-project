@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Heart, Star, ShoppingBag, Plus, Minus, Ticket, MapPin,
-  Flame, Sparkles, Percent, Zap, AlertCircle, Scale, Trash2, CheckCircle2
+  Flame, Sparkles, Percent, Zap, AlertCircle, Scale, Trash2, CheckCircle2, Settings2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -148,8 +148,9 @@ const LotteryCoupon = ({ coupon }) => {
 };
 
 // ─── COMPACT CART ACTION BUTTON (WITH GRADIENT BORDER ANIMATION) ─────────────
-const SwiggyCartAction = ({ cartQuantity, handleQuantityChange, handleInitialAdd, isOutOfStock, addingToCart, isHome }) => {
-  const label = addingToCart ? '...' : 'ADD';
+const SwiggyCartAction = ({ cartQuantity, handleQuantityChange, handleInitialAdd, isOutOfStock, addingToCart, isHome, isCustomCake }) => {
+  const label = isCustomCake ? 'CUSTOMIZE' : (addingToCart ? '...' : 'ADD');
+  const ActionIcon = isCustomCake ? Settings2 : Plus;
 
   if (isOutOfStock) {
     return (
@@ -163,7 +164,7 @@ const SwiggyCartAction = ({ cartQuantity, handleQuantityChange, handleInitialAdd
     );
   }
 
-  if (cartQuantity > 0) {
+  if (cartQuantity > 0 && !isCustomCake) {
     return (
       <div className="absolute -bottom-3.5 md:-bottom-4 left-1/2 -translate-x-1/2 z-20 rounded-md p-[1px] bg-gradient-to-r from-[var(--accent)] to-[var(--secondary)] shadow-lg transition-all">
         <div
@@ -202,10 +203,10 @@ const SwiggyCartAction = ({ cartQuantity, handleQuantityChange, handleInitialAdd
       />
       <button
         onClick={handleInitialAdd}
-        className={`touch-compact relative z-10 flex items-center justify-center rounded-[5px] ${isHome ? 'h-7 w-7' : 'h-6 w-6'} md:h-9 md:w-[104px] text-[12px] md:text-[14px] font-extrabold tracking-wider cursor-pointer`}
+        className={`touch-compact relative z-10 flex items-center justify-center rounded-[5px] ${isHome ? 'h-7 w-7' : 'h-6 w-6'} md:h-9 ${isCustomCake ? 'md:w-[116px]' : 'md:w-[104px]'} text-[12px] md:text-[13px] font-extrabold tracking-wider cursor-pointer`}
         style={{ background: 'var(--button-bg)', color: 'var(--button-text)' }}
       >
-        <Plus size={isHome ? 14 : 12} strokeWidth={3.5} className="md:w-[15px] md:h-[15px]" />
+        <ActionIcon size={isHome ? 14 : 12} strokeWidth={3} className="md:w-[14px] md:h-[14px]" />
         <span className="hidden md:inline ml-1">{label}</span>
       </button>
     </div>
@@ -231,7 +232,7 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg' })
 
   const defaultOptions = isCake ? { flavor: defaultFlavorName, weight: isBento ? '250g' : '500g' } : null;
 
-  const hasVariants = product?.hasVariants || (product?.variants && product.variants.length > 0);
+  const hasVariants = Boolean(Array.isArray(product?.variants) && product.variants.length > 0);
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
   const activeVariant = hasVariants && product.variants ? product.variants[selectedVariantIndex] : null;
 
@@ -400,13 +401,23 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg' })
     return formattedCats;
   };
 
-  if (!product) return null;
+  const isCustomCake = product?.isCustom || product?.isTheme || (Array.isArray(product?.category) ? product.category.some(c => typeof c === 'string' && c.toLowerCase().includes('custom')) : String(product?.category || '').toLowerCase().includes('custom'));
+
+  const handleCardClick = (e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    if (isCustomCake) {
+      const themeId = product?._id || product?.id;
+      navigate(`/custom-cake?theme=${themeId}`);
+    } else {
+      navigate(`/product/${product?.slug || product?._id}`);
+    }
+  };
 
   // ─── Horizontal Layout ─────────────────────
   if (layout === 'horizontal') {
     return (
       <motion.div
-        layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={() => navigate(`/product/${product.slug}`)}
+        layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={handleCardClick}
         className="menu-light-card flex flex-row p-3 sm:p-4 pb-8 gap-3 sm:gap-4 items-stretch cursor-pointer w-full border-b transition-colors min-w-0"
         style={{ background: 'var(--card)', borderColor: 'var(--border)' }}
       >
@@ -446,7 +457,7 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg' })
           </div>
 
           <div className="flex flex-col gap-1.5 mt-2 pr-2">
-            {hasVariants && product.variants.length > 1 && (
+            {hasVariants && (product?.variants?.length || 0) > 1 && (
               <div className="flex items-center gap-1.5 flex-wrap" onClick={(e) => e.stopPropagation()}>
                 <Scale size={13} strokeWidth={2.5} style={{ color: 'var(--muted)' }} />
                 {product.variants.map((v, idx) => (
@@ -509,10 +520,11 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg' })
           <SwiggyCartAction
             cartQuantity={cartQuantity}
             handleQuantityChange={handleQuantityChange}
-            handleInitialAdd={handleInitialAdd}
+            handleInitialAdd={isCustomCake ? handleCardClick : handleInitialAdd}
             isOutOfStock={isOutOfStock}
             addingToCart={addingToCart}
             isHome={isHome}
+            isCustomCake={isCustomCake}
           />
         </div>
       </motion.div>
@@ -522,7 +534,7 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg' })
   // ─── Vertical Layout ───────────────────────────────
   return (
     <motion.div
-      layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={() => navigate(`/product/${product.slug}`)}
+      layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={handleCardClick}
       className={`menu-light-card group w-full h-full min-w-0 flex flex-col justify-between cursor-pointer transition-all duration-200 p-3 sm:p-4 pb-8 ${cardStyleMap[cardStyle]}`}
       style={{ background: 'var(--card)', border: '1px solid var(--border)' }}
     >
@@ -560,10 +572,11 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg' })
           <SwiggyCartAction
             cartQuantity={cartQuantity}
             handleQuantityChange={handleQuantityChange}
-            handleInitialAdd={handleInitialAdd}
+            handleInitialAdd={isCustomCake ? handleCardClick : handleInitialAdd}
             isOutOfStock={isOutOfStock}
             addingToCart={addingToCart}
             isHome={isHome}
+            isCustomCake={isCustomCake}
           />
         </div>
 
@@ -609,7 +622,7 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg' })
           )}
         </div>
 
-        {hasVariants && product.variants.length > 1 && (
+        {hasVariants && (product?.variants?.length || 0) > 1 && (
           <div className="flex items-center gap-1.5 flex-wrap mt-2" onClick={(e) => e.stopPropagation()}>
             <Scale size={13} strokeWidth={2.5} style={{ color: 'var(--muted)' }} />
             {product.variants.map((v, idx) => (

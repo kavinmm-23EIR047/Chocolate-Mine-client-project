@@ -72,9 +72,12 @@ export default {
       },
 
       fontFamily: {
-        sans: ["Plus Jakarta Sans", "Inter", "sans-serif"],
-        heading: ["Syne", "Outfit", "Plus Jakarta Sans", "sans-serif"],
-        display: ["Syne", "Outfit", "sans-serif"],
+        sans: ["Geist Pixel", "Geist", "sans-serif"],
+        heading: ["Skranji", "system-ui", "sans-serif"],
+        display: ["Skranji", "system-ui", "sans-serif"],
+        skranji: ["Skranji", "system-ui", "sans-serif"],
+        geist: ["Geist Pixel", "Geist", "sans-serif"],
+        "geist-pixel": ["Geist Pixel", "Geist", "sans-serif"],
       },
 
       borderRadius: {

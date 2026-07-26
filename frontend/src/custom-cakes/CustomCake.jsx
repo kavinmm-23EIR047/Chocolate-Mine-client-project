@@ -249,6 +249,8 @@ export default function CustomCake() {
           name: t.name,
           shortName: t.name,
           description: t.description,
+          category: t.category,
+          location: t.location,
           enabled: t.isActive,
           badge: t.isActive ? 'Available' : 'Coming Soon',
           rating: 5.0, reviews: 0,
@@ -304,6 +306,11 @@ export default function CustomCake() {
   }, [themeIdx, selectedTier, theme]);
 
   useEffect(() => {
+    const themeParam = searchParams.get('theme');
+    if (themeParam) {
+      themeIdToKeep.current = themeParam;
+    }
+    
     if (themeIdToKeep.current && filteredThemes.length > 0) {
       const newIdx = filteredThemes.findIndex(t => t.id === themeIdToKeep.current);
       if (newIdx !== -1) {
@@ -311,10 +318,10 @@ export default function CustomCake() {
       } else {
         setThemeIdx(null);
       }
-    } else if (themeIdToKeep.current === null) {
+    } else if (themeIdToKeep.current === null || !themeParam) {
       setThemeIdx(null);
     }
-  }, [selectedTier, filteredThemes]);
+  }, [selectedTier, filteredThemes, searchParams]);
 
   const updateThemeUrl = useCallback((t) => {
     if (!t) return;

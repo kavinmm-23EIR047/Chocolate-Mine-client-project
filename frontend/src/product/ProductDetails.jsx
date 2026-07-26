@@ -191,7 +191,7 @@ const ProductDetails = () => {
       const hasCustom = Boolean(product.hasCustomWeights || (Array.isArray(product.customWeightPrices) && product.customWeightPrices.length > 0));
       const hasStandard = product.hasWeights !== undefined ? Boolean(product.hasWeights) : (!hasCustom && isCake);
       const isBento = (Array.isArray(product?.category) ? product.category.some(c => typeof c === 'string' && c.toLowerCase().includes('bento')) : (product?.category || '').toLowerCase().includes('bento')) || product?.cakeType?.toLowerCase().includes('bento');
-      
+
       let defaultWeight = null;
       if (hasCustom && product.customWeightPrices?.[0]?.weight) {
         defaultWeight = product.customWeightPrices[0].weight;
@@ -221,7 +221,7 @@ const ProductDetails = () => {
         if (product.flavors && product.flavors.length > 0) {
           const initialFlavor = product.flavors[0];
           setSelectedFlavor(initialFlavor);
-          
+
           const flavorPrice = getFlavorPrice(initialFlavor);
           setSelectedPrice(initialWeightPrice + flavorPrice);
 
@@ -439,7 +439,7 @@ const ProductDetails = () => {
         if (isCakeWithVariants) {
           if (showCustomFlavorInput && customFlavor) options.flavor = customFlavor;
           else if (selectedFlavor) options.flavor = selectedFlavor.name;
-          
+
           if (showCustomWeightInput && customWeight) options.weight = customWeight;
           else if (selectedWeight) options.weight = selectedWeight;
         }
@@ -506,12 +506,12 @@ const ProductDetails = () => {
         else { toast.error('Please select weight'); return; }
       }
 
-      dispatch(addToCart({ 
-        product, 
-        qty: quantity, 
-        options, 
-        variantPrice: isCakeWithVariants ? currentPrice : null, 
-        addons: selectedAddons 
+      dispatch(addToCart({
+        product,
+        qty: quantity,
+        options,
+        variantPrice: isCakeWithVariants ? currentPrice : null,
+        addons: selectedAddons
       }));
     }
 
@@ -598,7 +598,7 @@ const ProductDetails = () => {
       <div className="max-w-[1400px] w-full mx-auto px-4 lg:px-8 xl:px-12 lg:py-10">
         {/* ── TOP SECTION: Gallery + Pricing ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start mb-6">
-          
+
           {/* ── LEFT — IMAGE SECTION ── */}
           {/* Note: Ensure inside your internal ProductGallery component, the root layout handles aspect-[9/16] or aspect-[3/4] using object-contain with background #e3cbb3 */}
           <div className="w-full space-y-4">
@@ -628,7 +628,7 @@ const ProductDetails = () => {
                 <span className="text-[10px] sm:text-xs font-black text-primary uppercase bg-primary/5 px-3.5 py-1.5 rounded-full tracking-widest border border-primary/10 flex items-center gap-1.5">
                   {displayCategoryObj.main} {displayCategoryObj.sub ? `• ${displayCategoryObj.sub}` : ''}
                 </span>
-                <button 
+                <button
                   onClick={handleShare}
                   title="Share Product"
                   className="p-2.5 sm:p-3 text-muted hover:text-primary active:scale-95 transition-all bg-card-soft rounded-full border border-border/40 shadow-soft cursor-pointer"
@@ -707,15 +707,15 @@ const ProductDetails = () => {
                           <div className="shrink-0">
                             {isSelected ? (
                               <div className="flex items-center gap-0 bg-emerald-600 rounded-xl overflow-hidden shadow-md select-none" onClick={(e) => e.stopPropagation()}>
-                                <button 
-                                  onClick={() => handleAddonDecrement(addon)} 
+                                <button
+                                  onClick={() => handleAddonDecrement(addon)}
                                   className="px-3 py-2 text-white font-black text-base hover:bg-emerald-700 transition-colors"
                                 >
                                   −
                                 </button>
                                 <span className="px-3 py-2 text-white font-black text-sm min-w-[36px] text-center bg-emerald-700">{qty}</span>
-                                <button 
-                                  onClick={() => handleAddonIncrement(addon)} 
+                                <button
+                                  onClick={() => handleAddonIncrement(addon)}
                                   className="px-3 py-2 text-white font-black text-base hover:bg-emerald-700 transition-colors"
                                 >
                                   +
