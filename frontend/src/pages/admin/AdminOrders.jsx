@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
 import useNotificationSound from '../../hooks/useNotificationSound';
 import { isWithinServiceHours, getServiceHoursMessage } from '../../utils/serviceHours';
+import { getSocket, joinAdminRoom } from '../../sockets/socketManager';
 
 const getDisplayFlavor = (item) => {
   if (item.isCustomCake) return item.selectedFlavor || 'Custom';
@@ -218,58 +219,6 @@ const AdminOrders = () => {
   const [notificationsMuted, setNotificationsMuted] = useState(false);
   const [serviceHoursInfo, setServiceHoursInfo] = useState(null);
 
-  // Initialize socket connection for real-time updates
-  useEffect(() => {
-    const userStr = sessionStorage.getItem('user');
-    if (!userStr) return;
-
-    // Check service hours on mount
-    const hoursInfo = isWithinServiceHours();
-    setServiceHoursInfo(hoursInfo);
-
-    socketRef.current = io(import.meta.env.VITE_API_URL || (import.meta.env.PROD ? window.location.origin : 'http://localhost:5000'), {
-      transports: ['websocket'],
-      withCredentials: true
-    });
-
-    socketRef.current.on('connect', () => {
-      console.log('Admin socket connected');
-      socketRef.current.emit('join_admin_room');
-    });
-
-    // Listen for new orders coming in (payment verified)
-    socketRef.current.on('new_order_confirmed', (data) => {
-      console.log('🎵 New order received:', data);
-      
-      // Play notification sound if within service hours and not muted
-      if (isWithinServiceHours().isWithinHours && !notificationsMuted) {
-        playSound('order');
-        toast.success(`New Order #${data.orderNumber} received!`, {
-          duration: 5,
-          position: 'top-right'
-        });
-      }
-      
-      // Refresh orders list
-      fetchOrders();
-    });
-
-    socketRef.current.on('order_status_updated', (data) => {
-      console.log('Order status update received:', data);
-      fetchOrders();
-    });
-
-    socketRef.current.on('dashboard_needs_refresh', () => {
-      fetchOrders();
-    });
-
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-      }
-    };
-  }, [notificationsMuted]);
-
   const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
@@ -289,6 +238,70 @@ const AdminOrders = () => {
   useEffect(() => { 
     fetchOrders(); 
   }, [fetchOrders]);
+
+  // Initialize socket connection for real-time updates
+  useEffect(() => {
+    // Check service hours on mount
+    const hoursInfo = isWithinServiceHours();
+    setServiceHoursInfo(hoursInfo);
+
+    joinAdminRoom();
+
+    const rawUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL || (import.meta.env.PROD ? window.location.origin : 'http://localhost:5000');
+    const socketUrl = rawUrl.replace(/\/api\/v\d+.*$/, '');
+
+    socketRef.current = io(socketUrl, {
+      transports: ['polling', 'websocket'],
+      withCredentials: true
+    });
+
+    socketRef.current.on('connect', () => {
+      console.log('📡 Admin socket connected:', socketRef.current.id);
+      socketRef.current.emit('join_admin_room');
+      socketRef.current.emit('join_admin');
+    });
+
+    const handleNewOrder = (data) => {
+      console.log('🎵 New order received in AdminOrders:', data);
+      
+      if (!notificationsMuted) {
+        playSound('order', true);
+        toast.success(`New Order #${data?.orderNumber || data?.orderId || ''} received!`, {
+          duration: 6000,
+          position: 'top-right'
+        });
+      }
+      
+      fetchOrders();
+    };
+
+    // Attach listeners to local socket connection
+    socketRef.current.on('new_order_confirmed', handleNewOrder);
+    socketRef.current.on('new_order_alert', handleNewOrder);
+    socketRef.current.on('order_status_updated', () => fetchOrders());
+    socketRef.current.on('dashboard_needs_refresh', () => fetchOrders());
+
+    // Also attach listeners to shared global socket manager instance
+    const globalSocket = getSocket();
+    if (globalSocket) {
+      globalSocket.on('new_order_confirmed', handleNewOrder);
+      globalSocket.on('new_order_alert', handleNewOrder);
+      globalSocket.on('order_status_updated', () => fetchOrders());
+      globalSocket.on('dashboard_needs_refresh', () => fetchOrders());
+    }
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+      if (globalSocket) {
+        globalSocket.off('new_order_confirmed', handleNewOrder);
+        globalSocket.off('new_order_alert', handleNewOrder);
+        globalSocket.off('order_status_updated');
+        globalSocket.off('dashboard_needs_refresh');
+      }
+    };
+  }, [notificationsMuted, fetchOrders, playSound]);
 
   const handleViewOrderDetails = async (orderId) => {
     try {

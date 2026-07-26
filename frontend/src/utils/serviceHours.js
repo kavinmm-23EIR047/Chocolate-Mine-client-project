@@ -14,7 +14,7 @@ export const SERVICE_HOURS = {
 
 // You can also define per-day hours if needed
 export const SERVICE_HOURS_DETAILED = {
-  0: { enabled: false }, // Sunday: Closed
+  0: { enabled: true, startTime: 9, endTime: 23 }, // Sunday
   1: { enabled: true, startTime: 9, endTime: 23 }, // Monday
   2: { enabled: true, startTime: 9, endTime: 23 }, // Tuesday
   3: { enabled: true, startTime: 9, endTime: 23 }, // Wednesday

@@ -35,12 +35,14 @@ module.exports = (io) => {
 
     // Join staff-specific room
     socket.on('join_staff_room', (staffId) => {
+      socket.join('staff_room');
       if (staffId) {
         socket.join(`staff_${staffId}`);
         console.log(`👨‍🍳 Staff ${staffId} joined staff room`);
       }
     });
     socket.on('join_staff', (staffId) => {
+      socket.join('staff_room');
       if (staffId) {
         socket.join(`staff_${staffId}`);
         console.log(`👨‍🍳 Staff ${staffId} joined staff room (alias)`);

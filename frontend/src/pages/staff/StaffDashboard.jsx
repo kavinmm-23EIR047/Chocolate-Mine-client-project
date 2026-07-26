@@ -16,6 +16,7 @@ import orderService from '../../services/orderService';
 import api from '../../utils/api';
 import useNotificationSound from '../../hooks/useNotificationSound';
 import { isWithinServiceHours, getServiceHoursMessage } from '../../utils/serviceHours';
+import { getSocket, joinStaffRoom } from '../../sockets/socketManager';
 
 const BENTO_FLAVOR_PRICES = {
   'White Forest': 380,
@@ -1013,38 +1014,60 @@ const StaffDashboard = () => {
     const hoursInfo = isWithinServiceHours();
     setServiceHoursInfo(hoursInfo);
 
-    socketRef.current = io(import.meta.env.VITE_API_URL || (import.meta.env.PROD ? window.location.origin : 'http://localhost:5000'), {
-      transports: ['websocket'],
+    const rawUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL || (import.meta.env.PROD ? window.location.origin : 'http://localhost:5000');
+    const socketUrl = rawUrl.replace(/\/api\/v\d+.*$/, '');
+
+    socketRef.current = io(socketUrl, {
+      transports: ['polling', 'websocket'],
       withCredentials: true
     });
     socketRef.current.on('connect', () => {
+      console.log('📡 Staff socket connected:', socketRef.current.id);
       if (userId) {
         socketRef.current.emit('join_staff_room', userId);
+        socketRef.current.emit('join_staff', userId);
       }
       socketRef.current.emit('join_admin_room');
     });
 
-    // Listen for new orders coming in (payment verified)
-    socketRef.current.on('new_order_confirmed', (data) => {
+    const handleNewOrder = (data) => {
       console.log('🎵 New order received at staff:', data);
       
-      // Play notification sound if within service hours and not muted
-      if (isWithinServiceHours().isWithinHours && !notificationsMuted) {
-        playSound('order');
-        toast.success(`New Order #${data.orderNumber} received!`, {
-          duration: 5,
+      if (!notificationsMuted) {
+        playSound('order', true);
+        toast.success(`New Order #${data?.orderNumber || data?.orderId || ''} received!`, {
+          duration: 6000,
           position: 'top-right'
         });
       }
       
-      // Refresh orders list
       fetchData();
-    });
+    };
 
+    // Listen for new orders coming in under all alias events
+    socketRef.current.on('new_order_confirmed', handleNewOrder);
+    socketRef.current.on('new_order_alert', handleNewOrder);
     socketRef.current.on('assigned_order_updated', () => fetchData());
     socketRef.current.on('dashboard_needs_refresh', () => fetchData());
-    return () => { if (socketRef.current) socketRef.current.disconnect(); };
-  }, [notificationsMuted]);
+
+    const globalSocket = getSocket();
+    if (globalSocket) {
+      globalSocket.on('new_order_confirmed', handleNewOrder);
+      globalSocket.on('new_order_alert', handleNewOrder);
+      globalSocket.on('assigned_order_updated', () => fetchData());
+      globalSocket.on('dashboard_needs_refresh', () => fetchData());
+    }
+
+    return () => {
+      if (socketRef.current) socketRef.current.disconnect();
+      if (globalSocket) {
+        globalSocket.off('new_order_confirmed', handleNewOrder);
+        globalSocket.off('new_order_alert', handleNewOrder);
+        globalSocket.off('assigned_order_updated');
+        globalSocket.off('dashboard_needs_refresh');
+      }
+    };
+  }, [notificationsMuted, playSound]);
 
   const getPageType = (path) => {
     if (path.includes('orders/create-inshop')) return 'create-inshop';

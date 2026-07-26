@@ -215,14 +215,25 @@ exports.notifyOrderSuccess = async (order) => {
     // Save history and send FCM to Admins
     await saveAdminWebNotification(adminTitle, adminMsg, 'new_order', adminMetadata);
 
-    for (const admin of admins) {
-      socketService.emitToAdmin('new_order_alert', { 
-        orderId: populatedOrder._id, 
-        orderNumber: trackingNumber,
-        amount: populatedOrder.total,
-        customer: populatedOrder.address.fullName 
-      });
-    }
+    const newOrderPayload = { 
+      orderId: populatedOrder._id, 
+      orderNumber: trackingNumber,
+      amount: populatedOrder.total,
+      customer: populatedOrder.address.fullName 
+    };
+
+    // Emit to Admin, Staff, and All connected sockets for guaranteed real-time dashboard updates & sound alerts
+    socketService.emitToAdmin('new_order_alert', newOrderPayload);
+    socketService.emitToAdmin('new_order_confirmed', newOrderPayload);
+    socketService.emitToAdmin('dashboard_needs_refresh', newOrderPayload);
+    
+    socketService.emitToStaff('new_order_alert', newOrderPayload);
+    socketService.emitToStaff('new_order_confirmed', newOrderPayload);
+    socketService.emitToStaff('dashboard_needs_refresh', newOrderPayload);
+
+    socketService.emitToAll('new_order_alert', newOrderPayload);
+    socketService.emitToAll('new_order_confirmed', newOrderPayload);
+    socketService.emitToAll('dashboard_needs_refresh', newOrderPayload);
 
     // 4. Trigger Custom Cake request alert if order contains custom cake
     const hasCustomCake = populatedOrder.items.some(item => item.isCustomCake);

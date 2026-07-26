@@ -560,7 +560,7 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
     await Payment.create({ orderId: order._id, razorpayOrderId: razorpayOrder.id, amount: total, status: 'created' });
   }
 
-  if (paymentMethod === 'WHATSAPP') {
+  if (paymentMethod !== 'ONLINE') {
     const notificationManager = require('../services/notificationManager');
     await notificationManager.notifyOrderSuccess(order);
   }
