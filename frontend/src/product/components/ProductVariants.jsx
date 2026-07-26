@@ -1,6 +1,34 @@
 import React from 'react';
 import { Cake, Scale } from 'lucide-react';
 
+const normalizeWeightKey = (weightStr) => {
+  if (!weightStr) return '';
+  const w = String(weightStr).toLowerCase().replace(/\s+/g, '');
+  if (w === '500g' || w === '0.5kg' || w === '.5kg') return '0.5kg';
+  if (w === '250g' || w === '0.25kg' || w === '.25kg') return '0.25kg';
+  if (w === '750g' || w === '0.75kg' || w === '.75kg') return '0.75kg';
+  if (w === '1kg' || w === '1.0kg') return '1kg';
+  if (w === '1.5kg') return '1.5kg';
+  if (w === '2kg' || w === '2.0kg') return '2kg';
+  if (w === '2.5kg') return '2.5kg';
+  if (w === '3kg' || w === '3.0kg') return '3kg';
+  return w;
+};
+
+const getWeightMultiplier = (weightStr) => {
+  if (!weightStr) return 1;
+  const w = String(weightStr).toLowerCase().replace(/\s+/g, '');
+  if (w.includes('250g') || w.includes('0.25kg')) return 0.5;
+  if (w.includes('500g') || w.includes('0.5kg')) return 1;
+  if (w.includes('750g') || w.includes('0.75kg')) return 1.5;
+  if (w.includes('1.5kg')) return 3;
+  if (w.includes('2.5kg')) return 5;
+  if (w.includes('1kg')) return 2;
+  if (w.includes('2kg')) return 4;
+  if (w.includes('3kg')) return 6;
+  return 1;
+};
+
 const ProductVariants = ({
   product,
   selectedFlavor,
@@ -20,37 +48,17 @@ const ProductVariants = ({
   isInStock
 }) => {
   const isCake = Array.isArray(product?.category) ? product.category.some(c => typeof c === 'string' && c.toLowerCase().includes('cake')) : (product?.category || '').toLowerCase().includes('cake');
-  const hasVariants = product?.hasVariants || false;
-
   const isBento = (Array.isArray(product?.category) ? product.category.some(c => typeof c === 'string' && c.toLowerCase().includes('bento')) : (product?.category || '').toLowerCase().includes('bento')) || product?.cakeType?.toLowerCase().includes('bento');
   
-  let weights = [];
-  const hasCustom = (product?.hasCustomWeights || (Array.isArray(product?.customWeightPrices) && product.customWeightPrices.length > 0));
-  const hasStandard = product?.hasWeights || isCake;
+  const hasCustom = Boolean(product?.hasCustomWeights || (Array.isArray(product?.customWeightPrices) && product.customWeightPrices.length > 0));
+  const hasStandard = product?.hasWeights !== undefined ? Boolean(product.hasWeights) : (!hasCustom && isCake);
 
-  if (hasCustom) {
-    const customList = (product?.customWeightPrices || []).map(c => ({ value: c.weight, price: c.price }));
-    if (hasStandard) {
-      const standardList = isBento
-        ? [{ value: '250g' }]
-        : [
-            { value: '500g' },
-            { value: '1kg' },
-            { value: '1.5kg' },
-            { value: '2kg' },
-            { value: '2.5kg' },
-            { value: '3kg' }
-          ];
-      const customSet = new Set(customList.map(c => String(c.value).toLowerCase().trim()));
-      standardList.forEach(s => {
-        if (!customSet.has(String(s.value).toLowerCase().trim())) {
-          customList.push(s);
-        }
-      });
-    }
-    weights = customList;
-  } else {
-    weights = isBento
+  let weights = [];
+  const basePriceVal = Number(product?.price || 0);
+  const customList = (product?.customWeightPrices || []).map(c => ({ value: c.weight, price: c.price }));
+
+  if (hasStandard) {
+    const standardListRaw = isBento
       ? [{ value: '250g' }]
       : [
           { value: '500g' },
@@ -60,9 +68,33 @@ const ProductVariants = ({
           { value: '2.5kg' },
           { value: '3kg' }
         ];
+
+    const standardList = standardListRaw.map(s => {
+      const mult = getWeightMultiplier(s.value);
+      const calculatedPrice = basePriceVal > 0 ? (basePriceVal * mult) : null;
+      return {
+        value: s.value,
+        price: calculatedPrice
+      };
+    });
+
+    if (hasCustom) {
+      const customNormSet = new Set(customList.map(c => normalizeWeightKey(c.value)));
+      const combined = [...customList];
+      standardList.forEach(s => {
+        if (!customNormSet.has(normalizeWeightKey(s.value))) {
+          combined.push(s);
+        }
+      });
+      weights = combined;
+    } else {
+      weights = standardList;
+    }
+  } else if (hasCustom) {
+    weights = customList;
   }
 
-  const showWeightSection = hasCustom || hasStandard || (Array.isArray(product?.weights) && product.weights.length > 0) || (Array.isArray(product?.weightPrices) && product.weightPrices.length > 0);
+  const showWeightSection = weights.length > 0;
 
   return (
     <div className="space-y-6 mb-6">
@@ -144,18 +176,21 @@ const ProductVariants = ({
           </div>
 
           <div className="flex flex-wrap gap-2.5 sm:gap-3">
-            {weights.map((weight, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleWeightChange(weight.value)}
-                className={`px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-black uppercase tracking-wide transition-all ${selectedWeight === weight.value
-                  ? 'bg-primary text-button-text shadow-lg scale-105'
-                  : 'bg-muted/10 text-heading border-2 border-border hover:border-primary/50'
-                  }`}
-              >
-                {weight.value} {weight.price ? `(₹${weight.price})` : ''}
-              </button>
-            ))}
+            {weights.map((weight, idx) => {
+              const isSelected = normalizeWeightKey(selectedWeight) === normalizeWeightKey(weight.value);
+              return (
+                <button
+                  key={idx}
+                  onClick={() => handleWeightChange(weight.value)}
+                  className={`px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-black uppercase tracking-wide transition-all ${isSelected
+                    ? 'bg-primary text-button-text shadow-lg scale-105'
+                    : 'bg-muted/10 text-heading border-2 border-border hover:border-primary/50'
+                    }`}
+                >
+                  {weight.value}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}

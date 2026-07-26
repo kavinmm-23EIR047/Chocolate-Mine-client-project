@@ -73,7 +73,7 @@ const Shop = () => {
   const isOffers = searchParams.get('offers') === 'true' || searchParams.get('offer') === 'true';
 
   const [priceRange, setPriceRange] = useState([
-    Number(searchParams.get('minPrice')) || 10,
+    searchParams.get('minPrice') !== null ? Number(searchParams.get('minPrice')) : 0,
     Number(searchParams.get('maxPrice')) || 10000,
   ]);
 
@@ -90,7 +90,7 @@ const Shop = () => {
     if (activeSubCategory) filters.subCategory = activeSubCategory;
     if (activeOccasion !== 'all') filters.occasions = [activeOccasion];
     if (activeRating > 0) filters.ratings = [activeRating];
-    if (priceRange[0] > 10 || priceRange[1] < 10000) {
+    if (priceRange[0] > 0 || priceRange[1] < 10000) {
       filters.priceRange = { min: priceRange[0], max: priceRange[1] };
     }
     if (sortBy !== 'newest') filters.sort = [sortBy];
@@ -100,7 +100,7 @@ const Shop = () => {
   // Helper to check if a param value is default and should be omitted from URL
   const isDefaultParamValue = (key, value) => {
     if (!value || value === 'all' || value === 0 || value === false || value === '') return true;
-    if (key === 'minPrice' && Number(value) <= 10) return true;
+    if (key === 'minPrice' && Number(value) <= 0) return true;
     if (key === 'maxPrice' && Number(value) >= 10000) return true;
     if (key === 'sort' && String(value) === 'newest') return true;
     return false;
@@ -203,7 +203,7 @@ const Shop = () => {
     }
     
     if (filters.priceRange) {
-      updates.minPrice = filters.priceRange.min > 10 ? filters.priceRange.min : '';
+      updates.minPrice = filters.priceRange.min > 0 ? filters.priceRange.min : '';
       updates.maxPrice = filters.priceRange.max < 10000 ? filters.priceRange.max : '';
     } else {
       updates.minPrice = '';
@@ -285,7 +285,7 @@ const Shop = () => {
 
   useEffect(() => {
     setPriceRange([
-      Number(searchParams.get('minPrice')) || 10,
+      searchParams.get('minPrice') !== null ? Number(searchParams.get('minPrice')) : 0,
       Number(searchParams.get('maxPrice')) || 10000,
     ]);
   }, [searchParams]);
@@ -349,7 +349,7 @@ const Shop = () => {
     subCategory: activeSubCategory || undefined,
     occasion: activeOccasion !== 'all' ? activeOccasion : undefined,
     rating: activeRating > 0 ? activeRating : undefined,
-    minPrice: priceRange[0] > 10 ? priceRange[0] : undefined,
+    minPrice: priceRange[0] > 0 ? priceRange[0] : undefined,
     maxPrice: priceRange[1] < 10000 ? priceRange[1] : undefined,
     bestseller: isBestseller ? 'true' : undefined,
     featured: isFeatured ? 'true' : undefined,
@@ -853,13 +853,13 @@ const Shop = () => {
             
 
             
-            {(priceRange[0] > 10 || priceRange[1] < 10000) && (
+            {(priceRange[0] > 0 || priceRange[1] < 10000) && (
               <span className="h-8 px-3.5 bg-[#2A1813] border border-[#3A211B] text-white rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all hover:border-[#EBD1C6]/30">
                 Price: ₹{priceRange[0]} - ₹{priceRange[1]}
                 <button 
                   onClick={() => {
-                    setPriceRange([10, 10000]);
-                    updateSearchParam('minPrice', 10);
+                    setPriceRange([0, 10000]);
+                    updateSearchParam('minPrice', 0);
                     updateSearchParam('maxPrice', 10000);
                   }}
                   className="text-white/40 hover:text-[#ff8f8f] transition-colors font-bold ml-1 text-sm leading-none flex items-center justify-center"
