@@ -622,7 +622,7 @@ const Shop = () => {
 
   const getPageTitle = () => {
     if (isBestseller) return 'Best Sellers';
-    if (isFeatured) return 'Featured Delights';
+    if (isFeatured) return 'Special Cakes';
     if (searchQuery) return `"${searchQuery}"`;
     if (activeCategories.length === 1) {
       const sel = categories.find(c => c.name === activeCategories[0]);

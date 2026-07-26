@@ -252,7 +252,7 @@ const Navbar = () => {
             Offer Cakes <span className="text-xs">🔥</span>
           </Link>
           <Link to="/shop?bestseller=true" className="text-sm font-black uppercase tracking-widest text-heading hover:text-primary transition-colors py-1.5">Bestseller</Link>
-          <Link to="/shop?featured=true" className="text-sm font-black uppercase tracking-widest text-heading hover:text-primary transition-colors py-1.5">Features</Link>
+          <Link to="/shop?category=special cakes" className="text-sm font-black uppercase tracking-widest text-heading hover:text-primary transition-colors py-1.5">Special Cakes</Link>
         </div>
       </nav>
 
@@ -337,11 +337,11 @@ const Navbar = () => {
                       <span className="font-extrabold text-sm text-heading group-hover:text-primary transition-colors">Bestsellers</span>
                     </Link>
 
-                    <Link to="/shop?featured=true" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-primary/10 transition-colors group">
+                    <Link to="/shop?category=special cakes" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-primary/10 transition-colors group">
                       <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
                         <Zap size={16} />
                       </div>
-                      <span className="font-extrabold text-sm text-heading group-hover:text-primary transition-colors">Featured Items</span>
+                      <span className="font-extrabold text-sm text-heading group-hover:text-primary transition-colors">Special Cakes</span>
                     </Link>
                   </div>
                 </div>

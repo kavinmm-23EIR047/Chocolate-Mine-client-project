@@ -113,8 +113,8 @@ const MegaMenu = () => {
           <Link to="/shop?bestseller=true" onClick={() => setIsOpen(false)} className="text-xs md:text-sm font-black text-heading uppercase tracking-widest hover:text-primary transition-colors whitespace-nowrap">
             🔥 View Bestsellers
           </Link>
-          <Link to="/shop?featured=true" onClick={() => setIsOpen(false)} className="text-xs md:text-sm font-black text-heading uppercase tracking-widest hover:text-primary transition-colors whitespace-nowrap">
-            ⭐ Featured Products
+          <Link to="/shop?category=special cakes" onClick={() => setIsOpen(false)} className="text-xs md:text-sm font-black text-heading uppercase tracking-widest hover:text-primary transition-colors whitespace-nowrap">
+            ⭐ Special Cakes
           </Link>
         </div>
       </div>

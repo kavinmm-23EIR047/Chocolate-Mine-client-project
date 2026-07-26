@@ -16,12 +16,12 @@ const fadeUp = {
 
 const Features = ({ location }) => {
   const { data: productRes, isLoading } = useGetProductsQuery({
-    featured: 'true',
+    category: 'special cakes',
     location,
     limit: 10,
   });
 
-  const products = (productRes?.data || []).filter(p => p.featured === true);
+  const products = productRes?.data || [];
 
   if (!isLoading && products.length === 0) {
     return null;
@@ -37,13 +37,13 @@ const Features = ({ location }) => {
               <Sparkles className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2.5} />
             </div>
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight uppercase text-heading">
-              Featured Creations
+              Special Cakes
             </h2>
           </div>
 
           {!isLoading && products.length > 0 && (
             <Link
-              to="/shop?featured=true"
+              to="/shop?category=special cakes"
               className="inline-flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs lg:text-sm font-black text-primary hover:text-primary-hover uppercase tracking-widest border-b-2 border-primary/20 pb-0.5 transition-all hover:gap-2 whitespace-nowrap mb-1"
             >
               View All <ArrowRight size={14} className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 inline ml-1" />
