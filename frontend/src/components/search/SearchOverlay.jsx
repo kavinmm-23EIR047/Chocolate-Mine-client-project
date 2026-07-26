@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, TrendingUp, Clock, ArrowRight, Sparkles, History, ShoppingBag, ChevronRight } from 'lucide-react';
+import { Search, X, TrendingUp, ArrowRight, Sparkles, History, ShoppingBag, ChevronRight } from 'lucide-react';
 import ImageWithSkeleton from '../ui/ImageWithSkeleton';
 import { useNavigate, Link } from 'react-router-dom';
 import productService from '../../services/productService';
@@ -34,7 +34,7 @@ const SearchOverlay = ({ isOpen, onClose }) => {
     }
   };
 
-  // Debounced MongoDB Atlas Search with request cancellation
+  // Debounced search with request handling
   useEffect(() => {
     const trimmedQuery = query.trim();
 
@@ -93,29 +93,30 @@ const SearchOverlay = ({ isOpen, onClose }) => {
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
+          {/* Dark Glass Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-footer/80 backdrop-blur-xl z-[9999]"
+            className="fixed inset-0 bg-black/70 backdrop-blur-md z-[9999]"
           />
 
-          {/* Search Container */}
+          {/* Search Panel Container */}
           <motion.div
-            initial={{ y: -100, opacity: 0 }}
+            initial={{ y: -60, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -100, opacity: 0 }}
-            className="fixed top-0 left-0 right-0 bg-navbar z-[10000] shadow-2xl border-b border-border/10 overflow-y-auto max-h-[90vh]"
+            exit={{ y: -60, opacity: 0 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 280 }}
+            className="fixed top-0 left-0 right-0 bg-[var(--background)] z-[10000] shadow-2xl border-b border-[var(--border)] overflow-y-auto max-h-[92vh]"
           >
-            <div className="max-w-[1800px] mx-auto px-4 sm:px-12 py-6 sm:py-10">
-              
-              {/* Premium Search Input Section */}
-              <div className="flex items-center gap-4 mb-10">
-                <div className="flex-1 relative group">
-                  <div className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 text-primary/40 group-focus-within:text-primary transition-colors">
-                    <Search size={20} className="sm:w-6 sm:h-6" strokeWidth={2.5} />
+            <div className="max-w-[1600px] mx-auto px-4 sm:px-10 py-6 sm:py-8">
+
+              {/* CLEAN MODERN SEARCH INPUT BAR (NON-NEUMORPHIC) */}
+              <div className="flex items-center gap-3 sm:gap-4 mb-8">
+                <div className="flex-1 relative">
+                  <div className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 text-[var(--primary)] pointer-events-none">
+                    <Search size={22} className="sm:w-6 sm:h-6" strokeWidth={2.5} />
                   </div>
                   <input
                     autoFocus
@@ -123,57 +124,59 @@ const SearchOverlay = ({ isOpen, onClose }) => {
                     value={query}
                     onChange={handleInputChange}
                     onKeyDown={(e) => e.key === 'Enter' && onSelect(query)}
-                    placeholder="Search for premium delicacies..."
-                    className="w-full bg-card/80 border-0 text-sm sm:text-xl font-black text-heading pl-12 sm:pl-16 pr-14 py-3.5 sm:py-5 rounded-2xl sm:rounded-[2rem] outline-none transition-all shadow-[inset_4px_4px_8px_rgba(0,0,0,0.6),inset_-2px_-2px_6px_rgba(255,255,255,0.04)] focus:shadow-[inset_6px_6px_12px_rgba(0,0,0,0.8),inset_-2px_-2px_8px_rgba(255,255,255,0.06)] placeholder:text-muted/30 uppercase tracking-tight"
+                    placeholder="Search for cakes, desserts, bento treats..."
+                    className="w-full bg-[var(--card)] border-2 border-[var(--border)] focus:border-[var(--primary)] text-[var(--heading)] placeholder:text-[var(--body)] placeholder:opacity-60 text-base sm:text-xl font-bold pl-12 sm:pl-16 pr-14 py-3.5 sm:py-4.5 rounded-2xl outline-none transition-all shadow-sm"
                   />
                   <div className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 flex items-center gap-2">
                     {loading && (
-                      <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 sm:border-3 border-primary border-t-transparent rounded-full animate-spin" />
+                      <div className="w-5 h-5 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
                     )}
                     {query && (
                       <button
                         onClick={handleClearInput}
-                        className="p-1 text-muted hover:text-heading transition-colors"
+                        className="p-1.5 text-[var(--body)] hover:text-[var(--heading)] transition-colors rounded-full hover:bg-[var(--surface)]"
                         title="Clear search"
                       >
-                        <X size={16} />
+                        <X size={18} />
                       </button>
                     )}
                   </div>
                 </div>
-                <button 
+
+                <button
                   onClick={onClose}
-                  className="flex w-12 h-12 sm:w-16 sm:h-16 items-center justify-center rounded-2xl sm:rounded-[2rem] bg-card text-primary transition-all duration-300 shadow-[4px_4px_10px_rgba(0,0,0,0.6),-3px_-3px_8px_rgba(255,255,255,0.04)] active:shadow-[inset_4px_4px_8px_rgba(0,0,0,0.6),inset_-3px_-3px_8px_rgba(255,255,255,0.04)] cursor-pointer"
+                  className="flex w-12 h-12 sm:w-14 sm:h-14 items-center justify-center rounded-2xl bg-[var(--card)] border border-[var(--border)] text-[var(--heading)] hover:bg-[var(--primary)] hover:text-[var(--button-text)] hover:border-[var(--primary)] transition-all shadow-sm cursor-pointer shrink-0"
+                  aria-label="Close search"
                 >
-                  <X size={20} className="sm:w-7 sm:h-7" />
+                  <X size={22} />
                 </button>
               </div>
 
               {/* Dynamic Content Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 sm:gap-16">
-                
-                {/* Sidebar (Left on PC) */}
-                <div className="lg:col-span-4 space-y-10 order-2 lg:order-1">
-                  
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12">
+
+                {/* Sidebar (Left on Desktop) */}
+                <div className="lg:col-span-4 space-y-6 order-2 lg:order-1">
+
                   {/* Recent Searches */}
                   {recentSearches.length > 0 && (
-                    <div className="bg-card/30 rounded-[2.5rem] p-8 border border-border/40">
-                      <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-3">
-                          <History size={18} className="text-primary/60" />
-                          <h3 className="text-[10px] font-black text-muted uppercase tracking-[0.3em]">Recent</h3>
+                    <div className="bg-[var(--card)] rounded-2xl p-6 border border-[var(--border)] shadow-sm">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2.5">
+                          <History size={18} className="text-[var(--primary)]" />
+                          <h3 className="text-xs font-black text-[var(--heading)] uppercase tracking-wider">Recent Searches</h3>
                         </div>
-                        <button onClick={clearRecent} className="text-[10px] font-black text-primary/40 hover:text-primary uppercase tracking-widest transition-colors">Clear All</button>
+                        <button onClick={clearRecent} className="text-[11px] font-bold text-[var(--muted)] hover:text-[var(--primary)] uppercase tracking-wider transition-colors">Clear All</button>
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {recentSearches.map((s, i) => (
                           <button
                             key={i}
                             onClick={() => onSelect(s)}
-                            className="px-4 py-2.5 bg-background border border-border/40 rounded-xl text-xs font-black uppercase tracking-wider text-heading hover:border-primary hover:text-primary transition-all flex items-center gap-2 group"
+                            className="px-3.5 py-2 bg-[var(--background)] border border-[var(--border)] rounded-xl text-xs font-extrabold uppercase tracking-wide text-[var(--heading)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-all flex items-center gap-2 group cursor-pointer"
                           >
                             {s}
-                            <ArrowRight size={12} className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                            <ArrowRight size={12} className="opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-[var(--primary)]" />
                           </button>
                         ))}
                       </div>
@@ -181,36 +184,36 @@ const SearchOverlay = ({ isOpen, onClose }) => {
                   )}
 
                   {/* Trending Categories */}
-                  <div className="bg-card/30 rounded-[2.5rem] p-8 border border-border/40">
-                    <div className="flex items-center gap-3 mb-8">
-                      <TrendingUp size={18} className="text-accent" />
-                      <h3 className="text-[10px] font-black text-muted uppercase tracking-[0.3em]">Trending Now</h3>
+                  <div className="bg-[var(--card)] rounded-2xl p-6 border border-[var(--border)] shadow-sm">
+                    <div className="flex items-center gap-2.5 mb-5">
+                      <TrendingUp size={18} className="text-[var(--accent)]" />
+                      <h3 className="text-xs font-black text-[var(--heading)] uppercase tracking-wider">Trending Now</h3>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       {trending.map((item, i) => (
                         <button
                           key={i}
                           onClick={() => onSelect(item)}
-                          className="w-full flex items-center justify-between p-4 rounded-2xl hover:bg-primary/5 transition-all group"
+                          className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-[var(--surface)] transition-all group text-left cursor-pointer"
                         >
-                          <span className="text-sm font-black text-heading/70 group-hover:text-primary group-hover:pl-2 transition-all uppercase tracking-tight">{item}</span>
-                          <Sparkles size={14} className="text-accent opacity-0 group-hover:opacity-100 transition-all" />
+                          <span className="text-xs sm:text-sm font-bold text-[var(--body)] group-hover:text-[var(--heading)] uppercase tracking-wide transition-colors">{item}</span>
+                          <Sparkles size={14} className="text-[var(--accent)] opacity-0 group-hover:opacity-100 transition-opacity" />
                         </button>
                       ))}
                     </div>
                   </div>
                 </div>
 
-                {/* Main Results / Recommendations (Right on PC) */}
+                {/* Main Results & Recommendations (Right on Desktop) */}
                 <div className="lg:col-span-8 order-1 lg:order-2">
                   {query.length > 0 ? (
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between border-b border-border/20 pb-4 mb-4">
-                        <h2 className="text-[11px] font-black text-primary uppercase tracking-[0.4em]">
+                    <div className="space-y-5">
+                      <div className="flex items-center justify-between border-b border-[var(--border)] pb-3 mb-4">
+                        <h2 className="text-xs font-black text-[var(--primary)] uppercase tracking-widest">
                           {loading ? 'Searching...' : `Matching Delicacies (${results.length})`}
                         </h2>
                         {!loading && results.length > 0 && (
-                          <button onClick={() => onSelect(query)} className="flex items-center gap-2 text-[10px] font-black text-muted hover:text-primary uppercase tracking-widest transition-all group">
+                          <button onClick={() => onSelect(query)} className="flex items-center gap-1.5 text-xs font-bold text-[var(--muted)] hover:text-[var(--primary)] uppercase tracking-wider transition-all group cursor-pointer">
                             View All Results <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
                           </button>
                         )}
@@ -218,66 +221,66 @@ const SearchOverlay = ({ isOpen, onClose }) => {
 
                       {loading ? (
                         <div className="py-12 flex flex-col items-center justify-center">
-                          <div className="w-32 h-32 sm:w-40 sm:h-40">
+                          <div className="w-28 h-28 sm:w-36 sm:h-36">
                             <Lottie
                               animationData={searchLoaderAnimation}
                               loop={true}
                               autoplay={true}
                             />
                           </div>
-                          <p className="text-[10px] font-black text-muted uppercase tracking-[0.25em] mt-2 animate-pulse">
-                            Searching for premium delicacies...
+                          <p className="text-xs font-bold text-[var(--muted)] uppercase tracking-wider mt-2 animate-pulse">
+                            Searching for delicacies...
                           </p>
                         </div>
                       ) : results.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {results.map((p) => (
-                            <div 
+                            <div
                               key={p._id}
                               onClick={() => {
                                 navigate(`/product/${p.slug}`);
                                 onClose();
                               }}
-                              className="flex items-center gap-4 p-4 bg-card rounded-2xl border border-border/40 hover:border-primary/30 cursor-pointer transition-all group shadow-sm hover:shadow-lg relative overflow-hidden"
+                              className="flex items-center gap-4 p-3.5 bg-[var(--card)] rounded-2xl border border-[var(--border)] hover:border-[var(--primary)] cursor-pointer transition-all group shadow-sm hover:shadow-md relative overflow-hidden"
                             >
-                              <div className="w-16 h-16 shrink-0 rounded-xl overflow-hidden shadow-inner">
-                                <ImageWithSkeleton src={p.image} alt={p.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" showSparkles={false} />
+                              <div className="w-16 h-16 shrink-0 rounded-xl overflow-hidden bg-[var(--surface)]">
+                                <ImageWithSkeleton src={p.image} alt={p.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" showSparkles={false} />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="font-bold text-heading text-base leading-tight truncate group-hover:text-primary transition-colors uppercase tracking-tight">{p.name}</p>
-                                <p className="text-[9px] text-muted font-black uppercase tracking-[0.2em] mt-1">{p.category}</p>
-                                <div className="flex items-center gap-2 mt-2">
-                                  <span className="text-sm font-black text-primary">₹{p.offerPrice || p.price}</span>
-                                  {p.offerPrice && <span className="text-[10px] line-through opacity-30">₹{p.price}</span>}
+                                <p className="font-bold text-[var(--heading)] text-sm leading-tight truncate group-hover:text-[var(--primary)] transition-colors uppercase tracking-tight">{p.name}</p>
+                                <p className="text-[10px] text-[var(--muted)] font-extrabold uppercase tracking-wider mt-1">{p.category}</p>
+                                <div className="flex items-center gap-2 mt-1.5">
+                                  <span className="text-sm font-black text-[var(--primary)]">₹{p.offerPrice || p.price}</span>
+                                  {p.offerPrice && <span className="text-[11px] line-through text-[var(--muted)] opacity-60">₹{p.price}</span>}
                                 </div>
                               </div>
-                              <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <ArrowRight size={16} className="text-primary" />
+                              <div className="pr-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <ArrowRight size={16} className="text-[var(--primary)]" />
                               </div>
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <div className="py-24 text-center bg-card/20 rounded-[3rem] border-2 border-dashed border-border/40">
-                          <Search size={48} className="mx-auto mb-6 text-muted/10" />
-                          <p className="font-black text-heading uppercase tracking-tighter text-xl">No matching delicacies</p>
-                          <p className="text-[10px] font-black text-muted uppercase tracking-[0.3em] mt-4">Try different keywords or browse our shop</p>
+                        <div className="py-20 text-center bg-[var(--card)] rounded-2xl border border-dashed border-[var(--border)]">
+                          <Search size={44} className="mx-auto mb-4 text-[var(--muted)] opacity-40" />
+                          <p className="font-extrabold text-[var(--heading)] uppercase tracking-wide text-lg">No matching delicacies</p>
+                          <p className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider mt-2">Try different keywords or explore our catalog</p>
                         </div>
                       )}
                     </div>
                   ) : (
-                    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                      <div className="flex items-center justify-between border-b border-border/20 pb-4">
-                        <h2 className="text-[11px] font-black text-primary uppercase tracking-[0.4em]">Recommended For You</h2>
-                        <Link to="/shop" onClick={onClose} className="flex items-center gap-2 text-[10px] font-black text-muted hover:text-primary uppercase tracking-widest transition-all group">
+                    <div className="space-y-8 animate-in fade-in duration-500">
+                      <div className="flex items-center justify-between border-b border-[var(--border)] pb-3">
+                        <h2 className="text-xs font-black text-[var(--primary)] uppercase tracking-widest">Recommended For You</h2>
+                        <Link to="/shop" onClick={onClose} className="flex items-center gap-1.5 text-xs font-bold text-[var(--muted)] hover:text-[var(--primary)] uppercase tracking-wider transition-all group">
                           Browse Shop <ShoppingBag size={14} className="group-hover:scale-110 transition-transform" />
                         </Link>
                       </div>
- 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         {recommended.length > 0 ? (
                           recommended.map((p) => (
-                            <div 
+                            <div
                               key={p._id}
                               onClick={() => {
                                 navigate(`/product/${p.slug}`);
@@ -285,34 +288,34 @@ const SearchOverlay = ({ isOpen, onClose }) => {
                               }}
                               className="group cursor-pointer"
                             >
-                              <div className="relative aspect-[16/9] rounded-2xl overflow-hidden shadow-xl mb-4 border border-border/20">
-                                <ImageWithSkeleton src={p.image} alt={p.name} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" containerClassName="w-full h-full" />
-                                <div className="absolute inset-0 bg-gradient-to-t from-footer/90 via-footer/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
-                                <div className="absolute bottom-4 left-4 right-4">
-                                  <span className="px-2 py-0.5 bg-primary text-button-text text-[8px] font-black uppercase tracking-widest rounded-md mb-2 inline-block">Best Seller</span>
-                                  <p className="text-base font-bold text-white leading-tight uppercase tracking-tight line-clamp-1">{p.name}</p>
+                              <div className="relative aspect-[16/10] rounded-2xl overflow-hidden shadow-md mb-3 border border-[var(--border)] bg-[var(--card)]">
+                                <ImageWithSkeleton src={p.image} alt={p.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" containerClassName="w-full h-full" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-70 group-hover:opacity-85 transition-opacity" />
+                                <div className="absolute bottom-3 left-3.5 right-3.5">
+                                  <span className="px-2 py-0.5 bg-[var(--accent)] text-[#120806] text-[9px] font-black uppercase tracking-widest rounded-md mb-1.5 inline-block">Best Seller</span>
+                                  <p className="text-sm font-extrabold text-white leading-tight uppercase tracking-tight line-clamp-1">{p.name}</p>
                                 </div>
                               </div>
                             </div>
                           ))
                         ) : (
-                           Array(4).fill(0).map((_, i) => (
-                             <div key={i} className="aspect-[16/10] rounded-[2.5rem] bg-muted/10 animate-pulse" />
-                           ))
+                          Array(4).fill(0).map((_, i) => (
+                            <div key={i} className="aspect-[16/10] rounded-2xl bg-[var(--card)] animate-pulse" />
+                          ))
                         )}
                       </div>
-                      
-                      <div className="p-8 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
-                        <div className="flex items-center gap-5">
-                          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
-                            <Sparkles size={24} />
+
+                      <div className="p-6 sm:p-7 rounded-2xl bg-[var(--card)] border border-[var(--border)] flex flex-col sm:flex-row items-center justify-between gap-5 text-center sm:text-left shadow-sm">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)] shrink-0">
+                            <Sparkles size={22} />
                           </div>
                           <div>
-                            <p className="font-black text-heading uppercase tracking-tight">Need a custom masterpiece?</p>
-                            <p className="text-[10px] font-black text-muted uppercase tracking-widest mt-1">Direct from our master bakers</p>
+                            <p className="font-extrabold text-[var(--heading)] uppercase tracking-tight text-sm">Need a custom masterpiece?</p>
+                            <p className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wide mt-0.5">Handcrafted by our master chefs</p>
                           </div>
                         </div>
-                        <button onClick={() => { navigate('/custom-cake'); onClose(); }} className="px-8 py-3.5 bg-primary text-button-text rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 shadow-xl shadow-primary/20 transition-all">Design Your Cake</button>
+                        <button onClick={() => { navigate('/custom-cake'); onClose(); }} className="px-6 py-3 bg-[var(--button-bg)] text-[var(--button-text)] rounded-xl text-xs font-black uppercase tracking-wider hover:opacity-95 active:scale-95 shadow-md transition-all shrink-0 cursor-pointer">Design Your Cake</button>
                       </div>
                     </div>
                   )}

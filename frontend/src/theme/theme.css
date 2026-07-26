@@ -6,7 +6,7 @@
    Accent: Caramel Gold (#E6B25A)
    ═══════════════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=Roboto:wght@300;400;500;700;900&family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap');
 
 * {
    box-sizing: border-box;
@@ -17,83 +17,83 @@
    ─────────────────────────────────────────── */
 :root {
    /* Base Surfaces */
-   --background: #ecded9;
-   --background-rgb: 236 222 217;
-   --surface: #ecded9;
-   --surface-rgb: 236 222 217;
-   --card: #F1E6E2;
-   --card-rgb: 241 230 226;
-   --card-soft: #E4D4CF;
-   --card-soft-rgb: 228 212 207;
+   --background: #ccb396;
+   --background-rgb: 204 179 150;
+   --surface: #ccb396;
+   --surface-rgb: 204 179 150;
+   --card: #c6aa8a;
+   --card-rgb: 198 170 138;
+   --card-soft: #d1bba1;
+   --card-soft-rgb: 209 187 161;
 
    /* Typography */
-   --foreground: #2D1B17;
-   --foreground-rgb: 45 27 23;
-   --heading: #332623;
-   --heading-rgb: 51 38 35;
-   --body: #4A3732;
-   --body-rgb: 74 55 50;
-   --muted: #7C6660;
-   --muted-rgb: 124 102 96;
+   --foreground: #27190e;
+   --foreground-rgb: 39 25 14;
+   --heading: #27190e;
+   --heading-rgb: 39 25 14;
+   --body: #362214;
+   --body-rgb: 54 34 20;
+   --muted: #4e321e;
+   --muted-rgb: 78 50 30;
 
    /* Brand Colors */
-   --primary: #4E2820;
-   --primary-rgb: 78 40 32;
-   --primary-hover: #3D1E18;
-   --primary-hover-rgb: 61 30 24;
-   --primary-active: #2C1511;
-   --primary-active-rgb: 44 21 17;
-   --secondary: #936456;
-   --secondary-rgb: 147 100 86;
-   --accent: #C98F45;
+   --primary: #27190e;
+   --primary-rgb: 39 25 14;
+   --primary-hover: #3b2515;
+   --primary-hover-rgb: 59 37 21;
+   --primary-active: #1a1009;
+   --primary-active-rgb: 26 16 9;
+   --secondary: #8C653B;
+   --secondary-rgb: 140 101 59;
+   --accent: #C89D5A;
    --accent-rgb: 201 143 69;
    --accent-hover: #E6B25A;
    --accent-hover-rgb: 230 178 90;
 
    /* Navigation */
-   --navbar: #ecded9;
-   --navbar-rgb: 236 222 217;
-   --navbar-text: #332623;
-   --navbar-text-rgb: 51 38 35;
+   --navbar: #ccb396;
+   --navbar-rgb: 204 179 150;
+   --navbar-text: #27190e;
+   --navbar-text-rgb: 39 25 14;
 
    /* Footer */
-   --footer: #332623;
-   --footer-rgb: 51 38 35;
-   --footer-text: #F2E2DB;
-   --footer-text-rgb: 242 226 219;
+   --footer: #27190e;
+   --footer-rgb: 39 25 14;
+   --footer-text: #F8F1E7;
+   --footer-text-rgb: 248 241 231;
 
    /* Borders */
-   --border: #D5C0BA;
-   --border-rgb: 213 192 186;
-   --border-light: #F5ECE9;
-   --border-light-rgb: 245 236 233;
-   --border-dark: #C4AAA3;
-   --border-dark-rgb: 196 170 163;
+   --border: rgba(39, 25, 14, 0.12);
+   --border-rgb: 39 25 14;
+   --border-light: #e6d7c5;
+   --border-light-rgb: 230 215 197;
+   --border-dark: #bba690;
+   --border-dark-rgb: 187 166 144;
 
    /* Inputs */
-   --input: #F1E6E2;
-   --input-rgb: 241 230 226;
-   --input-border: #D5C0BA;
-   --input-border-rgb: 213 192 186;
-   --input-focus: #4E2820;
-   --ring: rgba(78, 40, 32, 0.15);
+   --input: #ddccb9;
+   --input-rgb: 221 204 185;
+   --input-border: rgba(39, 25, 14, 0.15);
+   --input-border-rgb: 39 25 14;
+   --input-focus: #27190e;
+   --ring: rgba(39, 25, 14, 0.12);
 
    /* Solid UI Shadows */
-   --shadow-color: 51, 38, 35;
+   --shadow-color: 39, 25, 14;
 
    /* Buttons */
-   --button-bg: #4E2820;
-   --button-bg-rgb: 78 40 32;
-   --button-text: #F2E2DB;
-   --button-text-rgb: 242 226 219;
-   --button-hover: #3D1E18;
-   --button-hover-rgb: 61 30 24;
-   --button-alt-bg: #F1E6E2;
-   --button-alt-bg-rgb: 241 230 226;
-   --button-alt-text: #4E2820;
-   --button-alt-text-rgb: 78 40 32;
-   --button-alt-hover: #E4D4CF;
-   --button-alt-hover-rgb: 228 212 207;
+   --button-bg: #27190e;
+   --button-bg-rgb: 39 25 14;
+   --button-text: #F8F1E7;
+   --button-text-rgb: 248 241 231;
+   --button-hover: #3b2515;
+   --button-hover-rgb: 59 37 21;
+   --button-alt-bg: #c6aa8a;
+   --button-alt-bg-rgb: 198 170 138;
+   --button-alt-text: #27190e;
+   --button-alt-text-rgb: 39 25 14;
+   --button-alt-hover: #d1bba1;
+   --button-alt-hover-rgb: 209 187 161;
 
    /* ─── BADGE COLORS - Light Theme ─── */
    --badge-bestseller-bg: var(--accent);
@@ -183,64 +183,64 @@
    ─────────────────────────────────────────── */
 .dark {
    /* Base Surfaces */
-   --background: #120806;
-   --background-rgb: 18 8 6;
-   --surface: #1A0E0B;
-   --surface-rgb: 26 14 11;
-   --card: #21120E;
-   --card-rgb: 33 18 14;
-   --card-soft: #2A1813;
-   --card-soft-rgb: 42 24 19;
+   --background: #24100A;
+   --background-rgb: 36 16 10;
+   --surface: #2E160F;
+   --surface-rgb: 46 22 15;
+   --card: #361C14;
+   --card-rgb: 54 28 20;
+   --card-soft: #402319;
+   --card-soft-rgb: 64 35 25;
 
    /* Typography */
-   --foreground: #ecded9;
-   --foreground-rgb: 236 222 217;
-   --heading: #ecded9;
-   --heading-rgb: 236 222 217;
-   --body: #D4C0BA;
-   --body-rgb: 212 192 186;
-   --muted: #A18881;
-   --muted-rgb: 161 136 129;
+   --foreground: #F2EADF;
+   --foreground-rgb: 242 234 223;
+   --heading: #F2EADF;
+   --heading-rgb: 242 234 223;
+   --body: #D6BE9F;
+   --body-rgb: 214 190 159;
+   --muted: #ffe6c2;
+   --muted-rgb: 242 234 223;
 
    /* Brand Colors */
-   --primary: #E8D3CB;
-   --primary-rgb: 232 211 203;
-   --primary-hover: #F4E5DF;
-   --primary-hover-rgb: 244 229 223;
-   --primary-active: #D4C0BA;
-   --primary-active-rgb: 212 192 186;
-   --secondary: #C8A79B;
-   --secondary-rgb: 200 167 155;
-   --accent: #E6B25A;
-   --accent-rgb: 230 178 90;
-   --accent-hover: #F0C46E;
-   --accent-hover-rgb: 240 196 110;
+   --primary: #F2EADF;
+   --primary-rgb: 242 234 223;
+   --primary-hover: #F8F3EC;
+   --primary-hover-rgb: 248 243 236;
+   --primary-active: #D6BE9F;
+   --primary-active-rgb: 214 190 159;
+   --secondary: #E6B25A;
+   --secondary-rgb: 230 178 90;
+   --accent: #C89D5A;
+   --accent-rgb: 200 157 90;
+   --accent-hover: #D9B36F;
+   --accent-hover-rgb: 217 179 111;
 
    /* Navigation */
-   --navbar: #120806;
-   --navbar-rgb: 18 8 6;
-   --navbar-text: #ecded9;
-   --navbar-text-rgb: 236 222 217;
+   --navbar: #24100A;
+   --navbar-rgb: 36 16 10;
+   --navbar-text: #F2EADF;
+   --navbar-text-rgb: 242 234 223;
 
    /* Footer */
-   --footer: #0A0403;
-   --footer-rgb: 10 4 3;
-   --footer-text: #ecded9;
-   --footer-text-rgb: 236 222 217;
+   --footer: #1F0E09;
+   --footer-rgb: 31 14 9;
+   --footer-text: #F2EADF;
+   --footer-text-rgb: 242 234 223;
 
    /* Borders */
-   --border: #3A211B;
-   --border-rgb: 58 33 27;
-   --border-light: #4B2B24;
-   --border-light-rgb: 75 43 36;
-   --border-dark: #27130F;
-   --border-dark-rgb: 39 19 15;
+   --border: #3A2016;
+   --border-rgb: 58 32 22;
+   --border-light: #3A2016;
+   --border-light-rgb: 58 32 22;
+   --border-dark: #3A2016;
+   --border-dark-rgb: 58 32 22;
 
    /* Inputs */
-   --input: #21120E;
-   --input-rgb: 33 18 14;
-   --input-border: #3A211B;
-   --input-border-rgb: 58 33 27;
+   --input: #2F190F;
+   --input-rgb: 58 36 25;
+   --input-border: #3A2016;
+   --input-border-rgb: 58 32 22;
    --input-focus: #E8D3CB;
    --ring: rgba(232, 211, 203, 0.15);
 
@@ -254,12 +254,12 @@
    --button-text-rgb: 18 8 6;
    --button-hover: #F4E5DF;
    --button-hover-rgb: 244 229 223;
-   --button-alt-bg: #21120E;
-   --button-alt-bg-rgb: 33 18 14;
+   --button-alt-bg: #4D3212;
+   --button-alt-bg-rgb: 77 50 18;
    --button-alt-text: #E8D3CB;
    --button-alt-text-rgb: 232 211 203;
-   --button-alt-hover: #2A1813;
-   --button-alt-hover-rgb: 42 24 19;
+   --button-alt-hover: #5C3D18;
+   --button-alt-hover-rgb: 92 61 24;
 
    /* ─── BADGE COLORS - Dark Theme ─── */
    --badge-bestseller-bg: var(--accent);
@@ -345,7 +345,7 @@
 }
 
 /* ───────────────────────────────────────────
-   GLOBAL STYLES
+   GLOBAL STYLES & TYPOGRAPHY
    ─────────────────────────────────────────── */
 html,
 body {
@@ -354,6 +354,51 @@ body {
    font-family: 'Inter', 'Roboto', system-ui, -apple-system, sans-serif;
    margin: 0;
    padding: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.font-heading,
+.heading,
+.section-title,
+.product-title,
+.hero-title,
+.menu-title {
+   color: var(--heading);
+   font-family: 'Syne', 'Outfit', sans-serif !important;
+   font-weight: 800;
+   letter-spacing: -0.01em;
+   line-height: 1.25;
+   margin-top: 0;
+}
+
+h1 {
+   font-size: clamp(2.25rem, 5vw, 3rem);
+   font-weight: 900;
+}
+
+h2 {
+   font-size: clamp(1.75rem, 4vw, 2.25rem);
+   font-weight: 900;
+}
+
+h3 {
+   font-size: clamp(1.35rem, 3vw, 1.75rem);
+   font-weight: 800;
+}
+
+h4 {
+   font-size: 1.25rem;
+   font-weight: 800;
+}
+
+p {
+   color: var(--body);
+   margin-top: 0;
 }
 
 /* ───────────────────────────────────────────

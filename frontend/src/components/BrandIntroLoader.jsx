@@ -35,15 +35,15 @@ export default function BrandIntroLoader({ show = false, onFinish, logoHoldMs = 
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="fixed inset-0 z-[240] flex flex-col items-center justify-center overflow-hidden px-5"
-          style={{ background: bg }}
+          style={{ background: 'var(--background)' }}
         >
           {/* Subtle elegant background radial glow */}
           <div
             className="pointer-events-none absolute inset-0 opacity-40 dark:opacity-60"
             style={{
               background: isDark
-                ? 'radial-gradient(circle at 50% 50%, rgba(198, 156, 109, 0.15), transparent 70%)'
-                : 'radial-gradient(circle at 50% 50%, rgba(59, 31, 27, 0.05), transparent 70%)',
+                ? 'radial-gradient(circle at 50% 50%, rgba(var(--accent-rgb), 0.15), transparent 70%)'
+                : 'radial-gradient(circle at 50% 50%, rgba(var(--primary-rgb), 0.05), transparent 70%)',
             }}
           />
 
@@ -61,8 +61,7 @@ export default function BrandIntroLoader({ show = false, onFinish, logoHoldMs = 
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 0.8, y: 0 }}
               transition={{ delay: 0.5, duration: 0.8 }}
-              className="mt-6 text-[10px] sm:text-[11px] font-black uppercase tracking-[0.35em] text-center"
-              style={{ color: isDark ? '#F5E6DA' : '#3B1F1B' }}
+              className="mt-6 text-[10px] sm:text-[11px] font-black uppercase tracking-[0.35em] text-center text-foreground"
             >
               The Chocolate Mine
             </motion.p>

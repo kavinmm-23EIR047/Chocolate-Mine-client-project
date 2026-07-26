@@ -91,18 +91,18 @@ const AdminLayout = () => {
               to={item.path}
               onClick={() => setMobileOpen(false)}
               className={`
-                flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm
+                flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm
                 transition-all duration-200 group
                 ${isActive
-                  ? 'bg-secondary/15 text-secondary shadow-sm'
-                  : 'text-muted hover:bg-border/50 hover:text-heading'
+                  ? 'bg-card text-heading border border-border shadow-md'
+                  : 'text-muted hover:bg-border/40 hover:text-heading'
                 }
               `}
             >
-              <item.icon size={20} className={isActive ? 'text-secondary' : 'text-muted group-hover:text-heading'} />
+              <item.icon size={20} className={isActive ? 'text-primary' : 'text-muted group-hover:text-heading'} />
               {sidebarOpen && <span>{item.label}</span>}
               {isActive && sidebarOpen && (
-                <ChevronRight size={16} className="ml-auto text-secondary" />
+                <ChevronRight size={16} className="ml-auto text-primary" />
               )}
             </Link>
           );

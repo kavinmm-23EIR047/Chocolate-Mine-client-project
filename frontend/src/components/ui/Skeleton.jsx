@@ -14,7 +14,7 @@ export const Skeleton = ({ className = '', count = 1 }) => {
 };
 
 export const CardSkeleton = () => (
-  <div className="bg-card border border-border/40 rounded-[1.5rem] overflow-hidden flex flex-col h-full bg-white dark:bg-[#1a1a1a] animate-pulse">
+  <div className="bg-card border border-border/40 rounded-[1.5rem] overflow-hidden flex flex-col h-full bg-card animate-pulse">
     {/* Image side */}
     <div className="relative aspect-[4/3] bg-border/40 m-2 rounded-t-[1.5rem]" />
     {/* Info side */}

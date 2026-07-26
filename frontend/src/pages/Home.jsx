@@ -119,9 +119,7 @@ const Home = () => {
 
       {/* 1. TrustBar (Top-most element) */}
       {!query && (
-        <div className="w-full overflow-hidden">
-          <TrustBar />
-        </div>
+        <TrustBar />
       )}
 
       {/* 2. Home Banner */}

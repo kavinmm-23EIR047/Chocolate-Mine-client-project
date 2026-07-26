@@ -475,24 +475,11 @@ export default function CustomCakeBrowse({
                                 <h3 className="text-[14px] sm:text-[15px] font-bold leading-tight break-words capitalize" style={{ color: 'var(--heading)' }}>
                                   {t.name}
                                 </h3>
-
-                                <div className="flex items-center gap-1 text-[12px] font-medium mb-1 flex-wrap" style={{ color: 'var(--muted)' }}>
-                                  <div className="flex items-center gap-0.5 font-bold text-green-500">
-                                    <Star size={13} fill={(t.rating || 0) > 0 ? "currentColor" : "none"} strokeWidth={2.5} />
-                                    <span>{(t.rating || 0) > 0 ? (t.rating || 0).toFixed(1) : '0'}</span>
-                                    <span className="font-normal text-[11px] ml-0.5" style={{ color: 'var(--muted)' }}>
-                                      ({t.numReviews === 1 ? '1 review' : `${t.numReviews || 0} reviews`})
-                                    </span>
+                                {t.description && (
+                                  <div className="text-[11px] font-medium mb-1 line-clamp-1" style={{ color: 'var(--muted)' }}>
+                                    {t.description}
                                   </div>
-                                  {t.description && (
-                                    <>
-                                      <span>•</span>
-                                      <div className="flex items-center gap-0.5">
-                                        <span className="capitalize text-[11px] line-clamp-1 leading-none">{t.description}</span>
-                                      </div>
-                                    </>
-                                  )}
-                                </div>
+                                )}
                               </div>
 
                               <div className="flex flex-col gap-1 text-[10px] mt-2">
@@ -623,23 +610,11 @@ export default function CustomCakeBrowse({
                                   {t.name}
                                 </h3>
 
-                                <div className="flex items-center gap-1 text-[12px] font-medium mb-1 flex-wrap" style={{ color: 'var(--muted)' }}>
-                                  <div className="flex items-center gap-0.5 font-bold text-green-500">
-                                    <Star size={13} fill={(t.rating || 0) > 0 ? "currentColor" : "none"} strokeWidth={2.5} />
-                                    <span>{(t.rating || 0) > 0 ? (t.rating || 0).toFixed(1) : '0'}</span>
-                                    <span className="font-normal text-[11px] ml-0.5" style={{ color: 'var(--muted)' }}>
-                                      ({t.numReviews === 1 ? '1 review' : `${t.numReviews || 0} reviews`})
-                                    </span>
+                                {t.description && (
+                                  <div className="text-[11px] font-medium mb-1 line-clamp-2 leading-snug" style={{ color: 'var(--muted)' }}>
+                                    {t.description}
                                   </div>
-                                  {t.description && (
-                                    <>
-                                      <span>•</span>
-                                      <div className="flex items-center gap-0.5">
-                                        <span className="capitalize text-[11px] line-clamp-2 leading-snug">{t.description}</span>
-                                      </div>
-                                    </>
-                                  )}
-                                </div>
+                                )}
                               </div>
                             </div>
 

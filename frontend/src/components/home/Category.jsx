@@ -113,7 +113,7 @@ export const CategoryCircles = ({ activeCategory, setActiveCategory }) => {
   if (loading) return null;
 
   return (
-    <section className="py-10 sm:py-14 lg:py-16 relative z-10 w-full overflow-hidden bg-[var(--background)] border-b border-[var(--border)]/30">
+    <section className="py-10 sm:py-14 lg:py-16 relative z-10 w-full bg-[var(--background)]">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* ── HEADER SECTION ── */}
@@ -155,8 +155,8 @@ export const CategoryCircles = ({ activeCategory, setActiveCategory }) => {
         {/* ── CATEGORY CIRCLES CAROUSEL ── */}
         <div
           ref={scrollRef}
-          className="flex overflow-x-auto gap-4 sm:gap-6 lg:gap-8 pb-4 pt-2 scroll-smooth [&::-webkit-scrollbar]:hidden snap-x snap-mandatory items-start"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          className="relative left-1/2 -translate-x-1/2 w-screen flex overflow-x-auto gap-4 sm:gap-6 lg:gap-8 pb-4 pt-2 px-4 sm:px-8 pr-20 scroll-smooth [&::-webkit-scrollbar]:hidden snap-x snap-mandatory items-start"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', scrollPaddingInline: '1rem' }}
         >
           {categories.map((cat, index) => {
             const isActive = activeCategory === cat.name;
@@ -175,9 +175,9 @@ export const CategoryCircles = ({ activeCategory, setActiveCategory }) => {
                     navigate(`/shop?category=${encodeURIComponent(cat.name)}`);
                   }
                 }}
-                className="snap-start shrink-0 flex flex-col items-center cursor-pointer select-none w-[110px] sm:w-[130px] md:w-[150px]"
+                className="snap-center shrink-0 flex flex-col items-center cursor-pointer select-none w-[110px] sm:w-[130px] md:w-[150px]"
               >
-                <div className={`w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full border border-[var(--border)]/40 bg-[var(--card)] shadow-sm overflow-hidden transition-transform duration-300 ${isActive ? 'scale-105 border-[var(--primary)]/70 shadow-md' : 'hover:scale-[1.03]'}`}>
+                <div className={`w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full border border-[var(--border)] bg-transparent shadow-sm overflow-hidden transition-transform duration-300 ${isActive ? 'scale-105 border-[var(--primary)] shadow-md' : 'hover:scale-[1.03]'}`}>
                   <img
                     src={categoryImageUrl}
                     alt={displayName}

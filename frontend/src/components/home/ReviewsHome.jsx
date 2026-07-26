@@ -141,7 +141,7 @@ const ReviewCard = ({ review, index }) => {
   }
 
   return (
-    <div className="bg-card dark:bg-[#1E0F0C] rounded-[2rem] p-6 md:p-8 border border-border/40 shadow-sm hover:shadow-premium hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between w-full h-[260px] md:h-[280px] relative select-none">
+    <div className="bg-card rounded-[2rem] p-6 md:p-8 border border-border/60 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between w-full h-[260px] md:h-[280px] relative select-none">
       {/* Background Watermark Quote */}
       <span className="absolute right-6 top-3 text-[5.5rem] font-serif font-black text-primary/5 dark:text-white/5 pointer-events-none select-none leading-none">“</span>
 
@@ -221,7 +221,7 @@ const ReviewsHome = () => {
   const totalReviews = stats?.totalReviews || 475;
 
   return (
-    <section className="py-16 md:py-24 w-full overflow-hidden relative bg-[#FAF5F2] dark:bg-[#120705] border-y border-[#E6D4CE] dark:border-[#2D1612] transition-colors duration-300">
+    <section className="py-16 md:py-24 w-full overflow-hidden relative bg-transparent border-y-0 transition-colors duration-300">
       
       {/* ─── BACKGROUND AMBIENT GLOWS ─── */}
       <div className="absolute top-12 left-1/4 w-[350px] h-[350px] bg-primary/5 rounded-full blur-[80px] pointer-events-none" />
@@ -238,7 +238,7 @@ const ReviewsHome = () => {
         
         {/* ─── CENTERED HEADER SECTION ─── */}
         <div className="text-center max-w-2xl mx-auto mb-12 md:mb-16">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-card dark:bg-[#1E0F0C] border border-border/50 shadow-sm mb-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-card border border-border/50 shadow-sm mb-4">
             <GoogleLogo size={14} />
             <span className="text-[10px] font-black uppercase tracking-widest text-muted">
               Official Google Reviews
@@ -254,7 +254,7 @@ const ReviewsHome = () => {
           </p>
 
           {/* Symmetrical Rating Summary Badge */}
-          <div className="inline-flex flex-wrap items-center justify-center gap-4 bg-card dark:bg-[#1E0F0C] px-6 py-3 rounded-full border border-border/40 shadow-sm">
+          <div className="inline-flex flex-wrap items-center justify-center gap-4 bg-card px-6 py-3 rounded-full border border-border/40 shadow-sm">
             <div className="flex items-center gap-1.5 border-r border-border/30 pr-4">
               <span className="text-xl md:text-2xl font-black text-heading leading-none">{avgRating}</span>
               <span className="text-[10px] font-bold text-muted">/ 5.0</span>
@@ -295,10 +295,10 @@ const ReviewsHome = () => {
           </Swiper>
           
           {/* Custom Navigation buttons (Desktop only) */}
-          <button className="swiper-button-prev-reviews absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 w-10 h-10 rounded-full bg-card dark:bg-[#1E0F0C] hover:bg-primary/5 text-heading flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-md border border-border/40 disabled:opacity-30 cursor-pointer hidden lg:flex">
+          <button className="swiper-button-prev-reviews absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 w-10 h-10 rounded-full bg-card hover:bg-primary/5 text-heading flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-md border border-border/40 disabled:opacity-30 cursor-pointer hidden lg:flex">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M15 18l-6-6 6-6" /></svg>
           </button>
-          <button className="swiper-button-next-reviews absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 w-10 h-10 rounded-full bg-card dark:bg-[#1E0F0C] hover:bg-primary/5 text-heading flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-md border border-border/40 disabled:opacity-30 cursor-pointer hidden lg:flex">
+          <button className="swiper-button-next-reviews absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 w-10 h-10 rounded-full bg-card hover:bg-primary/5 text-heading flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-md border border-border/40 disabled:opacity-30 cursor-pointer hidden lg:flex">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 18l6-6-6-6" /></svg>
           </button>
 
@@ -322,7 +322,7 @@ const ReviewsHome = () => {
             href={GOOGLE_MAPS_LINK}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full sm:flex-1 inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full border border-primary/20 hover:border-primary text-heading font-black text-xs uppercase tracking-wider transition-all duration-300 hover:bg-primary/5 bg-card dark:bg-[#1E0F0C] shadow-sm active:scale-[0.98] select-none text-center cursor-pointer"
+            className="w-full sm:flex-1 inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full border border-primary/20 hover:border-primary text-heading font-black text-xs uppercase tracking-wider transition-all duration-300 hover:bg-primary/5 bg-card shadow-sm active:scale-[0.98] select-none text-center cursor-pointer"
           >
             <ExternalLink size={14} className="text-muted" />
             <span>All Google Reviews</span>

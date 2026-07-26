@@ -399,7 +399,7 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg' })
     return (
       <motion.div
         layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={() => navigate(`/product/${product.slug}`)}
-        className="flex flex-row p-3 sm:p-4 pb-8 gap-3 sm:gap-4 items-stretch cursor-pointer w-full border-b transition-colors min-w-0"
+        className="menu-light-card flex flex-row p-3 sm:p-4 pb-8 gap-3 sm:gap-4 items-stretch cursor-pointer w-full border-b transition-colors min-w-0"
         style={{ background: 'var(--card)', borderColor: 'var(--border)' }}
       >
         <div className="flex flex-col flex-1 min-w-0 justify-between overflow-hidden">
@@ -413,7 +413,7 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg' })
             </div>
 
             {getDisplayCategory() && (
-              <span className="text-[11px] md:text-xs font-extrabold text-[#B59C94] uppercase tracking-wider mb-1 block">
+              <span className="text-[11px] md:text-xs font-extrabold uppercase tracking-wider mb-1 block opacity-90" style={{ color: 'var(--muted)' }}>
                 {getDisplayCategory()}
               </span>
             )}
@@ -515,7 +515,7 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg' })
   return (
     <motion.div
       layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={() => navigate(`/product/${product.slug}`)}
-      className={`group w-full h-full min-w-0 flex flex-col justify-between cursor-pointer transition-all duration-200 p-3 sm:p-4 pb-8 ${cardStyleMap[cardStyle]}`}
+      className={`menu-light-card group w-full h-full min-w-0 flex flex-col justify-between cursor-pointer transition-all duration-200 p-3 sm:p-4 pb-8 ${cardStyleMap[cardStyle]}`}
       style={{ background: 'var(--card)', border: '1px solid var(--border)' }}
     >
       <div>
@@ -569,7 +569,7 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg' })
           </div>
 
           {getDisplayCategory() && (
-            <span className="text-[11px] md:text-xs font-extrabold text-[#B59C94] uppercase tracking-wider mb-1 block">
+            <span className="text-[11px] md:text-xs font-extrabold uppercase tracking-wider mb-1 block opacity-90" style={{ color: 'var(--muted)' }}>
               {getDisplayCategory()}
             </span>
           )}

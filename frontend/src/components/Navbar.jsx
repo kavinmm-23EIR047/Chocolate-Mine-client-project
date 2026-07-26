@@ -82,14 +82,14 @@ const Navbar = () => {
               <div className="relative shrink-0" ref={locationDropdownRef}>
                 <button
                   onClick={() => setIsLocationOpen(!isLocationOpen)}
-                  className="flex items-center gap-2 px-2.5 py-1 rounded-xl border border-border/60 bg-surface hover:border-primary/30 transition-all duration-200 min-w-[130px] tv:min-w-[170px]"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-[var(--border)] bg-[var(--card)] hover:border-[var(--primary)] transition-all duration-200 shadow-sm min-w-[140px] tv:min-w-[180px] cursor-pointer"
                 >
-                  <MapPin size={13} className="text-primary shrink-0" />
-                  <div className="flex flex-col items-start">
-                    <span className="text-[9px] font-bold text-muted uppercase tracking-widest leading-none">Deliver to</span>
-                    <span className="text-[11px] font-black text-heading uppercase tracking-wide flex items-center gap-1 leading-tight mt-0.5">
+                  <MapPin size={15} className="text-[var(--primary)] shrink-0" />
+                  <div className="flex flex-col items-start text-left">
+                    <span className="text-[9px] font-black text-[var(--primary)] uppercase tracking-widest leading-none">Deliver to</span>
+                    <span className="text-[11px] font-black text-[var(--heading)] uppercase tracking-wide flex items-center gap-1 leading-tight mt-0.5">
                       {deliveryCity === 'pan india' ? 'PAN INDIA' : (deliveryCity?.toUpperCase() || 'SELECT CITY')}
-                      <ChevronDown size={10} className={`transition-transform duration-200 ${isLocationOpen ? 'rotate-180' : ''}`} />
+                      <ChevronDown size={11} className={`transition-transform duration-200 text-[var(--primary)] ${isLocationOpen ? 'rotate-180' : ''}`} />
                     </span>
                   </div>
                 </button>
@@ -97,12 +97,12 @@ const Navbar = () => {
                   {isLocationOpen && (
                     <motion.div
                       initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.15 }}
-                      className="absolute top-full left-0 mt-1 w-44 bg-card rounded-xl shadow-xl border border-border/50 overflow-hidden z-50"
+                      className="absolute top-full left-0 mt-1.5 w-48 bg-[var(--card)] rounded-2xl shadow-xl border border-[var(--border)] overflow-hidden z-50 p-1"
                     >
                       {['coimbatore', 'pan india'].map((city) => (
                         <button
                           key={city} onClick={() => { setDeliveryCity(city); setIsLocationOpen(false); }}
-                          className="w-full text-left px-4 py-1.5 text-[11px] font-black uppercase tracking-wider hover:bg-primary/8 text-heading transition-colors"
+                          className="w-full text-left px-4 py-2 text-[11px] font-black uppercase tracking-wider hover:bg-[var(--primary)] hover:text-[var(--button-text)] rounded-xl text-[var(--heading)] transition-colors cursor-pointer"
                         >
                           {city === 'pan india' ? 'PAN INDIA' : 'COIMBATORE'}
                         </button>
@@ -116,13 +116,13 @@ const Navbar = () => {
             {/* Desktop Search Bar */}
             <div className="flex flex-1 max-w-md xl:max-w-xl tv:max-w-3xl mx-auto cursor-pointer px-3" onClick={() => setIsSearchOverlayOpen(true)}>
               <div className="relative w-full">
-                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-heading/70" />
+                <Search size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--primary)]" />
                 <input
                   type="text" readOnly placeholder="Search for cakes, desserts and more..."
-                  className="w-full bg-surface border border-border/60 text-foreground pl-10 pr-10 py-1.5 rounded-full outline-none text-xs cursor-pointer"
+                  className="w-full bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--body)] font-medium pl-11 pr-11 py-2 rounded-full outline-none text-xs sm:text-sm shadow-sm hover:border-[var(--primary)] transition-all cursor-pointer"
                 />
-                <button className="absolute right-3.5 top-1/2 -translate-y-1/2 text-heading/60 hover:text-heading transition-colors">
-                  <SlidersHorizontal size={15} />
+                <button className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--primary)] hover:scale-110 transition-transform p-1">
+                  <SlidersHorizontal size={16} />
                 </button>
               </div>
             </div>
@@ -199,23 +199,23 @@ const Navbar = () => {
             <div className="flex justify-start relative mt-0.5" ref={mobileLocationDropdownRef}>
               <button
                 onClick={() => setIsLocationOpen(!isLocationOpen)}
-                className="flex items-center gap-2 px-4 py-2 rounded-full border border-border bg-transparent text-heading transition-colors text-[12px] font-black tracking-wider uppercase"
+                className="flex items-center gap-2 px-4 py-2 rounded-full border border-[var(--border)] bg-[var(--card)] text-[var(--heading)] transition-all text-[12px] font-black tracking-wider uppercase shadow-sm cursor-pointer"
               >
-                <MapPin size={15} className="text-heading" />
+                <MapPin size={15} className="text-[var(--primary)]" />
                 <span>{deliveryCity === 'pan india' ? 'PAN INDIA' : (deliveryCity?.toUpperCase() || 'COIMBATORE')}</span>
-                <ChevronDown size={14} className="text-heading transition-transform duration-200" style={{ transform: isLocationOpen ? 'rotate(180deg)' : 'none' }} />
+                <ChevronDown size={14} className="text-[var(--primary)] transition-transform duration-200" style={{ transform: isLocationOpen ? 'rotate(180deg)' : 'none' }} />
               </button>
 
               <AnimatePresence>
                 {isLocationOpen && (
                   <motion.div
                     initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.15 }}
-                    className="absolute top-full mt-1.5 left-0 w-48 bg-card rounded-xl shadow-xl border border-border/50 overflow-hidden z-[100]"
+                    className="absolute top-full mt-1.5 left-0 w-48 bg-[var(--card)] rounded-2xl shadow-xl border border-[var(--border)] overflow-hidden z-[100] p-1"
                   >
                     {['coimbatore', 'pan india'].map((city) => (
                       <button
                         key={city} onClick={() => { setDeliveryCity(city); setIsLocationOpen(false); }}
-                        className="w-full text-left px-5 py-3 text-[11px] font-black uppercase tracking-wider hover:bg-primary/8 text-heading transition-colors"
+                        className="w-full text-left px-5 py-3 text-[11px] font-black uppercase tracking-wider hover:bg-[var(--primary)] hover:text-[var(--button-text)] rounded-xl text-[var(--heading)] transition-colors cursor-pointer"
                       >
                         {city === 'pan india' ? 'PAN INDIA' : 'COIMBATORE'}
                       </button>
@@ -225,18 +225,18 @@ const Navbar = () => {
               </AnimatePresence>
             </div>
 
-            {/* Themed Search Pill with Contrast against bg-navbar */}
+            {/* Themed Search Pill with High Contrast */}
             <div
-              className="relative w-full mt-0.5 cursor-pointer flex items-center pl-12 pr-12 py-3 rounded-full bg-card border border-border/60 shadow-sm min-h-[48px] select-none"
+              className="relative w-full mt-0.5 cursor-pointer flex items-center pl-12 pr-12 py-3 rounded-full bg-[var(--card)] border border-[var(--border)] shadow-sm min-h-[48px] select-none hover:border-[var(--primary)] transition-all"
               onClick={() => setIsSearchOverlayOpen(true)}
             >
-              <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
+              <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--primary)]" />
 
-              <span className="text-muted/60 text-sm font-medium truncate flex-1 block">
+              <span className="text-[var(--body)] font-medium text-sm truncate flex-1 block">
                 Search cakes, desserts and more...
               </span>
 
-              <button className="absolute right-2 top-1/2 -translate-y-1/2 text-muted hover:text-heading transition-colors p-1 flex items-center justify-center">
+              <button className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--primary)] hover:scale-110 transition-transform p-1 flex items-center justify-center">
                 <SlidersHorizontal size={18} />
               </button>
             </div>
@@ -245,7 +245,7 @@ const Navbar = () => {
         </div>
 
         {/* BOTTOM DESKTOP NAVIGATION LINKS */}
-        <div className="hidden lg:flex items-center justify-start gap-5 xl:gap-7 tv:gap-10 py-0.5 border-t border-border/10 bg-navbar responsive-container relative">
+        <div className="hidden lg:flex items-center justify-start gap-5 xl:gap-7 tv:gap-10 py-0.5 bg-navbar responsive-container relative">
           <MegaMenu />
           <CustomCakeMenu />
           <Link to="/shop?offers=true" className="text-sm font-black uppercase tracking-widest text-heading hover:text-primary transition-colors py-1.5 flex items-center gap-1">

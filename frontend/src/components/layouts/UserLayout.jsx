@@ -7,6 +7,7 @@ import MobileBottomNav from '../layout/MobileBottomNav';
 import PureVegBadge from '../ui/PureVegBadge';
 import NotificationPrompt from '../ui/NotificationPrompt';
 import NotificationBanner from '../ui/NotificationBanner';
+import CocoaLeavesBackground from '../ui/CocoaLeavesBackground';
 import { useAuth } from '../../context/AuthContext';
 
 const UserLayout = () => {
@@ -20,14 +21,16 @@ const UserLayout = () => {
   const showBanner = user && (!hasPermission || !hasFcmToken);
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background relative overflow-x-hidden">
+      {/* ── COCOA LEAF BACKGROUND WATERMARKS (LIGHT THEME: DARK BROWN, DARK THEME: LIGHT BEIGE) ── */}
+      <CocoaLeavesBackground />
       <header className="sticky top-0 z-[200] w-full">
         <NotificationBanner />
         <Navbar />
       </header>
 
       {/* ── RESPONSIVE INFO BANNER ── */}
-      <div className="bg-[#4E2820] dark:bg-[#E8D3CB] py-1 px-4 overflow-hidden border-b border-border/10 transition-colors duration-300">
+      <div className="bg-[#4E2820] dark:bg-[#E8D3CB] py-1 px-4 overflow-hidden transition-colors duration-300">
 
         {/* DESKTOP/TABLET LAYOUT (md and up) */}
         <div className="hidden md:flex items-center justify-between responsive-container">
