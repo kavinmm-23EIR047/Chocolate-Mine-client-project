@@ -112,7 +112,7 @@ const ProductForm = () => {
             name: p.name,
             description: p.description,
             shortDescription: p.shortDescription || '',
-            price: p.price || '',
+            price: p.price !== undefined && p.price !== null ? p.price : '',
             offerPrice: p.offerPrice || '',
             category: Array.isArray(p.category) ? p.category.map(c => typeof c === 'string' ? c.toLowerCase() : c) : (p.category ? [p.category.toLowerCase()] : []),
             subCategory: p.subCategory ? p.subCategory.toLowerCase() : '',
@@ -124,7 +124,7 @@ const ProductForm = () => {
             bestseller: p.bestseller || false,
             isActive: p.isActive !== false,
             hasVariants: p.hasVariants || false,
-            hasWeights: p.hasWeights || (Array.isArray(p.weights) && p.weights.length > 0) || (Array.isArray(p.weightPrices) && p.weightPrices.length > 0) || (Array.isArray(p.category) && p.category.some(c => typeof c === 'string' && (c.toLowerCase().includes('bento') || c.toLowerCase().includes('cake')))),
+            hasWeights: p.hasWeights !== undefined ? Boolean(p.hasWeights) : ((Array.isArray(p.weights) && p.weights.length > 0) || (Array.isArray(p.weightPrices) && p.weightPrices.length > 0)),
             hasCustomWeights: p.hasCustomWeights || (Array.isArray(p.customWeightPrices) && p.customWeightPrices.length > 0),
             allowCustomFlavor: p.allowCustomFlavor || false,
             allowCustomWeight: p.allowCustomWeight || false,
@@ -435,7 +435,7 @@ const ProductForm = () => {
         } else if (key === 'stock') {
           // Send stock as boolean
           data.append('stock', formData.stock ? 'true' : 'false');
-        } else if (key === 'hasVariants' || key === 'allowCustomFlavor' || key === 'allowCustomWeight' || key === 'hasCustomWeights') {
+        } else if (key === 'hasVariants' || key === 'allowCustomFlavor' || key === 'allowCustomWeight' || key === 'hasCustomWeights' || key === 'hasWeights') {
           // Skip these boolean fields here - they will be handled explicitly
           return;
         } else {
@@ -443,15 +443,16 @@ const ProductForm = () => {
         }
       });
       
+      data.set('hasWeights', formData.hasWeights ? 'true' : 'false');
       data.set('hasCustomWeights', formData.hasCustomWeights ? 'true' : 'false');
       data.set('customWeightPrices', JSON.stringify(customWeightPrices));
 
-      // Auto-set base price from starting custom weight price if left blank
+      // Auto-set base price from starting custom weight price if left blank or 0
       let priceVal = formData.price;
-      if ((priceVal === '' || priceVal === null || priceVal === undefined) && formData.hasCustomWeights && customWeightPrices.length > 0) {
+      if ((priceVal === '' || priceVal === null || priceVal === undefined || priceVal === 0 || priceVal === '0') && formData.hasCustomWeights && customWeightPrices.length > 0) {
         priceVal = customWeightPrices[0].price;
-        data.set('price', String(priceVal));
       }
+      data.set('price', String(priceVal !== '' && priceVal !== null && priceVal !== undefined ? priceVal : 0));
 
       // Add variant data for cake category
       if (formData.category.some(c => c.includes('bento'))) {

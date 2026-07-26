@@ -53,11 +53,26 @@ const getFlavorPrice = (flavor) => {
   return 0;
 };
 
+const normalizeWeightKey = (weightStr) => {
+  if (!weightStr) return '';
+  const w = String(weightStr).toLowerCase().replace(/\s+/g, '');
+  if (w === '500g' || w === '0.5kg' || w === '.5kg') return '0.5kg';
+  if (w === '250g' || w === '0.25kg' || w === '.25kg') return '0.25kg';
+  if (w === '750g' || w === '0.75kg' || w === '.75kg') return '0.75kg';
+  if (w === '1kg' || w === '1.0kg') return '1kg';
+  if (w === '1.5kg') return '1.5kg';
+  if (w === '2kg' || w === '2.0kg') return '2kg';
+  if (w === '2.5kg') return '2.5kg';
+  if (w === '3kg' || w === '3.0kg') return '3kg';
+  return w;
+};
+
 const getWeightMultiplier = (weightStr) => {
   if (!weightStr) return 1;
   const w = String(weightStr).toLowerCase().replace(/\s+/g, '');
-  if (w.includes('250g')) return 1;
-  if (w.includes('500g')) return 1;
+  if (w.includes('250g') || w.includes('0.25kg')) return 0.5;
+  if (w.includes('500g') || w.includes('0.5kg')) return 1;
+  if (w.includes('750g') || w.includes('0.75kg')) return 1.5;
   if (w.includes('1.5kg')) return 3;
   if (w.includes('2.5kg')) return 5;
   if (w.includes('1kg')) return 2;
@@ -173,23 +188,34 @@ const ProductDetails = () => {
   // ─── INITIALIZE SELECTIONS ─────────────────────────────
   useEffect(() => {
     if (product) {
-      const hasCustom = product.hasCustomWeights || (Array.isArray(product.customWeightPrices) && product.customWeightPrices.length > 0);
+      const hasCustom = Boolean(product.hasCustomWeights || (Array.isArray(product.customWeightPrices) && product.customWeightPrices.length > 0));
+      const hasStandard = product.hasWeights !== undefined ? Boolean(product.hasWeights) : (!hasCustom && isCake);
       const isBento = (Array.isArray(product?.category) ? product.category.some(c => typeof c === 'string' && c.toLowerCase().includes('bento')) : (product?.category || '').toLowerCase().includes('bento')) || product?.cakeType?.toLowerCase().includes('bento');
       
-      const defaultWeight = hasCustom && product.customWeightPrices?.[0]?.weight
-        ? product.customWeightPrices[0].weight
-        : (isBento ? '250g' : '500g');
-      setSelectedWeight(defaultWeight);
+      let defaultWeight = null;
+      if (hasCustom && product.customWeightPrices?.[0]?.weight) {
+        defaultWeight = product.customWeightPrices[0].weight;
+      } else if (hasStandard) {
+        defaultWeight = isBento ? '250g' : '500g';
+      }
+
+      if (defaultWeight) {
+        setSelectedWeight(defaultWeight);
+      }
 
       let initialWeightPrice = Number(product.price || 0);
-      if (hasCustom && product.customWeightPrices?.[0]?.price !== undefined) {
-        initialWeightPrice = Number(product.customWeightPrices[0].price);
-      } else {
+      const customMatch = hasCustom && defaultWeight
+        ? product.customWeightPrices?.find(c => normalizeWeightKey(c.weight) === normalizeWeightKey(defaultWeight))
+        : null;
+
+      if (customMatch && customMatch.price !== undefined && customMatch.price !== null) {
+        initialWeightPrice = Number(customMatch.price);
+      } else if (defaultWeight) {
         const mult = getWeightMultiplier(defaultWeight);
         initialWeightPrice = initialWeightPrice * mult;
       }
 
-      if (isCake || hasCustom) {
+      if (isCake || hasCustom || hasStandard) {
         setSelectedStock(product.stock !== undefined ? product.stock : true);
 
         if (product.flavors && product.flavors.length > 0) {
@@ -234,8 +260,9 @@ const ProductDetails = () => {
     setCustomFlavor('');
 
     const flavorPrice = getFlavorPrice(flavor);
+    const targetNorm = normalizeWeightKey(selectedWeight);
     const customMatch = (product?.hasCustomWeights || (Array.isArray(product?.customWeightPrices) && product.customWeightPrices.length > 0)) && selectedWeight
-      ? product?.customWeightPrices?.find(c => String(c.weight).toLowerCase().trim() === String(selectedWeight).toLowerCase().trim())
+      ? product?.customWeightPrices?.find(c => normalizeWeightKey(c.weight) === targetNorm)
       : null;
 
     if (customMatch && customMatch.price !== undefined && customMatch.price !== null) {
@@ -257,8 +284,9 @@ const ProductDetails = () => {
     setCustomWeight('');
 
     const flavorPrice = getFlavorPrice(selectedFlavor);
+    const targetNorm = normalizeWeightKey(weight);
     const customMatch = (product?.hasCustomWeights || (Array.isArray(product?.customWeightPrices) && product.customWeightPrices.length > 0))
-      ? product?.customWeightPrices?.find(c => String(c.weight).toLowerCase().trim() === String(weight).toLowerCase().trim())
+      ? product?.customWeightPrices?.find(c => normalizeWeightKey(c.weight) === targetNorm)
       : null;
 
     if (customMatch && customMatch.price !== undefined && customMatch.price !== null) {

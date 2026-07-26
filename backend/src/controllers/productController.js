@@ -183,11 +183,16 @@ exports.getProducts = asyncHandler(async (req, res) => {
         defaultFlavorPrice = 380;
       }
 
+      let baseP = Number(p.price || 0);
+      if (baseP === 0 && (p.hasCustomWeights || (Array.isArray(p.customWeightPrices) && p.customWeightPrices.length > 0)) && p.customWeightPrices?.[0]?.price !== undefined) {
+        baseP = Number(p.customWeightPrices[0].price);
+      }
+
       let sellingPrice;
       if (p.hasVariants && p.variants && p.variants.length > 0) {
         sellingPrice = p.variants[0].price;
       } else {
-        sellingPrice = ((p.offerPrice && p.offerPrice < p.price) ? p.offerPrice : p.price) + defaultFlavorPrice;
+        sellingPrice = ((p.offerPrice && p.offerPrice > 0 && p.offerPrice < baseP) ? p.offerPrice : baseP) + defaultFlavorPrice;
       }
 
       return {
@@ -250,11 +255,16 @@ exports.getProducts = asyncHandler(async (req, res) => {
       defaultFlavorPrice = 380;
     }
     
+    let baseP = Number(p.price || 0);
+    if (baseP === 0 && (p.hasCustomWeights || (Array.isArray(p.customWeightPrices) && p.customWeightPrices.length > 0)) && p.customWeightPrices?.[0]?.price !== undefined) {
+      baseP = Number(p.customWeightPrices[0].price);
+    }
+
     let sellingPrice;
     if (p.hasVariants && p.variants && p.variants.length > 0) {
       sellingPrice = p.variants[0].price;
     } else {
-      sellingPrice = ((p.offerPrice && p.offerPrice < p.price) ? p.offerPrice : p.price) + defaultFlavorPrice;
+      sellingPrice = ((p.offerPrice && p.offerPrice > 0 && p.offerPrice < baseP) ? p.offerPrice : baseP) + defaultFlavorPrice;
     }
 
     return {

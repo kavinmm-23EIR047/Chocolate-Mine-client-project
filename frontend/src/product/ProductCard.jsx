@@ -261,13 +261,21 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg' })
     'rounded-xl': 'rounded-xl',
   };
 
-  const baseMrp = (activeVariant ? activeVariant.price : Number(product?.price || 0)) + defaultFlavorPrice;
-  const baseOfferPrice = (!activeVariant && product?.offerPrice ? Number(product.offerPrice) + defaultFlavorPrice : null);
+  const startingCustomPrice = (product?.hasCustomWeights || (Array.isArray(product?.customWeightPrices) && product.customWeightPrices.length > 0)) && product.customWeightPrices?.[0]?.price !== undefined
+    ? Number(product.customWeightPrices[0].price)
+    : 0;
+
+  const effectivePrice = Number(product?.price || 0) > 0 
+    ? Number(product.price) 
+    : (startingCustomPrice > 0 ? startingCustomPrice : Number(product?.price || 0));
+
+  const baseMrp = (activeVariant ? activeVariant.price : effectivePrice) + defaultFlavorPrice;
+  const baseOfferPrice = (!activeVariant && product?.offerPrice && Number(product.offerPrice) > 0 ? Number(product.offerPrice) + defaultFlavorPrice : null);
 
   const hasOffer = baseOfferPrice && baseOfferPrice < baseMrp;
   const displayPrice = hasOffer ? baseOfferPrice : baseMrp;
   const mrp = baseMrp;
-  const discountPct = hasOffer ? Math.round(((mrp - displayPrice) / mrp) * 100) : 0;
+  const discountPct = (hasOffer && mrp > 0) ? Math.round(((mrp - displayPrice) / mrp) * 100) : 0;
 
   const coupon = product?.coupon;
   const isCouponActive = coupon?.enabled && coupon?.code && (!coupon.endDate || new Date(coupon.endDate) > new Date());
