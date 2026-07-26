@@ -13,7 +13,8 @@ const Lottie = LottieImport.default || LottieImport;
 const SearchOverlay = ({ isOpen, onClose }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
-  const [bestsellers, setBestsellers] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
+  const [activeTab, setActiveTab] = useState('bestsellers'); // 'bestsellers' | 'special' | 'offers'
   const [trending, setTrending] = useState([]);
   const [loading, setLoading] = useState(false);
   const [recentSearches, setRecentSearches] = useState([]);
@@ -23,7 +24,7 @@ const SearchOverlay = ({ isOpen, onClose }) => {
   useEffect(() => {
     if (isOpen) {
       loadRecentSearches();
-      fetchBestsellers();
+      fetchBackendProducts();
       fetchTrendingCategories();
     }
   }, [isOpen]);
@@ -37,19 +38,36 @@ const SearchOverlay = ({ isOpen, onClose }) => {
     }
   };
 
-  // Fetch Bestsellers from Backend
-  const fetchBestsellers = async () => {
+  // Fetch Real Backend Products & Custom Cake Themes
+  const fetchBackendProducts = async () => {
     try {
-      const res = await productService.getBestsellers({ limit: 4 });
-      setBestsellers(res.data?.data || res.data || []);
+      const [prodRes, themesRes] = await Promise.all([
+        api.get('/products', { params: { limit: 100 } }).catch(() => ({ data: [] })),
+        api.get('/custom-cakes/themes').catch(() => ({ data: [] }))
+      ]);
+
+      const rawProds = prodRes.data?.data || prodRes.data || [];
+      const rawThemes = themesRes.data?.data || themesRes.data || [];
+
+      const mappedThemes = Array.isArray(rawThemes) ? rawThemes.map(t => ({
+        _id: t._id,
+        id: t._id,
+        name: t.name,
+        image: (t.flavors && t.flavors[0] && t.flavors[0].image) || t.image || t.colors?.[0]?.images?.tier1,
+        price: t.basePrice || 1120,
+        category: ['Custom Cakes'],
+        isCustom: true,
+        isTheme: true,
+        bestseller: true,
+        featured: true
+      })) : [];
+
+      const prodsList = Array.isArray(rawProds) ? rawProds : [];
+      const combined = [...prodsList, ...mappedThemes];
+      setAllProducts(combined);
     } catch (err) {
-      // Fallback to featured if bestsellers endpoint fails
-      try {
-        const featRes = await productService.getFeatured({ limit: 4 });
-        setBestsellers(featRes.data?.data || featRes.data || []);
-      } catch (e) {
-        console.error('Failed to fetch recommended products:', e);
-      }
+      console.error('Failed to fetch backend products:', err);
+      setAllProducts([]);
     }
   };
 
@@ -67,6 +85,28 @@ const SearchOverlay = ({ isOpen, onClose }) => {
     } catch (err) {
       setTrending(['Truffle Cakes', 'Bento Cakes', 'Jar Cakes', 'Eggless Specials']);
     }
+  };
+
+  // Filter backend products based on active tab
+  const getTabProducts = () => {
+    if (!allProducts || allProducts.length === 0) return [];
+    
+    if (activeTab === 'offers') {
+      const offers = allProducts.filter(p => p.offerPrice && Number(p.offerPrice) > 0 && Number(p.offerPrice) < Number(p.price));
+      if (offers.length > 0) return offers.slice(0, 4);
+      const discounted = allProducts.filter(p => p.coupon?.enabled || p.discountPct > 0);
+      return discounted.length > 0 ? discounted.slice(0, 4) : allProducts.filter(p => !p.isCustom).slice(0, 4);
+    }
+
+    if (activeTab === 'special') {
+      const special = allProducts.filter(p => p.isCustom || p.isTheme || p.featured || (Array.isArray(p.category) ? p.category.some(c => typeof c === 'string' && c.toLowerCase().includes('cake')) : String(p.category || '').toLowerCase().includes('cake')));
+      return special.length > 0 ? special.slice(0, 4) : allProducts.slice(0, 4);
+    }
+
+    // Bestsellers default: prioritize cake products and custom themes
+    const bests = allProducts.filter(p => p.bestseller || p.isBestseller || p.isCustom);
+    const cakesBests = bests.filter(p => p.isCustom || (Array.isArray(p.category) ? p.category.some(c => typeof c === 'string' && c.toLowerCase().includes('cake')) : String(p.category || '').toLowerCase().includes('cake')));
+    return cakesBests.length > 0 ? cakesBests.slice(0, 4) : (bests.length > 0 ? bests.slice(0, 4) : allProducts.slice(0, 4));
   };
 
   // Debounced Real-time Search
@@ -141,6 +181,8 @@ const SearchOverlay = ({ isOpen, onClose }) => {
     localStorage.removeItem('recentSearches');
     setRecentSearches([]);
   };
+
+  const tabProducts = getTabProducts();
 
   return (
     <AnimatePresence>
@@ -269,7 +311,7 @@ const SearchOverlay = ({ isOpen, onClose }) => {
                   </div>
                 </div>
 
-                {/* MAIN SECTION: Dynamic Backend Results / Bestsellers */}
+                {/* MAIN SECTION: Dynamic Backend Results / Tabbed Showcase */}
                 <div className="lg:col-span-8 order-1 lg:order-2">
                   {query.trim().length > 0 ? (
                     <div className="space-y-5">
@@ -306,7 +348,7 @@ const SearchOverlay = ({ isOpen, onClose }) => {
                                 key={p._id?.$oid || p._id}
                                 onClick={() => {
                                   saveSearchTerm(query);
-                                  navigate(`/product/${p.slug}`);
+                                  navigate(`/product/${p.slug || p._id}`);
                                   onClose();
                                 }}
                                 className="flex items-center gap-4 p-3.5 bg-[var(--card)] rounded-2xl border border-[var(--border)] hover:border-[var(--primary)] cursor-pointer transition-all group shadow-sm hover:shadow-md relative overflow-hidden"
@@ -340,36 +382,95 @@ const SearchOverlay = ({ isOpen, onClose }) => {
                       )}
                     </div>
                   ) : (
-                    /* Default Backend Recommended / Bestseller Grid */
-                    <div className="space-y-8 animate-in fade-in duration-500">
-                      <div className="flex items-center justify-between border-b border-[var(--border)] pb-3">
-                        <h2 className="text-xs font-black text-[var(--primary)] uppercase tracking-widest">Bestsellers & Recommended</h2>
-                        <Link to="/shop" onClick={onClose} className="flex items-center gap-1.5 text-xs font-bold text-[var(--muted)] hover:text-[var(--primary)] uppercase tracking-wider transition-all group">
+                    /* Default Backend Recommended / Bestseller / Offers Grid */
+                    <div className="space-y-6 animate-in fade-in duration-500">
+                      {/* TAB SELECTOR HEADER */}
+                      <div className="flex items-center justify-between border-b border-[var(--border)] pb-3 flex-wrap gap-3">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <button
+                            onClick={() => setActiveTab('bestsellers')}
+                            className={`px-3.5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
+                              activeTab === 'bestsellers'
+                                ? 'bg-[var(--primary)] text-[var(--button-text)] shadow-sm'
+                                : 'bg-[var(--card)] border border-[var(--border)] text-[var(--muted)] hover:text-[var(--heading)]'
+                            }`}
+                          >
+                            🔥 Bestsellers
+                          </button>
+                          <button
+                            onClick={() => setActiveTab('special')}
+                            className={`px-3.5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
+                              activeTab === 'special'
+                                ? 'bg-[var(--primary)] text-[var(--button-text)] shadow-sm'
+                                : 'bg-[var(--card)] border border-[var(--border)] text-[var(--muted)] hover:text-[var(--heading)]'
+                            }`}
+                          >
+                            🎂 Special Cakes
+                          </button>
+                          <button
+                            onClick={() => setActiveTab('offers')}
+                            className={`px-3.5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
+                              activeTab === 'offers'
+                                ? 'bg-[var(--primary)] text-[var(--button-text)] shadow-sm'
+                                : 'bg-[var(--card)] border border-[var(--border)] text-[var(--muted)] hover:text-[var(--heading)]'
+                            }`}
+                          >
+                            ⚡ Offer Cakes
+                          </button>
+                        </div>
+
+                        <Link
+                          to={activeTab === 'offers' ? '/shop?offers=true' : (activeTab === 'bestsellers' ? '/shop?bestseller=true' : '/shop')}
+                          onClick={onClose}
+                          className="flex items-center gap-1.5 text-xs font-bold text-[var(--muted)] hover:text-[var(--primary)] uppercase tracking-wider transition-all group"
+                        >
                           Browse Shop <ShoppingBag size={14} className="group-hover:scale-110 transition-transform" />
                         </Link>
                       </div>
 
+                      {/* PRODUCT GRID */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        {bestsellers.length > 0 ? (
-                          bestsellers.map((p) => (
-                            <div
-                              key={p._id?.$oid || p._id}
-                              onClick={() => {
-                                navigate(`/product/${p.slug}`);
-                                onClose();
-                              }}
-                              className="group cursor-pointer"
-                            >
-                              <div className="relative aspect-[16/10] rounded-2xl overflow-hidden shadow-md mb-3 border border-[var(--border)] bg-[var(--card)]">
-                                <ImageWithSkeleton src={p.image} alt={p.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" containerClassName="w-full h-full" />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-70 group-hover:opacity-85 transition-opacity" />
-                                <div className="absolute bottom-3 left-3.5 right-3.5">
-                                  <span className="px-2 py-0.5 bg-[var(--accent)] text-[#120806] text-[9px] font-black uppercase tracking-widest rounded-md mb-1.5 inline-block">Best Seller</span>
-                                  <p className="text-sm font-extrabold text-white leading-tight uppercase tracking-tight line-clamp-1">{p.name}</p>
+                        {tabProducts.length > 0 ? (
+                          tabProducts.map((p) => {
+                            const discountPct = p.offerPrice && p.price ? Math.round(((p.price - p.offerPrice) / p.price) * 100) : 0;
+                            const badgeText = activeTab === 'offers'
+                              ? `${discountPct}% OFF`
+                              : (activeTab === 'special' ? 'Special Cake' : 'Best Seller');
+
+                            return (
+                              <div
+                                key={p._id?.$oid || p._id}
+                                onClick={() => {
+                                  navigate(`/product/${p.slug || p._id}`);
+                                  onClose();
+                                }}
+                                className="group cursor-pointer"
+                              >
+                                <div className="relative aspect-[16/10] rounded-2xl overflow-hidden shadow-md mb-2.5 border border-[var(--border)] bg-[var(--card)]">
+                                  <ImageWithSkeleton src={p.image} alt={p.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" containerClassName="w-full h-full" />
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent opacity-75 group-hover:opacity-90 transition-opacity" />
+                                  <div className="absolute bottom-3 left-3.5 right-3.5 flex items-end justify-between gap-2">
+                                    <div className="min-w-0 flex-1">
+                                      <span className="px-2 py-0.5 bg-[var(--accent)] text-[#120806] text-[9px] font-black uppercase tracking-widest rounded-md mb-1 inline-block">
+                                        {badgeText}
+                                      </span>
+                                      <p className="text-sm font-extrabold text-white leading-tight uppercase tracking-tight line-clamp-1">{p.name}</p>
+                                    </div>
+                                    <div className="text-right shrink-0">
+                                      <span className="text-sm font-black text-white block">
+                                        ₹{p.offerPrice || p.price}
+                                      </span>
+                                      {p.offerPrice && p.offerPrice < p.price && (
+                                        <span className="text-[10px] line-through text-white/60 block">
+                                          ₹{p.price}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          ))
+                            );
+                          })
                         ) : (
                           Array(4).fill(0).map((_, i) => (
                             <div key={i} className="aspect-[16/10] rounded-2xl bg-[var(--card)] animate-pulse" />
