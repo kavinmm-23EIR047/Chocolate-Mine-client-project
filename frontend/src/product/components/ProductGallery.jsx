@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, Sparkles, RotateCcw, ShieldCheck, Cake, X, ZoomIn } from 'lucide-react';
 import ImageWithSkeleton from '../../components/ui/ImageWithSkeleton';
+import { getOptimizedCloudinaryUrl } from '../../utils/cloudinary';
 
 const ImagePlaceholder = () => (
   <div className="w-full h-full flex flex-col items-center justify-center bg-card-soft group-hover:bg-muted/10 transition-colors duration-500 rounded-[2rem] lg:rounded-[2.5rem]">
@@ -64,6 +65,7 @@ const ProductGallery = ({
                 alt={product?.name || 'Product Image'}
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 fallback={<ImagePlaceholder />}
+                imageWidth={900}
               />
             </motion.div>
           )}
@@ -118,7 +120,7 @@ const ProductGallery = ({
                 displayImage === img ? 'border-primary shadow-md scale-95' : 'border-border hover:border-primary/50 opacity-80'
               }`}
             >
-              <ImageWithSkeleton src={img} alt={`View Variant ${idx + 1}`} className="w-full h-full object-cover" showSparkles={false} />
+              <ImageWithSkeleton src={img} alt={`View Variant ${idx + 1}`} className="w-full h-full object-cover" showSparkles={false} imageWidth={200} />
             </button>
           ))}
         </div>
@@ -175,7 +177,7 @@ const ProductGallery = ({
               className="relative w-full max-w-md sm:max-w-lg max-h-[78vh] sm:max-h-[82vh] aspect-[3/4] sm:aspect-[9/16] rounded-2xl overflow-hidden bg-[#e3cbb3] shadow-2xl border border-white/5"
             >
               <img
-                src={displayImage}
+                src={getOptimizedCloudinaryUrl(displayImage, 900)}
                 alt={product?.name || "Product Gallery Zoom View"}
                 className="w-full h-full object-contain mx-auto"
                 draggable={false}

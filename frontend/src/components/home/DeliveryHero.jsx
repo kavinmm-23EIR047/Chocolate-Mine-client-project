@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import api from '../../utils/api';
 import { useTheme } from '../../context/ThemeContext';
+import { getOptimizedCloudinaryUrl } from '../../utils/cloudinary';
 
 import ScooterLightImg from '../../assets/scooter-light.png';
 import ScooterDarkImg from '../../assets/scooter-dark.png';
@@ -341,9 +342,11 @@ const DeliveryHero = () => {
                     <div className="px-3 pt-4 w-full flex justify-center items-center h-[160px] sm:h-[180px] overflow-hidden">
                       {theme.image || theme.colors?.[0]?.images?.tier1 || theme.colors?.[0]?.images?.tier2 || theme.colors?.[0]?.images?.tier3 ? (
                         <img
-                          src={theme.image || theme.colors?.[0]?.images?.tier1 || theme.colors?.[0]?.images?.tier2 || theme.colors?.[0]?.images?.tier3}
+                          src={getOptimizedCloudinaryUrl(theme.image || theme.colors?.[0]?.images?.tier1 || theme.colors?.[0]?.images?.tier2 || theme.colors?.[0]?.images?.tier3, 400)}
                           alt={theme.name}
                           className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
+                          loading="lazy"
+                          width="400"
                         />
                       ) : (
                         <span className="flex items-center justify-center h-full text-5xl">{theme.emoji || '🎂'}</span>

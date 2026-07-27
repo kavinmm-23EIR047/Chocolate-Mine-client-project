@@ -4,6 +4,7 @@ import { Plus, Trash2, Edit2, Check, X, ToggleLeft, ToggleRight, ExternalLink } 
 import adminService from '../../services/adminService';
 import ImageUpload from '../../components/admin/ImageUpload';
 import toast from 'react-hot-toast';
+import { getOptimizedCloudinaryUrl } from '../../utils/cloudinary';
 
 const AdminBanner = () => {
   const [banners, setBanners] = useState([]);
@@ -243,7 +244,7 @@ const AdminBanner = () => {
               className={`bg-card border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all ${!banner.isActive ? 'opacity-60 grayscale-[0.5]' : 'border-border'}`}
             >
               <div className="aspect-[21/9] relative overflow-hidden">
-                <img src={banner.image} alt={banner.title} className="w-full h-full object-cover" />
+                <img src={getOptimizedCloudinaryUrl(banner.image, 1600)} alt={banner.title} className="w-full h-full object-cover" />
                 <div className="absolute top-3 left-3 flex gap-2">
                   <span className="bg-black/60 backdrop-blur-md text-white text-[9px] font-black px-2 py-1 rounded uppercase tracking-widest">
                     Order: {banner.displayOrder}

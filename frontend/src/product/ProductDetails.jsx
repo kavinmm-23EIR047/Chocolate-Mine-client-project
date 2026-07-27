@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { getOptimizedCloudinaryUrl } from '../utils/cloudinary';
 
 import 'swiper/css';
 import 'swiper/css/pagination';
@@ -709,7 +710,7 @@ const ProductDetails = () => {
                             {/* Small thumbnail */}
                             {addon.image && (
                               <div className="w-9 h-9 rounded-lg overflow-hidden border border-border bg-background shrink-0">
-                                <img src={addon.image} alt={addon.name} className="w-full h-full object-cover" />
+                                <img src={getOptimizedCloudinaryUrl(addon.image, 200)} alt={addon.name} className="w-full h-full object-cover" />
                               </div>
                             )}
 

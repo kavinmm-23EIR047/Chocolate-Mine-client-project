@@ -495,6 +495,7 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg' })
                 alt={product.name}
                 className="w-full h-full object-cover"
                 loading="lazy"
+                imageWidth={400}
                 fallback={<ImagePlaceholder />}
               />
             ) : <ImagePlaceholder />}
@@ -547,6 +548,7 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg' })
                 alt={product.name}
                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                 loading="lazy"
+                imageWidth={400}
                 fallback={<ImagePlaceholder />}
               />
             ) : <ImagePlaceholder />}

@@ -11,6 +11,7 @@ import 'swiper/css';
 import 'swiper/css/free-mode';
 import 'swiper/css/pagination';
 import ProductSimilar from '../product/components/ProductSimilar';
+import { getOptimizedCloudinaryUrl } from '../utils/cloudinary';
 
 const VegIcon = () => (
   <img src={PureVegIcon} alt="Pure Veg" className="inline-block flex-shrink-0 w-5 h-5" style={{ marginTop: '-2px' }} />
@@ -262,7 +263,7 @@ export default function CustomCakeDetail({
           style={{ background: flavor.bg || 'var(--card-soft)' }}
         >
           <img
-            src={flavor.image || theme.image || theme.flavors?.[0]?.image}
+            src={getOptimizedCloudinaryUrl(flavor.image || theme.image || theme.flavors?.[0]?.image, 400)}
             alt={flavor.name}
             className="w-full h-full object-cover rounded-xl transition-transform duration-500 group-hover:scale-105"
           />
@@ -302,7 +303,7 @@ export default function CustomCakeDetail({
               className="relative aspect-[3/3.5] sm:aspect-square w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-[var(--border)]/50 shadow-premium group"
               style={{ background: theme.enabled ? (selectedFlavor?.bg || theme.bg) : theme.bg }}
             >
-              {!theme.enabled && theme.image && <img src={theme.image} alt="" className="absolute inset-0 w-full h-full object-cover opacity-25" />}
+              {!theme.enabled && theme.image && <img src={getOptimizedCloudinaryUrl(theme.image, 400)} alt="" className="absolute inset-0 w-full h-full object-cover opacity-25" />}
               {!theme.enabled && (
                 <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/30 backdrop-blur-[3px]">
                   <span className="text-6xl mb-3">{theme.emoji}</span>
@@ -346,7 +347,7 @@ export default function CustomCakeDetail({
                   {theme.enabled ? (
                     <motion.img
                       key={`${theme.id}-${selectedFlavor?.id}`}
-                      src={selectedFlavor?.image || theme.image || theme.flavors?.[0]?.image}
+                      src={getOptimizedCloudinaryUrl(selectedFlavor?.image || theme.image || theme.flavors?.[0]?.image, 900)}
                       alt={selectedFlavor?.name}
                       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"

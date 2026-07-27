@@ -4,6 +4,7 @@ import { Plus, Trash2, Edit2, Check, X, ToggleLeft, ToggleRight } from 'lucide-r
 import adminService from '../../services/adminService';
 import ImageUpload from '../../components/admin/ImageUpload';
 import toast from 'react-hot-toast';
+import { getOptimizedCloudinaryUrl } from '../../utils/cloudinary';
 
 const OccasionManager = () => {
   const [occasions, setOccasions] = useState([]);
@@ -184,7 +185,7 @@ const OccasionManager = () => {
               className={`bg-card border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all ${!occ.active ? 'opacity-50' : 'border-border'}`}
             >
               <div className="aspect-video relative overflow-hidden">
-                <img src={occ.image} alt={occ.label || occ.name} className="w-full h-full object-cover" />
+                <img src={getOptimizedCloudinaryUrl(occ.image, 400)} alt={occ.label || occ.name} className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-3">
                   <p className="text-white text-sm font-black uppercase tracking-widest truncate">{occ.label || occ.name}</p>
                 </div>

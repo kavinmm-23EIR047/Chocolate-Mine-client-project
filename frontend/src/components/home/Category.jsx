@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import api from '../../utils/api';
 import fallbackCakeImg from '../../assets/cake.png';
 import allCategoryImg from '../../assets/all.png';
+import { getOptimizedCloudinaryUrl } from '../../utils/cloudinary';
 
 const FALLBACK_IMAGE = fallbackCakeImg;
 const IMAGE_BASE_URL = import.meta.env.VITE_API_URL
@@ -179,7 +180,7 @@ export const CategoryCircles = ({ activeCategory, setActiveCategory }) => {
               >
                 <div className={`w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full border border-[var(--border)] bg-transparent shadow-sm overflow-hidden transition-transform duration-300 ${isActive ? 'scale-105 border-[var(--primary)] shadow-md' : 'hover:scale-[1.03]'}`}>
                   <img
-                    src={categoryImageUrl}
+                    src={getOptimizedCloudinaryUrl(categoryImageUrl, 300)}
                     alt={displayName}
                     className="w-full h-full object-cover"
                     onError={(e) => {

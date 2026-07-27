@@ -8,6 +8,7 @@ import Badge from '../../components/ui/Badge';
 import { ConfirmModal } from '../../components/ui/Modal';
 import EmptyState from '../../components/ui/EmptyState';
 import { TableSkeleton } from '../../components/ui/Skeleton';
+import { getOptimizedCloudinaryUrl } from '../../utils/cloudinary';
 import toast from 'react-hot-toast';
 
 const AdminReviews = () => {
@@ -218,7 +219,7 @@ const AdminReviews = () => {
                       {r.productId ? (
                         <div className="flex items-center gap-3 min-w-[150px]">
                           <img 
-                            src={r.productId.image} 
+                            src={getOptimizedCloudinaryUrl(r.productId.image, 200)} 
                             alt={r.productId.name} 
                             className="w-10 h-10 rounded-lg object-cover bg-border shrink-0" 
                             onError={(e) => { e.target.src = 'https://placehold.co/100x100/3B1A0F/FAF0EC?text=🍫'; }} 
@@ -332,7 +333,7 @@ const AdminReviews = () => {
                         <p className="font-semibold text-heading text-[10px] truncate">{r.productId.name}</p>
                       </div>
                       <img 
-                        src={r.productId.image} 
+                            src={getOptimizedCloudinaryUrl(r.productId.image, 200)} 
                         alt={r.productId.name} 
                         className="w-6 h-6 rounded object-cover bg-border shrink-0" 
                         onError={(e) => { e.target.src = 'https://placehold.co/100x100/3B1A0F/FAF0EC?text=🍫'; }} 

@@ -118,6 +118,9 @@ const HomeBanner = () => {
             className="absolute inset-0 w-full h-full select-none object-cover"
             containerClassName="absolute inset-0 w-full h-full bg-transparent"
             style={{ objectPosition: 'center center' }}
+            imageWidth={1600}
+            loading="eager"
+            fetchPriority="high"
             draggable={false}
           />
 

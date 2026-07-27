@@ -394,7 +394,7 @@ const SearchOverlay = ({ isOpen, onClose }) => {
                                 className="flex items-center gap-4 p-3.5 bg-[var(--card)] rounded-2xl border border-[var(--border)] hover:border-[var(--primary)] cursor-pointer transition-all group shadow-sm hover:shadow-md relative overflow-hidden"
                               >
                                 <div className="w-16 h-16 shrink-0 rounded-xl overflow-hidden bg-[var(--surface)]">
-                                  <ImageWithSkeleton src={p.image} alt={p.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" showSparkles={false} />
+                                  <ImageWithSkeleton src={p.image} alt={p.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" showSparkles={false} imageWidth={200} />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <p className="font-bold text-[var(--heading)] text-sm leading-tight truncate group-hover:text-[var(--primary)] transition-colors uppercase tracking-tight">{p.name}</p>
@@ -499,7 +499,7 @@ const SearchOverlay = ({ isOpen, onClose }) => {
                                 className="group cursor-pointer"
                               >
                                 <div className="relative aspect-[16/10] rounded-2xl overflow-hidden shadow-md mb-2.5 border border-[var(--border)] bg-[var(--card)]">
-                                  <ImageWithSkeleton src={p.image} alt={p.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" containerClassName="w-full h-full" />
+                                  <ImageWithSkeleton src={p.image} alt={p.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" containerClassName="w-full h-full" imageWidth={400} />
                                   <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent opacity-75 group-hover:opacity-90 transition-opacity" />
                                   <div className="absolute bottom-3 left-3.5 right-3.5 flex items-end justify-between gap-2">
                                     <div className="min-w-0 flex-1">

@@ -515,6 +515,7 @@ export default function CustomCakeBrowse({
                                     alt={t.name}
                                     className="w-full h-full object-cover"
                                     loading="lazy"
+                                    imageWidth={400}
                                   />
                                 ) : (
                                   <span className="flex items-center justify-center h-full text-5xl">{t.emoji}</span>
@@ -568,6 +569,7 @@ export default function CustomCakeBrowse({
                                       alt={t.name}
                                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                       loading="lazy"
+                                      imageWidth={400}
                                     />
                                   ) : (
                                     <span className="flex items-center justify-center h-full text-6xl">{t.emoji}</span>
