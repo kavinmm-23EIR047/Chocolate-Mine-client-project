@@ -228,19 +228,19 @@
    --footer-text: #F2EADF;
    --footer-text-rgb: 242 234 223;
 
-   /* Borders */
-   --border: #3A2016;
-   --border-rgb: 58 32 22;
-   --border-light: #3A2016;
-   --border-light-rgb: 58 32 22;
-   --border-dark: #3A2016;
-   --border-dark-rgb: 58 32 22;
+   /* Borders - Subtle Light Outline for Dark Mode Cards */
+   --border: rgba(242, 234, 223, 0.16);
+   --border-rgb: 242 234 223;
+   --border-light: rgba(242, 234, 223, 0.25);
+   --border-light-rgb: 242 234 223;
+   --border-dark: rgba(242, 234, 223, 0.35);
+   --border-dark-rgb: 242 234 223;
 
    /* Inputs */
    --input: #2F190F;
    --input-rgb: 58 36 25;
-   --input-border: #3A2016;
-   --input-border-rgb: 58 32 22;
+   --input-border: rgba(242, 234, 223, 0.2);
+   --input-border-rgb: 242 234 223;
    --input-focus: #E8D3CB;
    --ring: rgba(232, 211, 203, 0.15);
 
@@ -776,4 +776,76 @@ select:focus {
 
 ::-webkit-scrollbar-thumb:hover {
    background: var(--border-dark);
+}
+
+/* ───────────────────────────────────────────
+   10 ESSENTIAL THEME UI STATES UTILITIES
+   ─────────────────────────────────────────── */
+/* 1. Default State */
+.ui-state-default {
+   background-color: var(--background);
+   color: var(--foreground);
+}
+
+/* 2. Loading / Skeleton State */
+.ui-state-loading {
+   background-color: var(--skeleton);
+   color: var(--muted);
+}
+
+/* 3. Empty State */
+.ui-state-empty {
+   background-color: var(--card-soft);
+   color: var(--muted);
+   border: 1px dashed var(--border);
+}
+
+/* 4. Success State */
+.ui-state-success {
+   background-color: var(--success-light);
+   color: var(--success-text);
+   border: 1px solid var(--success);
+}
+
+/* 5. Error State */
+.ui-state-error {
+   background-color: var(--error-light);
+   color: var(--error-text);
+   border: 1px solid var(--error);
+}
+
+/* 6. Warning / Urgency State */
+.ui-state-warning {
+   background-color: var(--warning-light);
+   color: var(--warning-text);
+   border: 1px solid var(--warning);
+}
+
+/* 7. Info / Notice State */
+.ui-state-info {
+   background-color: var(--info-light);
+   color: var(--info-text);
+   border: 1px solid var(--info);
+}
+
+/* 8. Active / Focus State */
+.ui-state-active {
+   background-color: var(--primary);
+   color: var(--button-text);
+   box-shadow: 0 0 0 2px var(--ring);
+}
+
+/* 9. Disabled State */
+.ui-state-disabled,
+*:disabled {
+   opacity: 0.5;
+   cursor: not-allowed !important;
+   pointer-events: none;
+}
+
+/* 10. Offline / Disconnected State */
+.ui-state-offline {
+   background-color: var(--warning-light);
+   color: var(--warning-text);
+   border-bottom: 2px solid var(--warning);
 }

@@ -673,61 +673,77 @@ const ProductDetails = () => {
               />
 
               {availableAddons.length > 0 && (
-                <div className="mb-8">
-                  <h3 className="text-sm sm:text-base font-black text-heading uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <span className="w-1.5 h-5 bg-primary rounded-full"></span>
-                    Frequently Bought Together (Add-ons)
+                <div className="mb-6">
+                  <h3 className="text-xs sm:text-sm font-black text-heading uppercase tracking-widest mb-3">
+                    Add Extras
                   </h3>
-                  <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-2.5">
                     {availableAddons.map(addon => {
                       const isSelected = selectedAddons.some(a => a._id === addon._id);
                       const qty = selectedAddonQty(addon);
                       return (
                         <div
                           key={addon._id}
-                          className={`flex items-center gap-4 p-3 sm:p-4 rounded-2xl border-2 transition-all ${isSelected ? 'border-primary/60 bg-primary/5 shadow-sm' : 'border-border/30 bg-card hover:border-primary/30'}`}
+                          onClick={() => handleAddonToggle(addon)}
+                          className={`flex items-center justify-between p-3 sm:p-3.5 rounded-xl border transition-all cursor-pointer select-none ${
+                            isSelected
+                              ? 'border-primary bg-primary/10 shadow-xs'
+                              : 'border-border bg-card hover:border-primary/40'
+                          }`}
                         >
-                          {/* Left: Addon Image */}
-                          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border border-border/20 bg-white shrink-0">
-                            <img src={addon.image} alt={addon.name} className="w-full h-full object-cover" />
-                          </div>
+                          {/* Left: Checkbox + Thumbnail + Name */}
+                          <div className="flex items-center gap-3 min-w-0">
+                            {/* Checkbox square */}
+                            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all shrink-0 ${
+                              isSelected
+                                ? 'bg-primary border-primary text-button-text'
+                                : 'border-muted/50 bg-background'
+                            }`}>
+                              {isSelected && (
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth="3.5" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                              )}
+                            </div>
 
-                          {/* Middle: Name & Price */}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm sm:text-base font-black text-heading uppercase tracking-tight truncate">{addon.name}</p>
-                            <p className="text-sm sm:text-base font-black text-primary mt-0.5">₹{addon.price} <span className="text-xs text-muted/50 font-bold lowercase">/ each</span></p>
-                            {isSelected && (
-                              <p className="text-xs text-success-text font-bold mt-1">
-                                Total: ₹{addon.price * qty}
-                              </p>
+                            {/* Small thumbnail */}
+                            {addon.image && (
+                              <div className="w-9 h-9 rounded-lg overflow-hidden border border-border bg-background shrink-0">
+                                <img src={addon.image} alt={addon.name} className="w-full h-full object-cover" />
+                              </div>
                             )}
+
+                            {/* Name */}
+                            <span className="text-xs sm:text-sm font-extrabold text-heading truncate">
+                              {addon.name}
+                            </span>
                           </div>
 
-                          {/* Right: Add / Qty Controls */}
-                          <div className="shrink-0">
-                            {isSelected ? (
-                              <div className="flex items-center gap-0 bg-emerald-600 rounded-xl overflow-hidden shadow-md select-none" onClick={(e) => e.stopPropagation()}>
+                          {/* Right: Price + Quantity controls when selected */}
+                          <div className="flex items-center gap-2.5 shrink-0 ml-2">
+                            <span className="text-xs sm:text-sm font-black text-heading">
+                              +₹{addon.price}
+                            </span>
+
+                            {isSelected && (
+                              <div
+                                className="flex items-center gap-1 bg-primary text-button-text px-2 py-0.5 rounded-lg text-xs font-black shadow-xs"
+                                onClick={(e) => e.stopPropagation()}
+                              >
                                 <button
                                   onClick={() => handleAddonDecrement(addon)}
-                                  className="px-3 py-2 text-white font-black text-base hover:bg-emerald-700 transition-colors"
+                                  className="hover:opacity-80 px-1 py-0.5 cursor-pointer"
                                 >
                                   −
                                 </button>
-                                <span className="px-3 py-2 text-white font-black text-sm min-w-[36px] text-center bg-emerald-700">{qty}</span>
+                                <span className="min-w-[16px] text-center">{qty}</span>
                                 <button
                                   onClick={() => handleAddonIncrement(addon)}
-                                  className="px-3 py-2 text-white font-black text-base hover:bg-emerald-700 transition-colors"
+                                  className="hover:opacity-80 px-1 py-0.5 cursor-pointer"
                                 >
                                   +
                                 </button>
                               </div>
-                            ) : (
-                              <button
-                                onClick={() => handleAddonToggle(addon)}
-                                className="px-4 py-2 rounded-xl border-2 border-primary/30 text-primary font-black text-xs sm:text-sm uppercase tracking-wider hover:bg-primary/10 transition-all"
-                              >
-                                + Add
-                              </button>
                             )}
                           </div>
                         </div>

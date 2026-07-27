@@ -1,23 +1,19 @@
 import React from 'react';
 
-const PureVegLabel = ({ size = 12, className = '', hideText = false }) => {
+const PureVegBadge = ({ size = 22, className = '', hideText = false }) => {
   return (
-    <span
-      className={`inline-flex items-center ${hideText ? 'p-1' : 'gap-1.5 px-2.5 py-1'
-        } bg-[#008539] text-white rounded-full font-sans shrink-0 select-none shadow-sm ${className}`}
-    >
-      {/* Veg Symbol: White Outer Square with White Inner Dot */}
+    <span className={`inline-flex items-center gap-2 select-none ${className}`}>
+      {/* Official FSSAI Pure Veg Mark: Green Square Box + Green Centered Circle */}
       <span
         style={{ width: `${size}px`, height: `${size}px` }}
-        className="flex items-center justify-center border-2 border-white rounded-[2px] shrink-0 p-[2px]"
+        className="inline-flex items-center justify-center border-[2px] border-[#008539] bg-white rounded-[3px] shrink-0 p-[2.5px] shadow-xs"
+        title="100% Pure Veg"
       >
-        {/* Solid White Inner Dot */}
-        <span className="w-full h-full bg-white rounded-full" />
+        <span className="w-full h-full bg-[#008539] rounded-full" />
       </span>
 
-      {/* Bold White Text */}
       {!hideText && (
-        <span className="text-[10px] font-black uppercase tracking-wider leading-none text-white">
+        <span className="text-xs font-bold uppercase tracking-wider text-[#008539] dark:text-emerald-400">
           Pure Veg
         </span>
       )}
@@ -25,4 +21,4 @@ const PureVegLabel = ({ size = 12, className = '', hideText = false }) => {
   );
 };
 
-export default PureVegLabel;
+export default PureVegBadge;

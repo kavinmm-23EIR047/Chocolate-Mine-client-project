@@ -38,31 +38,67 @@ const SearchOverlay = ({ isOpen, onClose }) => {
     }
   };
 
-  // Fetch Real Backend Products & Custom Cake Themes
+  // Helper to extract crisp image URL for custom cake themes
+  const getThemeImage = (t) => {
+    if (t.image && typeof t.image === 'string' && t.image.trim() !== '') return t.image;
+    if (t.imageUrl && typeof t.imageUrl === 'string' && t.imageUrl.trim() !== '') return t.imageUrl;
+    if (t.thumbnail && typeof t.thumbnail === 'string' && t.thumbnail.trim() !== '') return t.thumbnail;
+
+    if (t.colors && Array.isArray(t.colors)) {
+      for (const c of t.colors) {
+        if (c && c.images) {
+          const cand = c.images.tier1 || c.images.single || c.images.tier2 || c.images.tier3;
+          if (cand && typeof cand === 'string' && cand.trim() !== '') {
+            return cand;
+          }
+        }
+      }
+    }
+
+    if (t.flavors && Array.isArray(t.flavors)) {
+      for (const f of t.flavors) {
+        if (f && f.image && typeof f.image === 'string' && f.image.trim() !== '') {
+          return f.image;
+        }
+      }
+    }
+
+    return 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80';
+  };
+
+  // Fetch Real Backend Products & Custom Cake Themes via API
   const fetchBackendProducts = async () => {
     try {
-      const [prodRes, themesRes] = await Promise.all([
+      const [prodRes, bestsRes, themesRes] = await Promise.all([
         api.get('/products', { params: { limit: 100 } }).catch(() => ({ data: [] })),
+        api.get('/products', { params: { bestseller: 'true', limit: 20 } }).catch(() => ({ data: [] })),
         api.get('/custom-cakes/themes').catch(() => ({ data: [] }))
       ]);
 
       const rawProds = prodRes.data?.data || prodRes.data || [];
+      const rawBests = bestsRes.data?.data || bestsRes.data || [];
       const rawThemes = themesRes.data?.data || themesRes.data || [];
+
+      // Flag API bestsellers
+      const bestIds = new Set(rawBests.map(b => String(b._id)));
+      const prodsList = Array.isArray(rawProds) ? rawProds.map(p => ({
+        ...p,
+        bestseller: p.bestseller === true || p.isBestseller === true || bestIds.has(String(p._id))
+      })) : [];
 
       const mappedThemes = Array.isArray(rawThemes) ? rawThemes.map(t => ({
         _id: t._id,
         id: t._id,
         name: t.name,
-        image: (t.flavors && t.flavors[0] && t.flavors[0].image) || t.image || t.colors?.[0]?.images?.tier1,
+        image: getThemeImage(t),
         price: t.basePrice || 1120,
         category: ['Custom Cakes'],
         isCustom: true,
         isTheme: true,
-        bestseller: true,
-        featured: true
+        bestseller: t.bestseller === true || t.isBestseller === true || t.isBestSeller === true,
+        featured: t.featured === true || t.isFeatured === true
       })) : [];
 
-      const prodsList = Array.isArray(rawProds) ? rawProds : [];
       const combined = [...prodsList, ...mappedThemes];
       setAllProducts(combined);
     } catch (err) {
@@ -99,14 +135,18 @@ const SearchOverlay = ({ isOpen, onClose }) => {
     }
 
     if (activeTab === 'special') {
-      const special = allProducts.filter(p => p.isCustom || p.isTheme || p.featured || (Array.isArray(p.category) ? p.category.some(c => typeof c === 'string' && c.toLowerCase().includes('cake')) : String(p.category || '').toLowerCase().includes('cake')));
+      const special = allProducts.filter(p => p.isCustom || p.isTheme || p.featured || p.isFeatured);
       return special.length > 0 ? special.slice(0, 4) : allProducts.slice(0, 4);
     }
 
-    // Bestsellers default: prioritize cake products and custom themes
-    const bests = allProducts.filter(p => p.bestseller || p.isBestseller || p.isCustom);
-    const cakesBests = bests.filter(p => p.isCustom || (Array.isArray(p.category) ? p.category.some(c => typeof c === 'string' && c.toLowerCase().includes('cake')) : String(p.category || '').toLowerCase().includes('cake')));
-    return cakesBests.length > 0 ? cakesBests.slice(0, 4) : (bests.length > 0 ? bests.slice(0, 4) : allProducts.slice(0, 4));
+    // Bestsellers tab: Only products marked as bestseller in backend
+    const realBestsellers = allProducts.filter(p => p.bestseller === true || p.isBestseller === true || p.isBestSeller === true);
+    if (realBestsellers.length > 0) {
+      return realBestsellers.slice(0, 4);
+    }
+
+    // Fallback: If no bestseller is flagged in backend yet, show available top backend products
+    return allProducts.slice(0, 4);
   };
 
   // Debounced Real-time Search
@@ -432,16 +472,28 @@ const SearchOverlay = ({ isOpen, onClose }) => {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         {tabProducts.length > 0 ? (
                           tabProducts.map((p) => {
-                            const discountPct = p.offerPrice && p.price ? Math.round(((p.price - p.offerPrice) / p.price) * 100) : 0;
-                            const badgeText = activeTab === 'offers'
-                              ? `${discountPct}% OFF`
-                              : (activeTab === 'special' ? 'Special Cake' : 'Best Seller');
+                            const isBestsellerProduct = p.bestseller === true || p.isBestseller === true || p.isBestSeller === true;
+                            const isOfferProduct = p.offerPrice && p.price && Number(p.offerPrice) < Number(p.price);
+                            const discountPct = isOfferProduct ? Math.round(((p.price - p.offerPrice) / p.price) * 100) : 0;
+
+                            let badgeText = null;
+                            if (isBestsellerProduct) {
+                              badgeText = 'BEST SELLER';
+                            } else if (isOfferProduct) {
+                              badgeText = `${discountPct}% OFF`;
+                            } else if (p.isCustom || p.isTheme) {
+                              badgeText = 'SPECIAL CAKE';
+                            }
 
                             return (
                               <div
                                 key={p._id?.$oid || p._id}
                                 onClick={() => {
-                                  navigate(`/product/${p.slug || p._id}`);
+                                  if (p.isCustom || p.isTheme) {
+                                    navigate('/custom-cake');
+                                  } else {
+                                    navigate(`/product/${p.slug || p._id}`);
+                                  }
                                   onClose();
                                 }}
                                 className="group cursor-pointer"
@@ -451,9 +503,11 @@ const SearchOverlay = ({ isOpen, onClose }) => {
                                   <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent opacity-75 group-hover:opacity-90 transition-opacity" />
                                   <div className="absolute bottom-3 left-3.5 right-3.5 flex items-end justify-between gap-2">
                                     <div className="min-w-0 flex-1">
-                                      <span className="px-2 py-0.5 bg-[var(--accent)] text-[#120806] text-[9px] font-black uppercase tracking-widest rounded-md mb-1 inline-block">
-                                        {badgeText}
-                                      </span>
+                                      {badgeText && (
+                                        <span className="px-2 py-0.5 bg-[var(--accent)] text-[#120806] text-[9px] font-black uppercase tracking-widest rounded-md mb-1 inline-block">
+                                          {badgeText}
+                                        </span>
+                                      )}
                                       <p className="text-sm font-extrabold text-white leading-tight uppercase tracking-tight line-clamp-1">{p.name}</p>
                                     </div>
                                     <div className="text-right shrink-0">

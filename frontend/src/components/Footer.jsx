@@ -86,11 +86,14 @@ const Footer = () => {
 
             {/* Badges */}
             <div className="flex flex-wrap items-center justify-start gap-3 max-w-md text-left">
-              <div className="flex gap-3">
-                <PureVegBadge size={28} className="bg-transparent shadow-none p-0" hideText={true} />
+              <div className="flex items-center gap-2.5">
+                <PureVegBadge size={24} hideText={true} />
+                <span className="text-xs font-bold text-emerald-500 dark:text-emerald-400 uppercase tracking-wider">
+                  100% Pure Veg & Eggless
+                </span>
               </div>
-              <span className="text-[10px] font-bold uppercase tracking-wider opacity-70 block w-full mt-1.5 leading-relaxed">
-                100% Pure Veg & Eggless artisanal desserts, masterfully crafted for every celebration.
+              <span className="text-[10px] font-semibold uppercase tracking-wider opacity-75 block w-full mt-0.5 leading-relaxed">
+                Artisanal desserts, masterfully crafted for every celebration.
               </span>
             </div>
 

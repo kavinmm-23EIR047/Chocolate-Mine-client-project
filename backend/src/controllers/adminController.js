@@ -110,6 +110,7 @@ exports.getDashboard = asyncHandler(async (req, res) => {
   const Order = require('../models/Order');
   const Product = require('../models/Product');
   const User = require('../models/User');
+  const CustomCakeTheme = require('../models/CustomCakeTheme');
 
   const [
     totalOrders,
@@ -117,6 +118,7 @@ exports.getDashboard = asyncHandler(async (req, res) => {
     outForDeliveryOrders,
     deliveredOrders,
     totalProducts,
+    totalCustomCakes,
     totalUsers,
     revenueStats
   ] = await Promise.all([
@@ -125,6 +127,7 @@ exports.getDashboard = asyncHandler(async (req, res) => {
     Order.countDocuments({ orderStatus: 'out_for_delivery' }),
     Order.countDocuments({ orderStatus: 'delivered' }),
     Product.countDocuments(),
+    CustomCakeTheme.countDocuments().catch(() => 0),
     User.countDocuments({ role: 'user' }),
     Order.aggregate([
       { $match: { paymentStatus: 'paid' } },
@@ -140,6 +143,7 @@ exports.getDashboard = asyncHandler(async (req, res) => {
       outForDeliveryOrders,
       deliveredOrders,
       totalProducts,
+      totalCustomCakes,
       totalUsers,
       revenue: revenueStats[0]?.total || 0
     }

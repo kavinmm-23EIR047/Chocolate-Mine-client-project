@@ -121,30 +121,30 @@ const DeliveryHero = () => {
 
         <div className="relative flex-1 grid grid-cols-1 lg:grid-cols-12 items-stretch gap-4 lg:gap-6 min-h-[380px] sm:min-h-[440px] lg:min-h-[460px]">
           {/* LEFT TEXT CONTENT */}
-          <div className="flex flex-col justify-center p-6 sm:p-8 lg:p-8 xl:p-10 order-2 lg:order-1 relative z-20 text-center lg:text-left lg:col-span-7 xl:col-span-6">
+          <div className="flex flex-col justify-center p-6 sm:p-8 lg:p-8 xl:p-10 order-2 lg:order-1 relative z-20 text-center lg:text-left lg:col-span-6 xl:col-span-6">
+            {/* Priority Service Badge */}
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               className="flex items-center justify-center lg:justify-start gap-2 mb-3"
             >
-              <Truck size={14} style={{ color: 'var(--primary)' }} />
-              <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.3em]" style={{ color: 'var(--muted)' }}>
+              <Truck size={15} style={{ color: 'var(--primary)' }} />
+              <span className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--muted)' }}>
                 Priority Service
               </span>
             </motion.div>
 
+            {/* Main Headline */}
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.07 }}
-              className="text-2xl sm:text-3xl lg:text-3xl xl:text-4xl tv:text-5xl font-black leading-[1.2] tracking-tight mb-3"
+              className="text-2xl sm:text-3xl lg:text-3xl xl:text-4xl font-black leading-snug tracking-tight mb-3"
               style={{ color: 'var(--heading)' }}
             >
-              The Best of <span className="text-[#3B1E08] dark:text-amber-400">Coimbatore</span>
-              <br />
-              At Your Doorstep in 3 Hours
+              The Best of <span style={{ color: 'var(--primary)' }}>Coimbatore</span> At Your Doorstep in <span style={{ color: 'var(--primary)' }}>3 Hours</span>
             </motion.h2>
 
             <motion.p
@@ -152,45 +152,55 @@ const DeliveryHero = () => {
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
               transition={{ delay: 0.13 }}
-              className="text-xs sm:text-sm font-medium leading-relaxed mb-5 max-w-md mx-auto lg:mx-0"
+              className="text-xs sm:text-sm font-medium leading-relaxed mb-6 max-w-md mx-auto lg:mx-0"
               style={{ color: 'var(--muted)' }}
             >
               Premium cakes, handcrafted with love and delivered fresh across the city.
             </motion.p>
 
+            {/* Feature Cards Grid (Horizontal card layout: Icon on Left, Text on Right) */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.16 }}
-              className="flex flex-wrap justify-center lg:justify-start gap-2 sm:gap-2.5 mb-6"
+              className="grid grid-cols-2 gap-3 mb-6 w-full max-w-xl mx-auto lg:mx-0"
             >
               {DELIVERY_FEATURES.map(({ icon, label, sub }) => (
                 <div
                   key={label}
-                  className="flex flex-col items-center gap-1 px-2.5 sm:px-3 py-2 rounded-xl min-w-[65px] sm:min-w-[75px] transition-all duration-300 hover:scale-105 cursor-default group"
+                  className="flex items-center gap-3 p-3 sm:p-3.5 rounded-xl transition-all duration-300 hover:scale-[1.02] cursor-default group"
                   style={{
                     background: 'var(--background)',
                     border: '1px solid var(--border)',
                   }}
                 >
-                  <span className="group-hover:scale-110 transition-transform duration-300" style={{ color: 'var(--primary)' }}>{icon}</span>
-                  <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-tight text-center leading-tight mt-0.5" style={{ color: 'var(--heading)' }}>{label}</span>
-                  <span className="text-[8px] sm:text-[9px] font-medium text-center leading-none" style={{ color: 'var(--muted)' }}>{sub}</span>
+                  <span className="shrink-0 group-hover:scale-110 transition-transform duration-300" style={{ color: 'var(--primary)' }}>
+                    {icon}
+                  </span>
+                  <div className="flex flex-col text-left">
+                    <span className="text-[11px] sm:text-xs font-black uppercase tracking-wider leading-tight" style={{ color: 'var(--heading)' }}>
+                      {label}
+                    </span>
+                    <span className="text-[9px] sm:text-[10px] font-medium leading-tight mt-0.5" style={{ color: 'var(--muted)' }}>
+                      {sub}
+                    </span>
+                  </div>
                 </div>
               ))}
             </motion.div>
 
+            {/* Action Buttons (Strictly Horizontal Side-by-Side) */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
-              className="flex flex-wrap justify-center lg:justify-start items-center gap-4"
+              className="flex flex-row items-center justify-center lg:justify-start gap-4 sm:gap-6 flex-nowrap"
             >
               <Link
                 to="/shop"
-                className="inline-flex items-center gap-2 px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl text-[11px] sm:text-xs font-black uppercase tracking-[0.18em] transition-all duration-300 hover:scale-105 active:scale-95"
+                className="inline-flex items-center gap-2 px-6 sm:px-7 py-3 rounded-xl text-xs font-black uppercase tracking-[0.18em] whitespace-nowrap shrink-0 transition-all duration-300 hover:scale-105 active:scale-95"
                 style={{
                   background: 'var(--primary)',
                   color: 'var(--button-text)',
@@ -200,25 +210,25 @@ const DeliveryHero = () => {
                 Order Now <ChevronRight size={14} />
               </Link>
               <Link
-                to="/track"
-                className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.15em] underline-offset-4 hover:underline transition-all"
+                to="/shop"
+                className="text-xs font-bold uppercase tracking-[0.15em] underline-offset-4 hover:underline whitespace-nowrap shrink-0 transition-all"
                 style={{ color: 'var(--muted)' }}
               >
-                Track your order →
+                Explore Products →
               </Link>
             </motion.div>
           </div>
 
-          {/* SCOOTER IMAGE CONTAINER (CENTERED HORIZONTALLY AND VERTICALLY ON PC & MOBILE) */}
-          <div className="relative order-1 lg:order-2 flex items-center justify-center z-10 lg:col-span-5 xl:col-span-6 p-4 sm:p-6 w-full h-full min-h-[260px] sm:min-h-[320px] lg:min-h-[400px]">
+          {/* SCOOTER IMAGE CONTAINER (MAXIMIZED HORIZONTALLY AND VERTICALLY) */}
+          <div className="relative order-1 lg:order-2 flex items-center justify-center z-10 lg:col-span-6 xl:col-span-6 p-2 sm:p-4 w-full h-full min-h-[340px] sm:min-h-[400px] lg:min-h-[500px]">
             <motion.img
               src={scooterImg}
               alt="Chocolate Mine Delivery"
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.98 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="w-full max-w-[500px] lg:max-w-[560px] xl:max-w-[620px] h-auto max-h-[340px] sm:max-h-[400px] lg:max-h-[440px] xl:max-h-[480px] object-contain object-center mx-auto my-auto drop-shadow-2xl"
+              className="w-full h-auto max-h-[480px] sm:max-h-[580px] lg:max-h-[680px] xl:max-h-[780px] object-contain object-center mx-auto my-auto drop-shadow-2xl scale-110 sm:scale-120 lg:scale-115"
               draggable={false}
             />
           </div>
@@ -373,8 +383,8 @@ const DeliveryHero = () => {
                 key={index}
                 onClick={() => scrollToSlide(index)}
                 className={`transition-all duration-300 rounded-full !min-w-0 !min-h-0 p-0 ${index === activeThemeIndex
-                    ? 'w-4 h-1.5 opacity-100'
-                    : 'w-1.5 h-1.5 opacity-30 hover:opacity-60'
+                  ? 'w-4 h-1.5 opacity-100'
+                  : 'w-1.5 h-1.5 opacity-30 hover:opacity-60'
                   }`}
                 style={{ background: 'var(--primary)' }}
                 aria-label={`Go to slide ${index + 1}`}
