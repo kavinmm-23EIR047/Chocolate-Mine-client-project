@@ -386,6 +386,7 @@ exports.getProduct = asyncHandler(async (req, res, next) => {
 
   let product;
   
+  // 1. Try by ObjectId if valid 24-hex string
   if (slug.match(/^[0-9a-fA-F]{24}$/)) {
     try {
       product = await Product.findById(slug);
@@ -394,8 +395,19 @@ exports.getProduct = asyncHandler(async (req, res, next) => {
     }
   }
 
+  // 2. Try by exact slug
   if (!product) {
-    product = await Product.findOne({ slug: slug, isActive: true });
+    product = await Product.findOne({ slug: slug });
+  }
+
+  // 3. Try by case-insensitive slug regex
+  if (!product) {
+    try {
+      const cleanSlug = slug.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+      product = await Product.findOne({ slug: new RegExp(`^${cleanSlug}$`, 'i') });
+    } catch (err) {
+      console.error('RegExp slug search error:', err);
+    }
   }
 
   if (!product) return next(new AppError('Product not found', 404));

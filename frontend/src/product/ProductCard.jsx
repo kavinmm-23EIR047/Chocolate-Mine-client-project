@@ -212,11 +212,22 @@ const SwiggyCartAction = ({ cartQuantity, handleQuantityChange, handleInitialAdd
   );
 };
 
-const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg' }) => {
+const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg', onCardClick }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { isInWishlist, toggleWishlist } = useWishlist();
   const isHome = window.location.pathname === '/';
+
+  const rawId = product?._id?.$oid || (typeof product?._id === 'string' ? product._id : (product?._id ? String(product._id) : ''));
+  const targetSlug = product?.slug || rawId;
+
+  const handleCardClick = (e) => {
+    if (onCardClick) {
+      onCardClick(product);
+    } else {
+      navigate(`/product/${targetSlug}`);
+    }
+  };
 
   const [addingToCart, setAddingToCart] = useState(false);
 
@@ -406,7 +417,7 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg' })
   if (layout === 'horizontal') {
     return (
       <motion.div
-        layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={() => navigate(`/product/${product.slug}`)}
+        layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={handleCardClick}
         className="menu-light-card flex flex-row p-3 sm:p-4 pb-8 gap-3 sm:gap-4 items-stretch cursor-pointer w-full border-b transition-colors min-w-0"
         style={{ background: 'var(--card)', borderColor: 'var(--border)' }}
       >
@@ -522,7 +533,7 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg' })
   // ─── Vertical Layout ───────────────────────────────
   return (
     <motion.div
-      layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={() => navigate(`/product/${product.slug}`)}
+      layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={handleCardClick}
       className={`menu-light-card group w-full h-full min-w-0 flex flex-col justify-between cursor-pointer transition-all duration-200 p-3 sm:p-4 pb-8 ${cardStyleMap[cardStyle]}`}
       style={{ background: 'var(--card)', border: '1px solid var(--border)' }}
     >

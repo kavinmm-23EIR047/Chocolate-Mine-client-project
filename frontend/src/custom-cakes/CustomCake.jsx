@@ -633,11 +633,11 @@ export default function CustomCake() {
       {themeIdx !== null && (
         <div className="bg-[var(--card)] border-b border-[var(--border)] py-3">
           <div className="w-full max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-10 flex items-center gap-1.5 text-xs text-[var(--muted)] overflow-x-auto no-scrollbar">
-            <button onClick={() => navigate('/')} className="hover:text-[var(--primary)] font-medium flex items-center gap-1">
-              <ArrowLeft size={12} /> Home
+            <button onClick={() => navigate(-1)} className="hover:text-[var(--primary)] font-medium flex items-center gap-1 cursor-pointer">
+              <ArrowLeft size={12} /> Back
             </button>
             <span className="opacity-40">/</span>
-            <button onClick={goBackToBrowse} className={`font-medium ${themeIdx === null ? 'font-bold text-[var(--heading)]' : 'hover:text-[var(--primary)]'}`}>
+            <button onClick={goBackToBrowse} className={`font-medium cursor-pointer ${themeIdx === null ? 'font-bold text-[var(--heading)]' : 'hover:text-[var(--primary)]'}`}>
               Custom Cakes
             </button>
             {selectedTier && <><span className="opacity-40">/</span><span className={themeIdx === null ? 'font-bold text-[var(--heading)]' : ''}>{currentTier?.shortName}</span></>}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, FreeMode, Pagination } from 'swiper/modules';
@@ -57,7 +58,18 @@ export default function CustomCakeDetail({
   toggleWishlist,
   WEIGHTS
 }) {
+  const navigate = useNavigate();
   const [hasCustomized, setHasCustomized] = useState(false);
+
+  const handleTopLeftBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else if (typeof goBackToBrowse === 'function') {
+      goBackToBrowse();
+    } else {
+      navigate('/custom-cake');
+    }
+  };
 
   useEffect(() => {
     if (window.innerWidth < 768 && (showMobileConfig || flavorDropdownOpen)) {
@@ -285,8 +297,8 @@ export default function CustomCakeDetail({
   return (
     <div className="w-full max-w-full mx-auto overflow-hidden rounded-none sm:rounded-[2rem] border-0 sm:border border-[var(--border)] bg-[var(--background)] px-4 sm:px-8 lg:px-12 xl:px-16 py-6 lg:py-10">
       <div className="pt-2 pb-4">
-        <button onClick={goBackToBrowse} className="flex items-center gap-2 text-xs sm:text-sm font-black uppercase tracking-[0.18em] text-[var(--muted)] hover:text-[var(--primary)] transition-colors">
-          <ArrowLeft size={18} /> Back to All Themes
+        <button onClick={handleTopLeftBack} className="flex items-center gap-2 text-xs sm:text-sm font-black uppercase tracking-[0.18em] text-[var(--muted)] hover:text-[var(--primary)] transition-colors cursor-pointer">
+          <ArrowLeft size={18} /> Back
         </button>
       </div>
 
@@ -466,13 +478,29 @@ export default function CustomCakeDetail({
             .slice(0, 12)
             .map(t => ({
               _id: t.id,
+              themeId: t.id,
               name: t.name,
               image: (t.flavors && t.flavors[0] && t.flavors[0].image) || t.image,
               price: t.basePrice || 0,
               category: ['Custom Cakes']
             }));
 
-          return related.length ? <div className="mt-8"><ProductSimilar relatedProducts={related} /></div> : null;
+          const handleThemeCardClick = (prod) => {
+            const tId = prod.themeId || prod._id;
+            const foundIdx = filteredThemes.findIndex(t => t.id === tId);
+            if (foundIdx !== -1 && typeof selectTheme === 'function') {
+              selectTheme(foundIdx);
+              window.scrollTo({ top: 0, behavior: 'instant' });
+            } else {
+              window.location.href = `/custom-cake?theme=${tId}`;
+            }
+          };
+
+          return related.length ? (
+            <div className="mt-8">
+              <ProductSimilar relatedProducts={related} onCardClick={handleThemeCardClick} />
+            </div>
+          ) : null;
         })()
       )}
 

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useWishlist } from '../context/WishlistContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Filter, Eye, Check, Layers, Search, ChevronDown, ChevronUp, RotateCcw, Star, ChevronRight, ChevronLeft, Settings2, Heart, List, LayoutGrid, SlidersHorizontal, X } from 'lucide-react';
+import { Filter, Eye, Check, Layers, Search, ChevronDown, ChevronUp, RotateCcw, Star, ChevronRight, ChevronLeft, Settings2, Heart, List, LayoutGrid, SlidersHorizontal, X, ArrowLeft } from 'lucide-react';
 import { TIERS } from './customCakeData';
 import ImageWithSkeleton from '../components/ui/ImageWithSkeleton';
 
@@ -30,6 +30,7 @@ export default function CustomCakeBrowse({
   setCategoryFilter = () => {},
   categories = []
 }) {
+  const navigate = useNavigate();
   const [mobileLayout, setMobileLayout] = useState('grid');
   const { isInWishlist, toggleWishlist } = useWishlist();
   const [currentPage, setCurrentPage] = useState(1);
@@ -287,7 +288,9 @@ export default function CustomCakeBrowse({
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
           <div>
             <nav className="flex items-center gap-2 mb-2">
-              <Link to="/" className="text-[11px] font-bold uppercase tracking-wider text-white/70 hover:text-[var(--primary)] transition-colors">Home</Link>
+              <button onClick={() => navigate(-1)} className="text-[11px] font-bold uppercase tracking-wider text-white/70 hover:text-[var(--primary)] transition-colors flex items-center gap-1 cursor-pointer">
+                <ArrowLeft size={12} /> Back
+              </button>
               <span className="text-white/40">/</span>
               <span className="text-[11px] font-bold uppercase tracking-wider text-white">Custom Cakes</span>
             </nav>
