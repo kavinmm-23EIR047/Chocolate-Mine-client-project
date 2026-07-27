@@ -7,6 +7,7 @@ import {
   CheckCircle,
   Users,
   Package,
+  Cake,
   TrendingUp,
   ArrowUpRight,
   Download,
@@ -26,7 +27,8 @@ const statCards = [
   { key: 'pendingOrders', label: 'Pending', icon: Clock, color: 'from-amber-500 to-amber-600' },
   { key: 'deliveredOrders', label: 'Delivered', icon: CheckCircle, color: 'from-green-500 to-green-600' },
   { key: 'totalUsers', label: 'Customers', icon: Users, color: 'from-purple-500 to-purple-600' },
-  { key: 'totalProducts', label: 'Products', icon: Package, color: 'from-rose-500 to-rose-600' },
+  { key: 'totalProducts', label: 'Ordinary Products', icon: Package, color: 'from-rose-500 to-rose-600' },
+  { key: 'totalCustomCakes', label: 'Custom Cakes', icon: Cake, color: 'from-amber-600 to-amber-700' },
 ];
 
 const AdminDashboard = () => {
@@ -100,7 +102,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7 gap-4">
         {statCards.map((card, i) => (
           <motion.div
             key={card.key}

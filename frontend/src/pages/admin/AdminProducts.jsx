@@ -5,6 +5,7 @@ import { Plus, Edit3, Trash2, Star, Award, EyeOff, Cake, ChevronDown } from 'luc
 import productService from '../../services/productService';
 import adminService from '../../services/adminService';
 import { formatCurrency } from '../../utils/helpers';
+import { getOptimizedCloudinaryUrl } from '../../utils/cloudinary';
 import Button from '../../components/ui/Button';
 import SearchInput from '../../components/ui/SearchInput';
 import Badge from '../../components/ui/Badge';
@@ -239,7 +240,7 @@ const AdminProducts = () => {
                     <motion.tr key={p._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }} className="hover:bg-border/20 transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <img src={p.image} alt={p.name} className="w-12 h-12 rounded-xl object-cover bg-border" onError={(e) => { e.target.src = 'https://placehold.co/100x100/3B1A0F/FAF0EC?text=🍫'; }} />
+                          <img src={getOptimizedCloudinaryUrl(p.image, 200)} alt={p.name} className="w-12 h-12 rounded-xl object-cover bg-border" onError={(e) => { e.target.src = 'https://placehold.co/100x100/3B1A0F/FAF0EC?text=🍫'; }} />
                           <div><p className="font-bold text-heading text-sm">{p.name}</p><p className="text-xs text-muted">{p.slug}</p></div>
                         </div>
                        </td>
@@ -300,7 +301,7 @@ const AdminProducts = () => {
               <details key={`mobile-${p._id}`} className="bg-card border border-border rounded-2xl overflow-hidden group">
                 <summary className="p-4 flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden">
                   <div className="flex items-center gap-3">
-                    <img src={p.image} alt={p.name} className="w-12 h-12 rounded-xl object-cover bg-border" onError={(e) => { e.target.src = 'https://placehold.co/100x100/3B1A0F/FAF0EC?text=🍫'; }} />
+                          <img src={getOptimizedCloudinaryUrl(p.image, 200)} alt={p.name} className="w-12 h-12 rounded-xl object-cover bg-border" onError={(e) => { e.target.src = 'https://placehold.co/100x100/3B1A0F/FAF0EC?text=🍫'; }} />
                     <div>
                       <p className="font-bold text-heading text-sm">{p.name}</p>
                       <div className="flex items-center gap-2 mt-1">

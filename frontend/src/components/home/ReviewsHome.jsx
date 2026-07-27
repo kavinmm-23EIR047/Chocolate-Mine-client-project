@@ -112,19 +112,44 @@ const GoogleLogo = ({ size = 20 }) => (
 
 const RenderStars = ({ rating, size = 16 }) => {
   const stars = [];
-  const starFillColor = "#E2A829";
-  const starStrokeColor = "#C6901D";
 
   for (let i = 1; i <= 5; i++) {
     if (rating >= i) {
-      stars.push(<Star key={i} size={size} fill={starFillColor} stroke={starStrokeColor} strokeWidth={1.5} />);
+      stars.push(
+        <Star
+          key={i}
+          size={size}
+          fill="#3B1E08"
+          stroke="#1A0F0A"
+          strokeWidth={1.5}
+          className="dark:fill-[#E6B25A] dark:stroke-[#B58535]"
+        />
+      );
     } else if (rating >= i - 0.5) {
-      stars.push(<StarHalf key={i} size={size} fill={starFillColor} stroke={starStrokeColor} strokeWidth={1.5} />);
+      stars.push(
+        <StarHalf
+          key={i}
+          size={size}
+          fill="#3B1E08"
+          stroke="#1A0F0A"
+          strokeWidth={1.5}
+          className="dark:fill-[#E6B25A] dark:stroke-[#B58535]"
+        />
+      );
     } else {
-      stars.push(<Star key={i} size={size} fill="none" stroke="#C6901D" strokeWidth={1.2} className="opacity-25" />);
+      stars.push(
+        <Star
+          key={i}
+          size={size}
+          fill="none"
+          stroke="#3B1E08"
+          strokeWidth={1.5}
+          className="opacity-30 dark:stroke-[#E6B25A]"
+        />
+      );
     }
   }
-  return <div className="flex gap-0.5">{stars}</div>;
+  return <div className="flex gap-1">{stars}</div>;
 };
 
 const ReviewCard = ({ review, index }) => {
@@ -238,14 +263,14 @@ const ReviewsHome = () => {
         
         {/* ─── CENTERED HEADER SECTION ─── */}
         <div className="text-center max-w-2xl mx-auto mb-12 md:mb-16">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-card border border-border/50 shadow-sm mb-4">
-            <GoogleLogo size={14} />
-            <span className="text-[10px] font-black uppercase tracking-widest text-muted">
-              Official Google Reviews
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-card/80 backdrop-blur-md border border-border/60 shadow-xs mb-4">
+            <GoogleLogo size={15} />
+            <span className="text-xs font-semibold tracking-wide text-foreground/90">
+              Google Reviews
             </span>
           </div>
 
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-heading leading-tight mb-4">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-heading leading-tight mb-4 font-sans">
             Loved By Dessert Lovers
           </h2>
 
@@ -254,16 +279,18 @@ const ReviewsHome = () => {
           </p>
 
           {/* Symmetrical Rating Summary Badge */}
-          <div className="inline-flex flex-wrap items-center justify-center gap-4 bg-card px-6 py-3 rounded-full border border-border/40 shadow-sm">
-            <div className="flex items-center gap-1.5 border-r border-border/30 pr-4">
-              <span className="text-xl md:text-2xl font-black text-heading leading-none">{avgRating}</span>
-              <span className="text-[10px] font-bold text-muted">/ 5.0</span>
+          <div className="inline-flex items-center gap-1.5 sm:gap-4 bg-card/90 backdrop-blur-md px-2.5 sm:px-6 py-2.5 sm:py-3 rounded-full border border-border/60 shadow-sm max-w-full">
+            <div className="flex items-baseline gap-1">
+              <span className="text-lg sm:text-2xl font-black text-heading leading-none tracking-tight">{avgRating}</span>
+              <span className="text-[10px] sm:text-xs font-semibold text-muted">/ 5.0</span>
             </div>
-            <div className="flex items-center justify-center">
-              <RenderStars rating={parseFloat(avgRating)} size={14} />
+            <div className="w-px h-5 bg-border/60 shrink-0" />
+            <div className="flex items-center">
+              <RenderStars rating={parseFloat(avgRating)} size={13} />
             </div>
-            <span className="text-[8px] sm:text-[10px] font-bold text-muted uppercase tracking-widest border-l border-border/30 pl-4 whitespace-nowrap">
-              {totalReviews}+ verified ratings
+            <div className="w-px h-5 bg-border/60 shrink-0" />
+            <span className="text-[9px] sm:text-xs font-medium text-muted tracking-normal whitespace-nowrap">
+              <strong className="font-bold text-heading">{totalReviews}+</strong> Verified Ratings
             </span>
           </div>
         </div>
@@ -274,7 +301,7 @@ const ReviewsHome = () => {
             modules={[Autoplay, Pagination, Navigation]}
             autoplay={{ delay: 4000, disableOnInteraction: false, pauseOnMouseEnter: true }}
             spaceBetween={24}
-            slidesPerView={1.1}
+            slidesPerView={1}
             navigation={{
               prevEl: '.swiper-button-prev-reviews',
               nextEl: '.swiper-button-next-reviews'

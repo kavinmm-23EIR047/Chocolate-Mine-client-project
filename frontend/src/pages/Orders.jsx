@@ -12,6 +12,7 @@ import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 import { OrderStatusBadge } from '../components/ui/StatusBadge';
 import { formatCurrency } from '../utils/helpers';
+import { getOptimizedCloudinaryUrl } from '../utils/cloudinary';
 import EmptyState from '../components/ui/EmptyState';
 import { CardSkeleton } from '../components/ui/Skeleton';
 import toast from 'react-hot-toast';
@@ -272,7 +273,7 @@ const OrderCard = ({ order, index, canReview = false }) => {
               {order.items?.slice(0, 3).map((item, i) => (
                 <div key={i} className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-surface rounded-xl overflow-hidden border border-border/30 shrink-0 shadow-sm">
-                    <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                    <img src={getOptimizedCloudinaryUrl(item.image, 200)} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-black text-heading truncate uppercase tracking-tighter">{item.name}</p>

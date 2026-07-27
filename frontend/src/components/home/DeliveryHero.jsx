@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import api from '../../utils/api';
 import { useTheme } from '../../context/ThemeContext';
+import { getOptimizedCloudinaryUrl } from '../../utils/cloudinary';
 
 import ScooterLightImg from '../../assets/scooter-light.png';
 import ScooterDarkImg from '../../assets/scooter-dark.png';
@@ -121,30 +122,30 @@ const DeliveryHero = () => {
 
         <div className="relative flex-1 grid grid-cols-1 lg:grid-cols-12 items-stretch gap-4 lg:gap-6 min-h-[380px] sm:min-h-[440px] lg:min-h-[460px]">
           {/* LEFT TEXT CONTENT */}
-          <div className="flex flex-col justify-center p-6 sm:p-8 lg:p-8 xl:p-10 order-2 lg:order-1 relative z-20 text-center lg:text-left lg:col-span-7 xl:col-span-6">
+          <div className="flex flex-col justify-center p-6 sm:p-8 lg:p-8 xl:p-10 order-2 lg:order-1 relative z-20 text-center lg:text-left lg:col-span-6 xl:col-span-6">
+            {/* Priority Service Badge */}
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               className="flex items-center justify-center lg:justify-start gap-2 mb-3"
             >
-              <Truck size={14} style={{ color: 'var(--primary)' }} />
-              <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.3em]" style={{ color: 'var(--muted)' }}>
+              <Truck size={15} style={{ color: 'var(--primary)' }} />
+              <span className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--muted)' }}>
                 Priority Service
               </span>
             </motion.div>
 
+            {/* Main Headline */}
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.07 }}
-              className="text-2xl sm:text-3xl lg:text-3xl xl:text-4xl tv:text-5xl font-black leading-[1.2] tracking-tight mb-3"
+              className="text-2xl sm:text-3xl lg:text-3xl xl:text-4xl font-black leading-snug tracking-tight mb-3"
               style={{ color: 'var(--heading)' }}
             >
-              The Best of <span style={{ color: 'var(--accent)' }}>Coimbatore</span>
-              <br />
-              At Your Doorstep in 3 Hours
+              The Best of <span style={{ color: 'var(--primary)' }}>Coimbatore</span> At Your Doorstep in <span style={{ color: 'var(--primary)' }}>3 Hours</span>
             </motion.h2>
 
             <motion.p
@@ -152,45 +153,55 @@ const DeliveryHero = () => {
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
               transition={{ delay: 0.13 }}
-              className="text-xs sm:text-sm font-medium leading-relaxed mb-5 max-w-md mx-auto lg:mx-0"
+              className="text-xs sm:text-sm font-medium leading-relaxed mb-6 max-w-md mx-auto lg:mx-0"
               style={{ color: 'var(--muted)' }}
             >
               Premium cakes, handcrafted with love and delivered fresh across the city.
             </motion.p>
 
+            {/* Feature Cards Grid (Horizontal card layout: Icon on Left, Text on Right) */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.16 }}
-              className="flex flex-wrap justify-center lg:justify-start gap-2 sm:gap-2.5 mb-6"
+              className="grid grid-cols-2 gap-3 mb-6 w-full max-w-xl mx-auto lg:mx-0"
             >
               {DELIVERY_FEATURES.map(({ icon, label, sub }) => (
                 <div
                   key={label}
-                  className="flex flex-col items-center gap-1 px-2.5 sm:px-3 py-2 rounded-xl min-w-[65px] sm:min-w-[75px] transition-all duration-300 hover:scale-105 cursor-default group"
+                  className="flex items-center gap-3 p-3 sm:p-3.5 rounded-xl transition-all duration-300 hover:scale-[1.02] cursor-default group"
                   style={{
                     background: 'var(--background)',
                     border: '1px solid var(--border)',
                   }}
                 >
-                  <span className="group-hover:scale-110 transition-transform duration-300" style={{ color: 'var(--primary)' }}>{icon}</span>
-                  <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-tight text-center leading-tight mt-0.5" style={{ color: 'var(--heading)' }}>{label}</span>
-                  <span className="text-[8px] sm:text-[9px] font-medium text-center leading-none" style={{ color: 'var(--muted)' }}>{sub}</span>
+                  <span className="shrink-0 group-hover:scale-110 transition-transform duration-300" style={{ color: 'var(--primary)' }}>
+                    {icon}
+                  </span>
+                  <div className="flex flex-col text-left">
+                    <span className="text-[11px] sm:text-xs font-black uppercase tracking-wider leading-tight" style={{ color: 'var(--heading)' }}>
+                      {label}
+                    </span>
+                    <span className="text-[9px] sm:text-[10px] font-medium leading-tight mt-0.5" style={{ color: 'var(--muted)' }}>
+                      {sub}
+                    </span>
+                  </div>
                 </div>
               ))}
             </motion.div>
 
+            {/* Action Buttons (Strictly Horizontal Side-by-Side) */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
-              className="flex flex-wrap justify-center lg:justify-start items-center gap-4"
+              className="flex flex-row flex-wrap items-center justify-center lg:justify-start gap-3 sm:gap-6 w-full lg:w-auto"
             >
               <Link
                 to="/shop"
-                className="inline-flex items-center gap-2 px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl text-[11px] sm:text-xs font-black uppercase tracking-[0.18em] transition-all duration-300 hover:scale-105 active:scale-95"
+                className="inline-flex flex-1 lg:flex-none items-center justify-center gap-1.5 px-3 sm:px-7 py-3 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-[0.12em] sm:tracking-[0.18em] whitespace-nowrap min-w-0 transition-all duration-300 hover:scale-105 active:scale-95"
                 style={{
                   background: 'var(--primary)',
                   color: 'var(--button-text)',
@@ -200,25 +211,25 @@ const DeliveryHero = () => {
                 Order Now <ChevronRight size={14} />
               </Link>
               <Link
-                to="/track"
-                className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.15em] underline-offset-4 hover:underline transition-all"
+                to="/shop"
+                className="flex-1 lg:flex-none text-[10px] sm:text-xs font-bold uppercase tracking-[0.08em] sm:tracking-[0.15em] underline-offset-4 hover:underline whitespace-nowrap min-w-0 text-center lg:text-left transition-all"
                 style={{ color: 'var(--muted)' }}
               >
-                Track your order →
+                Explore Products →
               </Link>
             </motion.div>
           </div>
 
-          {/* SCOOTER IMAGE CONTAINER (CENTERED HORIZONTALLY AND VERTICALLY ON PC & MOBILE) */}
-          <div className="relative order-1 lg:order-2 flex items-center justify-center z-10 lg:col-span-5 xl:col-span-6 p-4 sm:p-6 w-full h-full min-h-[260px] sm:min-h-[320px] lg:min-h-[400px]">
+          {/* SCOOTER IMAGE CONTAINER (MAXIMIZED HORIZONTALLY AND VERTICALLY) */}
+          <div className="hidden lg:flex relative order-1 lg:order-2 items-center justify-center z-10 lg:col-span-6 xl:col-span-6 p-2 sm:p-4 w-full h-full min-h-[340px] sm:min-h-[400px] lg:min-h-[500px]">
             <motion.img
               src={scooterImg}
               alt="Chocolate Mine Delivery"
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.98 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="w-full max-w-[500px] lg:max-w-[560px] xl:max-w-[620px] h-auto max-h-[340px] sm:max-h-[400px] lg:max-h-[440px] xl:max-h-[480px] object-contain object-center mx-auto my-auto drop-shadow-2xl"
+              className="w-full h-auto max-h-[480px] sm:max-h-[580px] lg:max-h-[680px] xl:max-h-[780px] object-contain object-center mx-auto my-auto drop-shadow-2xl scale-110 sm:scale-120 lg:scale-115"
               draggable={false}
             />
           </div>
@@ -242,7 +253,7 @@ const DeliveryHero = () => {
                 Pay securely with
               </span>
               <div className="flex items-center gap-1.5">
-                <Zap size={14} style={{ color: 'var(--accent)' }} />
+                <Zap size={14} className="text-[#3B1E08] dark:text-amber-400" />
                 <span className="text-sm font-black tracking-tight" style={{ color: 'var(--heading)' }}>Razorpay</span>
               </div>
             </div>
@@ -254,7 +265,7 @@ const DeliveryHero = () => {
                 { icon: <Zap size={12} />, label: 'Instant', sub: 'Confirm' },
               ].map(({ icon, label, sub }) => (
                 <div key={label} className="flex items-center gap-2">
-                  <span style={{ color: 'var(--accent)' }}>{icon}</span>
+                  <span className="text-[#3B1E08] dark:text-amber-400">{icon}</span>
                   <div>
                     <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-tight leading-none mb-0.5" style={{ color: 'var(--heading)' }}>{label}</p>
                     <p className="text-[8px] sm:text-[9px] leading-tight" style={{ color: 'var(--muted)' }}>{sub}</p>
@@ -297,7 +308,7 @@ const DeliveryHero = () => {
         }}
       >
         <div className="px-6 pt-8 pb-4 text-center lg:text-left">
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] mb-1.5" style={{ color: 'var(--accent)' }}>
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] mb-1.5 text-[#3B1E08] dark:text-amber-400">
             Custom Cakes
           </p>
           <h3 className="text-2xl sm:text-3xl font-black leading-tight tracking-tight mb-2" style={{ color: 'var(--heading)' }}>
@@ -331,9 +342,11 @@ const DeliveryHero = () => {
                     <div className="px-3 pt-4 w-full flex justify-center items-center h-[160px] sm:h-[180px] overflow-hidden">
                       {theme.image || theme.colors?.[0]?.images?.tier1 || theme.colors?.[0]?.images?.tier2 || theme.colors?.[0]?.images?.tier3 ? (
                         <img
-                          src={theme.image || theme.colors?.[0]?.images?.tier1 || theme.colors?.[0]?.images?.tier2 || theme.colors?.[0]?.images?.tier3}
+                          src={getOptimizedCloudinaryUrl(theme.image || theme.colors?.[0]?.images?.tier1 || theme.colors?.[0]?.images?.tier2 || theme.colors?.[0]?.images?.tier3, 400)}
                           alt={theme.name}
                           className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
+                          loading="lazy"
+                          width="400"
                         />
                       ) : (
                         <span className="flex items-center justify-center h-full text-5xl">{theme.emoji || '🎂'}</span>
@@ -373,8 +386,8 @@ const DeliveryHero = () => {
                 key={index}
                 onClick={() => scrollToSlide(index)}
                 className={`transition-all duration-300 rounded-full !min-w-0 !min-h-0 p-0 ${index === activeThemeIndex
-                    ? 'w-4 h-1.5 opacity-100'
-                    : 'w-1.5 h-1.5 opacity-30 hover:opacity-60'
+                  ? 'w-4 h-1.5 opacity-100'
+                  : 'w-1.5 h-1.5 opacity-30 hover:opacity-60'
                   }`}
                 style={{ background: 'var(--primary)' }}
                 aria-label={`Go to slide ${index + 1}`}
@@ -394,8 +407,8 @@ const DeliveryHero = () => {
             <div key={label} className="flex items-start gap-3 group cursor-default">
               <div
                 className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-110 ${highlight
-                  ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
-                  : 'bg-background text-accent border-border'
+                  ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+                  : 'bg-white/80 dark:bg-white/10 text-[#27190e] dark:text-amber-400 border border-[var(--border)]/40 shadow-sm'
                   }`}
               >
                 {icon}

@@ -231,6 +231,7 @@ const Cart = () => {
                           alt={item.name}
                           className="w-full h-full object-cover"
                           fallback={<ImagePlaceholder />}
+                          imageWidth={200}
                         />
                       )}
                     </div>

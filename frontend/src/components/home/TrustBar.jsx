@@ -21,7 +21,7 @@ const TrustBar = () => {
   return (
     <>
       {/* Mobile Trust Ticker */}
-      <div className="lg:hidden relative px-4 mb-6">
+      <div className="lg:hidden relative px-4 mb-6 rounded-none">
         <div className="relative overflow-hidden">
           <div className="py-2">
             <AnimatePresence mode="wait">
@@ -33,36 +33,33 @@ const TrustBar = () => {
                 transition={{ duration: 0.3 }}
                 className="flex items-center justify-center gap-3"
               >
-                <div className="w-8 h-8 rounded-full bg-primary/5 flex items-center justify-center text-primary shrink-0">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-[#27190e] dark:text-[#F5E6D3] shrink-0">
                   {TRUST[activeTrustIndex].icon}
                 </div>
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary whitespace-nowrap">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#27190e] dark:text-[#F5E6D3] whitespace-nowrap">
                   {TRUST[activeTrustIndex].label}
                 </span>
               </motion.div>
             </AnimatePresence>
           </div>
           <div className="flex justify-center gap-1.5 mt-2">
-            {TRUST.map((_, i) => {
-              const isVeg = TRUST[i].label.includes('Pure Veg');
-              return (
-                <button
-                  key={i}
-                  aria-label={`View slide ${i + 1}`}
-                  onClick={() => setActiveTrustIndex(i)}
-                  className={`!p-0 !m-0 !border-none !outline-none !min-w-0 !min-h-0 h-1.5 rounded-full transition-all duration-300 ${activeTrustIndex === i
-                    ? (isVeg ? 'w-6 bg-emerald-500' : 'w-6 bg-primary')
-                    : (isVeg ? 'w-1.5 bg-emerald-200' : 'w-1.5 bg-primary/20')
-                    }`}
-                />
-              );
-            })}
+            {TRUST.map((_, i) => (
+              <button
+                key={i}
+                aria-label={`View slide ${i + 1}`}
+                onClick={() => setActiveTrustIndex(i)}
+                className={`!p-0 !m-0 !border-none !outline-none !min-w-0 !min-h-0 h-1.5 rounded-full transition-all duration-300 ${activeTrustIndex === i
+                  ? 'w-6 bg-[#27190e] dark:bg-[#F5E6D3]'
+                  : 'w-1.5 bg-[#27190e]/20 dark:bg-[#F5E6D3]/20'
+                  }`}
+              />
+            ))}
           </div>
         </div>
       </div>
 
       {/* Desktop Trust Marquee */}
-      <div className="hidden lg:block bg-card border-y border-border overflow-hidden relative w-full">
+      <div className="hidden lg:block bg-[var(--card)] border-y border-[var(--border)] overflow-hidden relative w-full rounded-none">
         <style>{`
           @keyframes scroll-marquee {
             0% { transform: translateX(0); }
@@ -77,21 +74,18 @@ const TrustBar = () => {
             animation-play-state: paused;
           }
         `}</style>
-        <div className="py-3">
+        <div className="py-2.5">
           <div className="animate-scroll-marquee">
-            {[...TRUST, ...TRUST, ...TRUST, ...TRUST].map((t, i) => {
-              const isVeg = t.label.includes('Pure Veg');
-              return (
-                <div key={i} className="flex items-center gap-2 whitespace-nowrap shrink-0 group px-8">
-                  <div className={`transition-transform duration-300 ${isVeg ? 'text-emerald-600 dark:text-emerald-400' : 'text-primary'} group-hover:scale-110`}>
-                    {t.icon}
-                  </div>
-                  <span className={`text-[11px] font-semibold uppercase tracking-[0.2em] transition-colors ${isVeg ? 'text-emerald-700 dark:text-emerald-300' : 'text-muted group-hover:text-primary'}`}>
-                    {t.label}
-                  </span>
+            {[...TRUST, ...TRUST, ...TRUST, ...TRUST].map((t, i) => (
+              <div key={i} className="flex items-center gap-2 whitespace-nowrap shrink-0 group px-8">
+                <div className="text-[#27190e] dark:text-[#F5E6D3] transition-transform duration-300 group-hover:scale-110">
+                  {t.icon}
                 </div>
-              );
-            })}
+                <span className="text-[11px] font-black uppercase tracking-[0.2em] text-[#27190e] dark:text-[#F5E6D3]">
+                  {t.label}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </div>

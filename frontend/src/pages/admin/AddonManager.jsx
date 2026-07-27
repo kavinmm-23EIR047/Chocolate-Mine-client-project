@@ -4,6 +4,7 @@ import { Plus, Trash2, Edit2, Check, X, ToggleLeft, ToggleRight } from 'lucide-r
 import adminService from '../../services/adminService';
 import ImageUpload from '../../components/admin/ImageUpload';
 import toast from 'react-hot-toast';
+import { getOptimizedCloudinaryUrl } from '../../utils/cloudinary';
 
 const AddonManager = () => {
   const [addons, setAddons] = useState([]);
@@ -197,7 +198,7 @@ const AddonManager = () => {
               className={`bg-card border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all ${!addon.isActive ? 'opacity-50' : 'border-border'}`}
             >
               <div className="aspect-square relative overflow-hidden bg-white/5 flex items-center justify-center p-4">
-                <img src={addon.image} alt={addon.name} className="w-full h-full object-contain" />
+                <img src={getOptimizedCloudinaryUrl(addon.image, 200)} alt={addon.name} className="w-full h-full object-contain" />
               </div>
               <div className="p-3 border-t border-border">
                 <div className="flex justify-between items-start mb-2">

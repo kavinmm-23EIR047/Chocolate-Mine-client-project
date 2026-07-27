@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Image as ImageIcon } from 'lucide-react';
+import { getOptimizedCloudinaryUrl } from '../../utils/cloudinary';
 
 const ImageWithSkeleton = ({
   src,
@@ -13,24 +14,21 @@ const ImageWithSkeleton = ({
   imgStyle = {},
   fallback,
   showSparkles,
+  imageWidth,
+  fetchPriority,
   ...props
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
   const imgRef = useRef(null);
 
-  // Check if image is already cached in browser memory for instant rendering
+  const optimizedSrc = getOptimizedCloudinaryUrl(src, imageWidth);
+
   useEffect(() => {
-    if (!src || src === 'none' || src.trim() === '') return;
+    if (!optimizedSrc || optimizedSrc === 'none' || optimizedSrc.trim() === '') return;
     setIsLoaded(false);
     setHasError(false);
-
-    const img = new Image();
-    img.src = src;
-    if (img.complete && img.naturalWidth > 0) {
-      setIsLoaded(true);
-    }
-  }, [src]);
+  }, [optimizedSrc]);
 
   const handleLoad = () => {
     setIsLoaded(true);
@@ -41,7 +39,7 @@ const ImageWithSkeleton = ({
     setIsLoaded(true);
   };
 
-  if (!src || src === 'none' || src.trim() === '') {
+  if (!optimizedSrc || optimizedSrc === 'none' || optimizedSrc.trim() === '') {
     return (
       <div className={`relative overflow-hidden w-full h-full flex items-center justify-center ${containerClassName} ${aspectRatio}`} style={{ background: 'var(--card-soft)', ...style }}>
         {fallback || (
@@ -89,9 +87,10 @@ const ImageWithSkeleton = ({
       ) : (
         <img
           ref={imgRef}
-          src={src}
+          src={optimizedSrc}
           alt={alt}
           loading={loading}
+          fetchPriority={fetchPriority}
           onLoad={handleLoad}
           onError={handleError}
           className={`${className} transition-opacity duration-200 ease-out ${

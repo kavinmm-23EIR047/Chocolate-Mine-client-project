@@ -73,18 +73,18 @@ const HomeBanner = () => {
 
   return (
     <div
-      className="banner-root relative w-full overflow-hidden rounded-[16px] sm:rounded-[24px] shadow-premium select-none border border-border/20"
+      className="banner-root relative w-full overflow-hidden rounded-[16px] sm:rounded-[24px] select-none border-0 sm:border border-border/20 bg-transparent"
       style={{ aspectRatio: 'var(--banner-ratio, 16/9)' }}
     >
       <style>{`
-        @media (max-width: 480px) {
-          .banner-root { aspect-ratio: 16/7.5 !important; } 
+        @media (max-width: 640px) {
+          .banner-root { aspect-ratio: 16/4.6 !important; } 
         }
-        @media (min-width: 481px) {
+        @media (min-width: 641px) and (max-width: 1024px) {
           .banner-root { aspect-ratio: 16/4.5 !important; }
         }
-        @media (min-width: 1920px) {
-          .banner-root { aspect-ratio: 16/3.9 !important; }
+        @media (min-width: 1025px) {
+          .banner-root { aspect-ratio: 16/4.2 !important; }
         }
 
         .premium-glass {
@@ -96,8 +96,8 @@ const HomeBanner = () => {
         }
       `}</style>
 
-      {/* Solid base layer behind transitions */}
-      <div className="absolute inset-0 bg-background transition-colors duration-300 -z-10" />
+      {/* Transparent base layer behind transitions */}
+      <div className="absolute inset-0 bg-transparent transition-colors duration-300 -z-10" />
 
       {/* Slide transition zone */}
       <AnimatePresence>
@@ -107,17 +107,20 @@ const HomeBanner = () => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.35 }}
-          className="absolute inset-0 w-full h-full"
+          className="absolute inset-0 w-full h-full flex items-center justify-center bg-transparent"
           onClick={handleBannerClick}
           style={{ cursor: slide.link ? 'pointer' : 'default' }}
         >
-          {/* Background Image - With Sparkle Skeleton Loader */}
+          {/* Banner Image - Seamless Full-Bleed object-cover (eliminates corner gaps/glitches) */}
           <ImageWithSkeleton
             src={slide.image}
             alt={slide.title || "Banner Image"}
             className="absolute inset-0 w-full h-full select-none object-cover"
-            containerClassName="absolute inset-0 w-full h-full"
+            containerClassName="absolute inset-0 w-full h-full bg-transparent"
             style={{ objectPosition: 'center center' }}
+            imageWidth={1600}
+            loading="eager"
+            fetchPriority="high"
             draggable={false}
           />
 
@@ -132,64 +135,68 @@ const HomeBanner = () => {
             }}
           />
 
-          {/* TOP-LEFT: Dynamic Title Badge */}
-          <div
-            className="absolute top-0 left-0 right-0 z-10 flex flex-col items-start justify-start pointer-events-none"
-            style={{ padding: 'clamp(10px, 3vw, 20px)' }}
-          >
-            <div className="max-w-[85%] flex flex-col gap-1">
-              {(slide.cornerText || slide.subtitle) && (
-                <span className="font-semibold uppercase tracking-widest text-[8px] sm:text-[9px] text-white/40 pl-0.5 select-none">
-                  {slide.cornerText || slide.subtitle}
-                </span>
-              )}
+          {/* TOP-LEFT: Dynamic Title Badge (Shown on desktop when title exists) */}
+          {slide.title && (
+            <div
+              className="absolute top-0 left-0 right-0 z-10 flex flex-col items-start justify-start pointer-events-none hidden sm:flex"
+              style={{ padding: 'clamp(10px, 3vw, 20px)' }}
+            >
+              <div className="max-w-[85%] flex flex-col gap-1">
+                {(slide.cornerText || slide.subtitle) && (
+                  <span className="font-semibold uppercase tracking-widest text-[8px] sm:text-[9px] text-white/40 pl-0.5 select-none">
+                    {slide.cornerText || slide.subtitle}
+                  </span>
+                )}
 
-              <div className="premium-glass flex items-center gap-1.5 px-2.5 py-1 rounded-full w-fit pointer-events-auto opacity-80">
-                <Gift size={12} className="text-white shrink-0" />
-                <h2
-                  style={{
-                    fontSize: 'clamp(10px, 2vw, 13px)',
-                    fontWeight: 600,
-                    lineHeight: 1.2,
-                    letterSpacing: '0.01em',
-                    color: '#ffffff',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 1,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden',
-                    margin: 0,
-                  }}
-                >
-                  {slide.title || 'Special Offer'}
-                </h2>
+                <div className="premium-glass flex items-center gap-1.5 px-2.5 py-1 rounded-full w-fit pointer-events-auto opacity-80">
+                  <Gift size={12} className="text-white shrink-0" />
+                  <h2
+                    style={{
+                      fontSize: 'clamp(10px, 2vw, 13px)',
+                      fontWeight: 600,
+                      lineHeight: 1.2,
+                      letterSpacing: '0.01em',
+                      color: '#ffffff',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 1,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      margin: 0,
+                    }}
+                  >
+                    {slide.title}
+                  </h2>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* BOTTOM-RIGHT: Action Button */}
-          <div className="interactive-action-node absolute bottom-2.5 right-2.5 sm:bottom-4 sm:right-4 z-20 transition-transform duration-300 hover:scale-[1.02] pointer-events-auto">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (slide.link) window.location.href = slide.link;
-              }}
-              className="premium-glass flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold uppercase tracking-wider text-white/80 transition-all duration-200 active:scale-95 hover:bg-white/10 hover:text-white"
-              style={{
-                fontSize: 'clamp(8px, 1.2vw, 10px)',
-                minWidth: 0,
-                minHeight: 0
-              }}
-            >
-              <span>{slide.buttonText || 'Explore Now'}</span>
-              <ArrowRight size={10} className="shrink-0" />
-            </button>
-          </div>
+          {/* BOTTOM-RIGHT: Action Button (Shown only when slide.buttonText is set) */}
+          {slide.buttonText && (
+            <div className="interactive-action-node absolute bottom-2.5 right-2.5 sm:bottom-4 sm:right-4 z-20 transition-transform duration-300 hover:scale-[1.02] pointer-events-auto">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (slide.link) window.location.href = slide.link;
+                }}
+                className="premium-glass flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold uppercase tracking-wider text-white/80 transition-all duration-200 active:scale-95 hover:bg-white/10 hover:text-white"
+                style={{
+                  fontSize: 'clamp(8px, 1.2vw, 10px)',
+                  minWidth: 0,
+                  minHeight: 0
+                }}
+              >
+                <span>{slide.buttonText}</span>
+                <ArrowRight size={10} className="shrink-0" />
+              </button>
+            </div>
+          )}
         </motion.div>
       </AnimatePresence>
 
-      {/* Pagination Dots */}
+      {/* Pagination Dots - Centered at bottom to prevent covering graphic text */}
       {banners.length > 1 && (
-        <div className="absolute bottom-3 left-3 sm:left-4 flex gap-1.5 z-20 items-center interactive-action-node">
+        <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex gap-1.5 z-20 items-center interactive-action-node">
           {banners.map((_, i) => (
             <div
               key={i}

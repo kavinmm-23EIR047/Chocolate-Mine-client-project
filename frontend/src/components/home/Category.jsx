@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import api from '../../utils/api';
 import fallbackCakeImg from '../../assets/cake.png';
 import allCategoryImg from '../../assets/all.png';
+import { getOptimizedCloudinaryUrl } from '../../utils/cloudinary';
 
 const FALLBACK_IMAGE = fallbackCakeImg;
 const IMAGE_BASE_URL = import.meta.env.VITE_API_URL
@@ -113,7 +114,7 @@ export const CategoryCircles = ({ activeCategory, setActiveCategory }) => {
   if (loading) return null;
 
   return (
-    <section className="py-10 sm:py-14 lg:py-16 relative z-10 w-full bg-[var(--background)]">
+    <section className="py-10 sm:py-14 lg:py-16 relative z-10 w-full bg-transparent">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* ── HEADER SECTION ── */}
@@ -138,14 +139,14 @@ export const CategoryCircles = ({ activeCategory, setActiveCategory }) => {
             <button
               onClick={() => scroll('left')}
               aria-label="Previous categories"
-              className="w-10 h-10 rounded-full border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--primary)] hover:border-[var(--primary)] hover:text-[var(--button-text)] text-[var(--heading)] flex items-center justify-center transition-all duration-200 shadow-sm active:scale-95 cursor-pointer"
+              className="w-10 h-10 rounded-full border border-[var(--border)] bg-transparent hover:bg-[var(--primary)] hover:border-[var(--primary)] hover:text-[var(--button-text)] text-[var(--heading)] flex items-center justify-center transition-all duration-200 shadow-sm active:scale-95 cursor-pointer"
             >
               <ChevronLeft size={20} strokeWidth={2} />
             </button>
             <button
               onClick={() => scroll('right')}
               aria-label="Next categories"
-              className="w-10 h-10 rounded-full border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--primary)] hover:border-[var(--primary)] hover:text-[var(--button-text)] text-[var(--heading)] flex items-center justify-center transition-all duration-200 shadow-sm active:scale-95 cursor-pointer"
+              className="w-10 h-10 rounded-full border border-[var(--border)] bg-transparent hover:bg-[var(--primary)] hover:border-[var(--primary)] hover:text-[var(--button-text)] text-[var(--heading)] flex items-center justify-center transition-all duration-200 shadow-sm active:scale-95 cursor-pointer"
             >
               <ChevronRight size={20} strokeWidth={2} />
             </button>
@@ -179,7 +180,7 @@ export const CategoryCircles = ({ activeCategory, setActiveCategory }) => {
               >
                 <div className={`w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full border border-[var(--border)] bg-transparent shadow-sm overflow-hidden transition-transform duration-300 ${isActive ? 'scale-105 border-[var(--primary)] shadow-md' : 'hover:scale-[1.03]'}`}>
                   <img
-                    src={categoryImageUrl}
+                    src={getOptimizedCloudinaryUrl(categoryImageUrl, 300)}
                     alt={displayName}
                     className="w-full h-full object-cover"
                     onError={(e) => {

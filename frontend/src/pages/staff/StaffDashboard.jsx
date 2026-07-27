@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChefHat, ShoppingBag, Clock, CheckCircle, Printer, RefreshCw, Eye, Flame, Truck, Package, X, KeyRound, Phone, ChevronDown, ChevronUp, ChevronRight, LayoutDashboard, History, ClipboardList, MapPin, CreditCard, Calendar, Hash, Search, Plus, Minus, Trash2, Store, ShoppingCart, User, Cake, Filter, Volume2, VolumeX } from 'lucide-react';
 import staffService from '../../services/staffService';
+import { getOptimizedCloudinaryUrl } from '../../utils/cloudinary';
 import productService from '../../services/productService';
 import { OrderStatusBadge } from '../../components/ui/StatusBadge';
 import Button from '../../components/ui/Button';
@@ -268,7 +269,7 @@ const OrderDetailsModal = ({ order, onClose }) => {
                   <div key={idx} className="border border-border/60 rounded-2xl p-4 bg-card-soft/40 shadow-xs space-y-3">
                     <div className="flex gap-3 sm:gap-4 items-start">
                       {item.image && item.image !== 'none' ? (
-                        <img src={item.image} alt={item.name} className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover border border-border/40 shrink-0 bg-surface" />
+                        <img src={getOptimizedCloudinaryUrl(item.image, 200)} alt={item.name} className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover border border-border/40 shrink-0 bg-surface" />
                       ) : (
                         <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-surface border border-border/40 shrink-0 flex items-center justify-center">
                           <Cake size={24} className="text-muted" />
@@ -761,7 +762,7 @@ const CreateInShopOrderView = () => {
                       <span className="absolute top-2 right-2 bg-secondary text-background text-[9px] font-black px-1.5 py-0.5 rounded-md">VARIANTS</span>
                     ) : null}
                     {product.image ? (
-                      <img src={product.image} alt={product.name} className="w-16 h-16 rounded-lg object-cover mb-2 border border-border/20 group-hover:shadow-md transition-shadow" />
+                      <img src={getOptimizedCloudinaryUrl(product.image, 200)} alt={product.name} className="w-16 h-16 rounded-lg object-cover mb-2 border border-border/20 group-hover:shadow-md transition-shadow" />
                     ) : (
                       <div className="w-16 h-16 rounded-lg bg-border/20 flex items-center justify-center mb-2">
                         <Package size={24} className="text-muted" />
@@ -801,7 +802,7 @@ const CreateInShopOrderView = () => {
                     animate={{ opacity: 1, x: 0 }}
                     className="flex items-center gap-3 p-3 bg-card-soft border border-border/30 rounded-xl"
                   >
-                    {item.image && <img src={item.image} alt={item.name} className="w-12 h-12 rounded-lg object-cover border border-border/20" />}
+                    {item.image && <img src={getOptimizedCloudinaryUrl(item.image, 200)} alt={item.name} className="w-12 h-12 rounded-lg object-cover border border-border/20" />}
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-sm text-heading truncate">{item.name}</p>
                       {(item.selectedFlavor || item.selectedWeight) && (

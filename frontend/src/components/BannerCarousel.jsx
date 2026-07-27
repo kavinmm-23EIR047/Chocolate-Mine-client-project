@@ -60,6 +60,7 @@ const BannerCarousel = () => {
                 alt={banner.title}
                 className="w-full h-full object-cover"
                 containerClassName="w-full h-full"
+                imageWidth={1600}
               />
               <div className="absolute inset-0 bg-gradient-to-r from-footer/70 via-footer/30 to-transparent flex flex-col justify-center px-6 sm:px-16 lg:px-24">
                 <motion.div

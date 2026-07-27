@@ -43,6 +43,7 @@ import RefundPolicy from './pages/RefundPolicy';
 import Shop from './pages/Shop';
 import CustomCake from './custom-cakes/CustomCake';
 import BrandIntroLoader from './components/BrandIntroLoader.jsx';
+import OfflineStateBanner from './components/ui/OfflineStateBanner.jsx';
 
 // Dashboard Sub-pages
 import DashboardHome from './pages/user/DashboardHome';
@@ -189,6 +190,7 @@ function App() {
           <ThemeProvider>
             <BrandIntroGate />
             <Router>
+              <OfflineStateBanner />
               <ScrollToTop />
               <SocketInitializer />
               <GlobalNotificationHandler />

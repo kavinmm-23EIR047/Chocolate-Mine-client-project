@@ -1,26 +1,26 @@
 import React from 'react';
 
-// Order Statuses - Updated for delivery workflow (3 statuses only)
+// Order Statuses - Theme bound for Light & Dark mode
 export const ORDER_STATUSES = {
   confirmed: {
     label: 'Confirmed',
-    color: 'bg-blue-100 text-blue-700',
-    dot: 'bg-blue-500'
+    color: 'bg-info-light text-info-text border border-info/30',
+    dot: 'bg-info'
   },
   out_for_delivery: {
     label: 'Out for Delivery',
-    color: 'bg-orange-100 text-orange-700',
-    dot: 'bg-orange-500'
+    color: 'bg-warning-light text-warning-text border border-warning/30',
+    dot: 'bg-warning'
   },
   delivered: {
     label: 'Delivered',
-    color: 'bg-green-100 text-green-700',
-    dot: 'bg-green-500'
+    color: 'bg-success-light text-success-text border border-success/30',
+    dot: 'bg-success'
   },
   cancelled: {
     label: 'Payment Cancelled',
-    color: 'bg-red-100 text-red-700',
-    dot: 'bg-red-500'
+    color: 'bg-error-light text-error-text border border-error/30',
+    dot: 'bg-error'
   }
 };
 
@@ -28,23 +28,23 @@ export const ORDER_STATUSES = {
 export const PAYMENT_STATUSES = {
   pending: {
     label: 'Pending',
-    color: 'bg-yellow-100 text-yellow-700'
+    color: 'bg-warning-light text-warning-text border border-warning/30'
   },
   created: {
     label: 'Created',
-    color: 'bg-gray-100 text-gray-700'
+    color: 'bg-card-soft text-heading border border-border'
   },
   paid: {
     label: 'Paid',
-    color: 'bg-green-100 text-green-700'
+    color: 'bg-success-light text-success-text border border-success/30'
   },
   failed: {
     label: 'Failed',
-    color: 'bg-red-100 text-red-700'
+    color: 'bg-error-light text-error-text border border-error/30'
   },
   refunded: {
     label: 'Refunded',
-    color: 'bg-purple-100 text-purple-700'
+    color: 'bg-info-light text-info-text border border-info/30'
   }
 };
 
@@ -52,15 +52,15 @@ export const PAYMENT_STATUSES = {
 export const KITCHEN_STATUSES = {
   pending: {
     label: 'Pending',
-    color: 'bg-yellow-100 text-yellow-700'
+    color: 'bg-warning-light text-warning-text border border-warning/30'
   },
   preparing: {
     label: 'Preparing',
-    color: 'bg-blue-100 text-blue-700'
+    color: 'bg-info-light text-info-text border border-info/30'
   },
   ready: {
     label: 'Ready',
-    color: 'bg-green-100 text-green-700'
+    color: 'bg-success-light text-success-text border border-success/30'
   }
 };
 

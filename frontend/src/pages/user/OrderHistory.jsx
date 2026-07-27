@@ -11,6 +11,7 @@ import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/ui/Button';
 import { OrderStatusBadge } from '../../components/ui/StatusBadge';
 import { formatCurrency } from '../../utils/helpers';
+import { getOptimizedCloudinaryUrl } from '../../utils/cloudinary';
 import EmptyState from '../../components/ui/EmptyState';
 import { CardSkeleton } from '../../components/ui/Skeleton';
 import toast from 'react-hot-toast';
@@ -170,7 +171,7 @@ const OrderCard = ({ order, index, canReview = false }) => {
             <div className="flex-1 min-w-0 flex items-start sm:items-center gap-4 sm:gap-6 w-full">
                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-card-soft rounded-2xl flex items-center justify-center p-1.5 sm:p-2 border border-border/50 shrink-0 shadow-sm relative overflow-hidden group-hover:scale-105 transition-transform duration-500">
                   {order.items[0]?.image ? (
-                    <img src={order.items[0].image} alt="product" className="w-full h-full object-cover rounded-xl" />
+                    <img src={getOptimizedCloudinaryUrl(order.items[0].image, 200)} alt="product" className="w-full h-full object-cover rounded-xl" />
                   ) : (
                     <ShoppingBag size={24} className="text-muted" />
                   )}

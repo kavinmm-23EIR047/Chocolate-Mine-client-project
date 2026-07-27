@@ -4,6 +4,7 @@ import { Plus, Trash2, Edit2, Check, X, ToggleLeft, ToggleRight } from 'lucide-r
 import adminService from '../../services/adminService';
 import ImageUpload from '../../components/admin/ImageUpload';
 import toast from 'react-hot-toast';
+import { getOptimizedCloudinaryUrl } from '../../utils/cloudinary';
 
 const CategoryManager = () => {
   const [categories, setCategories] = useState([]);
@@ -197,7 +198,7 @@ const CategoryManager = () => {
               className={`bg-card border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all ${!cat.active ? 'opacity-50' : 'border-border'}`}
             >
               <div className="aspect-video relative overflow-hidden">
-                <img src={cat.image} alt={cat.label || cat.name} className="w-full h-full object-cover" />
+                <img src={getOptimizedCloudinaryUrl(cat.image, 300)} alt={cat.label || cat.name} className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-between p-3">
                   <span className="self-end text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider bg-black/60 text-amber-300 backdrop-blur-sm">
                     {cat.categoryType === 'ordinary' ? 'Ordinary' : cat.categoryType === 'custom' ? 'Custom' : 'Both'}

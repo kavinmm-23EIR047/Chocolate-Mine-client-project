@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { getOptimizedCloudinaryUrl } from '../utils/cloudinary';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Truck,
@@ -1684,7 +1685,7 @@ const Checkout = () => {
                     <div className="p-4 sm:p-5 space-y-4 sm:space-y-5">
                       {cartItems.map((item) => (
                         <div key={`${item.productId}-${item.options?.color || item.selectedFlavor}-${item.options?.weight || item.selectedWeight}`} className="flex gap-4 p-4 sm:p-5 rounded-2xl border-2 border-border/20 relative group bg-card-soft/50">
-                          <img src={item.image} className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl object-cover border border-border/10 shrink-0" alt={item.name} />
+                          <img src={getOptimizedCloudinaryUrl(item.image, 200)} className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl object-cover border border-border/10 shrink-0" alt={item.name} />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm sm:text-base font-black text-heading uppercase tracking-tight truncate">{item.name}</p>
                             {getItemDescription(item) && (
@@ -1906,7 +1907,7 @@ const Checkout = () => {
                       key={`${item.productId}-${item.options?.color || item.selectedFlavor || ''}-${item.options?.weight || item.selectedWeight || ''}`}
                       className="flex gap-4 p-4 sm:p-5 w-full min-w-0"
                     >
-                      <img src={item.image} className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover border border-border/10 shrink-0" alt={item.name} />
+                      <img src={getOptimizedCloudinaryUrl(item.image, 200)} className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover border border-border/10 shrink-0" alt={item.name} />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm sm:text-base font-black text-heading truncate uppercase tracking-tight">{item.name}</p>
                         {getItemDescription(item) && (

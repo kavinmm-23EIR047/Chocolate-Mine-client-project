@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { getOptimizedCloudinaryUrl } from '../utils/cloudinary';
 
 import 'swiper/css';
 import 'swiper/css/pagination';
@@ -195,7 +196,7 @@ const ProductDetails = () => {
       const hasCustom = Boolean(product.hasCustomWeights || (Array.isArray(product.customWeightPrices) && product.customWeightPrices.length > 0));
       const hasStandard = product.hasWeights !== undefined ? Boolean(product.hasWeights) : (!hasCustom && isCake);
       const isBento = (Array.isArray(product?.category) ? product.category.some(c => typeof c === 'string' && c.toLowerCase().includes('bento')) : (product?.category || '').toLowerCase().includes('bento')) || product?.cakeType?.toLowerCase().includes('bento');
-      
+
       let defaultWeight = null;
       if (hasCustom && product.customWeightPrices?.[0]?.weight) {
         defaultWeight = product.customWeightPrices[0].weight;
@@ -225,7 +226,7 @@ const ProductDetails = () => {
         if (product.flavors && product.flavors.length > 0) {
           const initialFlavor = product.flavors[0];
           setSelectedFlavor(initialFlavor);
-          
+
           const flavorPrice = getFlavorPrice(initialFlavor);
           setSelectedPrice(initialWeightPrice + flavorPrice);
 
@@ -443,7 +444,7 @@ const ProductDetails = () => {
         if (isCakeWithVariants) {
           if (showCustomFlavorInput && customFlavor) options.flavor = customFlavor;
           else if (selectedFlavor) options.flavor = selectedFlavor.name;
-          
+
           if (showCustomWeightInput && customWeight) options.weight = customWeight;
           else if (selectedWeight) options.weight = selectedWeight;
         }
@@ -510,12 +511,12 @@ const ProductDetails = () => {
         else { toast.error('Please select weight'); return; }
       }
 
-      dispatch(addToCart({ 
-        product, 
-        qty: quantity, 
-        options, 
-        variantPrice: isCakeWithVariants ? currentPrice : null, 
-        addons: selectedAddons 
+      dispatch(addToCart({
+        product,
+        qty: quantity,
+        options,
+        variantPrice: isCakeWithVariants ? currentPrice : null,
+        addons: selectedAddons
       }));
     }
 
@@ -602,7 +603,7 @@ const ProductDetails = () => {
       <div className="max-w-[1400px] w-full mx-auto px-4 lg:px-8 xl:px-12 lg:py-10">
         {/* ── TOP SECTION: Gallery + Pricing ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start mb-6">
-          
+
           {/* ── LEFT — IMAGE SECTION ── */}
           {/* Note: Ensure inside your internal ProductGallery component, the root layout handles aspect-[9/16] or aspect-[3/4] using object-contain with background #e3cbb3 */}
           <div className="w-full space-y-4">
@@ -632,7 +633,7 @@ const ProductDetails = () => {
                 <span className="text-[10px] sm:text-xs font-black text-primary uppercase bg-primary/5 px-3.5 py-1.5 rounded-full tracking-widest border border-primary/10 flex items-center gap-1.5">
                   {displayCategoryObj.main} {displayCategoryObj.sub ? `• ${displayCategoryObj.sub}` : ''}
                 </span>
-                <button 
+                <button
                   onClick={handleShare}
                   title="Share Product"
                   className="p-2.5 sm:p-3 text-muted hover:text-primary active:scale-95 transition-all bg-card-soft rounded-full border border-border/40 shadow-soft cursor-pointer"
@@ -677,61 +678,77 @@ const ProductDetails = () => {
               />
 
               {availableAddons.length > 0 && (
-                <div className="mb-8">
-                  <h3 className="text-sm sm:text-base font-black text-heading uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <span className="w-1.5 h-5 bg-primary rounded-full"></span>
-                    Frequently Bought Together (Add-ons)
+                <div className="mb-6">
+                  <h3 className="text-xs sm:text-sm font-black text-heading uppercase tracking-widest mb-3">
+                    Add Extras
                   </h3>
-                  <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-2.5">
                     {availableAddons.map(addon => {
                       const isSelected = selectedAddons.some(a => a._id === addon._id);
                       const qty = selectedAddonQty(addon);
                       return (
                         <div
                           key={addon._id}
-                          className={`flex items-center gap-4 p-3 sm:p-4 rounded-2xl border-2 transition-all ${isSelected ? 'border-primary/60 bg-primary/5 shadow-sm' : 'border-border/30 bg-card hover:border-primary/30'}`}
+                          onClick={() => handleAddonToggle(addon)}
+                          className={`flex items-center justify-between p-3 sm:p-3.5 rounded-xl border transition-all cursor-pointer select-none ${
+                            isSelected
+                              ? 'border-primary bg-primary/10 shadow-xs'
+                              : 'border-border bg-card hover:border-primary/40'
+                          }`}
                         >
-                          {/* Left: Addon Image */}
-                          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border border-border/20 bg-white shrink-0">
-                            <img src={addon.image} alt={addon.name} className="w-full h-full object-cover" />
-                          </div>
+                          {/* Left: Checkbox + Thumbnail + Name */}
+                          <div className="flex items-center gap-3 min-w-0">
+                            {/* Checkbox square */}
+                            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all shrink-0 ${
+                              isSelected
+                                ? 'bg-primary border-primary text-button-text'
+                                : 'border-muted/50 bg-background'
+                            }`}>
+                              {isSelected && (
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth="3.5" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                              )}
+                            </div>
 
-                          {/* Middle: Name & Price */}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm sm:text-base font-black text-heading uppercase tracking-tight truncate">{addon.name}</p>
-                            <p className="text-sm sm:text-base font-black text-primary mt-0.5">₹{addon.price} <span className="text-xs text-muted/50 font-bold lowercase">/ each</span></p>
-                            {isSelected && (
-                              <p className="text-xs text-success-text font-bold mt-1">
-                                Total: ₹{addon.price * qty}
-                              </p>
+                            {/* Small thumbnail */}
+                            {addon.image && (
+                              <div className="w-9 h-9 rounded-lg overflow-hidden border border-border bg-background shrink-0">
+                                <img src={getOptimizedCloudinaryUrl(addon.image, 200)} alt={addon.name} className="w-full h-full object-cover" />
+                              </div>
                             )}
+
+                            {/* Name */}
+                            <span className="text-xs sm:text-sm font-extrabold text-heading truncate">
+                              {addon.name}
+                            </span>
                           </div>
 
-                          {/* Right: Add / Qty Controls */}
-                          <div className="shrink-0">
-                            {isSelected ? (
-                              <div className="flex items-center gap-0 bg-emerald-600 rounded-xl overflow-hidden shadow-md select-none" onClick={(e) => e.stopPropagation()}>
-                                <button 
-                                  onClick={() => handleAddonDecrement(addon)} 
-                                  className="px-3 py-2 text-white font-black text-base hover:bg-emerald-700 transition-colors"
+                          {/* Right: Price + Quantity controls when selected */}
+                          <div className="flex items-center gap-2.5 shrink-0 ml-2">
+                            <span className="text-xs sm:text-sm font-black text-heading">
+                              +₹{addon.price}
+                            </span>
+
+                            {isSelected && (
+                              <div
+                                className="flex items-center gap-1 bg-primary text-button-text px-2 py-0.5 rounded-lg text-xs font-black shadow-xs"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <button
+                                  onClick={() => handleAddonDecrement(addon)}
+                                  className="hover:opacity-80 px-1 py-0.5 cursor-pointer"
                                 >
                                   −
                                 </button>
-                                <span className="px-3 py-2 text-white font-black text-sm min-w-[36px] text-center bg-emerald-700">{qty}</span>
-                                <button 
-                                  onClick={() => handleAddonIncrement(addon)} 
-                                  className="px-3 py-2 text-white font-black text-base hover:bg-emerald-700 transition-colors"
+                                <span className="min-w-[16px] text-center">{qty}</span>
+                                <button
+                                  onClick={() => handleAddonIncrement(addon)}
+                                  className="hover:opacity-80 px-1 py-0.5 cursor-pointer"
                                 >
                                   +
                                 </button>
                               </div>
-                            ) : (
-                              <button
-                                onClick={() => handleAddonToggle(addon)}
-                                className="px-4 py-2 rounded-xl border-2 border-primary/30 text-primary font-black text-xs sm:text-sm uppercase tracking-wider hover:bg-primary/10 transition-all"
-                              >
-                                + Add
-                              </button>
                             )}
                           </div>
                         </div>

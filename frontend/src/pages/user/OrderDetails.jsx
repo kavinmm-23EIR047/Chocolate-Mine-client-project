@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { getOptimizedCloudinaryUrl } from "../../utils/cloudinary";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   ArrowLeft,
@@ -343,7 +344,7 @@ const OrderDetails = () => {
                 <div key={idx} className="border rounded-xl p-3">
                   <div className="flex gap-4">
                     {item.image && (
-                      <img src={item.image} alt={item.name} className="w-16 h-16 rounded-lg object-cover" />
+                      <img src={getOptimizedCloudinaryUrl(item.image, 200)} alt={item.name} className="w-16 h-16 rounded-lg object-cover" />
                     )}
                     <div className="flex-1">
                       <div className="flex justify-between items-start gap-2">

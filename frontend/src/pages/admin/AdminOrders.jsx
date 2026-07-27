@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ShoppingBag, Eye, Filter, Download, RefreshCw, Info, Package, ChevronDown, ChevronUp, X, Volume2, VolumeX } from 'lucide-react';
 import adminService from '../../services/adminService';
 import { formatCurrency } from '../../utils/helpers';
+import { getOptimizedCloudinaryUrl } from '../../utils/cloudinary';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
 import { OrderStatusBadge } from '../../components/ui/StatusBadge';
@@ -113,7 +114,7 @@ const OrderDetailsModal = ({ order, onClose }) => {
                 <div key={idx} className="border border-border/50 rounded-xl p-3 bg-card-soft/30">
                   <div className="flex gap-3">
                     {item.image && (
-                      <img src={item.image} alt={item.name} className="w-16 h-16 rounded-lg object-cover border border-border/20" />
+                      <img src={getOptimizedCloudinaryUrl(item.image, 200)} alt={item.name} className="w-16 h-16 rounded-lg object-cover border border-border/20" />
                     )}
                     <div className="flex-1">
                       <div className="flex justify-between items-start gap-2">
