@@ -196,11 +196,11 @@ const DeliveryHero = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
-              className="flex flex-row items-center justify-center lg:justify-start gap-4 sm:gap-6 flex-nowrap"
+              className="flex flex-row flex-wrap items-center justify-center lg:justify-start gap-3 sm:gap-6 w-full lg:w-auto"
             >
               <Link
                 to="/shop"
-                className="inline-flex items-center gap-2 px-6 sm:px-7 py-3 rounded-xl text-xs font-black uppercase tracking-[0.18em] whitespace-nowrap shrink-0 transition-all duration-300 hover:scale-105 active:scale-95"
+                className="inline-flex flex-1 lg:flex-none items-center justify-center gap-1.5 px-3 sm:px-7 py-3 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-[0.12em] sm:tracking-[0.18em] whitespace-nowrap min-w-0 transition-all duration-300 hover:scale-105 active:scale-95"
                 style={{
                   background: 'var(--primary)',
                   color: 'var(--button-text)',
@@ -211,7 +211,7 @@ const DeliveryHero = () => {
               </Link>
               <Link
                 to="/shop"
-                className="text-xs font-bold uppercase tracking-[0.15em] underline-offset-4 hover:underline whitespace-nowrap shrink-0 transition-all"
+                className="flex-1 lg:flex-none text-[10px] sm:text-xs font-bold uppercase tracking-[0.08em] sm:tracking-[0.15em] underline-offset-4 hover:underline whitespace-nowrap min-w-0 text-center lg:text-left transition-all"
                 style={{ color: 'var(--muted)' }}
               >
                 Explore Products →
@@ -220,7 +220,7 @@ const DeliveryHero = () => {
           </div>
 
           {/* SCOOTER IMAGE CONTAINER (MAXIMIZED HORIZONTALLY AND VERTICALLY) */}
-          <div className="relative order-1 lg:order-2 flex items-center justify-center z-10 lg:col-span-6 xl:col-span-6 p-2 sm:p-4 w-full h-full min-h-[340px] sm:min-h-[400px] lg:min-h-[500px]">
+          <div className="hidden lg:flex relative order-1 lg:order-2 items-center justify-center z-10 lg:col-span-6 xl:col-span-6 p-2 sm:p-4 w-full h-full min-h-[340px] sm:min-h-[400px] lg:min-h-[500px]">
             <motion.img
               src={scooterImg}
               alt="Chocolate Mine Delivery"

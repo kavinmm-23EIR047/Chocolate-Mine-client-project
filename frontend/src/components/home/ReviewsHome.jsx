@@ -279,17 +279,17 @@ const ReviewsHome = () => {
           </p>
 
           {/* Symmetrical Rating Summary Badge */}
-          <div className="inline-flex items-center gap-3.5 sm:gap-4 bg-card/90 backdrop-blur-md px-5 sm:px-6 py-2.5 sm:py-3 rounded-full border border-border/60 shadow-sm">
+          <div className="inline-flex items-center gap-1.5 sm:gap-4 bg-card/90 backdrop-blur-md px-2.5 sm:px-6 py-2.5 sm:py-3 rounded-full border border-border/60 shadow-sm max-w-full">
             <div className="flex items-baseline gap-1">
-              <span className="text-xl sm:text-2xl font-black text-heading leading-none tracking-tight">{avgRating}</span>
-              <span className="text-xs font-semibold text-muted">/ 5.0</span>
+              <span className="text-lg sm:text-2xl font-black text-heading leading-none tracking-tight">{avgRating}</span>
+              <span className="text-[10px] sm:text-xs font-semibold text-muted">/ 5.0</span>
             </div>
-            <div className="w-px h-5 bg-border/60" />
+            <div className="w-px h-5 bg-border/60 shrink-0" />
             <div className="flex items-center">
-              <RenderStars rating={parseFloat(avgRating)} size={15} />
+              <RenderStars rating={parseFloat(avgRating)} size={13} />
             </div>
-            <div className="w-px h-5 bg-border/60" />
-            <span className="text-xs font-medium text-muted tracking-normal whitespace-nowrap">
+            <div className="w-px h-5 bg-border/60 shrink-0" />
+            <span className="text-[9px] sm:text-xs font-medium text-muted tracking-normal whitespace-nowrap">
               <strong className="font-bold text-heading">{totalReviews}+</strong> Verified Ratings
             </span>
           </div>
@@ -301,7 +301,7 @@ const ReviewsHome = () => {
             modules={[Autoplay, Pagination, Navigation]}
             autoplay={{ delay: 4000, disableOnInteraction: false, pauseOnMouseEnter: true }}
             spaceBetween={24}
-            slidesPerView={1.1}
+            slidesPerView={1}
             navigation={{
               prevEl: '.swiper-button-prev-reviews',
               nextEl: '.swiper-button-next-reviews'
