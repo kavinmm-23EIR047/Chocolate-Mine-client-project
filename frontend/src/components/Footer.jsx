@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
@@ -15,8 +15,47 @@ import {
 import Button from './ui/Button';
 import PureVegBadge from './ui/PureVegBadge';
 import Logo from './Logo';
+import api from '../utils/api';
 
 const Footer = () => {
+  const [quickShopItems, setQuickShopItems] = useState([]);
+
+  useEffect(() => {
+    const fetchQuickShopData = async () => {
+      try {
+        const [catRes, occRes] = await Promise.all([
+          api.get('/categories').catch(() => ({ data: [] })),
+          api.get('/occasions').catch(() => ({ data: [] }))
+        ]);
+
+        const rawCats = catRes.data?.data || catRes.data || [];
+        const rawOccs = occRes.data?.data || occRes.data || [];
+
+        let items = [];
+        if (Array.isArray(rawCats) && rawCats.length > 0) {
+          items = rawCats
+            .filter(c => (c.name || c.label) && (c.name || c.label).toLowerCase() !== 'all')
+            .map(c => ({
+              name: c.name || c.label,
+              path: `/shop?category=${encodeURIComponent(c.name || c.label)}`
+            }));
+        } else if (Array.isArray(rawOccs) && rawOccs.length > 0) {
+          items = rawOccs.map(o => ({
+            name: o.name || o.title,
+            path: `/shop?occasion=${encodeURIComponent(o.name || o.title)}`
+          }));
+        }
+
+        if (items.length > 0) {
+          setQuickShopItems(items.slice(0, 6));
+        }
+      } catch (err) {
+        console.error('Error fetching backend categories for footer:', err);
+      }
+    };
+
+    fetchQuickShopData();
+  }, []);
   return (
     <footer className="dark bg-footer text-footer-text pt-16 sm:pt-24 pb-8 sm:pb-12 overflow-hidden relative transition-colors duration-300">
 
@@ -167,8 +206,9 @@ const Footer = () => {
               {[
                 { name: 'Home', path: '/' },
                 { name: 'Shop All', path: '/shop' },
-                { name: 'Bestsellers', path: '/shop?search=bestseller' },
-                { name: 'Gifting', path: '/shop?search=gift' }
+                { name: 'Bestsellers', path: '/shop?bestseller=true' },
+                { name: 'Special Cakes', path: '/custom-cake' },
+                { name: 'Offer Cakes', path: '/shop?offers=true' }
               ].map((item, i) => (
                 <li key={i}>
                   <Link to={item.path} className="text-muted hover:text-primary transition-all text-xs uppercase tracking-wider block font-medium hover:translate-x-1 duration-200">
@@ -202,12 +242,12 @@ const Footer = () => {
           <div>
             <h4 className="text-[11px] font-black uppercase tracking-[0.35em] mb-6 text-accent">Quick Shop</h4>
             <ul className="space-y-3.5">
-              {[
-                { name: 'Birthday', path: '/shop?category=birthday' },
-                { name: 'Anniversary', path: '/shop?category=anniversary' },
-                { name: 'Wedding', path: '/shop?category=wedding' },
-                { name: 'Congratulations', path: '/shop?category=congratulations' }
-              ].map((item, i) => (
+              {(quickShopItems.length > 0 ? quickShopItems : [
+                { name: 'Bento Cakes', path: '/shop?category=Bento%20Cakes' },
+                { name: 'Birthday Cakes', path: '/shop?category=Birthday%20Cakes' },
+                { name: 'Chocolates', path: '/shop?category=Chocolates' },
+                { name: 'Desserts', path: '/shop?category=Desserts' }
+              ]).map((item, i) => (
                 <li key={i}>
                   <Link to={item.path} className="text-muted hover:text-primary transition-all text-xs uppercase tracking-wider block font-medium hover:translate-x-1 duration-200">
                     {item.name}
