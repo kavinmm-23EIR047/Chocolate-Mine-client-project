@@ -62,9 +62,7 @@ export default function CustomCakeDetail({
   const [hasCustomized, setHasCustomized] = useState(false);
 
   const handleTopLeftBack = () => {
-    if (window.history.length > 1) {
-      navigate(-1);
-    } else if (typeof goBackToBrowse === 'function') {
+    if (typeof goBackToBrowse === 'function') {
       goBackToBrowse();
     } else {
       navigate('/custom-cake');
@@ -72,8 +70,10 @@ export default function CustomCakeDetail({
   };
 
   useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-  }, [theme?.id]);
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [theme?.id, theme?.name]);
 
   useEffect(() => {
     if (window.innerWidth < 768 && (showMobileConfig || flavorDropdownOpen)) {
@@ -501,10 +501,17 @@ export default function CustomCakeDetail({
             const foundIdx = filteredThemes.findIndex(t => t.id === tId);
             if (foundIdx !== -1 && typeof selectTheme === 'function') {
               selectTheme(foundIdx);
-              window.scrollTo({ top: 0, behavior: 'instant' });
             } else {
-              window.location.href = `/custom-cake?theme=${tId}`;
+              navigate(`/custom-cake?theme=${tId}`);
             }
+            window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+            setTimeout(() => {
+              window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+              document.documentElement.scrollTop = 0;
+              document.body.scrollTop = 0;
+            }, 60);
           };
 
           return related.length ? (

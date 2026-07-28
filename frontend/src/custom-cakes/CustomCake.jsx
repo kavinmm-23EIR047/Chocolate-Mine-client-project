@@ -60,7 +60,7 @@ const SectionCard = ({ title, expanded, onToggle, children }) => (
 export default function CustomCake() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // ── STATE ──────────────────────────────────────────────────
   const getSessionData = (key, defaultVal) => {
@@ -348,6 +348,8 @@ export default function CustomCake() {
     const themeParam = searchParams.get('theme');
     if (themeParam) {
       themeIdToKeep.current = themeParam;
+    } else {
+      themeIdToKeep.current = null;
     }
     
     if (themeIdToKeep.current && filteredThemes.length > 0) {
@@ -365,11 +367,11 @@ export default function CustomCake() {
   const updateThemeUrl = useCallback((t) => {
     if (!t) return;
     themeIdToKeep.current = t.id;
-    const params = new URLSearchParams(window.location.search);
-    params.set('theme', t.id);
-    if (selectedTier) params.set('tier', selectedTier);
-    window.history.replaceState(null, '', `${window.location.pathname}?${params.toString()}`);
-  }, [selectedTier]);
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('theme', t.id);
+    if (selectedTier) newParams.set('tier', selectedTier);
+    setSearchParams(newParams, { replace: true });
+  }, [selectedTier, searchParams, setSearchParams]);
 
   const prevTheme = useCallback(() => {
     if (!filteredThemes.length) return;
@@ -523,9 +525,9 @@ export default function CustomCake() {
   const goBackToBrowse = () => {
     themeIdToKeep.current = null;
     setThemeIdx(null);
-    const params = new URLSearchParams(window.location.search);
-    params.delete('theme');
-    window.history.replaceState(null, '', `${window.location.pathname}?${params.toString()}`);
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete('theme');
+    setSearchParams(newParams);
   };
 
   const selectTheme = (idx) => {
@@ -540,10 +542,10 @@ export default function CustomCake() {
       setSelectedDbFlavor(t.dbFlavors[0]);
       sessionStorage.setItem('customCake_insideFlavor', JSON.stringify(t.dbFlavors[0].name));
     }
-    const params = new URLSearchParams(window.location.search);
-    if (t) params.set('theme', t.id);
-    if (selectedTier) params.set('tier', selectedTier);
-    window.history.replaceState(null, '', `${window.location.pathname}?${params.toString()}`);
+    const newParams = new URLSearchParams(searchParams);
+    if (t) newParams.set('theme', t.id);
+    if (selectedTier) newParams.set('tier', selectedTier);
+    setSearchParams(newParams);
   };
 
   const isThemeWishlisted = theme ? isInWishlist(theme.id, 'customCake') : false;
