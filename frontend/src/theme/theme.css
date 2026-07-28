@@ -62,21 +62,21 @@
    --footer-text: #F8F1E7;
    --footer-text-rgb: 248 241 231;
 
-   /* Borders */
-   --border: rgba(39, 25, 14, 0.12);
-   --border-rgb: 39 25 14;
-   --border-light: #e6d7c5;
-   --border-light-rgb: 230 215 197;
-   --border-dark: #bba690;
-   --border-dark-rgb: 187 166 144;
+   /* Borders - User Specified Light Theme Border (RGB: 171, 149, 125) */
+   --border: rgba(171, 149, 125, 0.4);
+   --border-rgb: 171 149 125;
+   --border-light: rgba(171, 149, 125, 0.25);
+   --border-light-rgb: 171 149 125;
+   --border-dark: rgb(171, 149, 125);
+   --border-dark-rgb: 171 149 125;
 
    /* Inputs */
-   --input: #ddccb9;
-   --input-rgb: 221 204 185;
-   --input-border: rgba(39, 25, 14, 0.15);
-   --input-border-rgb: 39 25 14;
+   --input: #E7D6C4;
+   --input-rgb: 231 214 196;
+   --input-border: rgba(171, 149, 125, 0.4);
+   --input-border-rgb: 171 149 125;
    --input-focus: #27190e;
-   --ring: rgba(39, 25, 14, 0.12);
+   --ring: rgba(171, 149, 125, 0.2);
 
    /* Solid UI Shadows */
    --shadow-color: 39, 25, 14;
@@ -187,10 +187,10 @@
    --background-rgb: 36 16 10;
    --surface: #2E160F;
    --surface-rgb: 46 22 15;
-   --card: #361C14;
-   --card-rgb: 54 28 20;
-   --card-soft: #402319;
-   --card-soft-rgb: 64 35 25;
+   --card: #2E160F;
+   --card-rgb: 46 22 15;
+   --card-soft: #3B1B13;
+   --card-soft-rgb: 59 27 19;
 
    /* Typography */
    --foreground: #F2EADF;
@@ -228,21 +228,21 @@
    --footer-text: #F2EADF;
    --footer-text-rgb: 242 234 223;
 
-   /* Borders - Subtle Light Outline for Dark Mode Cards */
-   --border: rgba(242, 234, 223, 0.16);
-   --border-rgb: 242 234 223;
-   --border-light: rgba(242, 234, 223, 0.25);
-   --border-light-rgb: 242 234 223;
-   --border-dark: rgba(242, 234, 223, 0.35);
-   --border-dark-rgb: 242 234 223;
+   /* Borders - User Specified Dark Theme Border (RGB: 84, 46, 35) */
+   --border: rgba(84, 46, 35, 0.7);
+   --border-rgb: 84 46 35;
+   --border-light: rgba(84, 46, 35, 0.4);
+   --border-light-rgb: 84 46 35;
+   --border-dark: rgb(84, 46, 35);
+   --border-dark-rgb: 84 46 35;
 
    /* Inputs */
    --input: #2F190F;
    --input-rgb: 58 36 25;
-   --input-border: rgba(242, 234, 223, 0.2);
-   --input-border-rgb: 242 234 223;
+   --input-border: rgba(84, 46, 35, 0.7);
+   --input-border-rgb: 84 46 35;
    --input-focus: #E8D3CB;
-   --ring: rgba(232, 211, 203, 0.15);
+   --ring: rgba(84, 46, 35, 0.3);
 
    /* Solid UI Shadows - Dark Theme */
    --shadow-color: 0, 0, 0;
@@ -848,4 +848,59 @@ select:focus {
    background-color: var(--warning-light);
    color: var(--warning-text);
    border-bottom: 2px solid var(--warning);
+}
+
+/* ───────────────────────────────────────────
+   UNIVERSAL HIGH-CONTRAST INVERTED HOVER SYSTEM
+   ───────────────────────────────────────────
+   Light Theme: Hover Background = Dark, Hover Text = Light
+   Dark Theme:  Hover Background = Light, Hover Text = Dark
+   ─────────────────────────────────────────── */
+
+.hover-invert,
+.dropdown-item,
+.dropdown-option,
+.menu-item-hover,
+.select-option {
+   transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.hover-invert:hover,
+.dropdown-item:hover,
+.dropdown-option:hover,
+.menu-item-hover:hover,
+.select-option:hover {
+   background-color: var(--button-bg) !important;
+   color: var(--button-text) !important;
+}
+
+.hover-invert:hover *,
+.dropdown-item:hover *,
+.dropdown-option:hover *,
+.menu-item-hover:hover * {
+   color: var(--button-text) !important;
+   stroke: var(--button-text) !important;
+}
+
+/* Dropdown menu containers */
+.dropdown-container,
+.dropdown-menu,
+.select-dropdown {
+   background-color: var(--card) !important;
+   border: 1px solid var(--border) !important;
+   box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* Native select element options */
+select option {
+   background-color: var(--card);
+   color: var(--foreground);
+   padding: 10px 14px;
+}
+
+select option:hover,
+select option:focus,
+select option:checked {
+   background-color: var(--button-bg) !important;
+   color: var(--button-text) !important;
 }

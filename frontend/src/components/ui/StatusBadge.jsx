@@ -14,8 +14,8 @@ export const ORDER_STATUSES = {
   },
   delivered: {
     label: 'Delivered',
-    color: 'bg-success-light text-success-text border border-success/30',
-    dot: 'bg-success'
+    color: 'bg-emerald-700 text-white font-black border border-emerald-700 shadow-xs',
+    dot: 'bg-white'
   },
   cancelled: {
     label: 'Payment Cancelled',
@@ -36,7 +36,7 @@ export const PAYMENT_STATUSES = {
   },
   paid: {
     label: 'Paid',
-    color: 'bg-success-light text-success-text border border-success/30'
+    color: 'bg-emerald-700 text-white font-black border border-emerald-700 shadow-xs'
   },
   failed: {
     label: 'Failed',

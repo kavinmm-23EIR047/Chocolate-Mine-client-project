@@ -55,7 +55,7 @@ const CustomCakeMenu = () => {
               <Link 
                 to="/custom-cake"
                 onClick={() => setIsOpen(false)}
-                className="text-xs font-bold text-heading/80 hover:text-primary uppercase tracking-normal transition-colors block py-1"
+                className="text-xs font-bold text-heading/80 hover:bg-[var(--button-bg)] hover:text-[var(--button-text)] px-3 py-1.5 rounded-xl uppercase tracking-normal transition-all block"
               >
                 ALL CUSTOM CAKES
               </Link>
@@ -64,7 +64,7 @@ const CustomCakeMenu = () => {
                   key={cat._id} 
                   to={`/custom-cake?category=${encodeURIComponent((cat.name || '').toLowerCase())}`}
                   onClick={() => setIsOpen(false)}
-                  className="text-xs font-bold text-heading/80 hover:text-primary uppercase tracking-normal transition-colors block py-1"
+                  className="text-xs font-bold text-heading/80 hover:bg-[var(--button-bg)] hover:text-[var(--button-text)] px-3 py-1.5 rounded-xl uppercase tracking-normal transition-all block"
                 >
                   {cat.label || cat.name}
                 </Link>
@@ -84,7 +84,7 @@ const CustomCakeMenu = () => {
                   key={tier.id} 
                   to={tier.path}
                   onClick={() => setIsOpen(false)}
-                  className="text-xs font-bold text-heading/80 hover:text-primary uppercase tracking-normal transition-colors block py-1.5 px-3 rounded-lg bg-border/10 hover:bg-primary/10 hover:text-primary transition-all"
+                  className="text-xs font-bold text-heading/80 hover:bg-[var(--button-bg)] hover:text-[var(--button-text)] uppercase tracking-normal transition-all block py-1.5 px-3 rounded-lg bg-border/10"
                 >
                   {tier.name}
                 </Link>

@@ -104,14 +104,14 @@ const DashboardLayout = () => {
                       className={`
                         w-full flex items-center gap-4 px-5 py-3.5 rounded-2xl font-black text-sm transition-all group
                         ${isActive
-                          ? 'bg-secondary text-button-text shadow-md translate-x-2'
-                          : 'text-muted hover:bg-secondary/5 hover:text-heading'
+                          ? 'bg-[var(--button-bg)] text-[var(--button-text)] shadow-md translate-x-2'
+                          : 'text-muted hover:bg-[var(--button-bg)] hover:text-[var(--button-text)]'
                         }
                       `}
                     >
-                      <item.icon size={18} className={isActive ? 'text-button-text' : 'text-secondary/70 group-hover:text-secondary transition-colors'} />
+                      <item.icon size={18} className={isActive ? 'text-[var(--button-text)]' : 'text-secondary/70 group-hover:text-[var(--button-text)] transition-colors'} />
                       {item.label}
-                      {isActive && <ChevronRight size={14} className="ml-auto opacity-50" />}
+                      {isActive && <ChevronRight size={14} className="ml-auto opacity-50 text-[var(--button-text)]" />}
                     </NavLink>
 
                   );

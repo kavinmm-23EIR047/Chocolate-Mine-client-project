@@ -201,23 +201,23 @@ const NotificationDropdown = ({ iconClass, buttonClass, showLabel, iconSize = 20
                     <div
                       key={notif._id}
                       onClick={() => handleNotificationClick(notif)}
-                      className={`p-3 rounded-xl flex gap-3 transition-colors cursor-pointer ${
+                      className={`p-3 rounded-xl flex gap-3 transition-colors cursor-pointer group hover:bg-[var(--button-bg)] hover:text-[var(--button-text)] ${
                         notif.isRead 
-                          ? 'bg-transparent hover:bg-black/5 dark:hover:bg-white/5' 
-                          : 'bg-primary/5 hover:bg-primary/10'
+                          ? 'bg-transparent' 
+                          : 'bg-primary/5'
                       }`}
                     >
-                      <div className="mt-1 shrink-0 bg-card rounded-full p-1.5 shadow-sm h-8 w-8 flex items-center justify-center border border-border/40">
+                      <div className="mt-1 shrink-0 bg-card rounded-full p-1.5 shadow-sm h-8 w-8 flex items-center justify-center border border-border/40 group-hover:bg-[var(--card)]">
                         {getIcon(notif.type)}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className={`text-xs ${notif.isRead ? 'text-heading font-bold' : 'text-primary font-black'}`}>
+                        <p className={`text-xs ${notif.isRead ? 'text-heading font-bold' : 'text-primary font-black'} group-hover:text-[var(--button-text)]`}>
                           {notif.title}
                         </p>
-                        <p className="text-[11px] text-muted mt-0.5 leading-relaxed whitespace-pre-line line-clamp-3">
+                        <p className="text-[11px] text-muted group-hover:text-[var(--button-text)] opacity-90 mt-0.5 leading-relaxed whitespace-pre-line line-clamp-3">
                           {notif.message}
                         </p>
-                        <p className="text-[9px] text-muted/60 font-bold mt-1.5 uppercase tracking-wider">
+                        <p className="text-[9px] text-muted/60 group-hover:text-[var(--button-text)] opacity-75 font-bold mt-1.5 uppercase tracking-wider">
                           {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChefHat, ShoppingBag, Clock, CheckCircle, Printer, RefreshCw, Eye, Flame, Truck, Package, X, KeyRound, Phone, ChevronDown, ChevronUp, ChevronRight, LayoutDashboard, History, ClipboardList, MapPin, CreditCard, Calendar, Hash, Search, Plus, Minus, Trash2, Store, ShoppingCart, User, Cake, Filter, Volume2, VolumeX } from 'lucide-react';
+import { ChefHat, ShoppingBag, Clock, CheckCircle, Printer, RefreshCw, Eye, Flame, Truck, Package, X, KeyRound, Phone, ChevronDown, ChevronUp, ChevronRight, LayoutDashboard, History, ClipboardList, MapPin, CreditCard, Calendar, Hash, Search, Plus, Minus, Trash2, Store, ShoppingCart, User, Cake, Filter, Volume2, VolumeX, LayoutGrid, List } from 'lucide-react';
 import staffService from '../../services/staffService';
 import { getOptimizedCloudinaryUrl } from '../../utils/cloudinary';
 import productService from '../../services/productService';
@@ -41,7 +41,39 @@ const getFlavorPrice = (flavor) => {
   return 0;
 };
 
-// Order Status Dropdown – fully theme-aware
+// Smart Call Customer helper (Copies number to clipboard for Desktop & redirects to Call App for Mobile)
+const handleCallCustomer = (phone, e) => {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  if (!phone) return;
+
+  const cleanPhone = String(phone).replace(/[^\d+]/g, '');
+
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(cleanPhone).catch(() => {});
+    }
+  } catch (err) {}
+
+  toast.success(
+    <div>
+      <p className="font-extrabold text-sm">📞 Phone Number Copied!</p>
+      <p className="text-xs font-mono font-bold">{cleanPhone}</p>
+    </div>,
+    {
+      duration: 4000,
+      icon: '📋'
+    }
+  );
+
+  setTimeout(() => {
+    window.location.href = `tel:${cleanPhone}`;
+  }, 100);
+};
+
+// Order Status Dropdown – fully theme-aware with solid high-contrast green completed button
 const OrderStatusDropdown = ({ order, onUpdate }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -63,7 +95,7 @@ const OrderStatusDropdown = ({ order, onUpdate }) => {
 
   if (actions.length === 0) {
     return (
-      <div className="flex-1 inline-flex items-center justify-center gap-1.5 py-3 px-4 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-xs font-black uppercase tracking-wider">
+      <div className="flex-1 inline-flex items-center justify-center gap-1.5 py-3 px-4 rounded-2xl bg-emerald-700 text-white border border-emerald-700 text-xs font-black uppercase tracking-wider shadow-sm">
         <CheckCircle size={14} /> COMPLETED
       </div>
     );
@@ -186,148 +218,122 @@ const OrderDetailsModal = ({ order, onClose }) => {
               
               {/* Call Customer Button */}
               {order.address?.phone && (
-                <a
-                  href={`tel:${order.address.phone}`}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-black uppercase tracking-wider transition-all active:scale-95"
+                <button
+                  type="button"
+                  onClick={(e) => handleCallCustomer(order.address.phone, e)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-xs active:scale-95 cursor-pointer"
+                  title="Click to call customer or copy phone number"
                 >
                   <Phone size={13} /> Call Customer
-                </a>
+                </button>
               )}
             </div>
 
             <div className="space-y-1">
               <p className="text-base font-extrabold text-heading">{order.address?.fullName || 'N/A'}</p>
-              <p className="text-sm font-semibold text-muted font-mono">{order.address?.phone || 'No phone provided'}</p>
+              {order.address?.phone ? (
+                <button
+                  type="button"
+                  onClick={(e) => handleCallCustomer(order.address.phone, e)}
+                  className="text-sm font-semibold text-muted font-mono hover:text-primary hover:underline cursor-pointer flex items-center gap-1.5"
+                  title="Click to call or copy phone number"
+                >
+                  <Phone size={13} className="text-emerald-700 dark:text-emerald-400 shrink-0" />
+                  <span>{order.address.phone}</span>
+                </button>
+              ) : (
+                <p className="text-sm font-semibold text-muted font-mono">No phone provided</p>
+              )}
             </div>
 
-            {/* Address & Google Maps Link */}
-            <div className="pt-2 border-t border-border/30 space-y-2.5">
-              <div className="flex items-start gap-2 text-xs font-medium text-heading/90 leading-relaxed">
-                <MapPin size={16} className="text-primary mt-0.5 shrink-0" />
-                <span>
-                  {[order.address?.houseNo, order.address?.street, order.address?.landmark && `Landmark: ${order.address.landmark}`, order.address?.city, order.address?.pincode].filter(Boolean).join(', ')}
-                </span>
-              </div>
-
-              {/* Google Maps Location Button */}
-              <div className="pt-1">
+            {/* Address & Google Maps Navigation */}
+            <div className="pt-2">
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted block mb-1">Delivery Address</span>
+              <p className="text-sm font-medium text-heading/90 leading-relaxed bg-card p-3 rounded-xl border border-border/40">
+                {[order.address?.houseNo, order.address?.street, order.address?.city, order.address?.pincode].filter(Boolean).join(', ')}
+              </p>
+              
+              <div className="mt-2.5">
                 <a
                   href={mapsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-3.5 py-2 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-xs active:scale-95 cursor-pointer"
+                  className="inline-flex items-center gap-2 px-3.5 py-2 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer"
                 >
-                  <MapPin size={14} className="animate-bounce" /> Open Location in Google Maps 🗺️
+                  <MapPin size={14} /> Open Location in Google Maps ↗
                 </a>
               </div>
             </div>
 
-            {/* Delivery Schedule & Order Time */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-3 border-t border-border/40 text-xs">
-              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-card border border-border/40">
-                <Calendar size={15} className="text-primary shrink-0" />
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-muted block">Delivery Date</span>
-                  <span className="font-extrabold text-heading">{order.deliveryDate ? new Date(order.deliveryDate).toLocaleDateString('en-IN') : 'N/A'}</span>
-                </div>
+            {/* Delivery Schedule & Timeslot */}
+            <div className="pt-3 border-t border-border/40 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-widest text-muted block">Delivery Date</span>
+                <span className="font-extrabold text-heading text-sm flex items-center gap-1.5 mt-0.5">
+                  <Calendar size={14} className="text-primary" />
+                  {order.deliveryDate ? new Date(order.deliveryDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
+                </span>
               </div>
-
-              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-card border border-border/40">
-                <Clock size={15} className="text-primary shrink-0" />
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-muted block">Time Slot</span>
-                  <span className="font-extrabold text-heading">{order.deliverySlot || 'Standard'}</span>
-                </div>
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-widest text-muted block">Time Slot</span>
+                <span className="font-extrabold text-heading text-sm flex items-center gap-1.5 mt-0.5">
+                  <Clock size={14} className="text-primary" />
+                  {order.deliverySlot || 'Standard Slot'}
+                </span>
               </div>
-
-              {formattedOrderTime && (
-                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-card border border-border/40">
-                  <Hash size={15} className="text-primary shrink-0" />
-                  <div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-muted block">Order Placed</span>
-                    <span className="font-extrabold text-heading text-[11px]">{formattedOrderTime}</span>
-                  </div>
-                </div>
-              )}
             </div>
+
+            {formattedOrderTime && (
+              <div className="pt-2 text-[11px] font-mono text-muted border-t border-border/30">
+                Order Placed At: <span className="font-bold text-heading">{formattedOrderTime}</span>
+              </div>
+            )}
           </div>
 
-          {/* SECTION 2: ORDERED ITEMS */}
-          <div>
-            <h4 className="font-extrabold text-sm uppercase tracking-wider text-primary mb-3 flex items-center gap-2">
-              <ShoppingBag size={16} /> Order Items ({order.items?.length || 0})
+          {/* SECTION 2: ORDERED ITEMS & CUSTOMIZATION DETAILS */}
+          <div className="space-y-3">
+            <h4 className="font-extrabold text-sm uppercase tracking-wider text-primary flex items-center gap-2">
+              <ShoppingBag size={16} /> Items Ordered ({order.items?.length || 0})
             </h4>
+
             <div className="space-y-3">
               {order.items?.map((item, idx) => {
-                const finalUnitPrice = Number(item.finalPrice ?? item.price ?? 0);
-                const origUnitPrice = Number(item.price || 0);
-                const total = finalUnitPrice * item.qty;
-                const resolvedFlavor = getDisplayFlavor(item);
-                const showFlavor = item.selectedFlavor || resolvedFlavor !== 'Standard';
-
+                const itemPrice = item.price || item.originalPrice;
+                const itemTotal = itemPrice * item.qty;
                 return (
-                  <div key={idx} className="border border-border/60 rounded-2xl p-4 bg-card-soft/40 shadow-xs space-y-3">
-                    <div className="flex gap-3 sm:gap-4 items-start">
-                      {item.image && item.image !== 'none' ? (
-                        <img src={getOptimizedCloudinaryUrl(item.image, 200)} alt={item.name} className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover border border-border/40 shrink-0 bg-surface" />
-                      ) : (
-                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-surface border border-border/40 shrink-0 flex items-center justify-center">
-                          <Cake size={24} className="text-muted" />
-                        </div>
-                      )}
-                      
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start gap-2">
-                          <div className="min-w-0">
-                            <h5 className="font-extrabold text-heading text-base break-words">{item.name}</h5>
-                            {item.sku && <span className="inline-block px-2 py-0.5 rounded bg-border/40 text-[10px] font-mono font-bold text-muted mt-1">{item.sku}</span>}
-                          </div>
-                          <div className="text-right shrink-0">
-                            <p className="font-extrabold text-heading text-base">{formatCurrency(total)}</p>
-                            <p className="text-xs text-muted font-medium">{formatCurrency(finalUnitPrice)} each</p>
-                          </div>
-                        </div>
-
-                        {/* Variant Badges (Qty, Flavor, Weight) */}
-                        <div className="flex flex-wrap items-center gap-2 mt-2">
-                          <span className="px-2.5 py-1 rounded-lg bg-card border border-border/50 text-xs font-extrabold text-heading">
-                            Qty: {item.qty}
-                          </span>
-
-                          {showFlavor && (
-                            <span className="px-2.5 py-1 rounded-lg bg-primary/10 border border-primary/20 text-xs font-extrabold text-primary">
-                              Flavor: {item.isCustomCake ? (item.customDetails?.flavour || resolvedFlavor) : resolvedFlavor}
-                            </span>
-                          )}
-
-                          {item.selectedWeight && (
-                            <span className="px-2.5 py-1 rounded-lg bg-card border border-border/50 text-xs font-extrabold text-heading">
-                              Weight: {item.selectedWeight}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Add-ons List */}
-                        {item.addons && Array.isArray(item.addons) && item.addons.length > 0 && (
-                          <div className="mt-3 p-2.5 bg-card border border-border/50 rounded-xl space-y-1 text-xs">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-primary block">Included Add-ons:</span>
-                            {item.addons.map((addon, aIdx) => (
-                              <div key={aIdx} className="flex justify-between items-center text-heading font-medium">
-                                <span>+ {addon.name} (x{addon.qty || 1})</span>
-                                <span className="font-bold">{formatCurrency(Number(addon.price || 0) * (addon.qty || 1))}</span>
-                              </div>
-                            ))}
-                          </div>
+                  <div key={idx} className="p-4 bg-card-soft border border-border/60 rounded-2xl space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3 min-w-0">
+                        {item.image && (
+                          <img
+                            src={getOptimizedCloudinaryUrl(item.image, 200)}
+                            alt={item.name}
+                            className="w-14 h-14 rounded-xl object-cover border border-border/40 shrink-0"
+                          />
                         )}
+                        <div className="min-w-0">
+                          <h5 className="font-extrabold text-sm text-heading leading-snug">{item.name}</h5>
+                          <p className="text-xs font-semibold text-muted mt-0.5">
+                            Flavor: <span className="text-heading font-extrabold">{getDisplayFlavor(item)}</span>
+                            {item.selectedWeight && <> · Weight: <span className="text-heading font-extrabold">{item.selectedWeight}</span></>}
+                          </p>
+                          <p className="text-xs text-muted font-mono mt-0.5">
+                            {item.qty} x {formatCurrency(itemPrice)}
+                          </p>
+                        </div>
+                      </div>
 
-                        {/* Custom Details Toggle */}
+                      <div className="text-right shrink-0">
+                        <span className="font-black text-base text-primary block">{formatCurrency(itemTotal)}</span>
+                        
+                        {/* Custom Cake details toggle button */}
                         {item.customDetails && (
                           <button 
                             onClick={() => toggleItemExpand(idx)} 
                             className="text-xs text-primary flex items-center gap-1.5 mt-3 font-extrabold hover:underline cursor-pointer"
                           >
                             {expandedItems[idx] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                            {expandedItems[idx] ? 'Hide Custom Cake Details' : 'View Custom Cake Details ✨'}
+                            {expandedItems[idx] ? 'Hide Custom Details' : 'View Custom Details ✨'}
                           </button>
                         )}
                       </div>
@@ -341,7 +347,7 @@ const OrderDetailsModal = ({ order, onClose }) => {
                           {item.customDetails.flavour && <p><span className="font-bold text-muted">Flavor:</span> <span className="font-extrabold">{item.customDetails.flavour}</span></p>}
                           {item.customDetails.weight && <p><span className="font-bold text-muted">Weight:</span> <span className="font-extrabold">{item.customDetails.weight}</span></p>}
                           {item.customDetails.tiers && <p><span className="font-bold text-muted">Tiers:</span> <span className="font-extrabold">{item.customDetails.tiers}</span></p>}
-                          {item.customDetails.eggless && <p><span className="font-bold text-muted">Eggless:</span> <span className="font-extrabold text-emerald-600 dark:text-emerald-400">Yes 🌿</span></p>}
+                          {item.customDetails.eggless && <p><span className="font-bold text-muted">Eggless:</span> <span className="font-extrabold text-emerald-700">Yes 🌿</span></p>}
                           {item.customDetails.lessSugar && <p><span className="font-bold text-muted">Less Sugar:</span> <span className="font-extrabold">Yes</span></p>}
                         </div>
 
@@ -374,7 +380,7 @@ const OrderDetailsModal = ({ order, onClose }) => {
               </div>
 
               {order.discount > 0 && (
-                <div className="flex justify-between font-medium text-emerald-600 dark:text-emerald-400">
+                <div className="flex justify-between font-medium text-emerald-700">
                   <span>Discount</span>
                   <span className="font-extrabold">-{formatCurrency(order.discount)}</span>
                 </div>
@@ -394,7 +400,7 @@ const OrderDetailsModal = ({ order, onClose }) => {
 
               <div className="flex justify-between font-medium text-xs text-muted">
                 <span>GST (18%)</span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">Inclusive</span>
+                <span className="font-bold text-emerald-700 font-extrabold">Inclusive</span>
               </div>
 
               <div className="flex justify-between font-black text-lg pt-3 border-t border-border/50">
@@ -416,7 +422,7 @@ const OrderDetailsModal = ({ order, onClose }) => {
                 <span className="text-muted font-bold">Payment Status:</span>
                 <span className={`px-2.5 py-1 rounded-lg font-black uppercase tracking-wider ${
                   order.paymentStatus === 'paid' 
-                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' 
+                    ? 'bg-emerald-700 text-white border border-emerald-700 shadow-xs' 
                     : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30'
                 }`}>
                   {order.paymentStatus?.toUpperCase() || 'PENDING'}
@@ -466,7 +472,6 @@ const CreateInShopOrderView = () => {
           cats = catRes.value.data?.data?.categories || catRes.value.data?.data || catRes.value.data?.categories || catRes.value.data || [];
         }
 
-        // Collect all category names from backend API + extract from product models
         const catNamesSet = new Set();
         if (Array.isArray(cats)) {
           cats.forEach(c => {
@@ -495,7 +500,6 @@ const CreateInShopOrderView = () => {
   }, []);
 
   const displayedProducts = allProducts.filter(p => {
-    // 1. Category Filter
     let matchesCategory = true;
     if (selectedCategory !== 'ALL') {
       const targetCat = selectedCategory.toLowerCase().trim();
@@ -508,7 +512,6 @@ const CreateInShopOrderView = () => {
       }
     }
 
-    // 2. Search Query Filter
     let matchesSearch = true;
     if (searchQuery.trim()) {
       matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase().trim());
@@ -599,10 +602,15 @@ const CreateInShopOrderView = () => {
         items: cart,
         notes: notes.trim()
       });
-      toast.success(`In-shop order #${res.data.data.orderNumber} created!`);
+      toast.success('In-Shop Order created successfully!');
+      setCart([]);
+      setCustomerName('');
+      setCustomerPhone('');
+      setNotes('');
       navigate('/staff/orders/in-shop-history');
     } catch (err) {
-      toast.error(err.response?.data?.message || err.message || 'Failed to create order');
+      console.error('Failed to create in-shop order:', err);
+      toast.error(err.response?.data?.message || 'Failed to place order');
     } finally {
       setPlacing(false);
     }
@@ -635,7 +643,6 @@ const CreateInShopOrderView = () => {
 
             {/* Top Search & Category Filter Control Row */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              {/* Text Search Bar */}
               <div className="relative flex-1">
                 <input
                   type="text"
@@ -659,7 +666,6 @@ const CreateInShopOrderView = () => {
                 ) : null}
               </div>
 
-              {/* Category Dropdown Select Button */}
               <div className="relative shrink-0">
                 <select
                   value={selectedCategory}
@@ -685,7 +691,6 @@ const CreateInShopOrderView = () => {
               </div>
             </div>
 
-            {/* Backend Category Filter Quick Pills */}
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[10px] font-black text-muted uppercase tracking-widest block">Quick Categories</span>
@@ -747,7 +752,6 @@ const CreateInShopOrderView = () => {
               </div>
             </div>
             
-            {/* Product List Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[480px] overflow-y-auto custom-scrollbar pr-2 mt-4">
               {displayedProducts.map(product => {
                 const price = product.offerPrice && product.offerPrice < product.price ? product.offerPrice : product.price;
@@ -782,7 +786,6 @@ const CreateInShopOrderView = () => {
             </div>
           </div>
 
-          {/* Cart Items */}
           <div className="bg-card border border-border rounded-2xl p-5">
             <h3 className="font-black text-sm text-heading uppercase tracking-widest mb-4 flex items-center gap-2">
               <ShoppingCart size={16} className="text-secondary" /> Order Items ({cart.length})
@@ -812,7 +815,6 @@ const CreateInShopOrderView = () => {
                       )}
                       <p className="text-xs text-muted">{formatCurrency(item.price)} each</p>
                     </div>
-                    {/* Qty Controls */}
                     <div className="flex items-center gap-1.5">
                       <button onClick={() => updateCartQty(idx, -1)} className="w-7 h-7 rounded-lg bg-border/40 hover:bg-border flex items-center justify-center transition-colors text-heading">
                         <Minus size={14} />
@@ -835,7 +837,6 @@ const CreateInShopOrderView = () => {
 
         {/* Right Column: Customer Info & Summary */}
         <div className="lg:col-span-2 space-y-5">
-          {/* Customer Info */}
           <div className="bg-card border border-border rounded-2xl p-5">
             <h3 className="font-black text-sm text-heading uppercase tracking-widest mb-4 flex items-center gap-2">
               <User size={16} className="text-secondary" /> Customer Info
@@ -873,115 +874,112 @@ const CreateInShopOrderView = () => {
                 />
               </div>
             </div>
-          </div>
 
-          {/* Order Summary */}
-          <div className="bg-card border border-border rounded-2xl p-5">
-            <h3 className="font-black text-sm text-heading uppercase tracking-widest mb-4">Order Summary</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted">Subtotal</span>
-                <span className="font-semibold text-heading">{formatCurrency(subtotal)}</span>
+            <div className="bg-card border border-border rounded-2xl p-5 mt-5">
+              <h3 className="font-black text-sm text-heading uppercase tracking-widest mb-4">Order Summary</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted">Subtotal</span>
+                  <span className="font-semibold text-heading">{formatCurrency(subtotal)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted">GST (18%)</span>
+                  <span className="font-semibold text-heading">{formatCurrency(gst)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted">Delivery</span>
+                  <span className="font-semibold text-success">FREE</span>
+                </div>
+                <div className="flex justify-between font-black pt-3 border-t border-border text-lg">
+                  <span className="text-heading">Total</span>
+                  <span className="text-primary">{formatCurrency(total)}</span>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted">GST (18%)</span>
-                <span className="font-semibold text-heading">{formatCurrency(gst)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted">Delivery</span>
-                <span className="font-semibold text-success">FREE</span>
-              </div>
-              <div className="flex justify-between font-black pt-3 border-t border-border text-lg">
-                <span className="text-heading">Total</span>
-                <span className="text-primary">{formatCurrency(total)}</span>
+              <div className="mt-4 p-3 bg-warning/5 border border-warning/20 rounded-xl">
+                <p className="text-xs text-warning font-bold flex items-center gap-1.5">
+                  <CreditCard size={14} /> Payment collected at counter
+                </p>
               </div>
             </div>
-            <div className="mt-4 p-3 bg-warning/5 border border-warning/20 rounded-xl">
-              <p className="text-xs text-warning font-bold flex items-center gap-1.5">
-                <CreditCard size={14} /> Payment collected at counter
-              </p>
-            </div>
-          </div>
 
-          {/* Place Order Button */}
-          <Button
-            variant="primary"
-            className="w-full py-4 text-base rounded-2xl"
-            onClick={handlePlaceOrder}
-            loading={placing}
-            disabled={cart.length === 0 || placing}
-            icon={CheckCircle}
-          >
-            Place In-Shop Order
-          </Button>
-        </div>
-      </div>
-
-      {/* Variant Selection Modal */}
-      <AnimatePresence>
-        {selectedProductForVariant && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ scale: 0.95, opacity: 0 }} 
-              animate={{ scale: 1, opacity: 1 }} 
-              exit={{ scale: 0.95, opacity: 0 }} 
-              className="bg-card border border-border rounded-2xl p-5 max-w-sm w-full shadow-2xl"
+            <Button
+              variant="primary"
+              className="w-full py-4 text-base rounded-2xl mt-4"
+              onClick={handlePlaceOrder}
+              loading={placing}
+              disabled={cart.length === 0 || placing}
+              icon={CheckCircle}
             >
-              <h3 className="text-lg font-black text-heading mb-1">{selectedProductForVariant.product.name}</h3>
-              <p className="text-xs text-muted mb-4">Select a flavor {selectedProductForVariant.type === 'variants' ? 'and weight' : ''} variant</p>
-              
-              <div className="space-y-2 max-h-72 overflow-y-auto custom-scrollbar pr-1">
-                {selectedProductForVariant.type === 'variants' && selectedProductForVariant.product.variants.map((v, idx) => (
-                  <button 
-                    key={idx} 
-                    onClick={() => {
-                      addToCart(selectedProductForVariant.product, v.flavor, v.weight, v.price);
-                      setSelectedProductForVariant(null);
-                    }} 
-                    className="w-full flex items-center justify-between p-3 rounded-xl bg-input/50 border border-input-border hover:bg-secondary/10 hover:border-secondary/40 transition-all text-left group"
-                  >
-                    <div>
-                      <p className="font-bold text-sm text-heading group-hover:text-secondary transition-colors">{v.flavor}</p>
-                      <p className="text-[10px] text-muted font-medium">{v.weight}</p>
-                    </div>
-                    <p className="font-black text-primary bg-primary/10 px-2 py-1 rounded-lg">{formatCurrency(v.price)}</p>
-                  </button>
-                ))}
+              Place In-Shop Order
+            </Button>
+          </div>
+        </div>
 
-                {selectedProductForVariant.type === 'flavors' && selectedProductForVariant.product.flavors.map((f, idx) => {
-                  const safePrice = selectedProductForVariant.product.price || 0;
-                  const basePrice = selectedProductForVariant.product.offerPrice && selectedProductForVariant.product.offerPrice < safePrice ? selectedProductForVariant.product.offerPrice : safePrice;
-                  const finalPrice = basePrice + getFlavorPrice(f);
-                  const weight = selectedProductForVariant.isBento ? '250g' : '500g';
-                  return (
+        <AnimatePresence>
+          {selectedProductForVariant && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+              <motion.div 
+                initial={{ scale: 0.95, opacity: 0 }} 
+                animate={{ scale: 1, opacity: 1 }} 
+                exit={{ scale: 0.95, opacity: 0 }} 
+                className="bg-card border border-border rounded-2xl p-5 max-w-sm w-full shadow-2xl"
+              >
+                <h3 className="text-lg font-black text-heading mb-1">{selectedProductForVariant.product.name}</h3>
+                <p className="text-xs text-muted mb-4">Select a flavor {selectedProductForVariant.type === 'variants' ? 'and weight' : ''} variant</p>
+                
+                <div className="space-y-2 max-h-72 overflow-y-auto custom-scrollbar pr-1">
+                  {selectedProductForVariant.type === 'variants' && selectedProductForVariant.product.variants.map((v, idx) => (
                     <button 
                       key={idx} 
                       onClick={() => {
-                        addToCart(selectedProductForVariant.product, f.name, weight, finalPrice);
+                        addToCart(selectedProductForVariant.product, v.flavor, v.weight, v.price);
                         setSelectedProductForVariant(null);
                       }} 
                       className="w-full flex items-center justify-between p-3 rounded-xl bg-input/50 border border-input-border hover:bg-secondary/10 hover:border-secondary/40 transition-all text-left group"
                     >
                       <div>
-                        <p className="font-bold text-sm text-heading group-hover:text-secondary transition-colors">{f.name}</p>
-                        <p className="text-[10px] text-muted font-medium">{weight}</p>
+                        <p className="font-bold text-sm text-heading group-hover:text-secondary transition-colors">{v.flavor}</p>
+                        <p className="text-[10px] text-muted font-medium">{v.weight}</p>
                       </div>
-                      <p className="font-black text-primary bg-primary/10 px-2 py-1 rounded-lg">{formatCurrency(finalPrice)}</p>
+                      <p className="font-black text-primary bg-primary/10 px-2 py-1 rounded-lg">{formatCurrency(v.price)}</p>
                     </button>
-                  );
-                })}
-              </div>
-              
-              <button 
-                onClick={() => setSelectedProductForVariant(null)} 
-                className="w-full mt-4 p-3 rounded-xl bg-error/10 text-error hover:bg-error/20 font-bold text-sm transition-colors"
-              >
-                Cancel
-              </button>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+                  ))}
+
+                  {selectedProductForVariant.type === 'flavors' && selectedProductForVariant.product.flavors.map((f, idx) => {
+                    const safePrice = selectedProductForVariant.product.price || 0;
+                    const basePrice = selectedProductForVariant.product.offerPrice && selectedProductForVariant.product.offerPrice < safePrice ? selectedProductForVariant.product.offerPrice : safePrice;
+                    const finalPrice = basePrice + getFlavorPrice(f);
+                    const weight = selectedProductForVariant.isBento ? '250g' : '500g';
+                    return (
+                      <button 
+                        key={idx} 
+                        onClick={() => {
+                          addToCart(selectedProductForVariant.product, f.name, weight, finalPrice);
+                          setSelectedProductForVariant(null);
+                        }} 
+                        className="w-full flex items-center justify-between p-3 rounded-xl bg-input/50 border border-input-border hover:bg-secondary/10 hover:border-secondary/40 transition-all text-left group"
+                      >
+                        <div>
+                          <p className="font-bold text-sm text-heading group-hover:text-secondary transition-colors">{f.name}</p>
+                          <p className="text-[10px] text-muted font-medium">{weight}</p>
+                        </div>
+                        <p className="font-black text-primary bg-primary/10 px-2 py-1 rounded-lg">{formatCurrency(finalPrice)}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+                
+                <button 
+                  onClick={() => setSelectedProductForVariant(null)} 
+                  className="w-full mt-4 p-3 rounded-xl bg-error/10 text-error hover:bg-error/20 font-bold text-sm transition-colors"
+                >
+                  Cancel
+                </button>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 };
@@ -999,76 +997,8 @@ const StaffDashboard = () => {
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [notificationsMuted, setNotificationsMuted] = useState(false);
   const [serviceHoursInfo, setServiceHoursInfo] = useState(null);
-
-  useEffect(() => {
-    const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
-    if (!userStr) return;
-    let userId = '';
-    try {
-      const userObj = JSON.parse(userStr);
-      userId = userObj.id || userObj._id;
-    } catch (e) {
-      console.error('Failed to parse user session in StaffDashboard', e);
-    }
-
-    // Check service hours on mount
-    const hoursInfo = isWithinServiceHours();
-    setServiceHoursInfo(hoursInfo);
-
-    const rawUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL || (import.meta.env.PROD ? window.location.origin : 'http://localhost:5000');
-    const socketUrl = rawUrl.replace(/\/api\/v\d+.*$/, '');
-
-    socketRef.current = io(socketUrl, {
-      transports: ['polling', 'websocket'],
-      withCredentials: true
-    });
-    socketRef.current.on('connect', () => {
-      console.log('📡 Staff socket connected:', socketRef.current.id);
-      if (userId) {
-        socketRef.current.emit('join_staff_room', userId);
-        socketRef.current.emit('join_staff', userId);
-      }
-      socketRef.current.emit('join_admin_room');
-    });
-
-    const handleNewOrder = (data) => {
-      console.log('🎵 New order received at staff:', data);
-      
-      if (!notificationsMuted) {
-        playSound('order', true);
-        toast.success(`New Order #${data?.orderNumber || data?.orderId || ''} received!`, {
-          duration: 6000,
-          position: 'top-right'
-        });
-      }
-      
-      fetchData();
-    };
-
-    // Listen for new orders coming in under all alias events
-    socketRef.current.on('new_order_confirmed', handleNewOrder);
-    socketRef.current.on('new_order_alert', handleNewOrder);
-    socketRef.current.on('assigned_order_updated', () => fetchData());
-    socketRef.current.on('dashboard_needs_refresh', () => fetchData());
-
-    const globalSocket = getSocket();
-    if (globalSocket) {
-      globalSocket.on('new_order_confirmed', handleNewOrder);
-      globalSocket.on('new_order_alert', handleNewOrder);
-      globalSocket.on('assigned_order_updated', () => fetchData());
-      globalSocket.on('dashboard_needs_refresh', () => fetchData());
-    }
-
-    return () => {
-      if (socketRef.current) socketRef.current.disconnect();
-      if (globalSocket) {
-        globalSocket.off('new_order_confirmed', handleNewOrder);
-        globalSocket.off('new_order_alert', handleNewOrder);
-        globalSocket.off('assigned_order_updated');
-        globalSocket.off('dashboard_needs_refresh');
-      }
-    };
-  }, [notificationsMuted, playSound]);
+  const [viewMode, setViewMode] = useState('grid');
+  const [orderSearch, setOrderSearch] = useState('');
 
   const getPageType = (path) => {
     if (path.includes('orders/create-inshop')) return 'create-inshop';
@@ -1109,6 +1039,74 @@ const StaffDashboard = () => {
     }
   };
 
+  useEffect(() => {
+    const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+    if (!userStr) return;
+    let userId = '';
+    try {
+      const userObj = JSON.parse(userStr);
+      userId = userObj.id || userObj._id;
+    } catch (e) {
+      console.error('Failed to parse user session in StaffDashboard', e);
+    }
+
+    const hoursInfo = isWithinServiceHours();
+    setServiceHoursInfo(hoursInfo);
+
+    const rawUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL || (import.meta.env.PROD ? window.location.origin : 'http://localhost:5000');
+    const socketUrl = rawUrl.replace(/\/api\/v\d+.*$/, '');
+
+    socketRef.current = io(socketUrl, {
+      transports: ['polling', 'websocket'],
+      withCredentials: true
+    });
+    socketRef.current.on('connect', () => {
+      console.log('📡 Staff socket connected:', socketRef.current.id);
+      if (userId) {
+        socketRef.current.emit('join_staff_room', userId);
+        socketRef.current.emit('join_staff', userId);
+      }
+      socketRef.current.emit('join_admin_room');
+    });
+
+    const handleNewOrder = (data) => {
+      console.log('🎵 New order received at staff:', data);
+      
+      if (!notificationsMuted) {
+        playSound('order', true);
+        toast.success(`New Order #${data?.orderNumber || data?.orderId || ''} received!`, {
+          duration: 6000,
+          position: 'top-right'
+        });
+      }
+      
+      fetchData();
+    };
+
+    socketRef.current.on('new_order_confirmed', handleNewOrder);
+    socketRef.current.on('new_order_alert', handleNewOrder);
+    socketRef.current.on('assigned_order_updated', () => fetchData());
+    socketRef.current.on('dashboard_needs_refresh', () => fetchData());
+
+    const globalSocket = getSocket();
+    if (globalSocket) {
+      globalSocket.on('new_order_confirmed', handleNewOrder);
+      globalSocket.on('new_order_alert', handleNewOrder);
+      globalSocket.on('assigned_order_updated', () => fetchData());
+      globalSocket.on('dashboard_needs_refresh', () => fetchData());
+    }
+
+    return () => {
+      if (socketRef.current) socketRef.current.disconnect();
+      if (globalSocket) {
+        globalSocket.off('new_order_confirmed', handleNewOrder);
+        globalSocket.off('new_order_alert', handleNewOrder);
+        globalSocket.off('assigned_order_updated');
+        globalSocket.off('dashboard_needs_refresh');
+      }
+    };
+  }, [notificationsMuted, playSound, location.pathname]);
+
   useEffect(() => { fetchData(); }, [location.pathname]);
 
   const handleViewOrderDetails = async (orderId) => {
@@ -1131,59 +1129,55 @@ const StaffDashboard = () => {
     }
   };
 
-
-
-  const handlePrintInvoice = async (orderId) => {
-    try {
-      toast.loading('Generating invoice...', { id: 'invoice' });
-      const res = await orderService.downloadInvoice(orderId);
-      const blob = new Blob([res.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      window.open(url, '_blank');
-      toast.success('Invoice ready', { id: 'invoice' });
-    } catch (err) {
-      toast.error('Failed to generate invoice', { id: 'invoice' });
-    }
-  };
-
-  const handlePrintKOT = async (orderId) => {
-    try {
-      toast.loading('Printing KOT...', { id: 'kot' });
-      staffService.printKOT(orderId);
-      toast.success('KOT generated successfully', { id: 'kot' });
-    } catch (err) {
-      toast.error('Failed to generate KOT', { id: 'kot' });
-    }
-  };
-
-  // Dashboard summary view (Ultra-Clean Executive Web Design)
   if (pageType === 'dashboard') {
     const summaryItems = [
-      { id: 'confirmed', label: 'Confirmed Orders', icon: ClipboardList, count: stats.confirmedOrders, accentColor: 'text-amber-400', badgeBg: 'bg-amber-500/15 border-amber-500/30 text-amber-400', hoverBorder: 'hover:border-amber-500/50', path: '/staff/orders/new' },
-      { id: 'active', label: 'Out For Delivery', icon: Flame, count: stats.outForDeliveryOrders, accentColor: 'text-orange-400', badgeBg: 'bg-orange-500/15 border-orange-500/30 text-orange-400', hoverBorder: 'hover:border-orange-500/50', path: '/staff/orders/active' },
-      { id: 'delivered', label: 'Delivered Orders', icon: CheckCircle, count: stats.deliveredOrders, accentColor: 'text-emerald-400', badgeBg: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400', hoverBorder: 'hover:border-emerald-500/50', path: '/staff/orders/history' },
-      { id: 'inshop', label: 'In-Shop Orders', icon: Store, count: stats.inShopOrdersCount, accentColor: 'text-purple-400', badgeBg: 'bg-purple-500/15 border-purple-500/30 text-purple-400', hoverBorder: 'hover:border-purple-500/50', path: '/staff/orders/in-shop-history' },
+      { id: 'confirmed', label: 'Confirmed Orders', icon: ClipboardList, count: stats.confirmedOrders, accentColor: 'text-amber-700 dark:text-amber-400', badgeBg: 'bg-amber-500/20 border-amber-600/40 text-amber-700 dark:text-amber-400', hoverBorder: 'hover:border-amber-500/50', path: '/staff/orders/new' },
+      { id: 'active', label: 'Out For Delivery', icon: Flame, count: stats.outForDeliveryOrders, accentColor: 'text-orange-700 dark:text-orange-400', badgeBg: 'bg-orange-500/20 border-orange-600/40 text-orange-700 dark:text-orange-400', hoverBorder: 'hover:border-orange-500/50', path: '/staff/orders/active' },
+      { id: 'delivered', label: 'Delivered Orders', icon: CheckCircle, count: stats.deliveredOrders, accentColor: 'text-emerald-700 dark:text-emerald-400', badgeBg: 'bg-emerald-500/20 border-emerald-600/40 text-emerald-700 dark:text-emerald-400', hoverBorder: 'hover:border-emerald-500/50', path: '/staff/orders/history' },
+      { id: 'inshop', label: 'In-Shop Orders', icon: Store, count: stats.inShopOrdersCount, accentColor: 'text-purple-700 dark:text-purple-400', badgeBg: 'bg-purple-500/20 border-purple-600/40 text-purple-700 dark:text-purple-400', hoverBorder: 'hover:border-purple-500/50', path: '/staff/orders/in-shop-history' },
     ];
 
     return (
       <div className="space-y-8">
-        {/* Welcome Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border/60">
           <div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-heading tracking-tight">Kitchen & Store Operations</h2>
             <p className="text-xs sm:text-sm font-semibold text-heading/80 mt-1">Live order pipeline, kitchen preparation & counter sales overview</p>
           </div>
           
-          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-card border border-border/80 shadow-xs">
-            <span className="relative flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-            </span>
-            <span className="text-xs font-extrabold text-heading">Live WebSockets Synced</span>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => setNotificationsMuted(!notificationsMuted)}
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-extrabold transition-all cursor-pointer border shadow-xs ${
+                notificationsMuted 
+                  ? 'bg-rose-500/10 text-rose-600 border-rose-500/30 dark:text-rose-400' 
+                  : 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30 dark:text-emerald-400'
+              }`}
+              title={notificationsMuted ? 'Audio Alerts Muted - Click to Unmute' : 'Audio Alerts Active - Click to Mute'}
+            >
+              {notificationsMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+              <span>{notificationsMuted ? 'Muted' : 'Sound ON'}</span>
+            </button>
+
+            <button
+              onClick={() => testSounds()}
+              className="px-3.5 py-2 rounded-2xl bg-card border border-border/80 hover:bg-border/40 text-heading transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 text-xs font-bold shadow-xs"
+              title="Test Notification Audio Chime"
+            >
+              <Volume2 size={15} className="text-primary" />
+              <span>Test Sound</span>
+            </button>
+
+            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-card border border-border/80 shadow-xs">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+              </span>
+              <span className="text-xs font-extrabold text-heading">Live WebSockets Synced</span>
+            </div>
           </div>
         </div>
 
-        {/* 4 Primary Stat Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {summaryItems.map((item) => (
             <Link key={item.id} to={item.path} className="group block">
@@ -1214,20 +1208,16 @@ const StaffDashboard = () => {
           ))}
         </div>
 
-        {/* Feature Action Banner: Create In-Shop Order */}
         <Link to="/staff/orders/create-inshop" className="block group">
           <motion.div 
             whileHover={{ y: -3 }} 
             className="bg-card border border-primary/40 hover:border-primary p-6 sm:p-7 rounded-3xl shadow-md hover:shadow-xl transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 relative overflow-hidden"
           >
-            {/* Top Accent Line */}
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-secondary to-primary" />
-
             <div className="flex items-center gap-5">
               <div className="w-14 h-14 rounded-2xl bg-primary/15 text-primary border border-primary/30 flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform">
                 <ShoppingCart size={28} />
               </div>
-
               <div>
                 <h4 className="text-lg font-black text-heading uppercase tracking-tight flex items-center gap-2">
                   Create New In-Shop Order
@@ -1238,7 +1228,6 @@ const StaffDashboard = () => {
                 </p>
               </div>
             </div>
-
             <div className="w-full sm:w-auto text-right">
               <div className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-amber-900 text-white dark:bg-amber-500 dark:text-slate-950 font-black text-xs uppercase tracking-wider transition-all shadow-md group-hover:scale-105 active:scale-95 cursor-pointer">
                 <span>+ Create Order Now</span>
@@ -1248,10 +1237,9 @@ const StaffDashboard = () => {
           </motion.div>
         </Link>
 
-        {/* Real-time System Banner */}
         <div className="p-5 rounded-3xl bg-card border border-border/80 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
+            <div className="w-11 h-11 rounded-2xl bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-xs">
               <RefreshCw size={22} />
             </div>
             <div>
@@ -1263,7 +1251,6 @@ const StaffDashboard = () => {
               </p>
             </div>
           </div>
-
           <Button 
             variant="outline" 
             icon={RefreshCw} 
@@ -1278,12 +1265,10 @@ const StaffDashboard = () => {
     );
   }
 
-  // ===================== CREATE IN-SHOP ORDER VIEW =====================
   if (pageType === 'create-inshop') {
     return <CreateInShopOrderView />;
   }
 
-  // ===================== IN-SHOP HISTORY VIEW =====================
   if (pageType === 'in-shop-history') {
     return (
       <div className="space-y-6">
@@ -1315,7 +1300,6 @@ const StaffDashboard = () => {
                   className="bg-card border-t-4 border-t-amber-500 rounded-2xl sm:rounded-3xl shadow-md border border-border/80 p-5 sm:p-6 relative group flex flex-col justify-between hover:shadow-xl transition-all duration-300"
                 >
                   <div className="space-y-4">
-                    {/* Header */}
                     <div className="flex justify-between items-start gap-2 pb-3 border-b border-border/40">
                       <div>
                         <span className="inline-block px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 font-black text-[11px] uppercase tracking-wider mb-2">
@@ -1332,14 +1316,24 @@ const StaffDashboard = () => {
                       </div>
                     </div>
 
-                    {/* Customer Info */}
                     <div className="p-3.5 bg-card-soft/80 rounded-2xl border border-border/60 space-y-1">
                       <span className="text-[10px] font-black uppercase tracking-widest text-primary block">Customer</span>
                       <p className="font-extrabold text-sm text-heading truncate">{order.address?.fullName || 'Walk-in Customer'}</p>
-                      <p className="text-xs font-bold text-muted font-mono">{order.address?.phone || 'No phone'}</p>
+                      {order.address?.phone ? (
+                        <button
+                          type="button"
+                          onClick={(e) => handleCallCustomer(order.address.phone, e)}
+                          className="text-xs font-bold text-muted font-mono hover:text-primary hover:underline cursor-pointer flex items-center gap-1 mt-0.5"
+                          title="Click to call or copy phone number"
+                        >
+                          <Phone size={12} className="text-emerald-700 dark:text-emerald-400 shrink-0" />
+                          <span>{order.address.phone}</span>
+                        </button>
+                      ) : (
+                        <p className="text-xs font-bold text-muted font-mono">No phone</p>
+                      )}
                     </div>
 
-                    {/* Items List */}
                     <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar pr-1">
                       {order.items?.map((item, idx) => (
                         <div key={idx} className="flex justify-between items-center p-2.5 bg-card border border-border/50 rounded-xl text-xs">
@@ -1353,11 +1347,10 @@ const StaffDashboard = () => {
                     </div>
                   </div>
 
-                  {/* Footer */}
                   <div className="pt-3 mt-4 border-t border-border/40 flex justify-between items-center text-xs">
                     <div>
                       <span className="text-[10px] font-black text-muted uppercase tracking-widest block">Payment</span>
-                      <span className="font-extrabold text-heading">Counter · <span className="text-emerald-600 dark:text-emerald-400">Paid</span></span>
+                      <span className="font-extrabold text-heading">Counter · <span className="bg-emerald-700 text-white font-black px-2 py-0.5 rounded-md text-[11px]">Paid</span></span>
                     </div>
                     {order.createdByStaff && (
                       <div className="text-right">
@@ -1375,31 +1368,210 @@ const StaffDashboard = () => {
     );
   }
 
+  const filteredOrdersList = orders.filter((order) => {
+    if (!orderSearch.trim()) return true;
+    const q = orderSearch.toLowerCase().trim();
+    const numMatch = order.orderNumber?.toString().toLowerCase().includes(q);
+    const trackMatch = order.trackingCode?.toString().toLowerCase().includes(q);
+    const nameMatch = order.address?.fullName?.toLowerCase().includes(q);
+    const phoneMatch = order.address?.phone?.toLowerCase().includes(q);
+    const itemMatch = order.items?.some(i => i.name?.toLowerCase().includes(q));
+    return numMatch || trackMatch || nameMatch || phoneMatch || itemMatch;
+  });
+
   return (
     <div className="space-y-6">
       <OrderDetailsModal order={selectedOrderDetails} onClose={() => { setDetailsModalOpen(false); setSelectedOrderDetails(null); }} />
       
-      {/* Header bar */}
-      <div className="flex justify-between items-center pb-2 border-b border-border/50">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-3 border-b border-border/60">
         <div>
-          <h2 className="text-xl sm:text-2xl font-black text-heading tracking-tight capitalize">
-            {pageType === 'new' ? 'New Confirmed Orders' : pageType === 'active' ? 'Active Delivery Orders' : pageType === 'history' ? 'Order History' : 'Kitchen Dashboard'}
-          </h2>
-          <p className="text-xs font-bold text-muted mt-0.5">
-            {pageType === 'new' ? 'Orders ready for preparation & packing' : pageType === 'active' ? 'Orders currently out for delivery' : 'Completed and delivered orders'}
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-heading tracking-tight capitalize">
+              {pageType === 'new' ? 'New Confirmed Orders' : pageType === 'active' ? 'Active Delivery Orders' : pageType === 'history' ? 'Order History' : pageType === 'in-shop-history' ? 'In-Shop Order History' : 'Kitchen Dashboard'}
+            </h2>
+            <span className="px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 text-xs font-black">
+              {filteredOrdersList.length} {filteredOrdersList.length === 1 ? 'Order' : 'Orders'}
+            </span>
+          </div>
+          <p className="text-xs font-semibold text-heading/80 mt-1">
+            {pageType === 'new' ? 'Orders ready for preparation & packing' : pageType === 'active' ? 'Orders currently out for delivery' : pageType === 'history' ? 'Completed and delivered orders' : 'Walk-in counter sales & store order history'}
           </p>
         </div>
-        <Button variant="outline" icon={RefreshCw} onClick={fetchData} loading={loading} className="rounded-xl py-2.5 text-xs font-extrabold">
-          Refresh
-        </Button>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative flex-1 sm:w-64">
+            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
+            <input
+              type="text"
+              placeholder="Search #, customer, item..."
+              value={orderSearch}
+              onChange={(e) => setOrderSearch(e.target.value)}
+              className="w-full bg-input border border-input-border text-heading pl-9 pr-8 py-2 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-secondary/40 placeholder:text-muted/60 transition-all"
+            />
+            {orderSearch && (
+              <button onClick={() => setOrderSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-heading">
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center p-1 bg-card border border-border/80 rounded-xl shadow-xs">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                viewMode === 'grid' 
+                  ? 'bg-amber-900 text-white dark:bg-amber-500 dark:text-slate-950 font-black shadow-xs' 
+                  : 'text-muted hover:text-heading'
+              }`}
+              title="Grid Card View (Vertical)"
+            >
+              <LayoutGrid size={15} />
+              <span className="hidden sm:inline">Grid</span>
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                viewMode === 'list' 
+                  ? 'bg-amber-900 text-white dark:bg-amber-500 dark:text-slate-950 font-black shadow-xs' 
+                  : 'text-muted hover:text-heading'
+              }`}
+              title="Horizontal List View"
+            >
+              <List size={15} />
+              <span className="hidden sm:inline">List</span>
+            </button>
+          </div>
+
+          <Button variant="outline" icon={RefreshCw} onClick={fetchData} loading={loading} className="rounded-xl py-2 px-3.5 text-xs font-extrabold">
+            Refresh
+          </Button>
+        </div>
       </div>
 
-      {loading ? <TableSkeleton rows={3} cols={1} /> : orders.length === 0 ? (
-        <EmptyState icon={ShoppingBag} title="No orders found" message="Relax! There's nothing to process in this section right now." />
+      {loading ? (
+        <TableSkeleton rows={4} cols={1} />
+      ) : filteredOrdersList.length === 0 ? (
+        <EmptyState icon={ShoppingBag} title="No orders found" message={orderSearch ? `No orders matched "${orderSearch}". Try a different keyword.` : "Relax! There's nothing to process in this section right now."} />
+      ) : viewMode === 'list' ? (
+        <div className="space-y-4">
+          <AnimatePresence mode="popLayout">
+            {filteredOrdersList.map((order) => (
+              <motion.div
+                key={order._id}
+                layout
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-card border border-border/80 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col lg:flex-row lg:items-center justify-between gap-5 relative overflow-hidden"
+              >
+                <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-primary" />
+
+                <div className="lg:w-1/5 shrink-0 space-y-1.5">
+                  <div className="flex items-center justify-between lg:justify-start gap-2">
+                    <h3 className="font-extrabold text-lg sm:text-xl text-heading tracking-tight">#{order.orderNumber}</h3>
+                    <OrderStatusBadge status={order.orderStatus} />
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    {order.trackingCode && (
+                      <span className="px-2 py-0.5 rounded-lg bg-primary/10 text-primary border border-primary/20 text-[11px] font-mono font-extrabold">
+                        Track: {order.trackingCode}
+                      </span>
+                    )}
+                    <span className="px-2 py-0.5 rounded-lg bg-card-soft text-heading border border-border/60 text-[10px] font-extrabold uppercase">
+                      {order.deliverySlot || 'Standard'}
+                    </span>
+                  </div>
+
+                  <p className="text-[11px] font-mono font-bold text-muted">
+                    {new Date(order.createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
+                  </p>
+                </div>
+
+                <div className="lg:w-1/4 shrink-0 p-3 bg-card-soft/60 rounded-xl border border-border/60 space-y-1">
+                  <div className="flex justify-between items-center">
+                    <span className="font-extrabold text-sm text-heading truncate">{order.address?.fullName || 'Customer'}</span>
+                    {order.address?.phone && (
+                      <button
+                        type="button"
+                        onClick={(e) => handleCallCustomer(order.address.phone, e)}
+                        className="bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs px-2.5 py-1 rounded-lg flex items-center gap-1 transition-colors shadow-xs cursor-pointer active:scale-95 shrink-0"
+                        title="Click to call customer or copy phone number"
+                      >
+                        <Phone size={12} /> Call
+                      </button>
+                    )}
+                  </div>
+                  {order.address?.phone && (
+                    <button
+                      type="button"
+                      onClick={(e) => handleCallCustomer(order.address.phone, e)}
+                      className="text-xs font-bold text-muted font-mono hover:text-primary hover:underline cursor-pointer flex items-center gap-1"
+                      title="Click to call or copy phone number"
+                    >
+                      <Phone size={11} className="text-emerald-700 dark:text-emerald-400 shrink-0" />
+                      <span>{order.address.phone}</span>
+                    </button>
+                  )}
+                  <p className="text-[11px] font-medium text-heading/90 truncate">
+                    <MapPin size={11} className="inline text-primary mr-1" />
+                    {[order.address?.houseNo, order.address?.street, order.address?.city, order.address?.pincode].filter(Boolean).join(', ')}
+                  </p>
+                  <div className="pt-1 flex items-center gap-3 text-[11px] font-extrabold text-heading border-t border-border/40 mt-1">
+                    <span><Calendar size={12} className="inline text-primary mr-1" />{order.deliveryDate ? new Date(order.deliveryDate).toLocaleDateString('en-IN') : 'N/A'}</span>
+                    <span><Clock size={12} className="inline text-primary mr-1" />{order.deliverySlot}</span>
+                  </div>
+                </div>
+
+                <div className="flex-1 min-w-0 max-h-28 overflow-y-auto custom-scrollbar space-y-1.5 pr-1">
+                  {order.items?.map((item, idx) => (
+                    <div key={idx} className="flex justify-between items-center p-2 rounded-lg bg-card border border-border/50 text-xs">
+                      <div className="truncate pr-2">
+                        <span className="font-extrabold text-heading">{item.name}</span>
+                        <span className="text-muted ml-1 font-semibold">({item.qty}x · {getDisplayFlavor(item)}{item.selectedWeight ? ` · ${item.selectedWeight}` : ''})</span>
+                      </div>
+                      <span className="font-black text-xs text-heading shrink-0">{formatCurrency((item.price || item.originalPrice) * item.qty)}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="lg:w-36 text-left lg:text-right shrink-0">
+                  <span className="text-[10px] font-black text-muted uppercase tracking-widest block">Payment</span>
+                  <span className="text-xs font-extrabold text-heading">
+                    {order.paymentMethod || 'ONLINE'} · <span className={order.paymentStatus === 'paid' ? 'bg-emerald-700 text-white font-black px-2 py-0.5 rounded-md' : 'text-amber-600 dark:text-amber-400'}>{order.paymentStatus === 'paid' ? 'Paid' : 'Pending'}</span>
+                  </span>
+                  <p className="font-black text-primary text-xl sm:text-2xl mt-0.5">{formatCurrency(order.total)}</p>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-border/50">
+                  <button 
+                    onClick={() => handleViewOrderDetails(order._id)} 
+                    className="p-2.5 bg-card border border-border/80 rounded-xl hover:bg-primary/10 hover:border-primary/40 transition-all text-heading shrink-0 active:scale-95 cursor-pointer" 
+                    title="View Full Order Details"
+                  >
+                    <Eye size={16} />
+                  </button>
+
+                  <OrderStatusDropdown order={order} onUpdate={handleDeliveryStatusUpdate} />
+
+                  <a 
+                    href={`${import.meta.env.VITE_API_URL || (import.meta.env.PROD ? window.location.origin : 'http://localhost:5000')}/staff/orders/${order._id}/kot/print`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2.5 bg-card border border-border/80 rounded-xl hover:bg-primary/10 hover:border-primary/40 transition-all text-heading shrink-0 flex items-center justify-center active:scale-95 cursor-pointer" 
+                    title="Print KOT"
+                  >
+                    <ChefHat size={16} />
+                  </a>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 sm:gap-6">
           <AnimatePresence mode="popLayout">
-            {orders.map((order) => (
+            {filteredOrdersList.map((order) => (
               <motion.div
                 key={order._id}
                 layout
@@ -1409,7 +1581,6 @@ const StaffDashboard = () => {
                 className="bg-card border-t-4 border-t-primary rounded-2xl sm:rounded-3xl shadow-md border border-border/80 p-5 sm:p-6 relative group flex flex-col justify-between hover:shadow-xl transition-all duration-300"
               >
                 <div className="space-y-4">
-                  {/* Header info */}
                   <div className="flex justify-between items-start gap-2 pb-3 border-b border-border/40">
                     <div>
                       <span className="inline-block px-3 py-1 rounded-xl bg-primary/10 text-primary border border-primary/20 font-black text-xs uppercase tracking-wider mb-2">
@@ -1432,18 +1603,32 @@ const StaffDashboard = () => {
                     <OrderStatusBadge status={order.orderStatus} />
                   </div>
 
-                  {/* Customer Info Card */}
                   <div className="p-3.5 bg-card-soft/80 rounded-2xl border border-border/60 space-y-1">
                     <div className="flex justify-between items-center">
                       <span className="text-[10px] font-black uppercase tracking-widest text-primary">Customer</span>
                       {order.address?.phone && (
-                        <a href={`tel:${order.address.phone}`} className="text-emerald-600 dark:text-emerald-400 font-extrabold text-xs flex items-center gap-1 hover:underline">
+                        <button
+                          type="button"
+                          onClick={(e) => handleCallCustomer(order.address.phone, e)}
+                          className="bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs px-2.5 py-1 rounded-lg flex items-center gap-1 transition-colors shadow-xs cursor-pointer active:scale-95 shrink-0"
+                          title="Click to call customer or copy phone number"
+                        >
                           <Phone size={12} /> Call
-                        </a>
+                        </button>
                       )}
                     </div>
                     <p className="font-extrabold text-base text-heading truncate">{order.address?.fullName || 'Customer'}</p>
-                    <p className="text-xs font-bold text-muted font-mono">{order.address?.phone}</p>
+                    {order.address?.phone && (
+                      <button
+                        type="button"
+                        onClick={(e) => handleCallCustomer(order.address.phone, e)}
+                        className="text-xs font-bold text-muted font-mono hover:text-primary hover:underline cursor-pointer flex items-center gap-1 mt-0.5"
+                        title="Click to call or copy phone number"
+                      >
+                        <Phone size={11} className="text-emerald-700 dark:text-emerald-400 shrink-0" />
+                        <span>{order.address.phone}</span>
+                      </button>
+                    )}
                     <div className="flex items-start gap-1.5 mt-2 text-xs font-medium text-heading/90">
                       <MapPin size={14} className="text-primary mt-0.5 shrink-0" />
                       <p className="line-clamp-2 leading-relaxed">
@@ -1452,7 +1637,6 @@ const StaffDashboard = () => {
                     </div>
                   </div>
 
-                  {/* Schedule Pills */}
                   <div className="flex items-center justify-between gap-2 p-2.5 bg-card border border-border/50 rounded-xl text-xs">
                     <div className="flex items-center gap-1.5 font-extrabold text-heading">
                       <Calendar size={14} className="text-primary" />
@@ -1464,7 +1648,6 @@ const StaffDashboard = () => {
                     </div>
                   </div>
 
-                  {/* Items List */}
                   <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar pr-1">
                     {order.items?.map((item, idx) => {
                       const itemPrice = item.price || item.originalPrice;
@@ -1484,13 +1667,12 @@ const StaffDashboard = () => {
                   </div>
                 </div>
 
-                {/* Card Footer & Controls */}
                 <div className="pt-4 mt-4 border-t border-border/50 space-y-3">
                   <div className="flex justify-between items-center text-xs">
                     <div>
                       <span className="text-[10px] font-black text-muted uppercase tracking-widest block">Payment</span>
                       <span className="font-extrabold text-heading">
-                        {order.paymentMethod || 'ONLINE'} · <span className={order.paymentStatus === 'paid' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}>{order.paymentStatus === 'paid' ? 'Paid' : 'Pending'}</span>
+                        {order.paymentMethod || 'ONLINE'} · <span className={order.paymentStatus === 'paid' ? 'bg-emerald-700 text-white font-black px-2 py-0.5 rounded-md' : 'text-amber-600 dark:text-amber-400'}>{order.paymentStatus === 'paid' ? 'Paid' : 'Pending'}</span>
                       </span>
                     </div>
                     <div className="text-right">
@@ -1499,7 +1681,6 @@ const StaffDashboard = () => {
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
                   <div className="flex items-center gap-2 pt-1">
                     <button 
                       onClick={() => handleViewOrderDetails(order._id)} 

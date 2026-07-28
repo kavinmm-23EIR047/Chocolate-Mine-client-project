@@ -718,8 +718,8 @@ const ProductForm = () => {
                     }}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                  <span className={`ml-3 text-xs font-black uppercase ${formData.hasWeights ? 'text-primary' : 'text-muted'}`}>
+                  <div className="w-11 h-6 bg-stone-500/30 dark:bg-stone-800 border border-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600 shadow-inner"></div>
+                  <span className={`ml-3 text-xs font-black uppercase ${formData.hasWeights ? 'text-emerald-500' : 'text-muted'}`}>
                     {formData.hasWeights ? 'Enabled' : 'Disabled'}
                   </span>
                 </label>
@@ -746,8 +746,8 @@ const ProductForm = () => {
                     }}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                  <span className={`ml-3 text-xs font-black uppercase ${formData.hasCustomWeights ? 'text-primary' : 'text-muted'}`}>
+                  <div className="w-11 h-6 bg-stone-500/30 dark:bg-stone-800 border border-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600 shadow-inner"></div>
+                  <span className={`ml-3 text-xs font-black uppercase ${formData.hasCustomWeights ? 'text-emerald-500' : 'text-muted'}`}>
                     {formData.hasCustomWeights ? 'Enabled' : 'Disabled'}
                   </span>
                 </label>

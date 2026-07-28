@@ -403,7 +403,7 @@ const ThemeBuilder = ({ themeId, onBack }) => {
                 <span className="font-black text-sm uppercase">Tier {idx + 1}</span>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" className="sr-only peer" checked={theme.tiers?.[tier]?.isActive} onChange={e => setTheme({...theme, tiers: {...theme.tiers, [tier]: { ...theme.tiers?.[tier], isActive: e.target.checked }}})} />
-                  <div className="w-9 h-5 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                  <div className="w-10 h-5 bg-stone-500/30 dark:bg-stone-800 border border-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600 shadow-inner"></div>
                 </label>
               </div>
               {theme.tiers?.[tier]?.isActive && (

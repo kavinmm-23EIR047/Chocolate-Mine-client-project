@@ -177,10 +177,8 @@ exports.getProducts = asyncHandler(async (req, res) => {
       const isBento = Array.isArray(p.category) ? p.category.some(c => typeof c === 'string' && c.toLowerCase().includes('bento')) : (p.category || '').toLowerCase().includes('bento');
 
       let defaultFlavorPrice = 0;
-      if (p.flavors && Array.isArray(p.flavors) && p.flavors.length > 0) {
+      if (!(p.hasVariants && p.variants && p.variants.length > 0) && p.flavors && Array.isArray(p.flavors) && p.flavors.length > 0) {
         defaultFlavorPrice = getFlavorPriceHelper(p.flavors[0]);
-      } else if (isBento) {
-        defaultFlavorPrice = 380;
       }
 
       let baseP = Number(p.price || 0);
@@ -249,10 +247,8 @@ exports.getProducts = asyncHandler(async (req, res) => {
     const isBento = Array.isArray(p.category) ? p.category.some(c => typeof c === 'string' && c.toLowerCase().includes('bento')) : (p.category || '').toLowerCase().includes('bento');
 
     let defaultFlavorPrice = 0;
-    if (p.flavors && Array.isArray(p.flavors) && p.flavors.length > 0) {
+    if (!(p.hasVariants && p.variants && p.variants.length > 0) && p.flavors && Array.isArray(p.flavors) && p.flavors.length > 0) {
       defaultFlavorPrice = getFlavorPriceHelper(p.flavors[0]);
-    } else if (isBento) {
-      defaultFlavorPrice = 380;
     }
     
     let baseP = Number(p.price || 0);
