@@ -442,16 +442,11 @@ export default function CustomCakeBrowse({
           ) : (
             <>
               <div className={`grid ${mobileLayout === 'list' ? 'grid-cols-1' : 'grid-cols-2'} sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 lg:gap-6`}>
-                <AnimatePresence mode="popLayout">
-                  {paginatedThemes.map((t, i) => {
-                    const actualIdx = filteredThemes.findIndex(theme => theme.id === t.id);
-                    return (
-                      <motion.div
-                        key={t.id} layout
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ duration: 0.2, delay: i * 0.03 }}
+                {paginatedThemes.map((t) => {
+                  const actualIdx = filteredThemes.findIndex(theme => theme.id === t.id);
+                  return (
+                    <div
+                        key={t.id}
                         onClick={() => selectTheme(actualIdx)}
                         className={mobileLayout === 'list' 
                           ? "flex flex-row p-3 sm:p-4 pb-8 gap-3 sm:gap-4 items-stretch cursor-pointer w-full border-b transition-colors min-w-0"
@@ -628,10 +623,9 @@ export default function CustomCakeBrowse({
                             </div>
                           </>
                         )}
-                      </motion.div>
-                    );
-                  })}
-                </AnimatePresence>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Pagination Controls */}
