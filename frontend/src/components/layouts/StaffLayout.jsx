@@ -128,16 +128,16 @@ const StaffLayout = () => {
                   to={item.path}
                   className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl font-extrabold text-xs uppercase tracking-wider transition-all duration-200 group ${
                     isActive
-                      ? 'bg-card text-heading border border-border shadow-md translate-x-1.5'
+                      ? 'bg-amber-900 text-white dark:bg-amber-500 dark:text-slate-950 shadow-md translate-x-1.5 font-black'
                       : 'text-heading/80 hover:bg-border/30 hover:text-heading border border-transparent'
                   }`}
                 >
                   <item.icon
                     size={18}
-                    className={isActive ? 'text-primary' : 'text-heading/70 group-hover:text-heading transition-transform group-hover:scale-110'}
+                    className={isActive ? 'text-white dark:text-slate-950' : 'text-heading/70 group-hover:text-heading transition-transform group-hover:scale-110'}
                   />
                   <span>{item.label}</span>
-                  {isActive && <ChevronRight size={16} className="ml-auto text-primary" />}
+                  {isActive && <ChevronRight size={16} className="ml-auto text-white dark:text-slate-950" />}
                 </Link>
               );
             })}

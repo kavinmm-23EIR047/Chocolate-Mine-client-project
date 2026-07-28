@@ -1361,7 +1361,9 @@ const StaffDashboard = () => {
             <button
               onClick={() => setViewMode('grid')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
-                viewMode === 'grid' ? 'bg-primary text-white shadow-xs' : 'text-muted hover:text-heading'
+                viewMode === 'grid' 
+                  ? 'bg-amber-900 text-white dark:bg-amber-500 dark:text-slate-950 font-black shadow-xs' 
+                  : 'text-muted hover:text-heading'
               }`}
               title="Grid Card View (Vertical)"
             >
@@ -1371,7 +1373,9 @@ const StaffDashboard = () => {
             <button
               onClick={() => setViewMode('list')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
-                viewMode === 'list' ? 'bg-primary text-white shadow-xs' : 'text-muted hover:text-heading'
+                viewMode === 'list' 
+                  ? 'bg-amber-900 text-white dark:bg-amber-500 dark:text-slate-950 font-black shadow-xs' 
+                  : 'text-muted hover:text-heading'
               }`}
               title="Horizontal List View"
             >
