@@ -54,6 +54,30 @@ const getWeightMultiplier = (weightStr) => {
   return 1;
 };
 
+const BENTO_FLAVOR_PRICES = {
+  'White Forest': 380,
+  'Butterscotch': 390,
+  'Rose Milk': 410,
+  'Honey & Almond': 410,
+  'Black Forest': 380,
+  'Choco Fudge': 390,
+  'Choco Truffle': 410,
+  'Choco Oreo': 410,
+  'Choco Caramel': 420,
+  'Death by Chocolate': 450,
+  'Red Velvet': 470,
+  'Lotus Biscoff': 480,
+  'Choco Pistachio': 480,
+};
+
+const getFlavorPriceHelper = (flavor) => {
+  if (!flavor) return 0;
+  if (flavor.price && Number(flavor.price) > 0) return Number(flavor.price);
+  if (flavor.name && BENTO_FLAVOR_PRICES[flavor.name]) return BENTO_FLAVOR_PRICES[flavor.name];
+  if (typeof flavor === 'string' && BENTO_FLAVOR_PRICES[flavor]) return BENTO_FLAVOR_PRICES[flavor];
+  return 0;
+};
+
 
 
 const computePricing = ({ cartItems, addressLat, addressLng, discount = 0, paymentMethod = 'ONLINE' }) => {
@@ -284,22 +308,36 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
 
       let salePrice = product.offerPrice && product.offerPrice < product.price ? product.offerPrice : product.price;
       const isCake = categoryStr.includes('cake');
-      const isBento = categoryStr.includes('bento-cakes');
+      const isBento = categoryStr.includes('bento');
       const customWeightMatch = (product.hasCustomWeights || (product.customWeightPrices && product.customWeightPrices.length > 0)) && (directItem.selectedWeight || directItem.options?.weight)
         ? product.customWeightPrices?.find(c => String(c.weight).toLowerCase().trim() === String(directItem.selectedWeight || directItem.options?.weight).toLowerCase().trim())
         : null;
 
+      let defaultFlavorPriceDirect = 0;
+      if (!product.hasVariants && product.flavors && Array.isArray(product.flavors) && product.flavors.length > 0) {
+        const selFlavorName = directItem.selectedFlavor || (directItem.options && (directItem.options.color || directItem.options.flavor));
+        const foundFlavor = product.flavors.find(f => f.name === selFlavorName) || product.flavors[0];
+        defaultFlavorPriceDirect = getFlavorPriceHelper(foundFlavor);
+      }
+
       if (customWeightMatch && customWeightMatch.price !== undefined && customWeightMatch.price !== null) {
-        salePrice = Number(customWeightMatch.price);
+        salePrice = Number(customWeightMatch.price) + defaultFlavorPriceDirect;
       } else if (isCake && !isCustomCake) {
         const selectedWeight = directItem.selectedWeight || (directItem.options && directItem.options.weight) || (isBento ? '250g' : '500g');
         const multiplier = getWeightMultiplier(selectedWeight);
-        salePrice = product.price * multiplier;
-      } else if (product.hasVariants && product.variants && directItem.selectedFlavor && directItem.selectedWeight) {
-        const variant = product.variants.find(v => v.flavor === directItem.selectedFlavor && v.weight === directItem.selectedWeight);
+        salePrice = (product.price * multiplier) + defaultFlavorPriceDirect;
+      } else if (product.hasVariants && product.variants && (directItem.selectedFlavor || directItem.options?.flavor) && (directItem.selectedWeight || directItem.options?.weight)) {
+        const selFlavor = directItem.selectedFlavor || directItem.options?.flavor;
+        const selWeight = directItem.selectedWeight || directItem.options?.weight;
+        const variant = product.variants.find(v => v.flavor === selFlavor && v.weight === selWeight);
         if (variant) salePrice = variant.price;
         if (variant && variant.stock === false)
           throw new AppError(`Stock error: Selected combination is out of stock`, 400);
+      }
+
+      const payloadPriceDirect = Number(directItem.variantPrice || directItem.finalPrice || directItem.price);
+      if (!isNaN(payloadPriceDirect) && payloadPriceDirect > salePrice) {
+        salePrice = payloadPriceDirect;
       }
 
       let finalPrice = salePrice;
@@ -371,20 +409,34 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
 
         let salePrice = product.offerPrice && product.offerPrice < product.price ? product.offerPrice : product.price;
         const isCake = categoryStr.includes('cake');
-        const isBento = categoryStr.includes('bento-cakes');
+        const isBento = categoryStr.includes('bento');
         const customWeightMatch = (product.hasCustomWeights || (product.customWeightPrices && product.customWeightPrices.length > 0)) && (item.options?.weight || item.selectedWeight)
           ? product.customWeightPrices?.find(c => String(c.weight).toLowerCase().trim() === String(item.options?.weight || item.selectedWeight).toLowerCase().trim())
           : null;
 
+        let defaultFlavorPriceCart = 0;
+        if (!product.hasVariants && product.flavors && Array.isArray(product.flavors) && product.flavors.length > 0) {
+          const selFlavorName = item.options?.color || item.options?.flavor || item.selectedFlavor;
+          const foundFlavor = product.flavors.find(f => f.name === selFlavorName) || product.flavors[0];
+          defaultFlavorPriceCart = getFlavorPriceHelper(foundFlavor);
+        }
+
         if (customWeightMatch && customWeightMatch.price !== undefined && customWeightMatch.price !== null) {
-          salePrice = Number(customWeightMatch.price);
+          salePrice = Number(customWeightMatch.price) + defaultFlavorPriceCart;
         } else if (isCake && !isCustomCake) {
           const selectedWeight = item.options?.weight || item.selectedWeight || (isBento ? '250g' : '500g');
           const multiplier = getWeightMultiplier(selectedWeight);
-          salePrice = product.price * multiplier;
-        } else if (product.hasVariants && product.variants && item.options?.flavor && item.options?.weight) {
-          const variant = product.variants.find(v => v.flavor === item.options.flavor && v.weight === item.options.weight);
+          salePrice = (product.price * multiplier) + defaultFlavorPriceCart;
+        } else if (product.hasVariants && product.variants && (item.options?.flavor || item.selectedFlavor) && (item.options?.weight || item.selectedWeight)) {
+          const selFlavor = item.options?.flavor || item.selectedFlavor;
+          const selWeight = item.options?.weight || item.selectedWeight;
+          const variant = product.variants.find(v => v.flavor === selFlavor && v.weight === selWeight);
           if (variant) salePrice = variant.price;
+        }
+
+        const payloadPriceCart = Number(item.variantPrice || item.finalPrice || item.price);
+        if (!isNaN(payloadPriceCart) && payloadPriceCart > salePrice) {
+          salePrice = payloadPriceCart;
         }
 
         let finalPrice = salePrice;
