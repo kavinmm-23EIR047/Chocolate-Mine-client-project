@@ -128,18 +128,6 @@ export default function CustomCake() {
   const [dbThemes, setDbThemes] = useState([]);
   const [dbCategories, setDbCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isFiltering, setIsFiltering] = useState(false);
-
-  useEffect(() => {
-    if (!loading) {
-      setIsFiltering(true);
-      const timer = setTimeout(() => {
-        setIsFiltering(false);
-      }, 350);
-      return () => clearTimeout(timer);
-    }
-  }, [selectedTier, themeSearchFilter, priceSortFilter, categoryFilter]);
-
   useEffect(() => {
     const loadDbData = async () => {
       try {
@@ -546,7 +534,28 @@ export default function CustomCake() {
     if (t) newParams.set('theme', t.id);
     if (selectedTier) newParams.set('tier', selectedTier);
     setSearchParams(newParams);
+
   };
+
+  useEffect(() => {
+    const themeParam = searchParams.get('theme');
+    if (!themeParam) return;
+
+    const summaryTheme = dbThemes.find((item) => item._id === themeParam);
+    if (!summaryTheme || summaryTheme.flavors?.length) return;
+
+    api.get(`/custom-cakes/themes/${themeParam}`)
+      .then((response) => {
+        const fullTheme = response.data?.data;
+        if (!fullTheme) return;
+        setDbThemes((previous) => previous.map((item) => (
+          item._id === fullTheme._id ? fullTheme : item
+        )));
+      })
+      .catch((error) => {
+        console.error('Failed to load custom cake theme details:', error);
+      });
+  }, [searchParams, dbThemes]);
 
   const isThemeWishlisted = theme ? isInWishlist(theme.id, 'customCake') : false;
 
@@ -707,7 +716,7 @@ export default function CustomCake() {
             {/* Render browse grid */}
             <CustomCakeBrowse
               filteredThemes={filteredThemes}
-              loading={loading || isFiltering}
+              loading={loading}
               selectedTier={selectedTier}
               setSelectedTier={setSelectedTier}
               themeSearchFilter={themeSearchFilter}

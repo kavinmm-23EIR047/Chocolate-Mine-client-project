@@ -35,7 +35,7 @@ export default function CustomCakeBrowse({
   const { isInWishlist, toggleWishlist } = useWishlist();
   const [currentPage, setCurrentPage] = useState(1);
   // Show all themes on a single page by default so numbered pagination isn't needed
-  const ITEMS_PER_PAGE = filteredThemes && filteredThemes.length ? filteredThemes.length : 8;
+  const ITEMS_PER_PAGE = 24;
 
   useEffect(() => {
     setCurrentPage(1);
@@ -496,6 +496,7 @@ export default function CustomCakeBrowse({
                                     alt={t.name}
                                     className="w-full h-full object-cover"
                                     loading="lazy"
+                                    imageWidth={300}
                                   />
                                 ) : (
                                   <span className="flex items-center justify-center h-full text-5xl">{t.emoji}</span>
@@ -549,6 +550,7 @@ export default function CustomCakeBrowse({
                                       alt={t.name}
                                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                       loading="lazy"
+                                      imageWidth={300}
                                     />
                                   ) : (
                                     <span className="flex items-center justify-center h-full text-6xl">{t.emoji}</span>

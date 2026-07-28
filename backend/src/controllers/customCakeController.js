@@ -36,9 +36,52 @@ exports.deleteFlavour = asyncHandler(async (req, res, next) => {
 });
 
 exports.getThemes = asyncHandler(async (req, res) => {
-  const themes = await CustomCakeTheme.find().sort('displayOrder name').lean();
+  const themes = await CustomCakeTheme.find()
+    .select('name description isActive basePrice displayOrder category hasWeights enabledStandardWeights hasCustomWeights customWeightPrices tiers colors')
+    .sort('displayOrder name')
+    .lean();
   res.status(200).json({ status: 'success', data: themes });
 });
+
+exports.getThemeById = asyncHandler(async (req, res, next) => {
+  const theme = await CustomCakeTheme.findById(req.params.id).lean();
+  if (!theme) return next(new AppError('Theme not found', 404));
+  res.status(200).json({ status: 'success', data: theme });
+});
+
+const toThemeBrowseData = (theme) => {
+  const {
+    _id,
+    name,
+    description,
+    isActive,
+    basePrice,
+    displayOrder,
+    category,
+    hasWeights,
+    enabledStandardWeights,
+    hasCustomWeights,
+    customWeightPrices,
+    tiers,
+    colors
+  } = theme;
+
+  return {
+    _id,
+    name,
+    description,
+    isActive,
+    basePrice,
+    displayOrder,
+    category,
+    hasWeights,
+    enabledStandardWeights,
+    hasCustomWeights,
+    customWeightPrices,
+    tiers,
+    colors
+  };
+};
 
 const sanitizeThemeData = (data) => {
   const themeData = { ...data };
@@ -538,7 +581,7 @@ exports.searchThemesAtlas = asyncHandler(async (req, res) => {
 
   try {
     const themes = await executeThemeAtlasSearch(searchTerm);
-    res.status(200).json({ status: 'success', total: themes.length, data: themes });
+    res.status(200).json({ status: 'success', total: themes.length, data: themes.map(toThemeBrowseData) });
   } catch (error) {
     console.error('Atlas Search Custom Cake Themes Error:', error);
     res.status(500).json({ status: 'error', message: 'Failed to search custom cake themes via Atlas Search' });
