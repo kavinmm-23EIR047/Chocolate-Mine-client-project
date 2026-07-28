@@ -261,6 +261,10 @@ export default function CustomCake() {
           defaultTier: effectiveTier,
           emoji: '🎂',
           tierPricing: t.tiers,
+          hasWeights: t.hasWeights !== undefined ? Boolean(t.hasWeights) : true,
+          enabledStandardWeights: t.enabledStandardWeights,
+          hasCustomWeights: Boolean(t.hasCustomWeights),
+          customWeightPrices: t.customWeightPrices,
           basePrice
         };
       });
@@ -281,7 +285,42 @@ export default function CustomCake() {
   }, [dbThemes, selectedTier, themeSearchFilter, priceSortFilter, categoryFilter]);
 
   const theme = themeIdx !== null ? filteredThemes[themeIdx] : null;
-  const weight = WEIGHTS[weightIdx];
+
+  const availableWeights = useMemo(() => {
+    let list = [];
+    const hasStandard = theme ? theme.hasWeights !== false : true;
+    const hasCustom = Boolean(theme?.hasCustomWeights && Array.isArray(theme?.customWeightPrices) && theme.customWeightPrices.length > 0);
+
+    if (hasStandard) {
+      if (Array.isArray(theme?.enabledStandardWeights) && theme.enabledStandardWeights.length > 0) {
+        const filtered = WEIGHTS.filter(w =>
+          theme.enabledStandardWeights.includes(w.id) || theme.enabledStandardWeights.includes(w.label)
+        );
+        list = filtered.length > 0 ? filtered : [...WEIGHTS];
+      } else {
+        list = [...WEIGHTS];
+      }
+    }
+    if (hasCustom && theme.customWeightPrices) {
+      theme.customWeightPrices.forEach((cw, idx) => {
+        list.push({
+          id: `custom_${idx}_${cw.weight}`,
+          dbKey: cw.weight,
+          label: cw.weight,
+          customPrice: cw.price,
+          serves: 'Custom',
+          isCustom: true
+        });
+      });
+    }
+    if (list.length === 0) {
+      list = [...WEIGHTS];
+    }
+    return list;
+  }, [theme]);
+
+  const safeWeightIdx = weightIdx >= availableWeights.length ? 0 : weightIdx;
+  const weight = availableWeights[safeWeightIdx] || availableWeights[0] || WEIGHTS[0];
   const activeTierNumber = selectedTier || theme?.defaultTier || theme?.tiers?.[0] || 1;
   const currentTier = getTierById(activeTierNumber);
 
@@ -352,10 +391,16 @@ export default function CustomCake() {
 
   // ── PRICE CALCULATION ──────────────────────────────────────
   const getFlavorWeightPrice = (w) => {
+    if (!w) return 1120;
+    if (w.isCustom && w.customPrice !== undefined) {
+      return w.customPrice;
+    }
     if (!selectedDbFlavor || !selectedDbFlavor.weights) return 1120;
     const weightVal = parseFloat(w.label);
-    const weightObj = selectedDbFlavor.weights.find(x => x.kg === weightVal);
-    if (weightObj) return weightObj.price;
+    if (!isNaN(weightVal)) {
+      const weightObj = selectedDbFlavor.weights.find(x => x.kg === weightVal);
+      if (weightObj) return weightObj.price;
+    }
     const baseObj = selectedDbFlavor.weights.find(x => x.kg === 1);
     return baseObj ? baseObj.price : 1120;
   };
@@ -812,7 +857,7 @@ export default function CustomCake() {
             selectTheme={selectTheme}
             isThemeWishlisted={isThemeWishlisted}
             toggleWishlist={toggleWishlist}
-            WEIGHTS={WEIGHTS}
+            WEIGHTS={availableWeights}
           />
         )}
       </main>

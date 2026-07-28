@@ -29,6 +29,22 @@ const customCakeThemeSchema = new mongoose.Schema({
     type: String,
     trim: true
   }],
+  hasWeights: {
+    type: Boolean,
+    default: true
+  },
+  enabledStandardWeights: [{
+    type: String,
+    trim: true
+  }],
+  hasCustomWeights: {
+    type: Boolean,
+    default: false
+  },
+  customWeightPrices: [{
+    weight: { type: String, trim: true },
+    price: { type: Number, min: 0 }
+  }],
   tiers: {
     tier1: { 
       isActive: { type: Boolean, default: true }, 

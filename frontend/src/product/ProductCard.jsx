@@ -222,9 +222,17 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg', o
   const rawId = product?._id?.$oid || (typeof product?._id === 'string' ? product._id : (product?._id ? String(product._id) : ''));
   const targetSlug = product?.slug || rawId;
 
+  const isCustomCake = product?.isCustom || product?.isTheme || (Array.isArray(product?.category) ? product.category.some(c => typeof c === 'string' && c.toLowerCase().includes('custom')) : String(product?.category || '').toLowerCase().includes('custom'));
+
   const handleCardClick = (e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
     if (onCardClick) {
       onCardClick(product);
+      return;
+    }
+    if (isCustomCake) {
+      const themeId = product?._id || product?.id;
+      navigate(`/custom-cake?theme=${themeId}`);
     } else {
       navigate(`/product/${targetSlug}`);
     }
@@ -410,18 +418,6 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg', o
     }
     
     return formattedCats;
-  };
-
-  const isCustomCake = product?.isCustom || product?.isTheme || (Array.isArray(product?.category) ? product.category.some(c => typeof c === 'string' && c.toLowerCase().includes('custom')) : String(product?.category || '').toLowerCase().includes('custom'));
-
-  const handleCardClick = (e) => {
-    if (e && e.stopPropagation) e.stopPropagation();
-    if (isCustomCake) {
-      const themeId = product?._id || product?.id;
-      navigate(`/custom-cake?theme=${themeId}`);
-    } else {
-      navigate(`/product/${product?.slug || product?._id}`);
-    }
   };
 
   // ─── Horizontal Layout ─────────────────────
