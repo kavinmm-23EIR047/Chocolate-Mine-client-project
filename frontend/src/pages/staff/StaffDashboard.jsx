@@ -41,6 +41,38 @@ const getFlavorPrice = (flavor) => {
   return 0;
 };
 
+// Smart Call Customer helper (Copies number to clipboard for Desktop & redirects to Call App for Mobile)
+const handleCallCustomer = (phone, e) => {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  if (!phone) return;
+
+  const cleanPhone = String(phone).replace(/[^\d+]/g, '');
+
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(cleanPhone).catch(() => {});
+    }
+  } catch (err) {}
+
+  toast.success(
+    <div>
+      <p className="font-extrabold text-sm">📞 Phone Number Copied!</p>
+      <p className="text-xs font-mono font-bold">{cleanPhone}</p>
+    </div>,
+    {
+      duration: 4000,
+      icon: '📋'
+    }
+  );
+
+  setTimeout(() => {
+    window.location.href = `tel:${cleanPhone}`;
+  }, 100);
+};
+
 // Order Status Dropdown – fully theme-aware with solid high-contrast green completed button
 const OrderStatusDropdown = ({ order, onUpdate }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -186,18 +218,32 @@ const OrderDetailsModal = ({ order, onClose }) => {
               
               {/* Call Customer Button */}
               {order.address?.phone && (
-                <a
-                  href={`tel:${order.address.phone}`}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-xs active:scale-95"
+                <button
+                  type="button"
+                  onClick={(e) => handleCallCustomer(order.address.phone, e)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-xs active:scale-95 cursor-pointer"
+                  title="Click to call customer or copy phone number"
                 >
                   <Phone size={13} /> Call Customer
-                </a>
+                </button>
               )}
             </div>
 
             <div className="space-y-1">
               <p className="text-base font-extrabold text-heading">{order.address?.fullName || 'N/A'}</p>
-              <p className="text-sm font-semibold text-muted font-mono">{order.address?.phone || 'No phone provided'}</p>
+              {order.address?.phone ? (
+                <button
+                  type="button"
+                  onClick={(e) => handleCallCustomer(order.address.phone, e)}
+                  className="text-sm font-semibold text-muted font-mono hover:text-primary hover:underline cursor-pointer flex items-center gap-1.5"
+                  title="Click to call or copy phone number"
+                >
+                  <Phone size={13} className="text-emerald-700 dark:text-emerald-400 shrink-0" />
+                  <span>{order.address.phone}</span>
+                </button>
+              ) : (
+                <p className="text-sm font-semibold text-muted font-mono">No phone provided</p>
+              )}
             </div>
 
             {/* Address & Google Maps Navigation */}
@@ -1273,7 +1319,19 @@ const StaffDashboard = () => {
                     <div className="p-3.5 bg-card-soft/80 rounded-2xl border border-border/60 space-y-1">
                       <span className="text-[10px] font-black uppercase tracking-widest text-primary block">Customer</span>
                       <p className="font-extrabold text-sm text-heading truncate">{order.address?.fullName || 'Walk-in Customer'}</p>
-                      <p className="text-xs font-bold text-muted font-mono">{order.address?.phone || 'No phone'}</p>
+                      {order.address?.phone ? (
+                        <button
+                          type="button"
+                          onClick={(e) => handleCallCustomer(order.address.phone, e)}
+                          className="text-xs font-bold text-muted font-mono hover:text-primary hover:underline cursor-pointer flex items-center gap-1 mt-0.5"
+                          title="Click to call or copy phone number"
+                        >
+                          <Phone size={12} className="text-emerald-700 dark:text-emerald-400 shrink-0" />
+                          <span>{order.address.phone}</span>
+                        </button>
+                      ) : (
+                        <p className="text-xs font-bold text-muted font-mono">No phone</p>
+                      )}
                     </div>
 
                     <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar pr-1">
@@ -1434,12 +1492,27 @@ const StaffDashboard = () => {
                   <div className="flex justify-between items-center">
                     <span className="font-extrabold text-sm text-heading truncate">{order.address?.fullName || 'Customer'}</span>
                     {order.address?.phone && (
-                      <a href={`tel:${order.address.phone}`} className="bg-emerald-700 text-white font-black text-xs px-2.5 py-1 rounded-lg flex items-center gap-1 hover:bg-emerald-800 transition-colors shadow-xs">
+                      <button
+                        type="button"
+                        onClick={(e) => handleCallCustomer(order.address.phone, e)}
+                        className="bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs px-2.5 py-1 rounded-lg flex items-center gap-1 transition-colors shadow-xs cursor-pointer active:scale-95 shrink-0"
+                        title="Click to call customer or copy phone number"
+                      >
                         <Phone size={12} /> Call
-                      </a>
+                      </button>
                     )}
                   </div>
-                  <p className="text-xs font-bold text-muted font-mono">{order.address?.phone}</p>
+                  {order.address?.phone && (
+                    <button
+                      type="button"
+                      onClick={(e) => handleCallCustomer(order.address.phone, e)}
+                      className="text-xs font-bold text-muted font-mono hover:text-primary hover:underline cursor-pointer flex items-center gap-1"
+                      title="Click to call or copy phone number"
+                    >
+                      <Phone size={11} className="text-emerald-700 dark:text-emerald-400 shrink-0" />
+                      <span>{order.address.phone}</span>
+                    </button>
+                  )}
                   <p className="text-[11px] font-medium text-heading/90 truncate">
                     <MapPin size={11} className="inline text-primary mr-1" />
                     {[order.address?.houseNo, order.address?.street, order.address?.city, order.address?.pincode].filter(Boolean).join(', ')}
@@ -1534,13 +1607,28 @@ const StaffDashboard = () => {
                     <div className="flex justify-between items-center">
                       <span className="text-[10px] font-black uppercase tracking-widest text-primary">Customer</span>
                       {order.address?.phone && (
-                        <a href={`tel:${order.address.phone}`} className="bg-emerald-700 text-white font-black text-xs px-2.5 py-1 rounded-lg flex items-center gap-1 hover:bg-emerald-800 transition-colors shadow-xs">
+                        <button
+                          type="button"
+                          onClick={(e) => handleCallCustomer(order.address.phone, e)}
+                          className="bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs px-2.5 py-1 rounded-lg flex items-center gap-1 transition-colors shadow-xs cursor-pointer active:scale-95 shrink-0"
+                          title="Click to call customer or copy phone number"
+                        >
                           <Phone size={12} /> Call
-                        </a>
+                        </button>
                       )}
                     </div>
                     <p className="font-extrabold text-base text-heading truncate">{order.address?.fullName || 'Customer'}</p>
-                    <p className="text-xs font-bold text-muted font-mono">{order.address?.phone}</p>
+                    {order.address?.phone && (
+                      <button
+                        type="button"
+                        onClick={(e) => handleCallCustomer(order.address.phone, e)}
+                        className="text-xs font-bold text-muted font-mono hover:text-primary hover:underline cursor-pointer flex items-center gap-1 mt-0.5"
+                        title="Click to call or copy phone number"
+                      >
+                        <Phone size={11} className="text-emerald-700 dark:text-emerald-400 shrink-0" />
+                        <span>{order.address.phone}</span>
+                      </button>
+                    )}
                     <div className="flex items-start gap-1.5 mt-2 text-xs font-medium text-heading/90">
                       <MapPin size={14} className="text-primary mt-0.5 shrink-0" />
                       <p className="line-clamp-2 leading-relaxed">
