@@ -53,7 +53,7 @@ const MegaMenu = () => {
               <Link 
                 to="/shop"
                 onClick={() => setIsOpen(false)}
-                className="text-xs font-bold text-heading/80 hover:text-primary uppercase tracking-normal transition-colors block whitespace-nowrap"
+                className="text-xs font-bold text-heading/80 hover:bg-[var(--button-bg)] hover:text-[var(--button-text)] px-3 py-1.5 rounded-xl uppercase tracking-normal transition-all block whitespace-nowrap"
               >
                 ALL
               </Link>
@@ -67,7 +67,7 @@ const MegaMenu = () => {
                     key={cat._id} 
                     to={targetPath}
                     onClick={() => setIsOpen(false)}
-                    className="text-xs font-bold text-heading/80 hover:text-primary uppercase tracking-normal transition-colors block whitespace-nowrap"
+                    className="text-xs font-bold text-heading/80 hover:bg-[var(--button-bg)] hover:text-[var(--button-text)] px-3 py-1.5 rounded-xl uppercase tracking-normal transition-all block whitespace-nowrap"
                   >
                     {cat.label || cat.name}
                   </Link>
@@ -83,7 +83,7 @@ const MegaMenu = () => {
               <Link 
                 to="/shop"
                 onClick={() => setIsOpen(false)}
-                className="text-xs font-bold text-heading/80 hover:text-primary uppercase tracking-normal transition-colors block whitespace-nowrap"
+                className="text-xs font-bold text-heading/80 hover:bg-[var(--button-bg)] hover:text-[var(--button-text)] px-3 py-1.5 rounded-xl uppercase tracking-normal transition-all block whitespace-nowrap"
               >
                 ALL
               </Link>
@@ -94,7 +94,7 @@ const MegaMenu = () => {
                     key={occ._id} 
                     to={`/shop?occasion=${slug}`}
                     onClick={() => setIsOpen(false)}
-                    className="text-xs font-bold text-heading/80 hover:text-primary uppercase tracking-normal transition-colors block whitespace-nowrap"
+                    className="text-xs font-bold text-heading/80 hover:bg-[var(--button-bg)] hover:text-[var(--button-text)] px-3 py-1.5 rounded-xl uppercase tracking-normal transition-all block whitespace-nowrap"
                   >
                     {occ.name}
                   </Link>
@@ -107,13 +107,13 @@ const MegaMenu = () => {
         
         {/* Bottom Quick Links Bar */}
         <div className="bg-primary/5 px-6 py-4 flex items-center justify-between gap-6 border-t border-border/10 select-none">
-          <Link to="/custom-cake" onClick={() => setIsOpen(false)} className="text-xs md:text-sm font-black text-heading uppercase tracking-widest hover:text-primary transition-colors whitespace-nowrap">
+          <Link to="/custom-cake" onClick={() => setIsOpen(false)} className="text-xs md:text-sm font-black text-heading uppercase tracking-widest px-3 py-1.5 rounded-xl hover:bg-[var(--button-bg)] hover:text-[var(--button-text)] transition-all whitespace-nowrap">
             ✨ Custom Cakes Builder
           </Link>
-          <Link to="/shop?bestseller=true" onClick={() => setIsOpen(false)} className="text-xs md:text-sm font-black text-heading uppercase tracking-widest hover:text-primary transition-colors whitespace-nowrap">
+          <Link to="/shop?bestseller=true" onClick={() => setIsOpen(false)} className="text-xs md:text-sm font-black text-heading uppercase tracking-widest px-3 py-1.5 rounded-xl hover:bg-[var(--button-bg)] hover:text-[var(--button-text)] transition-all whitespace-nowrap">
             🔥 View Bestsellers
           </Link>
-          <Link to="/shop?category=special cakes" onClick={() => setIsOpen(false)} className="text-xs md:text-sm font-black text-heading uppercase tracking-widest hover:text-primary transition-colors whitespace-nowrap">
+          <Link to="/shop?category=special cakes" onClick={() => setIsOpen(false)} className="text-xs md:text-sm font-black text-heading uppercase tracking-widest px-3 py-1.5 rounded-xl hover:bg-[var(--button-bg)] hover:text-[var(--button-text)] transition-all whitespace-nowrap">
             ⭐ Special Cakes
           </Link>
         </div>

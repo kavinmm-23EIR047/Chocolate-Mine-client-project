@@ -1,41 +1,32 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ShoppingBag, Eye, Filter, Download, RefreshCw, Info, Package, ChevronDown, ChevronUp, X, Volume2, VolumeX } from 'lucide-react';
+import toast from 'react-hot-toast';
+import io from 'socket.io-client';
+
 import adminService from '../../services/adminService';
 import { formatCurrency } from '../../utils/helpers';
 import { getOptimizedCloudinaryUrl } from '../../utils/cloudinary';
+import { OrderStatusBadge } from '../../components/ui/StatusBadge';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
-import { OrderStatusBadge } from '../../components/ui/StatusBadge';
 import { TableSkeleton } from '../../components/ui/Skeleton';
 import EmptyState from '../../components/ui/EmptyState';
 import Pagination from '../../components/ui/Pagination';
-import toast from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
-import io from 'socket.io-client';
 import useNotificationSound from '../../hooks/useNotificationSound';
 import { isWithinServiceHours, getServiceHoursMessage } from '../../utils/serviceHours';
 import { getSocket, joinAdminRoom } from '../../sockets/socketManager';
 
-const getDisplayFlavor = (item) => {
-  if (item.isCustomCake) return item.selectedFlavor || 'Custom';
-  const flavor = item.selectedFlavor;
-  if (!flavor || flavor.toLowerCase() === 'standard') {
-    const cat = String(item.category || '').toLowerCase();
-    const name = String(item.name || '').toLowerCase();
-    if (cat.includes('chocolate') || name.includes('chocolate') || name.includes('forest') || name.includes('fudge') || name.includes('truffle') || name.includes('oreo') || name.includes('caramel')) return 'Chocolate';
-    if (cat.includes('vanilla') || name.includes('vanilla') || name.includes('pineapple') || name.includes('butterscotch') || name.includes('strawberry') || name.includes('blueberry') || name.includes('biscoff') || name.includes('jamun') || name.includes('gulkand') || name.includes('rasmalai') || name.includes('honey') || name.includes('almond') || name.includes('lychee') || name.includes('rose')) return 'Vanilla';
-    if (cat.includes('red-velvet') || cat.includes('red velvet') || name.includes('red-velvet') || name.includes('red velvet')) return 'Red Velvet';
-    if (cat.includes('bento') || name.includes('bento')) return 'Bento';
-    return 'Standard';
-  }
-  return flavor;
-};
-
-// Order Details Modal Component
 const OrderDetailsModal = ({ order, onClose }) => {
   const [expandedItems, setExpandedItems] = useState({});
-  
+
+  const getDisplayFlavor = (item) => {
+    if (item.selectedFlavor && item.selectedFlavor !== 'Standard') return item.selectedFlavor;
+    if (item.customDetails?.flavour) return item.customDetails.flavour;
+    return 'Standard';
+  };
+
   if (!order) return null;
 
   const toggleItemExpand = (index) => {
@@ -187,16 +178,12 @@ const OrderDetailsModal = ({ order, onClose }) => {
               </div>
               <div className="flex justify-between text-xs text-muted/70">
                 <span>GST (18%)</span>
-                <span className="font-bold text-success-text">Included in Product Price</span>
+                <span className="font-semibold">{formatCurrency(order.gst)}</span>
               </div>
-              <div className="flex justify-between font-bold pt-2 border-t border-border/40">
-                <span className="text-heading">Total</span>
+              <div className="border-t border-border/40 my-2 pt-2 flex justify-between font-black text-base text-heading">
+                <span>Total Amount</span>
                 <span className="text-primary">{formatCurrency(order.total)}</span>
               </div>
-            </div>
-            <div className="mt-3 pt-2 border-t border-border/40">
-              <p className="text-xs text-muted">Payment Method: <span className="font-semibold text-heading">{order.paymentMethod}</span></p>
-              <p className="text-xs text-muted">Payment Status: <span className={`font-bold ${order.paymentStatus === 'paid' ? 'text-success' : 'text-warning'}`}>{order.paymentStatus?.toUpperCase()}</span></p>
             </div>
           </div>
         </div>
@@ -207,37 +194,39 @@ const OrderDetailsModal = ({ order, onClose }) => {
 
 const AdminOrders = () => {
   const navigate = useNavigate();
-  const socketRef = useRef(null);
-  const { playSound, toggleMute, isMuted, testSounds } = useNotificationSound();
-  
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [statusFilter, setStatusFilter] = useState('');
   const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
-  const [notificationsMuted, setNotificationsMuted] = useState(false);
   const [serviceHoursInfo, setServiceHoursInfo] = useState(null);
+  const [notificationsMuted, setNotificationsMuted] = useState(false);
+
+  const socketRef = useRef(null);
+  const { playSound, toggleMute, testSounds } = useNotificationSound();
 
   const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
-      const params = { page, limit: 10 };
-      if (statusFilter) params.orderStatus = statusFilter;
-      const res = await adminService.getOrders(params);
-      setOrders(res.data.data);
-      setTotalPages(Math.ceil((res.data.total || 0) / 10));
+      const res = await adminService.getOrders();
+      const rawOrders = res.data?.data?.orders || res.data?.data || (Array.isArray(res.data) ? res.data : []);
+      const filtered = statusFilter 
+        ? rawOrders.filter(o => o.orderStatus === statusFilter)
+        : rawOrders;
+      setOrders(filtered);
+      setTotalPages(Math.ceil(filtered.length / 10) || 1);
     } catch (err) {
-      console.error('Failed to fetch orders:', err);
+      console.error('Failed to fetch admin orders:', err);
       toast.error('Failed to load orders');
     } finally {
       setLoading(false);
     }
-  }, [page, statusFilter]);
+  }, [statusFilter]);
 
-  useEffect(() => { 
-    fetchOrders(); 
+  useEffect(() => {
+    fetchOrders();
   }, [fetchOrders]);
 
   // Initialize socket connection for real-time updates

@@ -341,9 +341,9 @@ const SearchOverlay = ({ isOpen, onClose }) => {
                         <button
                           key={i}
                           onClick={() => handleSelectQuery(item)}
-                          className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-[var(--surface)] transition-all group text-left cursor-pointer"
+                          className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-[var(--button-bg)] hover:text-[var(--button-text)] transition-all group text-left cursor-pointer"
                         >
-                          <span className="text-xs sm:text-sm font-bold text-[var(--body)] group-hover:text-[var(--heading)] uppercase tracking-wide transition-colors">{item}</span>
+                          <span className="text-xs sm:text-sm font-bold text-[var(--body)] group-hover:text-[var(--button-text)] uppercase tracking-wide transition-colors">{item}</span>
                           <Sparkles size={14} className="text-[var(--accent)] opacity-0 group-hover:opacity-100 transition-opacity" />
                         </button>
                       ))}

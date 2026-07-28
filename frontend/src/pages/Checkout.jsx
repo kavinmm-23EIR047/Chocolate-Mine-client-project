@@ -1206,23 +1206,30 @@ const Checkout = () => {
           } catch (e) {
             setLoading(false);
             isProcessingPayment.current = false;
-            toast.error(
-              e?.response?.data?.message ||
-              "Verification failed. Contact support."
-            );
+            const failMessage = e?.response?.data?.message || "Verification failed. Contact support.";
+            toast.error(failMessage);
+            navigate('/?payment=failed', {
+              replace: true,
+              state: { paymentFailed: true, reason: failMessage, orderId }
+            });
           }
         },
         modal: {
           ondismiss: async () => {
             setLoading(false);
             isProcessingPayment.current = false;
+            const failReason = "User closed payment window before completion.";
             try {
               await api.post("/payment/log-failure", {
                 orderId,
-                reason: "User closed payment window",
+                reason: failReason,
               });
             } catch { }
             toast.error("Payment cancelled.");
+            navigate('/?payment=failed', {
+              replace: true,
+              state: { paymentFailed: true, reason: failReason, orderId }
+            });
           },
         },
         prefill: {

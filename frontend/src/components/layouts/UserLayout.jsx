@@ -1,5 +1,5 @@
-import React from 'react';
-import { Outlet, useLocation, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Outlet, useLocation, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Truck, Phone, HelpCircle, MapPin } from 'lucide-react';
 import Navbar from '../Navbar';
 import Footer from '../Footer';
@@ -8,12 +8,48 @@ import PureVegBadge from '../ui/PureVegBadge';
 import NotificationPrompt from '../ui/NotificationPrompt';
 import NotificationBanner from '../ui/NotificationBanner';
 import CocoaLeavesBackground from '../ui/CocoaLeavesBackground';
+import PaymentFailedModal from '../ui/PaymentFailedModal';
 import { useAuth } from '../../context/AuthContext';
 import PureVegIcon from '../../assets/pure veg.webp';
 
 const UserLayout = () => {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const [paymentFailedModalOpen, setPaymentFailedModalOpen] = useState(false);
+  const [paymentFailedReason, setPaymentFailedReason] = useState('');
+  const [paymentFailedOrderId, setPaymentFailedOrderId] = useState(null);
+
+  useEffect(() => {
+    const isPaymentFailedParam = searchParams.get('payment') === 'failed' || searchParams.get('status') === 'failed';
+    const isPaymentFailedState = location.state?.paymentFailed;
+
+    if (isPaymentFailedParam || isPaymentFailedState) {
+      const reason = location.state?.reason || searchParams.get('reason') || 'Your payment transaction was cancelled or declined.';
+      const orderId = location.state?.orderId || searchParams.get('orderId') || null;
+      setPaymentFailedReason(reason);
+      setPaymentFailedOrderId(orderId);
+      setPaymentFailedModalOpen(true);
+    }
+  }, [location, searchParams]);
+
+  const handleClosePaymentFailedModal = () => {
+    setPaymentFailedModalOpen(false);
+    if (searchParams.get('payment') === 'failed' || searchParams.get('status') === 'failed') {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('payment');
+      newParams.delete('status');
+      newParams.delete('reason');
+      newParams.delete('orderId');
+      setSearchParams(newParams, { replace: true });
+    }
+    if (location.state?.paymentFailed) {
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  };
+
   const isProductPage = location.pathname.startsWith('/product/');
   const isAuthPage = ['/login', '/register', '/forgot-password'].some(path => location.pathname.toLowerCase().startsWith(path));
 
@@ -99,6 +135,12 @@ const UserLayout = () => {
       </div>
       {!isAuthPage && <MobileBottomNav />}
       <NotificationPrompt />
+      <PaymentFailedModal
+        isOpen={paymentFailedModalOpen}
+        onClose={handleClosePaymentFailedModal}
+        reason={paymentFailedReason}
+        orderId={paymentFailedOrderId}
+      />
     </div>
   );
 };
