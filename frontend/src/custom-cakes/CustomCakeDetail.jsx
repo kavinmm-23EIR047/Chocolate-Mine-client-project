@@ -163,7 +163,7 @@ export default function CustomCakeDetail({
           <div className="relative">
             <input
               type="text" maxLength={20}
-              placeholder="e.g. 'Happy Birthday, name' or 'My Life'"
+              placeholder="e.g. 'Happy Birthday, name"
               value={customerName}
               onChange={e => setCustomerName(e.target.value)}
               className="w-full bg-[var(--input)] border border-[var(--input-border)] text-[var(--foreground)] placeholder:text-[var(--muted)] rounded-xl px-4 py-3 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[var(--primary)] pr-14 transition-all font-bold"
