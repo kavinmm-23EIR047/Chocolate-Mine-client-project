@@ -40,8 +40,18 @@ exports.getThemes = asyncHandler(async (req, res) => {
   res.status(200).json({ status: 'success', data: themes });
 });
 
+const toSentenceCase = (str) => {
+  if (!str || typeof str !== 'string') return str;
+  const trimmed = str.trim();
+  if (!trimmed) return trimmed;
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+};
+
 const sanitizeThemeData = (data) => {
   const themeData = { ...data };
+  if (themeData.name) {
+    themeData.name = toSentenceCase(themeData.name);
+  }
 
   if (themeData.basePrice !== undefined) {
     themeData.basePrice = Math.max(0, parseFloat(themeData.basePrice) || 0);

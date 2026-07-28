@@ -16,6 +16,7 @@ import { useWishlist } from '../context/WishlistContext';
 import toast from 'react-hot-toast';
 import api from '../utils/api';
 import PureVegIcon from '../assets/pure veg.webp';
+import { toSentenceCase } from '../utils/textUtils';
 
 // ── Import separated data ────────────────────────────────────────────────
 import {
@@ -246,8 +247,8 @@ export default function CustomCake() {
 
         return {
           id: t._id,
-          name: t.name,
-          shortName: t.name,
+          name: toSentenceCase(t.name),
+          shortName: toSentenceCase(t.name),
           description: t.description,
           category: t.category,
           location: t.location,

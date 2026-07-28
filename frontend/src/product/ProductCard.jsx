@@ -10,6 +10,7 @@ import { addToCart, removeFromCart, updateCartQty } from '../redux/slices/cartSl
 import { useWishlist } from '../context/WishlistContext';
 import toast from 'react-hot-toast';
 import ImageWithSkeleton from '../components/ui/ImageWithSkeleton';
+import { toSentenceCase } from '../utils/textUtils';
 
 const BENTO_FLAVOR_PRICES = {
   'White Forest': 380,
@@ -444,7 +445,7 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg', o
               </span>
             )}
             <h3 className="text-[14px] sm:text-[15px] font-bold leading-tight break-words" style={{ color: 'var(--heading)' }}>
-              {product.name}
+              {toSentenceCase(product.name)}
             </h3>
 
             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
@@ -604,7 +605,7 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg', o
             </span>
           )}
           <h3 className="text-[14px] md:text-[15px] font-bold leading-tight mb-1 break-words" style={{ color: 'var(--heading)' }}>
-            {product.name}
+            {toSentenceCase(product.name)}
           </h3>
 
           <div className="flex items-center gap-1 text-[12px] font-medium mb-1 flex-wrap" style={{ color: 'var(--muted)' }}>

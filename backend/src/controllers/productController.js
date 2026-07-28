@@ -19,6 +19,13 @@ const normalizeBoolean = (value) => {
   return false; // default value
 };
 
+const toSentenceCase = (str) => {
+  if (!str || typeof str !== 'string') return str;
+  const trimmed = str.trim();
+  if (!trimmed) return trimmed;
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+};
+
 const applyCoupon = (product) => {
   if (!product.coupon || !product.coupon.enabled) return null;
   const now = new Date();
@@ -436,6 +443,7 @@ exports.getProduct = asyncHandler(async (req, res, next) => {
 
 exports.createProduct = asyncHandler(async (req, res, next) => {
   const body = { ...req.body };
+  if (body.name) body.name = toSentenceCase(body.name);
   
   // FIX: Normalize boolean fields first (critical for CastError fix)
   body.hasVariants = normalizeBoolean(body.hasVariants);
@@ -622,6 +630,7 @@ exports.updateProduct = asyncHandler(async (req, res, next) => {
   const oldCouponEnabled = product.coupon?.enabled;
 
   const body = { ...req.body };
+  if (body.name) body.name = toSentenceCase(body.name);
   
   // FIX: Normalize boolean fields first (critical for CastError fix)
   const hasVariants = normalizeBoolean(body.hasVariants);

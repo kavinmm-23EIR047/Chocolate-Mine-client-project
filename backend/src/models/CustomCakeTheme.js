@@ -81,6 +81,20 @@ const customCakeThemeSchema = new mongoose.Schema({
   }]
 }, { timestamps: true });
 
+function toSentenceCase(str) {
+  if (!str || typeof str !== 'string') return str;
+  const trimmed = str.trim();
+  if (!trimmed) return trimmed;
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+}
+
+customCakeThemeSchema.pre('save', function(next) {
+  if (this.name && typeof this.name === 'string') {
+    this.name = toSentenceCase(this.name);
+  }
+  next();
+});
+
 
 
 
