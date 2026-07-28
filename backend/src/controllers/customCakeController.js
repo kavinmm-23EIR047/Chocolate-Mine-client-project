@@ -37,45 +37,7 @@ exports.deleteFlavour = asyncHandler(async (req, res, next) => {
 
 exports.getThemes = asyncHandler(async (req, res) => {
   const themes = await CustomCakeTheme.find().sort('displayOrder name').lean();
-  const activeFlavors = await CustomCakeFlavor.find({ isActive: true }).lean();
-  const activeColors = await CustomCakeColor.find({ isActive: true }).lean();
-
-  const formattedThemes = themes.map(theme => {
-    // Merge flavors
-    const finalFlavors = [...(theme.flavors || [])];
-    activeFlavors.forEach(masterFlavor => {
-      if (!finalFlavors.some(f => f.name === masterFlavor.name)) {
-        finalFlavors.push({
-          name: masterFlavor.name,
-          category: masterFlavor.category,
-          weights: masterFlavor.weights,
-          isActive: masterFlavor.isActive
-        });
-      }
-    });
-
-    // Merge colors
-    const finalColors = [...(theme.colors || [])];
-    activeColors.forEach(masterColor => {
-      if (!finalColors.some(c => c.name === masterColor.name)) {
-        finalColors.push({
-          name: masterColor.name,
-          hexCode: masterColor.hexCode,
-          isActive: masterColor.isActive,
-          price: 0,
-          images: { tier1: null, tier2: null, tier3: null }
-        });
-      }
-    });
-
-    return {
-      ...theme,
-      flavors: finalFlavors,
-      colors: finalColors
-    };
-  });
-
-  res.status(200).json({ status: 'success', data: formattedThemes });
+  res.status(200).json({ status: 'success', data: themes });
 });
 
 const sanitizeThemeData = (data) => {
@@ -160,7 +122,7 @@ const sanitizeThemeData = (data) => {
 exports.createTheme = asyncHandler(async (req, res, next) => {
   const themeData = sanitizeThemeData(req.body);
   
-  if (!themeData.flavors || themeData.flavors.length === 0) {
+  if (themeData.flavors === undefined) {
     const activeFlavors = await CustomCakeFlavor.find({ isActive: true });
     themeData.flavors = activeFlavors.map(f => ({
       name: f.name,
@@ -170,7 +132,7 @@ exports.createTheme = asyncHandler(async (req, res, next) => {
     }));
   }
   
-  if (!themeData.colors || themeData.colors.length === 0) {
+  if (themeData.colors === undefined) {
     const activeColors = await CustomCakeColor.find({ isActive: true });
     themeData.colors = activeColors.map(c => ({
       name: c.name,
@@ -576,44 +538,7 @@ exports.searchThemesAtlas = asyncHandler(async (req, res) => {
 
   try {
     const themes = await executeThemeAtlasSearch(searchTerm);
-
-    const activeFlavors = await CustomCakeFlavor.find({ isActive: true }).lean();
-    const activeColors = await CustomCakeColor.find({ isActive: true }).lean();
-
-    const formattedThemes = themes.map(theme => {
-      const finalFlavors = [...(theme.flavors || [])];
-      activeFlavors.forEach(masterFlavor => {
-        if (!finalFlavors.some(f => f.name === masterFlavor.name)) {
-          finalFlavors.push({
-            name: masterFlavor.name,
-            category: masterFlavor.category,
-            weights: masterFlavor.weights,
-            isActive: masterFlavor.isActive
-          });
-        }
-      });
-
-      const finalColors = [...(theme.colors || [])];
-      activeColors.forEach(masterColor => {
-        if (!finalColors.some(c => c.name === masterColor.name)) {
-          finalColors.push({
-            name: masterColor.name,
-            hexCode: masterColor.hexCode,
-            images: { tier1: null, tier2: null, tier3: null },
-            price: 0,
-            isActive: masterColor.isActive
-          });
-        }
-      });
-
-      return {
-        ...theme,
-        flavors: finalFlavors,
-        colors: finalColors
-      };
-    });
-
-    res.status(200).json({ status: 'success', total: formattedThemes.length, data: formattedThemes });
+    res.status(200).json({ status: 'success', total: themes.length, data: themes });
   } catch (error) {
     console.error('Atlas Search Custom Cake Themes Error:', error);
     res.status(500).json({ status: 'error', message: 'Failed to search custom cake themes via Atlas Search' });

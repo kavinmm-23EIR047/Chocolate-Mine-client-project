@@ -16,23 +16,6 @@ const logger = require('./src/utils/logger');
 const mongoose = require('mongoose');
 const excelService = require('./src/services/excelService');
 
-// Auto copy happy-faces images to frontend public directory
-try {
-  const fs = require('fs');
-  const path = require('path');
-  const publicDir = path.join(__dirname, '../frontend/public/happy-faces');
-  if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir, { recursive: true });
-  const brainDir = 'C:/Users/KAVIN/.gemini/antigravity-ide/brain/00377606-188e-4a10-9146-2fe6aa589076';
-  ['media__1785250545206.jpg', 'media__1785250573226.jpg', 'media__1785250575243.jpg'].forEach((file, i) => {
-    const src = path.join(brainDir, file);
-    if (fs.existsSync(src)) {
-      fs.copyFileSync(src, path.join(publicDir, `face${i + 1}.jpg`));
-      console.log(`Copied happy face image: face${i + 1}.jpg`);
-    }
-  });
-} catch (e) {
-  console.error('Error copying happy faces:', e.message);
-}
 
 const app = express();
 
