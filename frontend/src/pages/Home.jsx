@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search } from 'lucide-react';
+import { Search, Grid, Heart, Package, Star, TrendingUp, Filter, Sparkles, Cake } from 'lucide-react';
 import { useGetProductsQuery } from '../product/productApi';
 import toast from 'react-hot-toast';
 import ProductCard from '../product/ProductCard';
@@ -17,14 +17,13 @@ import HomeLoader from '../components/home/HomeLoader';
 import WhatsAppButton from '../components/WhatsAppButton';
 import TrustBar from '../components/home/TrustBar';
 import { CategoryCircles } from '../components/home/Category';
-
 import ReviewsHome from '../components/home/ReviewsHome';
+import HappyFaces from '../components/home/HappyFaces';
 import BottomBanner from '../components/home/BottomBanner';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { FreeMode } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/free-mode';
-import { Grid, Heart, Package, Star, TrendingUp, Filter, Sparkles, Cake } from 'lucide-react';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
@@ -58,62 +57,41 @@ const Home = () => {
 
   const [sortBy, setSortBy] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
-  const [copiedCode, setCopiedCode] = useState('');
-  const { location: deliveryCity } = useDeliveryLocation();
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
-  const [page, setPage] = useState(1);
-  const [featuredProduct, setFeaturedProduct] = useState(null);
-  const productsPerPage = 4;
+
+  const { deliveryCity } = useDeliveryLocation();
 
   const { data: productRes, isLoading: loading } = useGetProductsQuery({
-    q: query,
-    category: activeCategory !== 'All' ? activeCategory.toLowerCase() : '',
-    location: deliveryCity,
-    limit: productsPerPage,
-    page,
-    sort: sortBy
+    page: 1,
+    limit: 24,
+    search: query || undefined,
   });
 
-  const products = productRes?.data || [];
-  const totalProducts = productRes?.total || 0;
+  const rawProducts = productRes?.data || [];
 
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 1024);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const products = React.useMemo(() => {
+    let result = [...rawProducts];
 
-  useEffect(() => {
-    const fetchFeaturedProduct = async () => {
-      try {
-        const res = await api.get('/products?limit=1&sort=popular');
-        const product = res.data?.data?.[0];
-        if (product) setFeaturedProduct(product);
-      } catch (err) {
-        console.error('Featured product fetch failed:', err);
-      }
-    };
-    fetchFeaturedProduct();
-  }, []);
-
-  const isFirstRender = useRef(true);
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
+    if (activeCategory && activeCategory !== 'All') {
+      result = result.filter(p => {
+        const cat = Array.isArray(p.category) ? p.category.join(' ') : (p.category || '');
+        return cat.toLowerCase().includes(activeCategory.toLowerCase());
+      });
     }
-    setPage(1);
-    const el = document.getElementById('main-catalog');
-    if (el) {
-      const offset = el.getBoundingClientRect().top + window.pageYOffset - 100;
-      window.scrollTo({ top: offset, behavior: 'smooth' });
+
+    if (sortBy === 'price-low') {
+      result.sort((a, b) => (a.finalPrice ?? a.price) - (b.finalPrice ?? b.price));
+    } else if (sortBy === 'price-high') {
+      result.sort((a, b) => (b.finalPrice ?? b.price) - (a.finalPrice ?? a.price));
+    } else if (sortBy === 'rating') {
+      result.sort((a, b) => (b.ratingsAverage || 0) - (a.ratingsAverage || 0));
     }
-  }, [activeCategory, query, sortBy]);
+
+    return result;
+  }, [rawProducts, activeCategory, sortBy]);
 
   return (
     <div className="min-h-screen bg-background text-body">
       <HomeLoader show={showHomeLoader} onFinish={handleLoaderFinish} />
-
 
       <h1 className="sr-only">The Chocolate Mine - Premium Handcrafted Artisan Chocolates, Cakes & Custom Desserts in Coimbatore | Pan India Delivery | Pure Veg & Eggless Cakes</h1>
 
@@ -236,12 +214,13 @@ const Home = () => {
           {/* Reviews Section */}
           {!query && <ReviewsHome />}
 
+          {/* Happy Faces Section (Under ReviewsHome) */}
+          {!query && <HappyFaces />}
+
           {/* Bottom Banner */}
           {!query && <BottomBanner />}
         </div>
       </main>
-
-      {/* Footer removed on homepage per design request */}
 
       <WhatsAppButton />
     </div>
