@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Check, X, Image as ImageIcon, Plus, Edit2, Trash2, UploadCloud } from 'lucide-react';
+import { Sparkles, Check, X, Image as ImageIcon, Plus, Edit2, Trash2, UploadCloud, Scale } from 'lucide-react';
 import adminService from '../../../services/adminService';
 import toast from 'react-hot-toast';
 
@@ -12,6 +12,10 @@ const ThemeBuilder = ({ themeId, onBack }) => {
     basePrice: 0,
     displayOrder: 0,
     category: [],
+    hasWeights: true,
+    enabledStandardWeights: ['1kg', '1.5kg', '2kg', '2.5kg', '3kg'],
+    hasCustomWeights: false,
+    customWeightPrices: [],
     tiers: {
       tier1: { isActive: true, price: 0 },
       tier2: { isActive: false, price: 0 },
@@ -35,6 +39,37 @@ const ThemeBuilder = ({ themeId, onBack }) => {
   const [saving, setSaving] = useState(false);
   
 
+
+  const [newCustomWeight, setNewCustomWeight] = useState('');
+  const [newCustomPrice, setNewCustomPrice] = useState('');
+
+  const handleAddCustomWeightPrice = () => {
+    if (!newCustomWeight.trim()) {
+      toast.error('Please enter a weight (e.g. 0.5kg)');
+      return;
+    }
+    if (!newCustomPrice || isNaN(newCustomPrice) || parseFloat(newCustomPrice) < 0) {
+      toast.error('Please enter a valid price');
+      return;
+    }
+    const newItem = {
+      weight: newCustomWeight.trim(),
+      price: parseFloat(newCustomPrice)
+    };
+    setTheme(prev => ({
+      ...prev,
+      customWeightPrices: [...(prev.customWeightPrices || []), newItem]
+    }));
+    setNewCustomWeight('');
+    setNewCustomPrice('');
+  };
+
+  const handleRemoveCustomWeightPrice = (index) => {
+    setTheme(prev => ({
+      ...prev,
+      customWeightPrices: (prev.customWeightPrices || []).filter((_, idx) => idx !== index)
+    }));
+  };
 
   useEffect(() => {
     loadData();
@@ -63,6 +98,12 @@ const ThemeBuilder = ({ themeId, onBack }) => {
           setTheme({
             ...existingTheme,
             category: existingTheme.category || [],
+            hasWeights: existingTheme.hasWeights !== undefined ? Boolean(existingTheme.hasWeights) : true,
+            enabledStandardWeights: Array.isArray(existingTheme.enabledStandardWeights) && existingTheme.enabledStandardWeights.length > 0
+              ? existingTheme.enabledStandardWeights
+              : ['1kg', '1.5kg', '2kg', '2.5kg', '3kg'],
+            hasCustomWeights: Boolean(existingTheme.hasCustomWeights),
+            customWeightPrices: Array.isArray(existingTheme.customWeightPrices) ? existingTheme.customWeightPrices : [],
             flavors: existingTheme.flavors || [],
             colors: existingTheme.colors || []
           });
@@ -374,6 +415,175 @@ const ThemeBuilder = ({ themeId, onBack }) => {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* SECTION 2.5: WEIGHT OPTIONS & PRICING CONFIG */}
+      <div className="space-y-6 bg-border/5 p-5 rounded-xl border border-border/50">
+        <div className="border-b border-border pb-3">
+          <h4 className="font-black text-sm uppercase tracking-wider text-muted flex items-center gap-2">
+            <Scale size={18} className="text-primary" />
+            Weight Options & Pricing Config
+          </h4>
+          <p className="text-xs text-muted mt-1">Configure standard weight multipliers or custom weight & specific price combinations for this theme.</p>
+        </div>
+
+        {/* Standard Weight Options Toggle */}
+        <div className="flex items-center justify-between p-4 bg-card rounded-2xl border border-border/50 shadow-sm">
+          <div>
+            <h4 className="font-black text-xs uppercase tracking-wider text-heading">Standard Weight Multipliers</h4>
+            <p className="text-[11px] text-muted">Enable standard weight choices (1kg, 1.5kg, 2kg, 2.5kg, 3kg, etc.) scaling with base price.</p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              name="hasWeights"
+              checked={theme.hasWeights !== false}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setTheme(prev => ({
+                  ...prev,
+                  hasWeights: checked
+                }));
+              }}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+            <span className={`ml-3 text-xs font-black uppercase ${theme.hasWeights !== false ? 'text-primary' : 'text-muted'}`}>
+              {theme.hasWeights !== false ? 'Enabled' : 'Disabled'}
+            </span>
+          </label>
+        </div>
+
+        {/* Granular Standard Weight Toggles */}
+        {theme.hasWeights !== false && (
+          <div className="p-4 bg-card rounded-2xl border border-border/50 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="font-black text-xs uppercase tracking-wider text-heading">Allowed Standard Weight Multipliers</h4>
+              <span className="text-[11px] text-muted font-bold">Turn ON or OFF individual standard weights for this theme</span>
+            </div>
+            <div className="flex flex-wrap gap-2 pt-1">
+              {[
+                { id: '1kg', label: '1 Kg' },
+                { id: '1.5kg', label: '1.5 Kg' },
+                { id: '2kg', label: '2 Kg' },
+                { id: '2.5kg', label: '2.5 Kg' },
+                { id: '3kg', label: '3 Kg' },
+              ].map((sw) => {
+                const currentEnabled = Array.isArray(theme.enabledStandardWeights) && theme.enabledStandardWeights.length > 0
+                  ? theme.enabledStandardWeights
+                  : ['1kg', '1.5kg', '2kg', '2.5kg', '3kg'];
+                const isSelected = currentEnabled.includes(sw.id) || currentEnabled.includes(sw.label);
+                return (
+                  <button
+                    key={sw.id}
+                    type="button"
+                    onClick={() => {
+                      let nextList;
+                      if (isSelected) {
+                        nextList = currentEnabled.filter(x => x !== sw.id && x !== sw.label);
+                      } else {
+                        nextList = [...currentEnabled, sw.id];
+                      }
+                      setTheme(prev => ({
+                        ...prev,
+                        enabledStandardWeights: nextList
+                      }));
+                    }}
+                    className={`px-4 py-2 rounded-xl text-xs font-black transition-all border-2 flex items-center gap-2 cursor-pointer ${
+                      isSelected
+                        ? 'bg-primary border-primary text-button-text shadow-sm'
+                        : 'bg-input border-input-border text-muted opacity-60 hover:opacity-100 hover:border-primary/50'
+                    }`}
+                  >
+                    <span>{sw.label}</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${isSelected ? 'bg-black/20 text-button-text' : 'bg-border text-muted'}`}>
+                      {isSelected ? 'ON' : 'OFF'}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Custom Weight & Pricing Toggle */}
+        <div className="flex items-center justify-between p-4 bg-card rounded-2xl border border-border/50 shadow-sm">
+          <div>
+            <h4 className="font-black text-xs uppercase tracking-wider text-heading">Custom Weight & Price Options</h4>
+            <p className="text-[11px] text-muted">Set specific weights with custom fixed prices (e.g. 0.5kg = ₹1020, 0.75kg = ₹1450).</p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              name="hasCustomWeights"
+              checked={theme.hasCustomWeights || false}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setTheme(prev => ({
+                  ...prev,
+                  hasCustomWeights: checked
+                }));
+              }}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+            <span className={`ml-3 text-xs font-black uppercase ${theme.hasCustomWeights ? 'text-primary' : 'text-muted'}`}>
+              {theme.hasCustomWeights ? 'Enabled' : 'Disabled'}
+            </span>
+          </label>
+        </div>
+
+        {/* Custom Weight Prices List & Manager */}
+        {theme.hasCustomWeights && (
+          <div className="p-4 bg-primary/5 rounded-2xl border border-primary/20 space-y-4">
+            <h4 className="font-black text-xs uppercase tracking-wider text-primary">Custom Weight & Price List</h4>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <input
+                type="text"
+                value={newCustomWeight}
+                onChange={(e) => setNewCustomWeight(e.target.value)}
+                placeholder="Weight (e.g. 0.5kg, 0.75kg)"
+                className="bg-input border border-input-border px-3 py-2 rounded-xl text-sm font-bold"
+              />
+              <input
+                type="number"
+                value={newCustomPrice}
+                onChange={(e) => setNewCustomPrice(e.target.value)}
+                placeholder="Price in ₹ (e.g. 1020)"
+                className="bg-input border border-input-border px-3 py-2 rounded-xl text-sm font-bold"
+              />
+              <button
+                type="button"
+                onClick={handleAddCustomWeightPrice}
+                className="flex items-center justify-center gap-2 bg-primary text-button-text px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider hover:brightness-110 transition-all"
+              >
+                <Plus size={16} /> Add Custom Option
+              </button>
+            </div>
+
+            {(theme.customWeightPrices || []).length > 0 ? (
+              <div className="flex flex-wrap gap-2 pt-2">
+                {(theme.customWeightPrices || []).map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-2 px-3 py-2 bg-card border border-border rounded-xl shadow-sm text-xs font-black text-heading">
+                    <span className="text-primary">{item.weight}</span>
+                    <span className="text-muted">→</span>
+                    <span className="text-emerald-600 font-black">₹{item.price}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveCustomWeightPrice(idx)}
+                      className="ml-1 text-muted hover:text-red-500 transition-colors"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted italic">No custom weight options added yet. Add options above (e.g. 0.5kg - ₹1020).</p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* SECTION 3: COLORS & IMAGES (OPTIONAL) */}

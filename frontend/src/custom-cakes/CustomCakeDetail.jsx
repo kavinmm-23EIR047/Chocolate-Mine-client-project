@@ -72,6 +72,10 @@ export default function CustomCakeDetail({
   };
 
   useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [theme?.id]);
+
+  useEffect(() => {
     if (window.innerWidth < 768 && (showMobileConfig || flavorDropdownOpen)) {
       document.body.style.overflow = 'hidden';
     } else {
@@ -130,9 +134,14 @@ export default function CustomCakeDetail({
             className="w-full appearance-none bg-[var(--input)] border border-[var(--input-border)] text-[var(--foreground)] rounded-xl px-4 py-3 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[var(--primary)] cursor-pointer pr-10 font-bold"
           >
             {theme && theme.dbFlavors && theme.dbFlavors.map(flavor => {
-              const weightVal = parseFloat(weight?.label || '1');
-              const wObj = flavor.weights?.find(x => x.kg === weightVal);
-              const priceVal = wObj ? wObj.price : (flavor.weights?.find(x => x.kg === 1)?.price || 1120);
+              let priceVal;
+              if (weight?.isCustom && weight?.customPrice !== undefined) {
+                priceVal = weight.customPrice;
+              } else {
+                const weightVal = parseFloat(weight?.label || '1');
+                const wObj = flavor.weights?.find(x => x.kg === weightVal);
+                priceVal = wObj ? wObj.price : (flavor.weights?.find(x => x.kg === 1)?.price || 1120);
+              }
 
               return (
                 <option key={flavor._id} value={flavor._id} className="bg-[var(--card)] text-[var(--foreground)]">
@@ -154,7 +163,7 @@ export default function CustomCakeDetail({
           <div className="relative">
             <input
               type="text" maxLength={20}
-              placeholder="e.g. 'Happy Birthday, name' or 'My Life'"
+              placeholder="e.g. 'Happy Birthday, name"
               value={customerName}
               onChange={e => setCustomerName(e.target.value)}
               className="w-full bg-[var(--input)] border border-[var(--input-border)] text-[var(--foreground)] placeholder:text-[var(--muted)] rounded-xl px-4 py-3 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[var(--primary)] pr-14 transition-all font-bold"
@@ -205,14 +214,16 @@ export default function CustomCakeDetail({
         <div>
           <div className="flex items-center justify-between mb-3">
             <p className="font-black text-sm sm:text-base text-[var(--heading)]">Select Cake Weight</p>
-            <span className="text-xs sm:text-sm text-[var(--muted)] font-bold">Serves {weight.serves} people</span>
+            <span className="text-xs sm:text-sm text-[var(--muted)] font-bold">
+              {weight?.serves ? (weight.serves === 'Custom' ? 'Custom Serving' : `Serves ${weight.serves} people`) : ''}
+            </span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5">
             {WEIGHTS.map((w, i) => {
               const isSel = i === weightIdx;
               return (
                 <button
-                  key={w.label} onClick={() => setWeightIdx(i)}
+                  key={w.id || w.label || i} onClick={() => setWeightIdx(i)}
                   className={`py-3 rounded-xl border-2 text-center transition-all ${isSel ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--background)] shadow-sm' : 'border-[var(--border)] bg-[var(--card)] text-[var(--foreground)]'}`}
                 >
                   <div className="text-sm font-black">{w.label}</div>

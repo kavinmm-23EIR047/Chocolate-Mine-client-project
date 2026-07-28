@@ -120,12 +120,14 @@ const LotteryCoupon = ({ coupon }) => {
       transition={{ repeat: Infinity, duration: 3.5, ease: 'easeInOut' }}
       className="relative mt-1.5 md:mt-2.5 w-full flex items-center justify-between px-1.5 md:px-3 py-1 overflow-hidden rounded-md md:rounded-lg border border-[#D49B35]/70 dark:border-[#E6B25A]/60 bg-gradient-to-r from-[#FFF6E5] via-[#FDE8C5] to-[#FFF6E5] dark:from-[#E6B25A]/15 dark:via-[#F0C46E]/25 dark:to-[#E6B25A]/15 shadow-sm pointer-events-none group min-h-[26px] md:min-h-[32px]"
     >
+      {/* Light Shimmer Beam Effect */}
       <motion.div
         className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-500/20 dark:via-white/30 to-transparent -skew-x-12"
         animate={{ x: ['-100%', '200%'] }}
         transition={{ repeat: Infinity, duration: 2.6, ease: 'linear', repeatDelay: 1 }}
       />
 
+      {/* Ticket Cutout Circles */}
       <div className="absolute -left-1.5 top-1/2 -translate-y-1/2 w-2.5 h-2.5 md:w-3 md:h-3 rounded-full border border-[#D49B35]/70 dark:border-[#E6B25A]/50 bg-[var(--card)]" />
       <div className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-2.5 h-2.5 md:w-3 md:h-3 rounded-full border border-[#D49B35]/70 dark:border-[#E6B25A]/50 bg-[var(--card)]" />
 
@@ -145,6 +147,7 @@ const LotteryCoupon = ({ coupon }) => {
   );
 };
 
+// ─── COMPACT CART ACTION BUTTON (WITH GRADIENT BORDER ANIMATION) ─────────────
 const SwiggyCartAction = ({ cartQuantity, handleQuantityChange, handleInitialAdd, isOutOfStock, addingToCart, isHome, isCustomCake }) => {
   const label = isCustomCake ? 'CUSTOMIZE' : (addingToCart ? '...' : 'ADD');
   const ActionIcon = isCustomCake ? Settings2 : Plus;
@@ -191,6 +194,7 @@ const SwiggyCartAction = ({ cartQuantity, handleQuantityChange, handleInitialAdd
 
   return (
     <div className="absolute -bottom-3.5 md:-bottom-4 left-1/2 -translate-x-1/2 z-20 rounded-md p-[1.5px] overflow-hidden shadow-md">
+      {/* Moving Linear Gradient Border Backdrop Background */}
       <motion.div
         className="absolute inset-0 w-[200%] h-[200%] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(circle_at_center,var(--accent)_0%,var(--secondary)_50%,transparent_100%)]"
         animate={{ rotate: 360 }}
@@ -215,15 +219,18 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg', o
   const { isInWishlist, toggleWishlist } = useWishlist();
   const isHome = window.location.pathname === '/';
 
-  const isCustomCake = product?.isCustom || product?.isTheme || (Array.isArray(product?.category) ? product.category.some(c => typeof c === 'string' && c.toLowerCase().includes('custom')) : String(product?.category || '').toLowerCase().includes('custom'));
   const rawId = product?._id?.$oid || (typeof product?._id === 'string' ? product._id : (product?._id ? String(product._id) : ''));
   const targetSlug = product?.slug || rawId;
+
+  const isCustomCake = product?.isCustom || product?.isTheme || (Array.isArray(product?.category) ? product.category.some(c => typeof c === 'string' && c.toLowerCase().includes('custom')) : String(product?.category || '').toLowerCase().includes('custom'));
 
   const handleCardClick = (e) => {
     if (e && e.stopPropagation) e.stopPropagation();
     if (onCardClick) {
       onCardClick(product);
-    } else if (isCustomCake) {
+      return;
+    }
+    if (isCustomCake) {
       const themeId = product?._id || product?.id;
       navigate(`/custom-cake?theme=${themeId}`);
     } else {
@@ -236,35 +243,24 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg', o
   const isCake = Array.isArray(product?.category) ? product.category.some(c => typeof c === 'string' && c.toLowerCase().includes('cake')) : (product?.category || '').toLowerCase().includes('cake');
   const isBento = (Array.isArray(product?.category) ? product.category.some(c => typeof c === 'string' && c.toLowerCase().includes('bento')) : (product?.category || '').toLowerCase().includes('bento')) || product?.cakeType?.toLowerCase().includes('bento');
 
-  const hasVariants = Boolean(Array.isArray(product?.variants) && product.variants.length > 0);
-
-  const [selectedVariantIndex, setSelectedVariantIndex] = useState(() => {
-    if (hasVariants && product.variants) {
-      const firstInStock = product.variants.findIndex(v => v.stock !== false);
-      return firstInStock !== -1 ? firstInStock : 0;
-    }
-    return 0;
-  });
-
-  const activeVariant = hasVariants && product.variants ? product.variants[selectedVariantIndex] : null;
-
   const defaultFlavor = (product?.flavors && Array.isArray(product.flavors) && product.flavors.length > 0)
     ? product.flavors[0]
-    : null;
+    : (isBento ? { name: 'White Forest', price: 380 } : null);
   const defaultFlavorName = defaultFlavor ? defaultFlavor.name : 'Standard';
-
-  const defaultFlavorPrice = (hasVariants || !defaultFlavor)
-    ? 0
-    : getFlavorPrice(defaultFlavor);
+  const defaultFlavorPrice = getFlavorPrice(defaultFlavor);
 
   const defaultOptions = isCake ? { flavor: defaultFlavorName, weight: isBento ? '250g' : '500g' } : null;
+
+  const hasVariants = Boolean(Array.isArray(product?.variants) && product.variants.length > 0);
+  const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
+  const activeVariant = hasVariants && product.variants ? product.variants[selectedVariantIndex] : null;
 
   const cartItems = useSelector((state) => state.cart?.items || []);
 
   const currentCartItem = cartItems.find(item => {
     const isIdMatch = item.productId === product?._id;
     if (isIdMatch) {
-      if (isCake && !hasVariants) {
+      if (isCake) {
         return JSON.stringify(item.options) === JSON.stringify(defaultOptions);
       }
       if (activeVariant) {
@@ -293,7 +289,7 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg', o
     ? Number(product.price) 
     : (startingCustomPrice > 0 ? startingCustomPrice : Number(product?.price || 0));
 
-  const baseMrp = (activeVariant ? Number(activeVariant.price || 0) : effectivePrice) + defaultFlavorPrice;
+  const baseMrp = (activeVariant ? activeVariant.price : effectivePrice) + defaultFlavorPrice;
   const baseOfferPrice = (!activeVariant && product?.offerPrice && Number(product.offerPrice) > 0 ? Number(product.offerPrice) + defaultFlavorPrice : null);
 
   const hasOffer = baseOfferPrice && baseOfferPrice < baseMrp;
@@ -464,26 +460,24 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg', o
               )}
             </div>
 
+
+          </div>
+
+          <div className="flex flex-col gap-1.5 mt-2 pr-2">
             {hasVariants && (product?.variants?.length || 0) > 1 && (
-              <div className="flex items-center gap-1.5 flex-wrap mt-2" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-1.5 flex-wrap" onClick={(e) => e.stopPropagation()}>
                 <Scale size={13} strokeWidth={2.5} style={{ color: 'var(--muted)' }} />
-                {(() => {
-                  const allWeightsSame = product.variants.every(varItem => varItem.weight === product.variants[0].weight);
-                  return product.variants.map((v, idx) => {
-                    const label = (allWeightsSame && v.flavor) ? v.flavor : (v.weight || v.flavor);
-                    return (
-                      <button key={idx} onClick={() => setSelectedVariantIndex(idx)}
-                        className="px-2 py-0.5 rounded text-[9px] font-semibold border transition-all cursor-pointer"
-                        style={{
-                          background: selectedVariantIndex === idx ? 'var(--primary)' : 'var(--card-soft)',
-                          color: selectedVariantIndex === idx ? 'var(--button-text)' : 'var(--heading)',
-                          borderColor: selectedVariantIndex === idx ? 'var(--primary)' : 'var(--border)'
-                        }}>
-                        {label}
-                      </button>
-                    );
-                  });
-                })()}
+                {product.variants.map((v, idx) => (
+                  <button key={idx} onClick={() => setSelectedVariantIndex(idx)}
+                    className="px-2 py-0.5 rounded text-[9px] font-semibold border transition-all cursor-pointer"
+                    style={{
+                      background: selectedVariantIndex === idx ? 'var(--primary)' : 'var(--card-soft)',
+                      color: selectedVariantIndex === idx ? 'var(--button-text)' : 'var(--heading)',
+                      borderColor: selectedVariantIndex === idx ? 'var(--primary)' : 'var(--border)'
+                    }}>
+                    {v.weight}
+                  </button>
+                ))}
               </div>
             )}
 
@@ -614,6 +608,7 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg', o
           </h3>
 
           <div className="flex items-center gap-1 text-[12px] font-medium mb-1 flex-wrap" style={{ color: 'var(--muted)' }}>
+
             <div className="flex items-center gap-0.5">
               <MapPin size={11} strokeWidth={2.5} />
               <span className="capitalize break-all">{locationDisplay}</span>
@@ -639,23 +634,17 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg', o
         {hasVariants && (product?.variants?.length || 0) > 1 && (
           <div className="flex items-center gap-1.5 flex-wrap mt-2" onClick={(e) => e.stopPropagation()}>
             <Scale size={13} strokeWidth={2.5} style={{ color: 'var(--muted)' }} />
-            {(() => {
-              const allWeightsSame = product.variants.every(varItem => varItem.weight === product.variants[0].weight);
-              return product.variants.map((v, idx) => {
-                const label = (allWeightsSame && v.flavor) ? v.flavor : (v.weight || v.flavor);
-                return (
-                  <button key={idx} onClick={() => setSelectedVariantIndex(idx)}
-                    className="px-1.5 py-0.5 rounded text-[8px] md:text-[10px] font-black border transition-all cursor-pointer"
-                    style={{
-                      background: selectedVariantIndex === idx ? 'var(--primary)' : 'var(--card-soft)',
-                      color: selectedVariantIndex === idx ? 'var(--button-text)' : 'var(--heading)',
-                      borderColor: selectedVariantIndex === idx ? 'var(--primary)' : 'var(--border)'
-                    }}>
-                    {label}
-                  </button>
-                );
-              });
-            })()}
+            {product.variants.map((v, idx) => (
+              <button key={idx} onClick={() => setSelectedVariantIndex(idx)}
+                className="px-1.5 py-0.5 rounded text-[8px] md:text-[10px] font-black border transition-all cursor-pointer"
+                style={{
+                  background: selectedVariantIndex === idx ? 'var(--primary)' : 'var(--card-soft)',
+                  color: selectedVariantIndex === idx ? 'var(--button-text)' : 'var(--heading)',
+                  borderColor: selectedVariantIndex === idx ? 'var(--primary)' : 'var(--border)'
+                }}>
+                {v.weight}
+              </button>
+            ))}
           </div>
         )}
 

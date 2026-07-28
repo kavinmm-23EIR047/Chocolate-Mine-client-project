@@ -88,6 +88,26 @@ const sanitizeThemeData = (data) => {
     themeData.displayOrder = parseInt(themeData.displayOrder) || 0;
   }
 
+  if (themeData.hasWeights !== undefined) {
+    themeData.hasWeights = Boolean(themeData.hasWeights);
+  }
+  if (Array.isArray(themeData.enabledStandardWeights)) {
+    themeData.enabledStandardWeights = themeData.enabledStandardWeights
+      .filter(w => typeof w === 'string' && w.trim() !== '')
+      .map(w => w.trim());
+  }
+  if (themeData.hasCustomWeights !== undefined) {
+    themeData.hasCustomWeights = Boolean(themeData.hasCustomWeights);
+  }
+  if (Array.isArray(themeData.customWeightPrices)) {
+    themeData.customWeightPrices = themeData.customWeightPrices
+      .filter(item => item && item.weight && item.weight.trim() !== '')
+      .map(item => ({
+        weight: String(item.weight).trim(),
+        price: Math.max(0, parseFloat(item.price) || 0)
+      }));
+  }
+
   if (themeData.tiers) {
     ['tier1', 'tier2', 'tier3'].forEach(tier => {
       if (themeData.tiers[tier]) {
