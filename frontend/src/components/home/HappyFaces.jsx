@@ -38,7 +38,7 @@ function FaceCard({ face, index = 0 }) {
 
   return (
     <div
-      className={`group relative max-w-[260px] mx-auto transition-all duration-500 hover:-translate-y-1.5 ${tilt}`}
+      className={`group relative max-w-[260px] md:max-w-[320px] lg:max-w-[350px] mx-auto transition-all duration-500 hover:-translate-y-1.5 ${tilt}`}
     >
       {/* Outer decorative frame */}
       <div
@@ -184,7 +184,7 @@ export default function HappyFaces() {
       </div>
 
       {/* ── DESKTOP: 3-Column Grid — constrained width ── */}
-      <div className="hidden md:grid md:grid-cols-3 gap-5 lg:gap-6 max-w-3xl mx-auto px-6">
+      <div className="hidden md:grid md:grid-cols-3 gap-5 lg:gap-8 max-w-4xl lg:max-w-5xl mx-auto px-6">
         {HAPPY_FACES.map((face, index) => (
           <motion.div
             key={face.id}
@@ -199,7 +199,7 @@ export default function HappyFaces() {
       </div>
 
       {/* ── FOOTER CTA ── */}
-      <div className="mt-8 pt-5 border-t border-border/20 flex flex-col sm:flex-row items-center justify-between gap-3 px-4 sm:px-0 max-w-3xl mx-auto">
+      <div className="mt-8 pt-5 border-t border-border/20 flex flex-col sm:flex-row items-center justify-between gap-3 px-4 sm:px-0 max-w-4xl lg:max-w-5xl mx-auto">
         <div className="flex items-center gap-2.5 text-center sm:text-left">
           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-400 via-rose-500 to-purple-600 flex items-center justify-center text-white shrink-0 shadow-md">
             <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
