@@ -280,7 +280,7 @@ const MapSelector = ({ onSelect, onClose }) => {
             <input 
               type="text" 
               placeholder="Search area, landmark, or street name..." 
-              className="bg-transparent w-full text-[var(--foreground)] text-sm sm:text-base font-bold outline-none border-none p-0 focus:ring-0 placeholder:text-[var(--muted)]/60"
+              className="bg-transparent w-full text-[var(--foreground)] text-sm sm:text-base font-bold outline-none border-none p-0 focus:ring-0 placeholder:text-[var(--foreground)] placeholder:opacity-60"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => {

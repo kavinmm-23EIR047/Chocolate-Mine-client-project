@@ -248,14 +248,9 @@ const Shop = () => {
   }, [activeCategories]);
 
   // CRITICAL FIX: Handle category click with proper toggle & URL parameter update
-  const handleCategoryClick = useCallback((e, categoryName) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    
+  const handleCategoryClick = useCallback((categoryName) => {
     setIsApplyingFilter(true);
-    
+
     if (categoryName === 'all') {
       updateSearchParam('category', 'all');
       updateSearchParam('subCategory', '');
@@ -269,10 +264,10 @@ const Shop = () => {
       }
       updateSearchParam('subCategory', '');
     }
-    
+
     // Close mobile filter if open
     if (isFilterOpen) setIsFilterOpen(false);
-    
+
     // Reset applying state after delay
     setTimeout(() => setIsApplyingFilter(false), 200);
   }, [updateSearchParam, isFilterOpen, isCategoryActive, activeCategories]);
@@ -722,7 +717,7 @@ const Shop = () => {
               placeholder="Search products..." 
               value={localSearchTerm}
               onChange={handleSearchChange}
-              className="w-full bg-[var(--card)] border border-[var(--border)] text-[var(--heading)] rounded-lg py-2.5 pl-10 pr-9 text-sm font-medium focus:ring-1 focus:ring-[var(--primary)] outline-none transition-all placeholder:text-[var(--muted)]/50"
+              className="w-full bg-[var(--card)] border border-[var(--border)] text-[var(--heading)] rounded-lg py-2.5 pl-10 pr-9 text-sm font-semibold focus:ring-1 focus:ring-[var(--primary)] outline-none transition-all placeholder:text-[var(--heading)] placeholder:opacity-60"
             />
             {localSearchTerm && (
               <button 
@@ -785,11 +780,11 @@ const Shop = () => {
           </div>
 
           {/* Horizontal categories scroll list */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 pt-1 px-1 scrollbar-hide select-none">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 pt-1 px-1 scrollbar-hide">
             <button 
               type="button"
-              onClick={(e) => handleCategoryClick(e, 'all')}
-              className={`shrink-0 touch-compact px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all border cursor-pointer ${
+              onClick={() => handleCategoryClick('all')}
+              className={`shrink-0 touch-manipulation px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all border cursor-pointer ${
                 isCategoryActive('all')
                   ? 'bg-[var(--primary)] text-[var(--button-text)] border-[var(--primary)] shadow-sm'
                   : 'bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] hover:border-[var(--primary)]/50'
@@ -803,8 +798,8 @@ const Shop = () => {
                 <button 
                   key={cat.name} 
                   type="button"
-                  onClick={(e) => handleCategoryClick(e, cat.name)}
-                  className={`shrink-0 touch-compact px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all border cursor-pointer ${
+                  onClick={() => handleCategoryClick(cat.name)}
+                  className={`shrink-0 touch-manipulation px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all border cursor-pointer ${
                     isActive
                       ? 'bg-[var(--primary)] text-[var(--button-text)] border-[var(--primary)] shadow-sm'
                       : 'bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] hover:border-[var(--primary)]/50'
@@ -815,7 +810,7 @@ const Shop = () => {
               );
             })}
             <Link to="/custom-cake"
-              className="shrink-0 touch-compact px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap bg-gradient-to-r from-amber-400 to-pink-500 text-white shadow-sm"
+              className="shrink-0 touch-manipulation px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap bg-gradient-to-r from-amber-400 to-pink-500 text-white shadow-sm"
             >
               Custom ✨
             </Link>
