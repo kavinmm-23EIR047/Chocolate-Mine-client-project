@@ -66,6 +66,8 @@ const ProductGallery = ({
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 fallback={<ImagePlaceholder />}
                 imageWidth={900}
+                loading="eager"
+                fetchPriority="high"
               />
             </motion.div>
           )}

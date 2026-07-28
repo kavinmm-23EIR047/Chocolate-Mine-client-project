@@ -8,6 +8,33 @@ const notificationManager = require('../services/notificationManager');
 
 const DEFAULT_CAKE_IMAGE_URL = 'https://via.placeholder.com/800x600.png?text=Chocolate+Mine+Cake+Background';
 
+const normalizeFlavorImageUrls = async (flavors, folder = 'products/flavors') => {
+  if (!Array.isArray(flavors)) return flavors;
+
+  return Promise.all(flavors.map(async (flavor) => {
+    if (!Array.isArray(flavor?.images)) return flavor;
+
+    const images = await Promise.all(flavor.images.map(async (image) => {
+      if (typeof image !== 'string' || !image.startsWith('data:image/')) return image;
+      const uploaded = await cloudinaryService.uploadImage(image, folder);
+      return uploaded?.secure_url || image;
+    }));
+
+    return { ...flavor, images };
+  }));
+};
+
+const productListFields = (product) => {
+  const productObj = typeof product.toObject === 'function' ? product.toObject() : { ...product };
+  delete productObj.gallery;
+
+  if (Array.isArray(productObj.flavors)) {
+    productObj.flavors = productObj.flavors.map(({ images, ...flavor }) => flavor);
+  }
+
+  return productObj;
+};
+
 // Helper function to safely normalize boolean values from FormData
 const normalizeBoolean = (value) => {
   if (value === 'true' || value === true) return true;
@@ -201,7 +228,7 @@ exports.getProducts = asyncHandler(async (req, res) => {
       }
 
       return {
-        ...p,
+        ...productListFields(p),
         couponAvailable: !!couponData,
         finalPrice: sellingPrice,
         discountText: couponData ? couponData.discountText : null,
@@ -249,7 +276,7 @@ exports.getProducts = asyncHandler(async (req, res) => {
 
   const products = rawProducts.map(p => {
     const couponData = applyCoupon(p);
-    const productObj = p.toObject();
+    const productObj = productListFields(p);
     
     const isBento = Array.isArray(p.category) ? p.category.some(c => typeof c === 'string' && c.toLowerCase().includes('bento')) : (p.category || '').toLowerCase().includes('bento');
 
@@ -528,6 +555,10 @@ exports.createProduct = asyncHandler(async (req, res, next) => {
         body.variants = JSON.parse(body.variants);
       } catch (e) {}
     }
+    body.flavors = await normalizeFlavorImageUrls(
+      body.flavors,
+      `products/${slugify(body.name || 'product', { lower: true })}/flavors`
+    );
     // Use normalized boolean values
     if (body.hasVariants === undefined) {
       body.hasVariants = true;
@@ -722,6 +753,12 @@ exports.updateProduct = asyncHandler(async (req, res, next) => {
       } else {
         product.variants = body.variants;
       }
+    }
+    if (product.flavors !== undefined) {
+      product.flavors = await normalizeFlavorImageUrls(
+        product.flavors,
+        `products/${slugify(product.name || 'product', { lower: true })}/flavors`
+      );
     }
     // Use normalized boolean values
     if (body.hasVariants !== undefined) product.hasVariants = hasVariants;

@@ -72,6 +72,9 @@ const Shop = () => {
   const isFeatured = searchParams.get('featured') === 'true';
   const isOffers = searchParams.get('offers') === 'true' || searchParams.get('offer') === 'true';
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 50;
+
   const [priceRange, setPriceRange] = useState([
     searchParams.get('minPrice') !== null ? Number(searchParams.get('minPrice')) : 0,
     Number(searchParams.get('maxPrice')) || 10000,
@@ -360,8 +363,8 @@ const Shop = () => {
 
   // Fetch products with filters
   const { data: productRes, isLoading, isFetching } = useGetProductsQuery({ 
-    page: 1, 
-    limit: 2000,
+    page: currentPage,
+    limit: ITEMS_PER_PAGE,
     search: searchQuery || undefined,
     category: activeCategories.length > 0 ? activeCategories.join(',') : undefined,
     subCategory: activeSubCategory || undefined,
@@ -372,6 +375,7 @@ const Shop = () => {
     bestseller: isBestseller ? 'true' : undefined,
     featured: isFeatured ? 'true' : undefined,
     offers: isOffers ? 'true' : undefined,
+    location,
   });
 
   const [isFiltering, setIsFiltering] = useState(false);
@@ -590,9 +594,6 @@ const Shop = () => {
     location
   ]);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 50;
-
   useEffect(() => {
     setCurrentPage(1);
   }, [categoryString, activeSubCategory, activeOccasion, activeRating, priceMin, priceMax, sortBy, searchQuery]);
@@ -601,12 +602,8 @@ const Shop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentPage]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
-
-  const paginatedProducts = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredProducts.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredProducts, currentPage]);
+  const totalPages = Math.max(1, Math.ceil((productRes?.total || filteredProducts.length) / ITEMS_PER_PAGE));
+  const paginatedProducts = filteredProducts;
 
   const clearFilters = useCallback(() => {
     setIsApplyingFilter(true);
