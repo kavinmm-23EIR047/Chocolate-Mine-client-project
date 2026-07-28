@@ -8,7 +8,7 @@ import 'swiper/css/pagination';
 import 'swiper/css/navigation';
 import ProductCard from '../ProductCard';
 
-const ProductSimilar = ({ relatedProducts }) => {
+const ProductSimilar = ({ relatedProducts, onCardClick }) => {
   if (!relatedProducts || relatedProducts.length === 0) return null;
 
   return (
@@ -55,7 +55,7 @@ const ProductSimilar = ({ relatedProducts }) => {
           modules={[Autoplay, Pagination, Navigation]}
           spaceBetween={16}
           slidesPerView={1.2}
-          loop={relatedProducts.length > 2}
+          loop={false}
           autoplay={{
             delay: 3500, // Moderate delay
             disableOnInteraction: false,
@@ -72,7 +72,7 @@ const ProductSimilar = ({ relatedProducts }) => {
         >
           {relatedProducts.map((product, idx) => (
             <SwiperSlide key={product._id?.$oid || product._id || idx} className="h-auto">
-              <ProductCard product={product} layout="vertical" />
+              <ProductCard product={product} layout="vertical" onCardClick={onCardClick} />
             </SwiperSlide>
           ))}
         </Swiper>

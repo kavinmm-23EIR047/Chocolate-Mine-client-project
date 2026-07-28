@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, FreeMode, Pagination } from 'swiper/modules';
@@ -11,7 +12,6 @@ import 'swiper/css';
 import 'swiper/css/free-mode';
 import 'swiper/css/pagination';
 import ProductSimilar from '../product/components/ProductSimilar';
-import { getOptimizedCloudinaryUrl } from '../utils/cloudinary';
 
 const VegIcon = () => (
   <img src={PureVegIcon} alt="Pure Veg" className="inline-block flex-shrink-0 w-5 h-5" style={{ marginTop: '-2px' }} />
@@ -58,7 +58,18 @@ export default function CustomCakeDetail({
   toggleWishlist,
   WEIGHTS
 }) {
+  const navigate = useNavigate();
   const [hasCustomized, setHasCustomized] = useState(false);
+
+  const handleTopLeftBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else if (typeof goBackToBrowse === 'function') {
+      goBackToBrowse();
+    } else {
+      navigate('/custom-cake');
+    }
+  };
 
   useEffect(() => {
     if (window.innerWidth < 768 && (showMobileConfig || flavorDropdownOpen)) {
@@ -96,9 +107,9 @@ export default function CustomCakeDetail({
 
   const renderPersonalizeForm = () => (
     <div className="space-y-5">
-      <div className="flex items-center gap-2.5 bg-[#008539] border border-[#007030] rounded-xl px-4 py-2.5 shadow-sm">
+      <div className="flex items-center gap-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-4 py-2.5">
         <VegIcon />
-        <span className="text-xs sm:text-sm font-black text-white uppercase tracking-wider">
+        <span className="text-xs sm:text-sm font-black text-emerald-500 dark:text-emerald-400 uppercase tracking-wider">
           100% Pure Veg & Eggless
         </span>
       </div>
@@ -143,13 +154,13 @@ export default function CustomCakeDetail({
           <div className="relative">
             <input
               type="text" maxLength={20}
-              placeholder="e.g. Happy Birthday Alex"
+              placeholder="e.g. 'Happy Birthday, name' or 'My Life'"
               value={customerName}
               onChange={e => setCustomerName(e.target.value)}
               className="w-full bg-[var(--input)] border border-[var(--input-border)] text-[var(--foreground)] placeholder:text-[var(--muted)] rounded-xl px-4 py-3 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[var(--primary)] pr-14 transition-all font-bold"
             />
             <span className="absolute right-3.5 top-3.5 text-xs text-[var(--muted)] font-bold">{customerName.length}/20</span>
-            <p className="mt-2 text-xs text-[var(--muted)]">Enter the exact name or short title to be written on top of the cake.</p>
+            <p className="mt-2 text-xs text-[var(--muted)]">Use this for the exact text to appear on cake — short names or titles (e.g. "Happy Birthday, name" or "My Life").</p>
           </div>
         </div>
         <div>
@@ -175,13 +186,13 @@ export default function CustomCakeDetail({
         <div className="relative">
           <input
             type="text" maxLength={60}
-            placeholder="e.g. Wish you a very Happy Birthday! / Less sugar"
+            placeholder="e.g. Less sugar, less cream — important notes"
             value={message}
             onChange={e => setMessage(e.target.value)}
             className="w-full bg-[var(--input)] border border-[var(--input-border)] text-[var(--foreground)] placeholder:text-[var(--muted)] rounded-xl px-4 py-3 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[var(--primary)] pr-16 transition-all font-bold"
           />
           <span className="absolute right-3.5 top-3.5 text-xs text-[var(--muted)] font-bold">{message.length}/60</span>
-          <p className="mt-2 text-xs text-[var(--muted)]">Add greeting card message or special baking instructions (e.g. less sugar, allergy info, delivery notes).</p>
+          <p className="mt-2 text-xs text-[var(--muted)]">Add special requests or important notes (e.g., less sugar, less cream, allergy info, delivery instructions).</p>
         </div>
       </div>
     </div>
@@ -263,7 +274,7 @@ export default function CustomCakeDetail({
           style={{ background: flavor.bg || 'var(--card-soft)' }}
         >
           <img
-            src={getOptimizedCloudinaryUrl(flavor.image || theme.image || theme.flavors?.[0]?.image, 400)}
+            src={flavor.image || theme.image || theme.flavors?.[0]?.image}
             alt={flavor.name}
             className="w-full h-full object-cover rounded-xl transition-transform duration-500 group-hover:scale-105"
           />
@@ -286,8 +297,8 @@ export default function CustomCakeDetail({
   return (
     <div className="w-full max-w-full mx-auto overflow-hidden rounded-none sm:rounded-[2rem] border-0 sm:border border-[var(--border)] bg-[var(--background)] px-4 sm:px-8 lg:px-12 xl:px-16 py-6 lg:py-10">
       <div className="pt-2 pb-4">
-        <button onClick={goBackToBrowse} className="flex items-center gap-2 text-xs sm:text-sm font-black uppercase tracking-[0.18em] text-[var(--muted)] hover:text-[var(--primary)] transition-colors">
-          <ArrowLeft size={18} /> Back to All Themes
+        <button onClick={handleTopLeftBack} className="flex items-center gap-2 text-xs sm:text-sm font-black uppercase tracking-[0.18em] text-[var(--muted)] hover:text-[var(--primary)] transition-colors cursor-pointer">
+          <ArrowLeft size={18} /> Back
         </button>
       </div>
 
@@ -303,7 +314,7 @@ export default function CustomCakeDetail({
               className="relative aspect-[3/3.5] sm:aspect-square w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-[var(--border)]/50 shadow-premium group"
               style={{ background: theme.enabled ? (selectedFlavor?.bg || theme.bg) : theme.bg }}
             >
-              {!theme.enabled && theme.image && <img src={getOptimizedCloudinaryUrl(theme.image, 400)} alt="" className="absolute inset-0 w-full h-full object-cover opacity-25" />}
+              {!theme.enabled && theme.image && <img src={theme.image} alt="" className="absolute inset-0 w-full h-full object-cover opacity-25" />}
               {!theme.enabled && (
                 <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/30 backdrop-blur-[3px]">
                   <span className="text-6xl mb-3">{theme.emoji}</span>
@@ -347,7 +358,7 @@ export default function CustomCakeDetail({
                   {theme.enabled ? (
                     <motion.img
                       key={`${theme.id}-${selectedFlavor?.id}`}
-                      src={getOptimizedCloudinaryUrl(selectedFlavor?.image || theme.image || theme.flavors?.[0]?.image, 900)}
+                      src={selectedFlavor?.image || theme.image || theme.flavors?.[0]?.image}
                       alt={selectedFlavor?.name}
                       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
@@ -467,16 +478,29 @@ export default function CustomCakeDetail({
             .slice(0, 12)
             .map(t => ({
               _id: t.id,
-              id: t.id,
-              isTheme: true,
-              isCustom: true,
+              themeId: t.id,
               name: t.name,
               image: (t.flavors && t.flavors[0] && t.flavors[0].image) || t.image,
               price: t.basePrice || 0,
               category: ['Custom Cakes']
             }));
 
-          return related.length ? <div className="mt-8"><ProductSimilar relatedProducts={related} /></div> : null;
+          const handleThemeCardClick = (prod) => {
+            const tId = prod.themeId || prod._id;
+            const foundIdx = filteredThemes.findIndex(t => t.id === tId);
+            if (foundIdx !== -1 && typeof selectTheme === 'function') {
+              selectTheme(foundIdx);
+              window.scrollTo({ top: 0, behavior: 'instant' });
+            } else {
+              window.location.href = `/custom-cake?theme=${tId}`;
+            }
+          };
+
+          return related.length ? (
+            <div className="mt-8">
+              <ProductSimilar relatedProducts={related} onCardClick={handleThemeCardClick} />
+            </div>
+          ) : null;
         })()
       )}
 

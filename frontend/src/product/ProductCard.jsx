@@ -209,11 +209,22 @@ const SwiggyCartAction = ({ cartQuantity, handleQuantityChange, handleInitialAdd
   );
 };
 
-const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg' }) => {
+const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg', onCardClick }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { isInWishlist, toggleWishlist } = useWishlist();
   const isHome = window.location.pathname === '/';
+
+  const rawId = product?._id?.$oid || (typeof product?._id === 'string' ? product._id : (product?._id ? String(product._id) : ''));
+  const targetSlug = product?.slug || rawId;
+
+  const handleCardClick = (e) => {
+    if (onCardClick) {
+      onCardClick(product);
+    } else {
+      navigate(`/product/${targetSlug}`);
+    }
+  };
 
   const [addingToCart, setAddingToCart] = useState(false);
 

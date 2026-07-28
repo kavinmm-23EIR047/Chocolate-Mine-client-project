@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useWishlist } from '../context/WishlistContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Filter, Eye, Check, Layers, Search, ChevronDown, ChevronUp, RotateCcw, Star, ChevronRight, ChevronLeft, Settings2, Heart, List, LayoutGrid, SlidersHorizontal, X, MapPin } from 'lucide-react';
+import { Filter, Eye, Check, Layers, Search, ChevronDown, ChevronUp, RotateCcw, Star, ChevronRight, ChevronLeft, Settings2, Heart, List, LayoutGrid, SlidersHorizontal, X, ArrowLeft } from 'lucide-react';
 import { TIERS } from './customCakeData';
 import ImageWithSkeleton from '../components/ui/ImageWithSkeleton';
 
@@ -30,6 +30,7 @@ export default function CustomCakeBrowse({
   setCategoryFilter = () => {},
   categories = []
 }) {
+  const navigate = useNavigate();
   const [mobileLayout, setMobileLayout] = useState('grid');
   const { isInWishlist, toggleWishlist } = useWishlist();
   const [currentPage, setCurrentPage] = useState(1);
@@ -287,7 +288,9 @@ export default function CustomCakeBrowse({
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
           <div>
             <nav className="flex items-center gap-2 mb-2">
-              <Link to="/" className="text-[11px] font-bold uppercase tracking-wider text-white/70 hover:text-[var(--primary)] transition-colors">Home</Link>
+              <button onClick={() => navigate(-1)} className="text-[11px] font-bold uppercase tracking-wider text-white/70 hover:text-[var(--primary)] transition-colors flex items-center gap-1 cursor-pointer">
+                <ArrowLeft size={12} /> Back
+              </button>
               <span className="text-white/40">/</span>
               <span className="text-[11px] font-bold uppercase tracking-wider text-white">Custom Cakes</span>
             </nav>
@@ -442,13 +445,6 @@ export default function CustomCakeBrowse({
                 <AnimatePresence mode="popLayout">
                   {paginatedThemes.map((t, i) => {
                     const actualIdx = filteredThemes.findIndex(theme => theme.id === t.id);
-                    const catDisplay = (Array.isArray(t.category) && t.category.length > 0)
-                      ? t.category.join(', ')
-                      : (typeof t.category === 'string' && t.category.trim() !== '' ? t.category : 'CUSTOM CAKES');
-                    const locDisplay = (t.location === 'pan-india' || t.location === 'pan india' || t.location === 'both')
-                      ? 'Coimbatore & Pan India'
-                      : 'Coimbatore Only';
-
                     return (
                       <motion.div
                         key={t.id} layout
@@ -479,19 +475,9 @@ export default function CustomCakeBrowse({
                                   )}
                                 </div>
 
-                                <span className="text-[10px] md:text-xs font-extrabold uppercase tracking-wider mb-0.5 block opacity-90" style={{ color: 'var(--muted)' }}>
-                                  {catDisplay}
-                                </span>
-
                                 <h3 className="text-[14px] sm:text-[15px] font-bold leading-tight break-words capitalize" style={{ color: 'var(--heading)' }}>
                                   {t.name}
                                 </h3>
-
-                                <div className="flex items-center gap-1 text-[10px] sm:text-[11px] font-bold mt-1 mb-1 flex-wrap" style={{ color: 'var(--muted)' }}>
-                                  <MapPin size={11} strokeWidth={2.5} />
-                                  <span className="capitalize break-all">{locDisplay}</span>
-                                </div>
-
                                 {t.description && (
                                   <div className="text-[11px] font-medium mb-1 line-clamp-1" style={{ color: 'var(--muted)' }}>
                                     {t.description}
@@ -515,7 +501,6 @@ export default function CustomCakeBrowse({
                                     alt={t.name}
                                     className="w-full h-full object-cover"
                                     loading="lazy"
-                                    imageWidth={400}
                                   />
                                 ) : (
                                   <span className="flex items-center justify-center h-full text-5xl">{t.emoji}</span>
@@ -569,7 +554,6 @@ export default function CustomCakeBrowse({
                                       alt={t.name}
                                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                       loading="lazy"
-                                      imageWidth={400}
                                     />
                                   ) : (
                                     <span className="flex items-center justify-center h-full text-6xl">{t.emoji}</span>
@@ -613,7 +597,7 @@ export default function CustomCakeBrowse({
                               </div>
 
                               <div className="flex flex-col text-left mt-1">
-                                <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
+                                <div className="flex items-center gap-1.5 flex-wrap mb-2">
                                   <VegIcon />
                                   {t.enabled && (
                                     <div
@@ -625,18 +609,9 @@ export default function CustomCakeBrowse({
                                   )}
                                 </div>
 
-                                <span className="text-[10px] md:text-xs font-extrabold uppercase tracking-wider mb-0.5 block opacity-90" style={{ color: 'var(--muted)' }}>
-                                  {catDisplay}
-                                </span>
-
                                 <h3 className="text-[14px] md:text-[15px] font-bold leading-tight mb-1 break-words capitalize" style={{ color: 'var(--heading)' }}>
                                   {t.name}
                                 </h3>
-
-                                <div className="flex items-center gap-1 text-[10px] md:text-[11px] font-bold mb-1 flex-wrap" style={{ color: 'var(--muted)' }}>
-                                  <MapPin size={11} strokeWidth={2.5} />
-                                  <span className="capitalize break-all">{locDisplay}</span>
-                                </div>
 
                                 {t.description && (
                                   <div className="text-[11px] font-medium mb-1 line-clamp-2 leading-snug" style={{ color: 'var(--muted)' }}>
