@@ -8,6 +8,7 @@ import {
   Heart, ChevronDown, Settings2, RotateCcw, ShieldCheck, X
 } from 'lucide-react';
 import PureVegIcon from '../assets/pure veg.webp';
+import { getOptimizedCloudinaryUrl } from '../utils/cloudinary';
 import 'swiper/css';
 import 'swiper/css/free-mode';
 import 'swiper/css/pagination';
@@ -285,9 +286,10 @@ export default function CustomCakeDetail({
           style={{ background: flavor.bg || 'var(--card-soft)' }}
         >
           <img
-            src={flavor.image || theme.image || theme.flavors?.[0]?.image}
+            src={getOptimizedCloudinaryUrl(flavor.image || theme.image || theme.flavors?.[0]?.image, 300)}
             alt={flavor.name}
             className="w-full h-full object-cover rounded-xl transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
           />
           {isSel && (
             <span className="absolute top-3 right-3 bg-[var(--primary)] text-[var(--background)] rounded-full p-1 shadow-md flex items-center justify-center z-10">
@@ -325,7 +327,7 @@ export default function CustomCakeDetail({
               className="relative aspect-[3/3.5] sm:aspect-square w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-[var(--border)]/50 shadow-premium group"
               style={{ background: theme.enabled ? (selectedFlavor?.bg || theme.bg) : theme.bg }}
             >
-              {!theme.enabled && theme.image && <img src={theme.image} alt="" className="absolute inset-0 w-full h-full object-cover opacity-25" />}
+              {!theme.enabled && theme.image && <img src={getOptimizedCloudinaryUrl(theme.image, 400)} alt="" className="absolute inset-0 w-full h-full object-cover opacity-25" loading="lazy" />}
               {!theme.enabled && (
                 <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/30 backdrop-blur-[3px]">
                   <span className="text-6xl mb-3">{theme.emoji}</span>
@@ -369,10 +371,12 @@ export default function CustomCakeDetail({
                   {theme.enabled ? (
                     <motion.img
                       key={`${theme.id}-${selectedFlavor?.id}`}
-                      src={selectedFlavor?.image || theme.image || theme.flavors?.[0]?.image}
+                      src={getOptimizedCloudinaryUrl(selectedFlavor?.image || theme.image || theme.flavors?.[0]?.image, 900)}
                       alt={selectedFlavor?.name}
                       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                      loading="eager"
+                      fetchPriority="high"
                     />
                   ) : <div className="w-full h-full" />}
                 </AnimatePresence>
