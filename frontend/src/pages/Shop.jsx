@@ -238,21 +238,44 @@ const Shop = () => {
     setIsFilterOpen(false);
   }, [setSearchParams]);
 
-  // CRITICAL FIX: Handle category click with prevention of default behavior
+  // Helper to check if a category is currently active (resilient to slug/case differences)
+  const isCategoryActive = useCallback((catName) => {
+    if (!catName || catName === 'all') {
+      return activeCategories.length === 0 || activeCategories.includes('all');
+    }
+    const baseTarget = getBaseFilterWord(catName);
+    return activeCategories.some(ac => getBaseFilterWord(ac) === baseTarget);
+  }, [activeCategories]);
+
+  // CRITICAL FIX: Handle category click with proper toggle & URL parameter update
   const handleCategoryClick = useCallback((e, categoryName) => {
-    e.preventDefault();
-    e.stopPropagation();
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     
     setIsApplyingFilter(true);
-    updateSearchParam('category', categoryName);
-    updateSearchParam('subCategory', '');
+    
+    if (categoryName === 'all') {
+      updateSearchParam('category', 'all');
+      updateSearchParam('subCategory', '');
+      updateSearchParam('occasion', 'all');
+    } else {
+      const isCurrentlyActive = isCategoryActive(categoryName);
+      if (isCurrentlyActive && activeCategories.length === 1) {
+        updateSearchParam('category', 'all');
+      } else {
+        updateSearchParam('category', categoryName);
+      }
+      updateSearchParam('subCategory', '');
+    }
     
     // Close mobile filter if open
     if (isFilterOpen) setIsFilterOpen(false);
     
     // Reset applying state after delay
     setTimeout(() => setIsApplyingFilter(false), 200);
-  }, [updateSearchParam, isFilterOpen]);
+  }, [updateSearchParam, isFilterOpen, isCategoryActive, activeCategories]);
 
   // CRITICAL FIX: Handle occasion click
   const handleOccasionClick = useCallback((e, occasionName) => {
@@ -633,121 +656,6 @@ const Shop = () => {
     return 'The Shop';
   };
 
-
-
-  // Mobile Top Bar
-  const MobileTopBar = () => (
-    <div className="lg:hidden mb-4 flex flex-col gap-3">
-      {/* Search Bar */}
-      <div className="relative">
-        <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
-        <input 
-          type="text" 
-          placeholder="Search products..." 
-          value={localSearchTerm}
-          onChange={handleSearchChange}
-          className="w-full bg-[var(--card)] border border-[var(--border)] text-[var(--heading)] rounded-lg py-2.5 pl-10 pr-9 text-sm font-medium focus:ring-1 focus:ring-[var(--primary)] outline-none transition-all placeholder:text-[var(--muted)]/50"
-        />
-        {localSearchTerm && (
-          <button 
-            onClick={handleClearSearch} 
-            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[var(--heading)]"
-          >
-            <X size={16} />
-          </button>
-        )}
-      </div>
-
-      {/* Control row: Filter, Sort dropdown, Layout switcher */}
-      <div className="flex items-center gap-2">
-        <button 
-          onClick={() => setIsFilterOpen(true)}
-          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-[var(--card)] border border-[var(--border)] rounded-lg text-[12px] font-bold text-[var(--heading)] hover:border-[var(--primary)] transition-colors select-none"
-        >
-          <SlidersHorizontal size={14} /> Filter
-          {getActiveFilterCount() > 0 && (
-            <span className="px-1.5 py-0.5 bg-[var(--primary)] text-[var(--button-text)] text-[9px] rounded-full font-black ml-1 select-none">
-              {getActiveFilterCount()}
-            </span>
-          )}
-        </button>
-
-        {/* Sort select */}
-        <div className="relative flex-1">
-          <select 
-            value={sortBy} 
-            onChange={handleSortChange}
-            className="w-full appearance-none bg-[var(--card)] border border-[var(--border)] text-[var(--heading)] rounded-lg pl-3 pr-7 py-2.5 text-[12px] font-bold outline-none cursor-pointer"
-          >
-            <option value="newest">Newest</option>
-            <option value="price-low">Price: Low to High</option>
-            <option value="price-high">Price: High to Low</option>
-            <option value="rating">Popularity</option>
-          </select>
-          <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)] pointer-events-none" />
-        </div>
-
-        {/* Layout Switcher */}
-        <div className="flex items-center bg-[var(--card)] border border-[var(--border)] rounded-lg overflow-hidden shrink-0 h-[42px]">
-          <button 
-            onClick={() => setMobileLayout('list')}
-            className={`h-full px-3 transition-colors ${mobileLayout === 'list' ? 'bg-[var(--primary)]/10 text-[var(--primary)]' : 'text-[var(--muted)] hover:text-[var(--heading)]'}`}
-          >
-            <List size={16} />
-          </button>
-          <button 
-            onClick={() => setMobileLayout('grid')}
-            className={`h-full px-3 transition-colors ${mobileLayout === 'grid' ? 'bg-[var(--primary)]/10 text-[var(--primary)]' : 'text-[var(--muted)] hover:text-[var(--heading)]'}`}
-          >
-            <LayoutGrid size={16} />
-          </button>
-        </div>
-      </div>
-
-      {/* Horizontal categories scroll list */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide select-none">
-        <button 
-          onClick={(e) => {
-            e.preventDefault();
-            setIsApplyingFilter(true);
-            updateSearchParam('category', 'all');
-            updateSearchParam('subCategory', '');
-            updateSearchParam('occasion', 'all');
-            setTimeout(() => setIsApplyingFilter(false), 200);
-          }}
-          className={`shrink-0 px-3.5 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap transition-all border ${
-            !(activeCategories.length) || activeCategories.includes('all')
-              ? 'bg-[#EBD1C6] text-[#2C1810] border-transparent shadow-sm'
-              : 'bg-[#2A1813] border-[#3A211B] text-white/70 hover:border-[#A18881]/50 hover:text-white'
-          }`}
-        >
-          All
-        </button>
-        {categories.filter(c => c.name !== 'all' && c.name !== 'All').map((cat) => {
-          const isActive = activeCategories.includes(cat.name);
-          return (
-            <button 
-              key={cat.name} 
-              onClick={(e) => handleCategoryClick(e, cat.name)}
-              className={`shrink-0 px-3.5 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap transition-all border ${
-                isActive
-                  ? 'bg-[#EBD1C6] text-[#2C1810] border-transparent'
-                  : 'bg-[#2A1813] border-[#3A211B] text-white/70 hover:border-[#A18881]/50 hover:text-white'
-              }`}
-            >
-              {cat.label}
-            </button>
-          );
-        })}
-        <Link to="/custom-cake"
-          className="shrink-0 px-3.5 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap bg-gradient-to-r from-amber-400 to-pink-500 text-white"
-        >
-          Custom ✨
-        </Link>
-      </div>
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-[var(--background)] pt-8 sm:pt-12 lg:pt-16 pb-24">
       <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
@@ -777,6 +685,7 @@ const Shop = () => {
                   <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/60" />
                   {localSearchTerm && (
                     <button 
+                      type="button"
                       onClick={handleClearSearch} 
                       className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
                     >
@@ -804,7 +713,114 @@ const Shop = () => {
         </div>
 
         {/* Mobile Filter Controls & Horizontal Categories pills */}
-        <MobileTopBar />
+        <div className="lg:hidden mb-4 flex flex-col gap-3">
+          {/* Search Bar */}
+          <div className="relative">
+            <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+            <input 
+              type="text" 
+              placeholder="Search products..." 
+              value={localSearchTerm}
+              onChange={handleSearchChange}
+              className="w-full bg-[var(--card)] border border-[var(--border)] text-[var(--heading)] rounded-lg py-2.5 pl-10 pr-9 text-sm font-medium focus:ring-1 focus:ring-[var(--primary)] outline-none transition-all placeholder:text-[var(--muted)]/50"
+            />
+            {localSearchTerm && (
+              <button 
+                type="button"
+                onClick={handleClearSearch} 
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[var(--heading)]"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
+
+          {/* Control row: Filter, Sort dropdown, Layout switcher */}
+          <div className="flex items-center gap-2">
+            <button 
+              type="button"
+              onClick={() => setIsFilterOpen(true)}
+              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-[var(--card)] border border-[var(--border)] rounded-lg text-[12px] font-bold text-[var(--heading)] hover:border-[var(--primary)] transition-colors select-none"
+            >
+              <SlidersHorizontal size={14} /> Filter
+              {getActiveFilterCount() > 0 && (
+                <span className="px-1.5 py-0.5 bg-[var(--primary)] text-[var(--button-text)] text-[9px] rounded-full font-black ml-1 select-none">
+                  {getActiveFilterCount()}
+                </span>
+              )}
+            </button>
+
+            {/* Sort select */}
+            <div className="relative flex-1">
+              <select 
+                value={sortBy} 
+                onChange={handleSortChange}
+                className="w-full appearance-none bg-[var(--card)] border border-[var(--border)] text-[var(--heading)] rounded-lg pl-3 pr-7 py-2.5 text-[12px] font-bold outline-none cursor-pointer"
+              >
+                <option value="newest">Newest</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+                <option value="rating">Popularity</option>
+              </select>
+              <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)] pointer-events-none" />
+            </div>
+
+            {/* Layout Switcher */}
+            <div className="flex items-center bg-[var(--card)] border border-[var(--border)] rounded-lg overflow-hidden shrink-0 h-[42px]">
+              <button 
+                type="button"
+                onClick={() => setMobileLayout('list')}
+                className={`h-full px-3 transition-colors ${mobileLayout === 'list' ? 'bg-[var(--primary)]/10 text-[var(--primary)]' : 'text-[var(--muted)] hover:text-[var(--heading)]'}`}
+              >
+                <List size={16} />
+              </button>
+              <button 
+                type="button"
+                onClick={() => setMobileLayout('grid')}
+                className={`h-full px-3 transition-colors ${mobileLayout === 'grid' ? 'bg-[var(--primary)]/10 text-[var(--primary)]' : 'text-[var(--muted)] hover:text-[var(--heading)]'}`}
+              >
+                <LayoutGrid size={16} />
+              </button>
+            </div>
+          </div>
+
+          {/* Horizontal categories scroll list */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 pt-1 px-1 scrollbar-hide select-none">
+            <button 
+              type="button"
+              onClick={(e) => handleCategoryClick(e, 'all')}
+              className={`shrink-0 touch-compact px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all border cursor-pointer ${
+                isCategoryActive('all')
+                  ? 'bg-[var(--primary)] text-[var(--button-text)] border-[var(--primary)] shadow-sm'
+                  : 'bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] hover:border-[var(--primary)]/50'
+              }`}
+            >
+              All
+            </button>
+            {categories.filter(c => c.name !== 'all' && c.name !== 'All').map((cat) => {
+              const isActive = isCategoryActive(cat.name);
+              return (
+                <button 
+                  key={cat.name} 
+                  type="button"
+                  onClick={(e) => handleCategoryClick(e, cat.name)}
+                  className={`shrink-0 touch-compact px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all border cursor-pointer ${
+                    isActive
+                      ? 'bg-[var(--primary)] text-[var(--button-text)] border-[var(--primary)] shadow-sm'
+                      : 'bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] hover:border-[var(--primary)]/50'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              );
+            })}
+            <Link to="/custom-cake"
+              className="shrink-0 touch-compact px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap bg-gradient-to-r from-amber-400 to-pink-500 text-white shadow-sm"
+            >
+              Custom ✨
+            </Link>
+          </div>
+        </div>
 
         {/* Active Filters Display */}
         {getActiveFilterCount() > 0 && (

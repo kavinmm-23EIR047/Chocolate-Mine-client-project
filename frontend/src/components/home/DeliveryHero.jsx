@@ -122,7 +122,7 @@ const DeliveryHero = () => {
 
         <div className="relative flex-1 grid grid-cols-1 lg:grid-cols-12 items-stretch gap-4 lg:gap-6 min-h-[380px] sm:min-h-[440px] lg:min-h-[460px]">
           {/* LEFT TEXT CONTENT */}
-          <div className="flex flex-col justify-center p-6 sm:p-8 lg:p-8 xl:p-10 order-2 lg:order-1 relative z-20 text-center lg:text-left lg:col-span-6 xl:col-span-6">
+          <div className="flex flex-col justify-center p-6 sm:p-8 lg:p-8 xl:p-10 order-1 lg:order-1 relative z-20 text-center lg:text-left lg:col-span-6 xl:col-span-6">
             {/* Priority Service Badge */}
             <motion.div
               initial={{ opacity: 0, y: 8 }}
@@ -221,7 +221,7 @@ const DeliveryHero = () => {
           </div>
 
           {/* SCOOTER IMAGE CONTAINER (MAXIMIZED HORIZONTALLY AND VERTICALLY) */}
-          <div className="hidden lg:flex relative order-1 lg:order-2 items-center justify-center z-10 lg:col-span-6 xl:col-span-6 p-2 sm:p-4 w-full h-full min-h-[340px] sm:min-h-[400px] lg:min-h-[500px]">
+          <div className="flex relative order-2 lg:order-2 items-center justify-center z-10 lg:col-span-6 xl:col-span-6 p-4 sm:p-6 w-full h-auto min-h-[220px] sm:min-h-[320px] lg:min-h-[500px]">
             <motion.img
               src={scooterImg}
               alt="Chocolate Mine Delivery"
@@ -229,7 +229,7 @@ const DeliveryHero = () => {
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="w-full h-auto max-h-[480px] sm:max-h-[580px] lg:max-h-[680px] xl:max-h-[780px] object-contain object-center mx-auto my-auto drop-shadow-2xl scale-110 sm:scale-120 lg:scale-115"
+              className="w-full h-auto max-h-[280px] sm:max-h-[380px] lg:max-h-[680px] xl:max-h-[780px] object-contain object-center mx-auto my-auto drop-shadow-2xl scale-100 lg:scale-115"
               draggable={false}
             />
           </div>
