@@ -34,6 +34,19 @@ const SearchOverlay = ({ isOpen, onClose }) => {
     }
   }, [isOpen]);
 
+  // Lock body scroll & listen for ESC key when overlay is open (Safari + all browsers)
+  useEffect(() => {
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen) onClose?.();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
   const loadRecentSearches = () => {
     try {
       const saved = JSON.parse(localStorage.getItem('recentSearches') || '[]');

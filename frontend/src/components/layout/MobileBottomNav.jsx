@@ -45,7 +45,8 @@ const MobileBottomNav = () => {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 260, damping: 25 }}
-          className="lg:hidden fixed bottom-5 left-0 right-0 z-[100] px-4 pointer-events-none"
+          className="lg:hidden fixed left-0 right-0 z-[100] px-4 pointer-events-none"
+          style={{ bottom: 'max(12px, env(safe-area-inset-bottom, 12px))' }}
         >
           {/* Fully-Bend Pill Base with Dynamic Inner Element Shaping */}
           <style>{`

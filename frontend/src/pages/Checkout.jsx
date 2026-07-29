@@ -277,7 +277,6 @@ const Checkout = () => {
     savedState.localCoupon || (directItem?.coupon?.code ? directItem.coupon : '')
   );
 
-  // FIXED: Safely extract coupon code string
   const appliedCouponDisplay = useMemo(() => {
     const rawCoupon = directItem ? localCoupon : appliedCouponFromRedux;
     return getCouponCodeString(rawCoupon);
@@ -289,6 +288,12 @@ const Checkout = () => {
   const [loading, setLoading] = useState(false);
   const [activeStep, setActiveStep] = useState(savedState.step || 1);
   const [editingAddressId, setEditingAddressId] = useState(null);
+
+  // Lock body scroll when map modal is open (Safari + cross-browser fix)
+  useEffect(() => {
+    document.body.style.overflow = showMap ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [showMap]);
 
   // Save active step to sessionStorage
   useEffect(() => {
@@ -361,7 +366,7 @@ const Checkout = () => {
         options: item.options
       }));
     }
-    setBackendTotal(null); // Reset backend total to force recalculation
+    setBackendTotal(null);
   };
 
   const handleCheckoutAddonDecrement = (item, addon) => {
@@ -400,7 +405,7 @@ const Checkout = () => {
         options: item.options
       }));
     }
-    setBackendTotal(null); // Reset backend total to force recalculation
+    setBackendTotal(null);
   };
 
   const [deliveryInfo, setDeliveryInfo] = useState(savedState.deliveryInfo || { address: null, position: null });
@@ -409,14 +414,12 @@ const Checkout = () => {
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
 
-  // Save delivery info to sessionStorage
   useEffect(() => {
     if (deliveryInfo && deliveryInfo.position) {
       sessionStorage.setItem(STORAGE_KEYS.DELIVERY_INFO, JSON.stringify(deliveryInfo));
     }
   }, [deliveryInfo]);
 
-  // Delivery date with future support (up to 30 days)
   const [deliveryDate, setDeliveryDate] = useState(() => {
     if (savedState.deliveryDate) {
       return new Date(savedState.deliveryDate);
@@ -426,7 +429,6 @@ const Checkout = () => {
     return today;
   });
 
-  // Save delivery date to sessionStorage
   useEffect(() => {
     sessionStorage.setItem(STORAGE_KEYS.DELIVERY_DATE, deliveryDate.toISOString());
   }, [deliveryDate]);
@@ -454,25 +456,22 @@ const Checkout = () => {
     }
   };
 
-  // Helper: format phone with +91 prefix for display, but store only digits
   const formatPhoneForDisplay = (digits) => digits ? `+91 ${digits}` : '';
 
   const [addressDetails, setAddressDetails] = useState(
     savedState.addressDetails || {
       fullName: user?.name || '',
-      phone: '',  // store only 10 digits
+      phone: '',
       houseNo: '',
       street: '',
       landmark: '',
     }
   );
 
-  // Save address details to sessionStorage
   useEffect(() => {
     sessionStorage.setItem(STORAGE_KEYS.ADDRESS_DETAILS, JSON.stringify(addressDetails));
   }, [addressDetails]);
 
-  // Initialize phone from user if available (strip non-digits, take last 10)
   useEffect(() => {
     if (user?.phone && !addressDetails.phone) {
       const digits = user.phone.replace(/\D/g, '').slice(-10);
@@ -484,7 +483,6 @@ const Checkout = () => {
   const SHOP_LNG = import.meta.env.VITE_SHOP_LNG || 76.97510955713153;
   const DELIVERY_RADIUS = import.meta.env.VITE_DELIVERY_RADIUS_KM || 30;
 
-
   const [locationValid, setLocationValid] = useState(true);
   const [locationError, setLocationError] = useState('');
   const [deliverySlot, setDeliverySlot] = useState(savedState.deliverySlot || null);
@@ -494,7 +492,6 @@ const Checkout = () => {
 
   const [backendTotal, setBackendTotal] = useState(null);
 
-  // Save delivery slot to sessionStorage
   useEffect(() => {
     if (deliverySlot) {
       sessionStorage.setItem(STORAGE_KEYS.DELIVERY_SLOT, deliverySlot);
@@ -503,7 +500,6 @@ const Checkout = () => {
     }
   }, [deliverySlot]);
 
-  // Save local coupon to sessionStorage
   useEffect(() => {
     if (localCoupon) {
       sessionStorage.setItem(STORAGE_KEYS.LOCAL_COUPON, typeof localCoupon === 'object' ? JSON.stringify(localCoupon) : localCoupon);
@@ -522,15 +518,12 @@ const Checkout = () => {
     const selectedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     const todayDate = new Date(current.getFullYear(), current.getMonth(), current.getDate());
 
-    // Future dates: all slots available (business hours assumed, can be customized)
     if (selectedDate > todayDate) return true;
 
-    // Today: apply 2-hour advance and exclude slots that have already ended
     const slotStartMinutes = slot.startHour * 60 + slot.startMinute;
     const slotEndMinutes = slot.endHour * 60 + slot.endMinute;
     const currentMinutes = current.getHours() * 60 + current.getMinutes();
 
-    // Must start at least 2 hours from now and not have ended yet
     return (slotStartMinutes - currentMinutes >= 120) && (currentMinutes < slotEndMinutes);
   };
 
@@ -742,7 +735,6 @@ const Checkout = () => {
     if (!code || !item.coupon?.enabled) return 0;
     if (code !== getCouponCodeString(item.coupon.code)) return 0;
 
-    // Coupon discount applies to the product base price (excluding addons)
     const vp = item.variantPrice != null ? Number(item.variantPrice) : NaN;
     let prodPrice = !Number.isNaN(vp) && vp > 0 ? vp : Number(item.price);
     const hasOffer =
@@ -766,7 +758,6 @@ const Checkout = () => {
   );
   const couponDiscount = cartItems.reduce((s, i) => s + getItemCouponDiscount(i) * i.qty, 0);
 
-  // Separate product-only and addon-only totals for clear display
   const productOnlyTotal = cartItems.reduce((s, i) => {
     const vp = i.variantPrice != null ? Number(i.variantPrice) : NaN;
     const base = !Number.isNaN(vp) && vp > 0 ? vp : Number(i.price);
@@ -778,7 +769,7 @@ const Checkout = () => {
   }, 0);
 
   const isAddressSelected = !!deliveryInfo.position;
-  const gst = 0; // Product prices are inclusive of 18% GST (no extra GST line item added)
+  const gst = 0;
   const convenienceFee = Math.round(subtotal * 0.025);
   const clientTotal = subtotal + (isAddressSelected ? deliveryFee : 0) + convenienceFee - couponDiscount;
   const displayTotal = backendTotal !== null ? backendTotal : clientTotal;
@@ -807,7 +798,6 @@ const Checkout = () => {
     return coupons;
   }, [cartItems, hasAppliedCoupon]);
 
-  // Auto-set shop pickup details if order total is under ₹100
   useEffect(() => {
     if (subtotal < 100) {
       setDeliveryInfo({
@@ -990,7 +980,6 @@ const Checkout = () => {
       document.body.appendChild(s);
     });
 
-  // Clear all saved checkout data on successful order
   const clearSavedCheckoutData = () => {
     Object.values(STORAGE_KEYS).forEach(key => {
       sessionStorage.removeItem(key);
@@ -1039,7 +1028,6 @@ const Checkout = () => {
       const builderNotes = shouldShowCustomCakeRequest ? safeFormatNotes(formatCustomCakeNotes(customCakeRequest)) : '';
       const notesMerged = [builderNotes, orderNotesExtra.trim()].filter(Boolean).join('\n\n');
 
-      // FIXED: Safely extract coupon code for API
       const couponCodeForApi = directItem
         ? getCouponCodeForApi(localCoupon)
         : getCouponCodeForApi(appliedCouponFromRedux);
@@ -1097,7 +1085,6 @@ const Checkout = () => {
         const adminPhone = import.meta.env.VITE_ADMIN_PHONE || '9363265477';
         const orderNum = orderNumber || `ORD-${orderId.slice(-6).toUpperCase()}`;
 
-        // Build items text list
         const itemsList = cartItems.map(item => {
           const optStr = item.selectedFlavor || item.selectedWeight ? ` (${[item.selectedFlavor, item.selectedWeight].filter(Boolean).join(', ')})` : '';
           const origPrice = getItemOriginalPrice(item);
@@ -1154,7 +1141,7 @@ const Checkout = () => {
         const waLink = `https://wa.me/91${adminPhone}?text=${encodeURIComponent(messageText)}`;
 
         toast.success("Order registered! Redirecting to WhatsApp...");
-        window.open(waLink, '_blank');
+        window.location.href = waLink;
         navigate("/order-success", {
           state: { orderId },
         });
@@ -1195,7 +1182,6 @@ const Checkout = () => {
             }
             clearCustomCakeRequest();
             setCustomCakeRequest(null);
-            // Clear saved checkout data on successful payment
             clearSavedCheckoutData();
             setLoading(false);
             isProcessingPayment.current = false;
@@ -1257,7 +1243,6 @@ const Checkout = () => {
         },
       };
 
-      // Add method preference if selected
       if (selectedPayMethod) {
         const method = PAYMENT_METHODS.find(m => m.id === selectedPayMethod);
         if (method) {
@@ -1316,7 +1301,6 @@ const Checkout = () => {
 
   const isToday = deliveryDate.toDateString() === new Date().toDateString();
 
-  // Get formatted custom cake notes safely
   const getFormattedCustomNotes = () => {
     if (!customCakeRequest) return '';
     const notes = formatCustomCakeNotes(customCakeRequest);
@@ -1395,6 +1379,9 @@ const Checkout = () => {
                                   <div className="min-w-0 flex-1">
                                     <span className="font-black text-heading text-sm break-words">{addr.fullName}</span>
                                     <p className="text-xs text-muted font-bold mt-0.5">{formatPhoneForDisplay(addr.phone)}</p>
+                                    <p className="text-xs text-muted/70 font-medium mt-1 leading-snug line-clamp-2">
+                                      {addr.houseNo}, {addr.street}{addr.landmark ? `, ${addr.landmark}` : ''}
+                                    </p>
                                   </div>
                                   <div className="flex items-center gap-2 shrink-0">
                                     <button
@@ -1418,67 +1405,43 @@ const Checkout = () => {
                                     )}
                                   </div>
                                 </div>
-                                <p className="text-xs sm:text-sm text-muted font-medium mt-2 break-all leading-relaxed pr-8">
-                                  {addr.houseNo}, {addr.street}
-                                </p>
                               </div>
                             ))}
-                          </div>
-                          <div className="relative py-2">
-                            <div className="absolute inset-0 flex items-center">
-                              <div className="w-full border-t border-border/20" />
-                            </div>
-                            <div className="relative flex justify-center text-xs">
-                              <span className="bg-card px-3 text-heading font-black uppercase tracking-widest">OR</span>
-                            </div>
                           </div>
                         </div>
                       )}
 
                       {subtotal >= 300 && (
-                        <button
-                          onClick={() => setShowMap(true)}
-                          className="w-full p-2.5 sm:p-4 border-2 border-dashed border-primary/30 dark:border-border-card rounded-2xl flex items-center justify-center gap-2 text-primary font-black text-xs sm:text-sm uppercase tracking-widest hover:bg-primary/5 hover:border-primary/50 transition-all"
-                        >
-                          <MapPin size={15} className="shrink-0" />
-                          <span className="truncate">Add / Update Location on Map</span>
-                        </button>
-                      )}
-
-                      {subtotal >= 300 && deliveryInfo.position && (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.97 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          className={`w-full min-w-0 p-3 sm:p-4 rounded-2xl border-2 flex items-start gap-3 ${locationValid
-                            ? 'bg-success-light border-success/40'
-                            : 'bg-error-light border-error/40'
-                            }`}
-                        >
-                          <Navigation size={15} className={`mt-0.5 shrink-0 ${locationValid ? 'text-success-text' : 'text-error-text'}`} />
-                          <div className="min-w-0 flex-1">
-                            <p className={`text-sm font-black uppercase tracking-widest ${locationValid ? 'text-success-text' : 'text-error-text'}`}>
-                              {locationValid ? 'Delivery Location Set' : 'Outside Service Area'}
-                            </p>
-                            <p className={`text-xs sm:text-sm font-medium mt-0.5 leading-relaxed break-all ${locationValid ? 'text-success-text' : 'text-error-text'}`}>
-                              {locationValid ? deliveryInfo.address : locationError}
-                            </p>
-                            {locationValid && (
-                              <p className="text-xs text-success-text font-bold mt-1">
-                                {distance.toFixed(1)} km · Est. fee {formatCurrency(deliveryFee)}
+                        <div className="p-3.5 sm:p-4 rounded-2xl bg-surface/30 border-2 border-dashed border-border-muted flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                              <MapPin size={20} />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-xs font-black text-heading uppercase tracking-widest">Pin Location on Map *</p>
+                              <p className="text-[10px] text-muted font-bold uppercase tracking-widest mt-0.5">
+                                {deliveryInfo.position ? 'Location Pinned' : 'Required for accurate delivery'}
                               </p>
-                            )}
+                            </div>
                           </div>
-                        </motion.div>
+                          <Button
+                            onClick={() => setShowMap(true)}
+                            className="btn-secondary text-xs font-black uppercase tracking-widest px-4 py-2.5 whitespace-nowrap border-primary/30 text-primary"
+                          >
+                            <Navigation size={12} className="mr-1.5 inline" />
+                            {deliveryInfo.position ? 'Change Pin' : 'Select on Map'}
+                          </Button>
+                        </div>
                       )}
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-4 sm:pt-5 border-t border-border/30">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-2">
                         <div className="space-y-1.5 sm:space-y-2">
                           <label className="flex items-center gap-1.5 text-xs font-black text-muted uppercase tracking-widest ml-1">
                             <User size={12} /> Full Name *
                           </label>
                           <input
                             className="input-field text-sm sm:text-base min-w-0"
-                            placeholder="Recipient name"
+                            placeholder="Recipient's name"
                             value={addressDetails.fullName}
                             onChange={(e) => setAddressDetails({ ...addressDetails, fullName: e.target.value })}
                             type="text"
@@ -1560,7 +1523,7 @@ const Checkout = () => {
                         )}
                       </div>
 
-                      {locationValid && deliveryInfo.position && (
+                      {locationValid && (deliveryInfo.position || subtotal < 300) && (
                         <div className="pt-4 flex justify-end gap-3">
                           {subtotal >= 300 && editingAddressId && (
                             <Button onClick={handleUpdateAddress} className="btn-secondary px-6 border-primary/20 text-primary">
@@ -2026,17 +1989,17 @@ const Checkout = () => {
 
       <AnimatePresence>
         {showMap && (
-          <div className="fixed inset-0 z-[9999] bg-background flex flex-col w-full h-full p-0 overflow-hidden">
+          <div className="fixed inset-0 z-[9999] bg-background flex flex-col w-full h-full h-[100dvh] max-h-[100dvh] p-0 overflow-hidden">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
-              className="w-full h-full flex flex-col"
+              className="w-full h-full h-[100dvh] max-h-[100dvh] flex flex-col"
             >
-              <MapSelector 
+              <MapSelector
                 onClose={() => setShowMap(false)}
-                onSelect={(data) => { 
-                  setDeliveryInfo(data); 
+                onSelect={(data) => {
+                  setDeliveryInfo(data);
                   if (data.address) {
                     setAddressDetails(prev => ({
                       ...prev,
@@ -2044,8 +2007,8 @@ const Checkout = () => {
                       pincode: data.pincode || prev.pincode || ''
                     }));
                   }
-                  setShowMap(false); 
-                }} 
+                  setShowMap(false);
+                }}
               />
             </motion.div>
           </div>

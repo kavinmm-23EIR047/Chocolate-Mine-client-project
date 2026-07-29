@@ -13,6 +13,7 @@ import { onMessageListener } from './firebase';
 import { joinUserRoom, joinAdminRoom, joinStaffRoom, disconnectSocket, getSocket } from './sockets/socketManager';
 
 // Layouts
+import ErrorBoundary from './components/ui/ErrorBoundary';
 import UserLayout from './components/layouts/UserLayout';
 import AdminLayout from './components/layouts/AdminLayout';
 import StaffLayout from './components/layouts/StaffLayout';
@@ -214,12 +215,12 @@ function App() {
               <Routes>
                 {/* Public / User Routes */}
                 <Route element={<UserLayout />}>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/shop" element={<Shop />} />
-                  <Route path="/custom-cake" element={<CustomCake />} />
-                  <Route path="/product/:slug" element={<ProductDetails />} />
-                  <Route path="/occasion/:name" element={<OccasionProducts />} />
-                  <Route path="/cart" element={<Cart />} />
+                  <Route path="/" element={<ErrorBoundary><Home /></ErrorBoundary>} />
+                  <Route path="/shop" element={<ErrorBoundary><Shop /></ErrorBoundary>} />
+                  <Route path="/custom-cake" element={<ErrorBoundary><CustomCake /></ErrorBoundary>} />
+                  <Route path="/product/:slug" element={<ErrorBoundary><ProductDetails /></ErrorBoundary>} />
+                  <Route path="/occasion/:name" element={<ErrorBoundary><OccasionProducts /></ErrorBoundary>} />
+                  <Route path="/cart" element={<ErrorBoundary><Cart /></ErrorBoundary>} />
                   <Route path="/track/:orderId?" element={<OrderTracking />} />
                   <Route path="/order-success" element={<OrderSuccess />} />
                   <Route path="/oauth-callback" element={<OAuthCallback />} />
@@ -236,7 +237,7 @@ function App() {
                   <Route path="/forgot-password" element={<ForgotPassword />} />
 
                   {/* Protected User Routes */}
-                  <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+                  <Route path="/checkout" element={<ProtectedRoute><ErrorBoundary><Checkout /></ErrorBoundary></ProtectedRoute>} />
                   <Route path="/review/:orderId" element={<ProtectedRoute><ReviewPage /></ProtectedRoute>} />
 
                   {/* Legacy Redirects */}

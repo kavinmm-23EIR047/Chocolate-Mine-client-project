@@ -3,14 +3,14 @@ import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 
 const variants = {
-  primary: 'bg-primary text-button-text hover:opacity-90 active:scale-95 transition-all',
-  secondary: 'bg-secondary/10 text-secondary border border-secondary/30 hover:bg-secondary/20',
+  primary: 'bg-primary text-button-text hover:bg-primary-hover active:scale-95 transition-all',
+  secondary: 'bg-button-alt-bg text-button-alt-text border border-border hover:bg-button-alt-hover',
   danger: 'bg-error/10 text-error border border-error/30 hover:bg-error/20',
   success: 'bg-success/10 text-success border border-success/30 hover:bg-success/20',
   ghost: 'bg-transparent hover:bg-border text-body',
   outline: 'bg-transparent border border-input-border text-body hover:bg-input',
   'primary-outline': 'border-2 border-primary text-primary hover:bg-primary hover:text-button-text transition-all',
-  'filter-active': 'bg-primary text-button-text shadow-sm hover:bg-primary/90',
+  'filter-active': 'bg-primary text-button-text shadow-sm hover:bg-primary-hover',
   'filter-inactive': 'bg-transparent border border-border/50 text-heading/70 hover:border-primary/40 hover:text-heading',
 };
 
@@ -72,13 +72,14 @@ const Button = forwardRef(({
         transition: { duration: 0.1 }
       }}
       className={`
-        inline-flex items-center justify-center gap-2 font-bold rounded-lg
+        ui-button inline-flex items-center justify-center gap-2 font-bold rounded-lg
         transition-all duration-200 cursor-pointer
         disabled:opacity-50 disabled:cursor-not-allowed
         ${variants[getVariant()]} ${sizes[size]} ${className}
         ${active ? 'ring-2 ring-primary/30 ring-offset-2 ring-offset-background' : ''}
       `}
       disabled={disabled || isLoading || loading}
+      aria-busy={isLoading || loading ? 'true' : undefined}
       onClick={handleClick}
       {...props}
     >

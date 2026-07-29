@@ -113,7 +113,7 @@ const StaffLayout = () => {
       <div className="flex flex-1 overflow-hidden">
         {/* Desktop Sidebar */}
         <aside className="staff-sidebar hidden lg:flex flex-col w-64 bg-card border-r border-border flex-shrink-0">
-          <div className="px-5 py-6 border-b border-border">
+          <div className="px-5 py-5 border-b border-border">
             <Link to="/staff/dashboard" className="flex items-center gap-3">
               <Logo className="w-8 h-8" />
               <span className="text-lg font-black text-heading tracking-tight">Kitchen Panel</span>
@@ -127,7 +127,7 @@ const StaffLayout = () => {
                 <Link
                   key={item.path}
                   to={item.path}
-                    className={`staff-nav-link ${isActive ? 'is-active' : ''} flex items-center gap-3 px-4 py-3.5 rounded-2xl font-extrabold text-xs uppercase tracking-wider transition-all duration-200 group ${
+                    className={`staff-nav-link ${isActive ? 'is-active' : ''} flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-extrabold text-sm transition-all duration-200 group ${
                     isActive
                       ? 'bg-amber-900 text-white dark:bg-amber-500 dark:text-slate-950 shadow-md translate-x-1.5 font-black'
                       : 'text-heading/80 hover:bg-border/30 hover:text-heading border border-transparent'
@@ -245,9 +245,12 @@ const StaffLayout = () => {
               >
                 <Menu size={20} className="text-heading" />
               </button>
-              <h1 className="text-lg font-bold text-heading">
+              <div>
+                <p className="hidden sm:block text-[11px] font-semibold uppercase tracking-wider text-muted mb-0.5">Workspace / Staff</p>
+                <h1 className="text-base sm:text-lg font-bold text-heading">
                 {menuItems.find((m) => location.pathname === m.path)?.label || 'Staff'}
-              </h1>
+                </h1>
+              </div>
             </div>
 
             <div className="flex items-center gap-3">
@@ -279,7 +282,7 @@ const StaffLayout = () => {
             </div>
           </header>
           
-          <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+          <main className="flex-1 overflow-y-auto p-5 lg:p-8">
             <Outlet />
           </main>
         </div>

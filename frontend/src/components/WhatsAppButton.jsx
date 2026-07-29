@@ -39,7 +39,7 @@ const WhatsAppButton = () => {
   const sendToWhatsApp = (text) => {
     if (!text.trim()) return;
     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(text.trim())}`;
-    window.open(whatsappUrl, '_blank');
+    window.location.href = whatsappUrl;
     setIsOpen(false);
     setMessage('');
   };

@@ -120,7 +120,7 @@ const ColorManager = () => {
               <label htmlFor="isActiveColor" className="text-sm font-bold text-heading">Active</label>
             </div>
             <div className="flex items-center gap-3 pt-2">
-              <button type="submit" disabled={saving} className="flex items-center gap-2 bg-primary text-button-text px-6 py-2.5 rounded-xl font-black text-sm uppercase hover:brightness-110 disabled:opacity-60"><Check size={16} /> Save</button>
+              <button type="submit" disabled={saving} aria-busy={saving} className="flex items-center gap-2 bg-primary text-button-text px-6 py-2.5 rounded-xl font-black text-sm uppercase hover:brightness-110 disabled:opacity-60"><Check size={16} /> Save</button>
               <button type="button" onClick={resetForm} className="flex items-center gap-2 border border-border px-6 py-2.5 rounded-xl font-black text-sm uppercase hover:bg-border/30"><X size={16} /> Cancel</button>
             </div>
           </form>

@@ -325,7 +325,7 @@ const ThemeBuilder = ({ themeId, onBack }) => {
           <button onClick={onBack} className="px-4 py-2 text-sm font-black uppercase text-muted hover:bg-border/20 rounded-xl transition-colors">
             Cancel
           </button>
-          <button onClick={handleSaveTheme} disabled={saving} className="px-6 py-2 bg-primary text-button-text font-black text-sm uppercase tracking-widest rounded-xl hover:brightness-110 flex items-center gap-2">
+          <button onClick={handleSaveTheme} disabled={saving} aria-busy={saving} className="px-6 py-2 bg-primary text-button-text font-black text-sm uppercase tracking-widest rounded-xl hover:brightness-110 flex items-center gap-2">
             {saving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <Check size={16} />} 
             {saving ? 'Saving...' : 'Save Theme'}
           </button>

@@ -38,6 +38,19 @@ const Navbar = () => {
 
   useEffect(() => { setIsMenuOpen(false); }, [location.pathname]);
 
+  // Lock body scroll & listen for ESC key when mobile sidebar is open (Safari + all browsers)
+  useEffect(() => {
+    document.body.style.overflow = isMenuOpen ? 'hidden' : '';
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isMenuOpen) setIsMenuOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isMenuOpen]);
+
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (

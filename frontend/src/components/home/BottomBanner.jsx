@@ -1,13 +1,21 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, ArrowRight, Cake, Star, ShieldCheck, Leaf } from 'lucide-react';
+import { Sparkles, ArrowRight, Cake, Star, Leaf } from 'lucide-react';
+import { getOptimizedCloudinaryUrl } from '../../utils/cloudinary';
+
+const BANNER_IMG = getOptimizedCloudinaryUrl(
+  'https://res.cloudinary.com/djkfvoxpx/image/upload/v1784865898/categories/uo822q9gaftknwyldjtg.png',
+  1000
+);
 
 const BottomBanner = () => (
   <section className="relative w-full rounded-2xl sm:rounded-[2rem] overflow-hidden shadow-2xl group border border-white/10 my-6 sm:my-10">
     {/* Background Image with better aspect ratio on mobile */}
     <div className="relative w-full pt-[60%] sm:pt-[40%] md:pt-[30%]">
       <img
-        src="https://images.unsplash.com/photo-1550617931-e17a7b70dce2?w=1400"
+        src={BANNER_IMG}
+        loading="lazy"
+        decoding="async"
         className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
         alt="Fresh baked goods"
       />

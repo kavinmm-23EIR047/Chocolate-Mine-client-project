@@ -94,6 +94,7 @@ const AdminDashboard = () => {
             }
           }}
           disabled={exporting}
+          aria-busy={exporting}
           className="neo-btn flex items-center justify-center gap-2 w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Download size={20} />

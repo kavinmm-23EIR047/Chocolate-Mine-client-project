@@ -11,22 +11,19 @@ const HAPPY_FACES = [
     id: 'happy-1',
     title: 'A Royal Birthday Celebration 👑',
     tag: 'Birthday Cake',
-    image: '/happy-faces/face1.jpg',
-    fallbackImage: 'https://res.cloudinary.com/djkfvoxpx/image/upload/v1784865898/categories/uo822q9gaftknwyldjtg.png',
+    image: 'https://res.cloudinary.com/djkfvoxpx/image/upload/v1784865898/categories/uo822q9gaftknwyldjtg.png',
   },
   {
     id: 'happy-2',
     title: 'Wild Jungle Theme Party 🦁',
     tag: 'Jungle Theme',
-    image: '/happy-faces/face2.jpg',
-    fallbackImage: 'https://res.cloudinary.com/djkfvoxpx/image/upload/v1784866478/categories/k86t1wm1kmkqgkhnirwp.png',
+    image: 'https://res.cloudinary.com/djkfvoxpx/image/upload/v1784866478/categories/k86t1wm1kmkqgkhnirwp.png',
   },
   {
     id: 'happy-3',
     title: 'Sweet Half-Year Milestone 🍓',
     tag: 'Half Birthday',
-    image: '/happy-faces/face3.jpg',
-    fallbackImage: 'https://res.cloudinary.com/djkfvoxpx/image/upload/v1784865898/categories/uo822q9gaftknwyldjtg.png',
+    image: 'https://res.cloudinary.com/djkfvoxpx/image/upload/v1784865898/categories/uo822q9gaftknwyldjtg.png',
   },
 ];
 

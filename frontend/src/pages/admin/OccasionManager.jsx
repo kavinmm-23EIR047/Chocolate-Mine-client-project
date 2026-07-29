@@ -145,7 +145,7 @@ const OccasionManager = () => {
               <div className="flex items-center gap-3 pt-2">
                 <button
                   type="submit"
-                  disabled={saving}
+                  disabled={saving} aria-busy={saving}
                   className="flex items-center gap-2 bg-primary text-button-text px-6 py-2.5 rounded-xl font-black text-sm uppercase tracking-widest hover:brightness-110 disabled:opacity-60 transition-all"
                 >
                   <Check size={16} /> {saving ? 'Saving...' : 'Save Occasion'}

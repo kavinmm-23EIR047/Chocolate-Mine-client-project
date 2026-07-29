@@ -181,7 +181,7 @@ const ThemeFlavourManager = ({ themeId, flavours, setFlavours, onClose }) => {
           {flavours.length === 0 && (
             <button
               onClick={fetchDefaultFlavours}
-              disabled={saving}
+                disabled={saving} aria-busy={saving}
               className="flex items-center gap-2 border border-primary text-primary px-5 py-2.5 rounded-xl font-black text-sm uppercase tracking-widest hover:bg-primary/5 transition-all shadow-sm"
             >
               Fetch Default Flavours
