@@ -423,7 +423,7 @@ const OrderDetailsModal = ({ order, onClose }) => {
                 <span className={`px-2.5 py-1 rounded-lg font-black uppercase tracking-wider ${
                   order.paymentStatus === 'paid' 
                     ? 'bg-emerald-700 text-white border border-emerald-700 shadow-xs' 
-                    : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30'
+                    : 'bg-amber-700 text-white border border-amber-600 shadow-xs'
                 }`}>
                   {order.paymentStatus?.toUpperCase() || 'PENDING'}
                 </span>

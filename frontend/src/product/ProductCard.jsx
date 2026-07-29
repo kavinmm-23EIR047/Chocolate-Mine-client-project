@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { memo } from 'react';
 import { motion } from 'framer-motion';
 import {
   Heart, Star, ShoppingBag, Plus, Minus, Ticket, MapPin,
@@ -213,7 +214,7 @@ const SwiggyCartAction = ({ cartQuantity, handleQuantityChange, handleInitialAdd
   );
 };
 
-const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg', onCardClick }) => {
+const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg', onCardClick, priority = false }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { isInWishlist, toggleWishlist } = useWishlist();
@@ -501,7 +502,9 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg', o
                 src={product.image}
                 alt={product.name}
                 className="w-full h-full object-cover"
-                loading="lazy"
+                loading={priority ? 'eager' : 'lazy'}
+                fetchPriority={priority ? 'high' : 'auto'}
+                sizes="(max-width: 639px) 35vw, 140px"
                 imageWidth={400}
                 fallback={<ImagePlaceholder />}
               />
@@ -554,7 +557,9 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg', o
                 src={product.image}
                 alt={product.name}
                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                loading="lazy"
+                loading={priority ? 'eager' : 'lazy'}
+                fetchPriority={priority ? 'high' : 'auto'}
+                sizes="(max-width: 639px) 50vw, (max-width: 1023px) 33vw, 25vw"
                 imageWidth={400}
                 fallback={<ImagePlaceholder />}
               />
@@ -656,4 +661,4 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg', o
   );
 };
 
-export default ProductCard;
+export default memo(ProductCard);

@@ -369,8 +369,8 @@ const AdminOrders = () => {
             }}
             className={`p-2 rounded-lg transition-all ${
               notificationsMuted 
-                ? 'bg-warning/10 text-warning border border-warning/20' 
-                : 'bg-success/10 text-success border border-success/20'
+                ? 'bg-amber-700 text-white border border-amber-600' 
+                : 'bg-emerald-700 text-white border border-emerald-600'
             }`}
             title={notificationsMuted ? 'Notifications Muted' : 'Notifications Enabled'}
           >

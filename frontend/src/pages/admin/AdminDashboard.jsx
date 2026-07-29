@@ -166,8 +166,8 @@ const AdminDashboard = () => {
                  <option value="year" className="bg-card text-heading">Last Year</option>
                  <option value="all" className="bg-card text-heading">All Time</option>
                </select>
-              <div className="flex items-center gap-2 text-success text-sm font-bold bg-success/10 px-3 py-1.5 rounded-lg">
-                <TrendingUp size={16} />
+              <div className="flex items-center gap-2 bg-emerald-700 text-white text-xs font-black uppercase tracking-wider px-3.5 py-1.5 rounded-full shadow-xs">
+                <TrendingUp size={16} className="text-white" />
                 <span>Active</span>
               </div>
             </div>

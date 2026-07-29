@@ -30,6 +30,7 @@ import NotificationBanner from '../ui/NotificationBanner';
 import NotificationPrompt from '../ui/NotificationPrompt';
 import useNotificationSound from '../../hooks/useNotificationSound';
 import { getSocket, joinStaffRoom } from '../../sockets/socketManager';
+import '../../styles/admin-neobrutalist.css';
 
 const menuItems = [
   { path: '/staff/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -107,11 +108,11 @@ const StaffLayout = () => {
   }, [user, isMuted, playSound]);
 
   return (
-    <div className="flex flex-col h-screen bg-background overflow-hidden text-heading">
+    <div className="staff-shell flex flex-col h-screen bg-background overflow-hidden text-heading">
       <NotificationBanner />
       <div className="flex flex-1 overflow-hidden">
         {/* Desktop Sidebar */}
-        <aside className="hidden lg:flex flex-col w-64 bg-card border-r border-border flex-shrink-0">
+        <aside className="staff-sidebar hidden lg:flex flex-col w-64 bg-card border-r border-border flex-shrink-0">
           <div className="px-5 py-6 border-b border-border">
             <Link to="/staff/dashboard" className="flex items-center gap-3">
               <Logo className="w-8 h-8" />
@@ -126,7 +127,7 @@ const StaffLayout = () => {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl font-extrabold text-xs uppercase tracking-wider transition-all duration-200 group ${
+                    className={`staff-nav-link ${isActive ? 'is-active' : ''} flex items-center gap-3 px-4 py-3.5 rounded-2xl font-extrabold text-xs uppercase tracking-wider transition-all duration-200 group ${
                     isActive
                       ? 'bg-amber-900 text-white dark:bg-amber-500 dark:text-slate-950 shadow-md translate-x-1.5 font-black'
                       : 'text-heading/80 hover:bg-border/30 hover:text-heading border border-transparent'
@@ -186,7 +187,7 @@ const StaffLayout = () => {
                 animate={{ x: 0 }}
                 exit={{ x: '-100%' }}
                 transition={{ type: 'spring', damping: 25 }}
-                className="fixed left-0 top-0 bottom-0 w-64 bg-card border-r border-border z-50 lg:hidden flex flex-col"
+                className="staff-sidebar fixed left-0 top-0 bottom-0 w-64 bg-card border-r border-border z-50 lg:hidden flex flex-col"
               >
                 <div className="px-5 py-6 border-b border-border flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -236,7 +237,7 @@ const StaffLayout = () => {
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          <header className="h-16 bg-card border-b border-border flex items-center justify-between px-4 lg:px-6 flex-shrink-0">
+          <header className="staff-topbar h-16 bg-card border-b border-border flex items-center justify-between px-4 lg:px-6 flex-shrink-0">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setMobileOpen(!mobileOpen)}

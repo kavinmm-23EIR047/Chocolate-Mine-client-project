@@ -262,7 +262,7 @@ const OrderCard = ({ order, index, canReview = false }) => {
             <div className="text-right">
               <p className="text-[10px] font-black text-muted uppercase tracking-widest mb-1">Amount</p>
               <p className="text-2xl font-black text-heading leading-none">{formatCurrency(order.total || 0)}</p>
-              <p className={`text-[10px] font-black uppercase tracking-widest mt-2 ${order.paymentStatus === 'paid' ? 'text-success' : 'text-warning'}`}>
+              <p className={`text-[10px] font-black uppercase tracking-widest mt-2 inline-block px-2.5 py-0.5 rounded-full ${order.paymentStatus === 'paid' ? 'bg-emerald-700 text-white border border-emerald-600 shadow-xs' : 'bg-amber-700 text-white border border-amber-600 shadow-xs'}`}>
                 {order.paymentStatus === 'paid' ? 'Paid' : 'Payment Pending'}
               </p>
             </div>
@@ -274,9 +274,6 @@ const OrderCard = ({ order, index, canReview = false }) => {
                 <div key={i} className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-surface rounded-xl overflow-hidden border border-border/30 shrink-0 shadow-sm">
                     <img src={getOptimizedCloudinaryUrl(item.image, 200)} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-black text-heading truncate uppercase tracking-tighter">{item.name}</p>
                     <p className="text-[10px] text-muted font-black uppercase tracking-widest mt-0.5">
                       {item.qty} Unit{item.qty > 1 ? 's' : ''} • {formatCurrency(item.price)}
                     </p>

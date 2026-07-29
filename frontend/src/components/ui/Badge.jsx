@@ -2,12 +2,12 @@ import React from 'react';
 
 const Badge = ({ children, variant = 'default', className = '' }) => {
   const styles = {
-    default: 'bg-primary/10 text-primary',
-    success: 'bg-success/15 text-success',
-    error: 'bg-error/15 text-error',
-    secondary: 'bg-secondary/15 text-secondary',
-    warning: 'bg-star/15 text-star',
-    info: 'bg-primary/15 text-primary',
+    default: 'bg-zinc-800 text-white font-bold border border-zinc-700 shadow-xs',
+    success: 'bg-emerald-700 text-white font-bold border border-emerald-600 shadow-xs',
+    error: 'bg-rose-700 text-white font-bold border border-rose-600 shadow-xs',
+    secondary: 'bg-amber-700 text-white font-bold border border-amber-600 shadow-xs',
+    warning: 'bg-amber-600 text-white font-bold border border-amber-500 shadow-xs',
+    info: 'bg-sky-700 text-white font-bold border border-sky-600 shadow-xs',
   };
 
   return (

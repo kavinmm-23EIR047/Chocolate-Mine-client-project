@@ -271,7 +271,11 @@ const AdminProducts = () => {
                        </td>
                       <td className="px-4 py-3"><Badge variant="secondary">{p.location}</Badge></td>
                       <td className="px-4 py-3"><span className="font-bold text-heading">{formatCurrency(p.price)}</span></td>
-                      <td className="px-4 py-3"><span className={`font-bold text-xs px-2 py-1 rounded-full ${p.stock ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}`}>{p.stock ? 'In Stock' : 'Out of Stock'}</span></td>
+                      <td className="px-4 py-3">
+                        <span className={`font-black text-xs px-3 py-1 rounded-full shadow-xs uppercase tracking-wider ${p.stock ? 'bg-emerald-700 text-white border border-emerald-600' : 'bg-rose-700 text-white border border-rose-600'}`}>
+                          {p.stock ? 'In Stock' : 'Out of Stock'}
+                        </span>
+                      </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2 flex-wrap">
                           {p.featured && <span className="text-xs font-bold text-yellow-500 flex items-center gap-1"><Star size={12} fill="currentColor" />Featured</span>}
@@ -306,7 +310,7 @@ const AdminProducts = () => {
                       <p className="font-bold text-heading text-sm">{p.name}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="font-bold text-heading text-xs">{formatCurrency(p.price)}</span>
-                        <span className={`font-bold text-[10px] px-2 py-0.5 rounded-full ${p.stock ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}`}>{p.stock ? 'In Stock' : 'Out'}</span>
+                        <span className={`font-black text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider ${p.stock ? 'bg-emerald-700 text-white border border-emerald-600' : 'bg-rose-700 text-white border border-rose-600'}`}>{p.stock ? 'In Stock' : 'Out'}</span>
                       </div>
                     </div>
                   </div>

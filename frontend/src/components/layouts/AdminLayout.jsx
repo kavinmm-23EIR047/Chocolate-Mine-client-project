@@ -46,6 +46,7 @@ import Logo from '../Logo';
 import NotificationDropdown from '../ui/NotificationDropdown';
 import NotificationBanner from '../ui/NotificationBanner';
 import NotificationPrompt from '../ui/NotificationPrompt';
+import '../../styles/admin-neobrutalist.css';
 
 const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -90,7 +91,7 @@ const AdminLayout = () => {
               key={item.path}
               to={item.path}
               onClick={() => setMobileOpen(false)}
-              className={`
+              className={`admin-nav-link ${isActive ? 'is-active' : ''}
                 flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm
                 transition-all duration-200 group
                 ${isActive
@@ -143,13 +144,13 @@ const AdminLayout = () => {
   );
 
   return (
-    <div className="flex flex-col min-h-screen h-dvh bg-background overflow-hidden">
+    <div className="admin-shell flex flex-col min-h-screen h-dvh bg-background overflow-hidden">
       <NotificationBanner />
       <div className="flex flex-1 overflow-hidden">
       {/* Desktop Sidebar */}
       <aside
         className={`
-          hidden lg:flex flex-col bg-card border-r border-border
+          admin-sidebar hidden lg:flex flex-col bg-card border-r border-border
           transition-all duration-300 flex-shrink-0
           ${sidebarOpen ? 'w-64' : 'w-20'}
         `}
@@ -173,7 +174,7 @@ const AdminLayout = () => {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 25 }}
-              className="fixed left-0 top-0 bottom-0 w-full sm:w-80 bg-card border-r border-border z-50 lg:hidden"
+              className="admin-sidebar fixed left-0 top-0 bottom-0 w-full sm:w-80 bg-card border-r border-border z-50 lg:hidden"
             >
               <SidebarContent />
             </motion.aside>
@@ -184,7 +185,7 @@ const AdminLayout = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Bar */}
-        <header className="min-h-16 bg-card border-b border-border flex items-center justify-between gap-3 px-4 lg:px-6 flex-shrink-0">
+        <header className="admin-topbar min-h-16 bg-card border-b border-border flex items-center justify-between gap-3 px-4 lg:px-6 flex-shrink-0">
           <div className="flex items-center gap-3">
             <button
               onClick={() => {

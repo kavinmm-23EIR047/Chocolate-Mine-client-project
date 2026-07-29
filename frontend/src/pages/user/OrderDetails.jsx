@@ -28,12 +28,12 @@ import { useAuth } from "../../context/AuthContext";
 
 const STATUS_ORDER = ["confirmed", "out_for_delivery", "delivered"];
 
-// Status display mapping
+// Status display mapping (Dark BG + Light Text)
 const STATUS_MAP = {
-  confirmed: { label: "Confirmed", color: "text-blue-600 bg-blue-500/10 border border-blue-200/20" },
-  out_for_delivery: { label: "Out for Delivery", color: "text-orange-600 bg-orange-500/10 border border-orange-200/20" },
-  delivered: { label: "Delivered", color: "text-green-600 bg-green-500/10 border border-green-200/20" },
-  cancelled: { label: "Payment Cancelled", color: "text-red-600 bg-red-500/10 border border-red-200/20" }
+  confirmed: { label: "Confirmed", color: "text-white bg-sky-700 border border-sky-600 shadow-xs" },
+  out_for_delivery: { label: "Out for Delivery", color: "text-white bg-amber-700 border border-amber-600 shadow-xs" },
+  delivered: { label: "Delivered", color: "text-white bg-emerald-700 border border-emerald-600 shadow-xs" },
+  cancelled: { label: "Payment Cancelled", color: "text-white bg-rose-700 border border-rose-600 shadow-xs" }
 };
 
 const getDisplayFlavor = (item) => {
@@ -50,7 +50,6 @@ const getDisplayFlavor = (item) => {
   }
   return flavor;
 };
-
 
 const OrderDetails = () => {
   const { id } = useParams();

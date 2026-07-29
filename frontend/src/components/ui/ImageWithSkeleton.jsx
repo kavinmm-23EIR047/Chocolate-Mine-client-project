@@ -16,6 +16,9 @@ const ImageWithSkeleton = ({
   showSparkles,
   imageWidth,
   fetchPriority,
+  sizes,
+  decoding = 'async',
+  srcSet,
   ...props
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -23,6 +26,11 @@ const ImageWithSkeleton = ({
   const imgRef = useRef(null);
 
   const optimizedSrc = getOptimizedCloudinaryUrl(src, imageWidth);
+  const responsiveSrcSet = srcSet || (imageWidth
+    ? [...new Set([Math.round(imageWidth / 2), Math.round(imageWidth), Math.round(imageWidth * 2)])]
+      .map(width => `${getOptimizedCloudinaryUrl(src, width)} ${width}w`)
+      .join(', ')
+    : undefined);
 
   useEffect(() => {
     if (!optimizedSrc || optimizedSrc === 'none' || optimizedSrc.trim() === '') return;
@@ -88,9 +96,12 @@ const ImageWithSkeleton = ({
         <img
           ref={imgRef}
           src={optimizedSrc}
+          srcSet={responsiveSrcSet}
+          sizes={sizes}
           alt={alt}
           loading={loading}
           fetchPriority={fetchPriority}
+          decoding={decoding}
           onLoad={handleLoad}
           onError={handleError}
           className={`${className} transition-opacity duration-200 ease-out ${

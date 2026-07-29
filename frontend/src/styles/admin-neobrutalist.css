@@ -1,0 +1,66 @@
+/* Internal surfaces only. Scoped to admin/staff layout roots. */
+.admin-shell,
+.staff-shell {
+  --admin-shadow: 4px 4px 0 var(--heading);
+  --admin-shadow-sm: 3px 3px 0 var(--heading);
+  --admin-radius: 10px;
+  background: var(--background);
+}
+
+.admin-shell *, .staff-shell * { transition-duration: 180ms !important; }
+.admin-shell [class*="backdrop-blur"], .staff-shell [class*="backdrop-blur"] { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+
+/* Keep every internal surface opaque. Alpha utility classes use solid theme tokens. */
+.admin-shell [class*="bg-card/"], .staff-shell [class*="bg-card/"] { background-color: var(--card) !important; }
+.admin-shell [class*="bg-card-soft/"], .staff-shell [class*="bg-card-soft/"] { background-color: var(--card-soft) !important; }
+.admin-shell [class*="bg-primary/"], .staff-shell [class*="bg-primary/"] { background-color: var(--card-soft) !important; }
+.admin-shell [class*="bg-border/"], .staff-shell [class*="bg-border/"] { background-color: var(--card-soft) !important; }
+.admin-shell [class*="bg-error/"], .staff-shell [class*="bg-error/"] { background-color: var(--error-light) !important; }
+.admin-shell [class*="bg-success/"], .staff-shell [class*="bg-success/"] { background-color: var(--success-light) !important; }
+
+.admin-shell :is(.bg-card, .bg-card\/95), .staff-shell :is(.bg-card, .bg-card\/95) {
+  border: 2px solid var(--border) !important;
+  border-radius: var(--admin-radius) !important;
+  box-shadow: var(--admin-shadow-sm) !important;
+  backdrop-filter: none !important;
+}
+
+.admin-shell :is(.border-border, .border-border\/80, .border-border\/60, .border-border\/50),
+.staff-shell :is(.border-border, .border-border\/80, .border-border\/60, .border-border\/50) { border-width: 2px !important; border-color: var(--border-dark) !important; }
+
+.admin-shell :is(button, a[class*="bg-"], .btn-base), .staff-shell :is(button, a[class*="bg-"], .btn-base) {
+  border-radius: var(--admin-radius) !important;
+  border-width: 2px;
+  border-color: var(--border-dark) !important;
+  box-shadow: var(--admin-shadow-sm);
+  transform: translate(0, 0);
+}
+.admin-shell :is(button, a[class*="bg-"], .btn-base):hover, .staff-shell :is(button, a[class*="bg-"], .btn-base):hover { transform: translate(-2px, -2px); box-shadow: var(--admin-shadow); }
+.admin-shell :is(button, a[class*="bg-"], .btn-base):active, .staff-shell :is(button, a[class*="bg-"], .btn-base):active { transform: translate(2px, 2px) !important; box-shadow: none !important; }
+
+.admin-shell :is(input, select, textarea), .staff-shell :is(input, select, textarea) {
+  border: 2px solid var(--input-border, var(--border)) !important;
+  border-radius: var(--admin-radius) !important;
+  box-shadow: var(--admin-shadow-sm);
+  outline: none;
+}
+.admin-shell :is(input, select, textarea):focus, .staff-shell :is(input, select, textarea):focus { border-color: var(--primary) !important; box-shadow: 3px 3px 0 var(--primary) !important; }
+
+.admin-shell :is(table, .table-responsive, [class*="overflow-x-auto"]), .staff-shell :is(table, .table-responsive, [class*="overflow-x-auto"]) { border: 2px solid var(--border); border-radius: var(--admin-radius); overflow: hidden; }
+.admin-shell th, .staff-shell th { background: var(--card-soft); border-bottom: 2px solid var(--border) !important; color: var(--heading); font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+.admin-shell td, .staff-shell td { border-bottom: 2px solid var(--border-dark) !important; }
+.admin-shell tbody tr:hover, .staff-shell tbody tr:hover { background: var(--card-soft) !important; }
+.admin-shell :is(.rounded-2xl, .rounded-3xl, .rounded-xl), .staff-shell :is(.rounded-2xl, .rounded-3xl, .rounded-xl) { border-radius: var(--admin-radius) !important; }
+.admin-shell :is(.shadow-sm, .shadow-md, .shadow-lg, .shadow-xl, .shadow-2xl), .staff-shell :is(.shadow-sm, .shadow-md, .shadow-lg, .shadow-xl, .shadow-2xl) { box-shadow: var(--admin-shadow-sm) !important; }
+.admin-shell :is(.bg-primary, .bg-button-bg), .staff-shell :is(.bg-primary, .bg-button-bg) { border-color: var(--heading) !important; }
+.admin-shell :is(.badge-base, [class*="rounded-full"]), .staff-shell :is(.badge-base, [class*="rounded-full"]) { border: 2px solid currentColor; }
+.admin-shell :is(.modal-premium, [role="dialog"]), .staff-shell :is(.modal-premium, [role="dialog"]) { border: 2px solid var(--heading) !important; border-radius: var(--admin-radius) !important; box-shadow: 8px 8px 0 var(--heading) !important; }
+.admin-shell :focus-visible, .staff-shell :focus-visible { outline: 3px solid var(--primary) !important; outline-offset: 2px; }
+
+.admin-sidebar, .staff-sidebar { border-right: 2px solid var(--border) !important; box-shadow: 3px 0 0 var(--heading); }
+.admin-topbar, .staff-topbar { border-bottom: 2px solid var(--border) !important; box-shadow: 0 3px 0 var(--heading); }
+.admin-nav-link, .staff-nav-link { border: 2px solid transparent; border-radius: var(--admin-radius); }
+.admin-nav-link:hover, .staff-nav-link:hover { border-color: var(--border); transform: translate(-2px, -2px); box-shadow: var(--admin-shadow-sm); }
+.admin-nav-link.is-active, .staff-nav-link.is-active { border-color: var(--heading); box-shadow: var(--admin-shadow-sm); }
+.admin-sidebar nav a, .staff-sidebar nav a { border-radius: var(--admin-radius); }
+.admin-sidebar nav a:hover, .staff-sidebar nav a:hover { border-color: var(--border); transform: translate(-2px, -2px); box-shadow: var(--admin-shadow-sm); }

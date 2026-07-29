@@ -73,7 +73,7 @@ const Shop = () => {
   const isOffers = searchParams.get('offers') === 'true' || searchParams.get('offer') === 'true';
 
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 50;
+  const ITEMS_PER_PAGE = 24;
 
   const [priceRange, setPriceRange] = useState([
     searchParams.get('minPrice') !== null ? Number(searchParams.get('minPrice')) : 0,
@@ -388,7 +388,7 @@ const Shop = () => {
       setIsFiltering(true);
       const timer = setTimeout(() => {
         setIsFiltering(false);
-      }, 350);
+      }, 100);
       return () => clearTimeout(timer);
     }
   }, [categoryString, activeSubCategory, activeOccasion, activeRating, priceMin, priceMax, sortBy, searchQuery, isBestseller, isFeatured, isOffers]);
@@ -926,7 +926,7 @@ const Shop = () => {
                         <motion.div key={product._id?.$oid || product._id}
                           initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}
                         >
-                          <ProductCard product={product} layout="horizontal" />
+                          <ProductCard product={product} layout="horizontal" priority={i < 4} />
                         </motion.div>
                       ))}
                     </div>
@@ -936,7 +936,7 @@ const Shop = () => {
                         <motion.div key={product._id?.$oid || product._id}
                           initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}
                         >
-                          <ProductCard product={product} layout="vertical" />
+                          <ProductCard product={product} layout="vertical" priority={i < 4} />
                         </motion.div>
                       ))}
                     </div>
@@ -949,7 +949,7 @@ const Shop = () => {
                     <motion.div key={product._id?.$oid || product._id}
                       initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
                     >
-                      <ProductCard product={product} layout="vertical" />
+                      <ProductCard product={product} layout="vertical" priority={i < 4} />
                     </motion.div>
                   ))}
                 </div>

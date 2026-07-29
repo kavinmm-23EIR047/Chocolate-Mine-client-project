@@ -108,9 +108,9 @@
    --badge-discount-text: var(--background);
    --badge-discount-border: var(--primary-hover);
 
-   --badge-stock-bg: var(--success-light);
-   --badge-stock-text: var(--success-text);
-   --badge-stock-border: var(--success);
+   --badge-stock-bg: #15803d;
+   --badge-stock-text: #FFFFFF;
+   --badge-stock-border: #15803d;
 
    --badge-soldout-bg: var(--card-soft);
    --badge-soldout-text: var(--heading);
@@ -120,21 +120,21 @@
    --badge-coupon-text: var(--primary);
    --badge-coupon-border: var(--primary);
 
-   --badge-new-bg: var(--accent);
-   --badge-new-text: var(--heading);
-   --badge-new-border: var(--accent-hover);
+   --badge-new-bg: #15803d;
+   --badge-new-text: #FFFFFF;
+   --badge-new-border: #15803d;
 
    --badge-limited-bg: var(--secondary);
    --badge-limited-text: var(--background);
    --badge-limited-border: var(--primary);
 
-   /* Semantic Colors */
-   --success: #2E7D32;
-   --success-rgb: 46 125 50;
-   --success-light: #E8F5E9;
-   --success-light-rgb: 232 245 233;
-   --success-text: #1B5E20;
-   --success-text-rgb: 27 94 32;
+   /* Semantic Colors - High-contrast Dark BG & Light Text for Badges */
+   --success: #15803d;
+   --success-rgb: 21 128 61;
+   --success-light: #15803d;
+   --success-light-rgb: 21 128 61;
+   --success-text: #FFFFFF;
+   --success-text-rgb: 255 255 255;
 
    --error: #D32F2F;
    --error-rgb: 211 47 47;
@@ -274,9 +274,9 @@
    --badge-discount-text: var(--background);
    --badge-discount-border: var(--primary-hover);
 
-   --badge-stock-bg: var(--success-light);
-   --badge-stock-text: var(--success-text);
-   --badge-stock-border: var(--success);
+   --badge-stock-bg: #16a34a;
+   --badge-stock-text: #FFFFFF;
+   --badge-stock-border: #16a34a;
 
    --badge-soldout-bg: var(--card-soft);
    --badge-soldout-text: var(--heading);
@@ -286,21 +286,21 @@
    --badge-coupon-text: var(--primary);
    --badge-coupon-border: var(--primary);
 
-   --badge-new-bg: var(--accent);
-   --badge-new-text: var(--background);
-   --badge-new-border: var(--accent-hover);
+   --badge-new-bg: #16a34a;
+   --badge-new-text: #FFFFFF;
+   --badge-new-border: #16a34a;
 
    --badge-limited-bg: var(--secondary);
    --badge-limited-text: var(--background);
    --badge-limited-border: var(--primary);
 
-   /* Semantic Colors */
-   --success: #66BB6A;
-   --success-rgb: 102 187 106;
-   --success-light: #1A381E;
-   --success-light-rgb: 26 56 30;
-   --success-text: #4ADE80;
-   --success-text-rgb: 74 222 128;
+   /* Semantic Colors - Dark Theme High Contrast */
+   --success: #16a34a;
+   --success-rgb: 22 163 74;
+   --success-light: #15803d;
+   --success-light-rgb: 21 128 61;
+   --success-text: #FFFFFF;
+   --success-text-rgb: 255 255 255;
 
    --error: #EF5350;
    --error-rgb: 239 83 80;
@@ -529,9 +529,9 @@ p {
 }
 
 .badge-instock {
-   background: var(--badge-stock-bg);
-   color: var(--badge-stock-text);
-   border: 1px solid var(--badge-stock-border);
+   background: var(--badge-stock-bg) !important;
+   color: #FFFFFF !important;
+   border: 1px solid var(--badge-stock-border) !important;
 }
 
 .badge-soldout {
@@ -541,9 +541,9 @@ p {
 }
 
 .badge-new {
-   background: var(--badge-new-bg);
-   color: var(--badge-new-text);
-   border: 1px solid var(--badge-new-border);
+   background: var(--badge-new-bg) !important;
+   color: #FFFFFF !important;
+   border: 1px solid var(--badge-new-border) !important;
 }
 
 .badge-limited {

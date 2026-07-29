@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, TrendingUp, ArrowRight, Sparkles, History, ShoppingBag, ChevronRight } from 'lucide-react';
 import ImageWithSkeleton from '../ui/ImageWithSkeleton';
@@ -18,14 +18,18 @@ const SearchOverlay = ({ isOpen, onClose }) => {
   const [trending, setTrending] = useState([]);
   const [loading, setLoading] = useState(false);
   const [recentSearches, setRecentSearches] = useState([]);
+  const hasLoadedInitialData = useRef(false);
   const navigate = useNavigate();
 
   // Load Recent Searches & Initial Backend Data on Open
   useEffect(() => {
     if (isOpen) {
       loadRecentSearches();
-      fetchBackendProducts();
-      fetchTrendingCategories();
+      if (!hasLoadedInitialData.current) {
+        hasLoadedInitialData.current = true;
+        fetchBackendProducts();
+        fetchTrendingCategories();
+      }
     }
   }, [isOpen]);
 
@@ -69,23 +73,33 @@ const SearchOverlay = ({ isOpen, onClose }) => {
   // Fetch Real Backend Products & Custom Cake Themes via API
   const fetchBackendProducts = async () => {
     try {
-      const [prodRes, bestsRes, themesRes] = await Promise.all([
-        api.get('/products', { params: { limit: 100 } }).catch(() => ({ data: [] })),
-        api.get('/products', { params: { bestseller: 'true', limit: 20 } }).catch(() => ({ data: [] })),
-        api.get('/custom-cakes/themes').catch(() => ({ data: [] }))
-      ]);
+      // Render products as soon as the product endpoints respond. Themes are
+      // supplementary content and should not hold up the first paint.
+      const productsPromise = api.get('/products', { params: { limit: 24 } }).catch(() => ({ data: [] }));
+      const bestsellersPromise = api.get('/products', { params: { bestseller: 'true', limit: 20 } }).catch(() => ({ data: [] }));
+      const themesPromise = api.get('/custom-cakes/themes').catch(() => ({ data: [] }));
 
+      const prodRes = await productsPromise;
       const rawProds = prodRes.data?.data || prodRes.data || [];
-      const rawBests = bestsRes.data?.data || bestsRes.data || [];
-      const rawThemes = themesRes.data?.data || themesRes.data || [];
 
-      // Flag API bestsellers
+      // Paint the first product cards without waiting for supplementary data.
+      const prodsList = Array.isArray(rawProds) ? rawProds : [];
+
+      setAllProducts(prodsList);
+
+      // Apply bestseller flags after the first product paint.
+      const bestsRes = await bestsellersPromise;
+      const rawBests = bestsRes.data?.data || bestsRes.data || [];
       const bestIds = new Set(rawBests.map(b => String(b._id)));
-      const prodsList = Array.isArray(rawProds) ? rawProds.map(p => ({
+      const flaggedProducts = prodsList.map(p => ({
         ...p,
         bestseller: p.bestseller === true || p.isBestseller === true || bestIds.has(String(p._id))
-      })) : [];
+      }));
+      setAllProducts(flaggedProducts);
 
+      // Add custom themes when they are ready, without delaying product cards.
+      const themesRes = await themesPromise;
+      const rawThemes = themesRes.data?.data || themesRes.data || [];
       const mappedThemes = Array.isArray(rawThemes) ? rawThemes.map(t => ({
         _id: t._id,
         id: t._id,
@@ -99,7 +113,7 @@ const SearchOverlay = ({ isOpen, onClose }) => {
         featured: t.featured === true || t.isFeatured === true
       })) : [];
 
-      const combined = [...prodsList, ...mappedThemes];
+      const combined = [...flaggedProducts, ...mappedThemes];
       setAllProducts(combined);
     } catch (err) {
       console.error('Failed to fetch backend products:', err);
@@ -394,7 +408,7 @@ const SearchOverlay = ({ isOpen, onClose }) => {
                                 className="flex items-center gap-4 p-3.5 bg-[var(--card)] rounded-2xl border border-[var(--border)] hover:border-[var(--primary)] cursor-pointer transition-all group shadow-sm hover:shadow-md relative overflow-hidden"
                               >
                                 <div className="w-16 h-16 shrink-0 rounded-xl overflow-hidden bg-[var(--surface)]">
-                                  <ImageWithSkeleton src={p.image} alt={p.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" showSparkles={false} imageWidth={200} />
+                                  <ImageWithSkeleton src={p.image} alt={p.name} loading="eager" fetchPriority="high" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" showSparkles={false} imageWidth={200} />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <p className="font-bold text-[var(--heading)] text-sm leading-tight truncate group-hover:text-[var(--primary)] transition-colors uppercase tracking-tight">{p.name}</p>
@@ -499,7 +513,7 @@ const SearchOverlay = ({ isOpen, onClose }) => {
                                 className="group cursor-pointer"
                               >
                                 <div className="relative aspect-[16/10] rounded-2xl overflow-hidden shadow-md mb-2.5 border border-[var(--border)] bg-[var(--card)]">
-                                  <ImageWithSkeleton src={p.image} alt={p.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" containerClassName="w-full h-full" imageWidth={400} />
+                                  <ImageWithSkeleton src={p.image} alt={p.name} loading="eager" fetchPriority="high" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" containerClassName="w-full h-full" imageWidth={400} />
                                   <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent opacity-75 group-hover:opacity-90 transition-opacity" />
                                   <div className="absolute bottom-3 left-3.5 right-3.5 flex items-end justify-between gap-2">
                                     <div className="min-w-0 flex-1">

@@ -1,66 +1,66 @@
 import React from 'react';
 
-// Order Statuses - Theme bound for Light & Dark mode
+// Order Statuses - Theme bound for Light & Dark mode (Dark BG + Light Text)
 export const ORDER_STATUSES = {
   confirmed: {
     label: 'Confirmed',
-    color: 'bg-info-light text-info-text border border-info/30',
-    dot: 'bg-info'
+    color: 'bg-sky-700 text-white font-black border border-sky-600 shadow-xs',
+    dot: 'bg-white'
   },
   out_for_delivery: {
     label: 'Out for Delivery',
-    color: 'bg-warning-light text-warning-text border border-warning/30',
-    dot: 'bg-warning'
+    color: 'bg-amber-700 text-white font-black border border-amber-600 shadow-xs',
+    dot: 'bg-white'
   },
   delivered: {
     label: 'Delivered',
-    color: 'bg-emerald-700 text-white font-black border border-emerald-700 shadow-xs',
+    color: 'bg-emerald-700 text-white font-black border border-emerald-600 shadow-xs',
     dot: 'bg-white'
   },
   cancelled: {
     label: 'Payment Cancelled',
-    color: 'bg-error-light text-error-text border border-error/30',
-    dot: 'bg-error'
+    color: 'bg-rose-700 text-white font-black border border-rose-600 shadow-xs',
+    dot: 'bg-white'
   }
 };
 
-// Payment Statuses
+// Payment Statuses (Dark BG + Light Text)
 export const PAYMENT_STATUSES = {
   pending: {
     label: 'Pending',
-    color: 'bg-warning-light text-warning-text border border-warning/30'
+    color: 'bg-amber-700 text-white font-black border border-amber-600 shadow-xs'
   },
   created: {
     label: 'Created',
-    color: 'bg-card-soft text-heading border border-border'
+    color: 'bg-slate-700 text-white font-black border border-slate-600 shadow-xs'
   },
   paid: {
     label: 'Paid',
-    color: 'bg-emerald-700 text-white font-black border border-emerald-700 shadow-xs'
+    color: 'bg-emerald-700 text-white font-black border border-emerald-600 shadow-xs'
   },
   failed: {
     label: 'Failed',
-    color: 'bg-error-light text-error-text border border-error/30'
+    color: 'bg-rose-700 text-white font-black border border-rose-600 shadow-xs'
   },
   refunded: {
     label: 'Refunded',
-    color: 'bg-info-light text-info-text border border-info/30'
+    color: 'bg-sky-700 text-white font-black border border-sky-600 shadow-xs'
   }
 };
 
-// Kitchen Statuses (Legacy - kept for compatibility)
+// Kitchen Statuses (Dark BG + Light Text)
 export const KITCHEN_STATUSES = {
   pending: {
     label: 'Pending',
-    color: 'bg-warning-light text-warning-text border border-warning/30'
+    color: 'bg-amber-700 text-white font-black border border-amber-600 shadow-xs'
   },
   preparing: {
     label: 'Preparing',
-    color: 'bg-info-light text-info-text border border-info/30'
+    color: 'bg-sky-700 text-white font-black border border-sky-600 shadow-xs'
   },
   ready: {
     label: 'Ready',
-    color: 'bg-success-light text-success-text border border-success/30'
+    color: 'bg-emerald-700 text-white font-black border border-emerald-600 shadow-xs'
   }
 };
 
