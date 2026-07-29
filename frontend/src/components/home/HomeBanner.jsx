@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Gift, ArrowRight } from 'lucide-react';
 import api from '../../utils/api';
 import Logo from '../Logo';
-import ImageWithSkeleton from '../ui/ImageWithSkeleton';
 import { getOptimizedCloudinaryUrl } from '../../utils/cloudinary';
 
 const HomeBanner = () => {
   const [banners, setBanners] = useState([]);
   const [current, setCurrent] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [allImagesReady, setAllImagesReady] = useState(false);
+  const loadedCountRef = useRef(0);
+  const totalCountRef = useRef(0);
 
   useEffect(() => {
     const fetchBanners = async () => {
@@ -18,18 +19,11 @@ const HomeBanner = () => {
         const res = await api.get('/banners/active');
         const activeBanners = res.data.data || [];
         setBanners(activeBanners);
+        totalCountRef.current = activeBanners.filter(b => b.image).length;
 
-        // Preload all banner images into browser cache instantly
-        activeBanners.forEach((b) => {
-          if (b.image) {
-            const img = new Image();
-            img.src = getOptimizedCloudinaryUrl(b.image, 1600);
-            if (b.image.includes('cloudinary.com')) {
-              const mobileImg = new Image();
-              mobileImg.src = getOptimizedCloudinaryUrl(b.image, 600);
-            }
-          }
-        });
+        if (totalCountRef.current === 0) {
+          setAllImagesReady(true);
+        }
       } catch (error) {
         console.error('Failed to fetch banners:', error);
       } finally {
@@ -37,6 +31,14 @@ const HomeBanner = () => {
       }
     };
     fetchBanners();
+  }, []);
+
+  // Track when each slide image finishes loading
+  const handleImageLoaded = useCallback(() => {
+    loadedCountRef.current += 1;
+    if (loadedCountRef.current >= totalCountRef.current) {
+      setAllImagesReady(true);
+    }
   }, []);
 
   useEffect(() => {
@@ -83,22 +85,11 @@ const HomeBanner = () => {
     );
   }
 
-  const slide = banners[current];
-
   return (
     <div
       className="banner-root relative w-full overflow-hidden rounded-[16px] sm:rounded-[24px] select-none border-0 sm:border border-border/20 bg-transparent"
       style={{ aspectRatio: 'var(--banner-ratio, 16/9)' }}
     >
-      {/* Hidden preloader elements for smooth instant slide transitions */}
-      <div className="hidden" aria-hidden="true">
-        {banners.map((b, idx) => (
-          idx !== current && b.image ? (
-            <img key={b._id || idx} src={getOptimizedCloudinaryUrl(b.image, 1600)} alt="" />
-          ) : null
-        ))}
-      </div>
-
       <style>{`
         @media (max-width: 640px) {
           .banner-root { aspect-ratio: 16/4.6 !important; } 
@@ -109,7 +100,6 @@ const HomeBanner = () => {
         @media (min-width: 1025px) {
           .banner-root { aspect-ratio: 16/4.2 !important; }
         }
-
         .premium-glass {
           background: rgba(15, 15, 15, 0.65);
           backdrop-filter: blur(12px) saturate(140%);
@@ -122,104 +112,133 @@ const HomeBanner = () => {
       {/* Transparent base layer behind transitions */}
       <div className="absolute inset-0 bg-transparent transition-colors duration-300 -z-10" />
 
-      {/* Slide transition zone */}
-      <AnimatePresence>
-        <motion.div
-          key={slide._id}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.35 }}
-          className="absolute inset-0 w-full h-full flex items-center justify-center bg-transparent"
-          onClick={handleBannerClick}
-          style={{ cursor: slide.link ? 'pointer' : 'default' }}
-        >
-          {/* Banner Image - Seamless Full-Bleed object-cover with pre-loaded responsive srcset */}
-          <ImageWithSkeleton
-            src={slide.image}
-            alt={slide.title || "Banner Image"}
-            className="absolute inset-0 w-full h-full select-none object-cover"
-            containerClassName="absolute inset-0 w-full h-full bg-transparent"
-            style={{ objectPosition: 'center center' }}
-            imageWidth={1600}
-            sizes="(max-width: 640px) 600px, (max-width: 1024px) 1000px, 1600px"
-            loading="eager"
-            fetchPriority="high"
-            decoding="async"
-            draggable={false}
-          />
+      {/* === ALL SLIDES RENDERED SIMULTANEOUSLY — only opacity toggles === */}
+      {banners.map((slide, idx) => {
+        const isActive = idx === current;
+        const optimizedSrc = getOptimizedCloudinaryUrl(slide.image, 1600);
+        // Build responsive srcset: 800w, 1600w, 3200w
+        const srcSet = slide.image
+          ? [800, 1600, 3200].map(w => `${getOptimizedCloudinaryUrl(slide.image, w)} ${w}w`).join(', ')
+          : undefined;
 
-          {/* Vignette Gradient Overlay */}
+        return (
           <div
-            className="absolute inset-0 pointer-events-none"
+            key={slide._id || idx}
+            className="absolute inset-0 w-full h-full"
             style={{
-              background: [
-                'linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.5) 100%)',
-                'linear-gradient(to right, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0) 70%)',
-              ].join(', '),
+              opacity: isActive ? 1 : 0,
+              zIndex: isActive ? 10 : 1,
+              transition: 'opacity 0.4s ease-in-out',
+              pointerEvents: isActive ? 'auto' : 'none',
+              cursor: slide.link ? 'pointer' : 'default',
             }}
-          />
+            onClick={isActive ? handleBannerClick : undefined}
+          >
+            {/* Banner Image — always mounted, always loaded */}
+            {slide.image && (
+              <img
+                src={optimizedSrc}
+                srcSet={srcSet}
+                sizes="(max-width: 640px) 600px, (max-width: 1024px) 1000px, 1600px"
+                alt={slide.title || 'Banner Image'}
+                loading="eager"
+                fetchPriority={idx === 0 ? 'high' : 'auto'}
+                decoding="async"
+                draggable={false}
+                onLoad={handleImageLoaded}
+                onError={handleImageLoaded}
+                className="absolute inset-0 w-full h-full object-cover select-none"
+                style={{ objectPosition: 'center center' }}
+              />
+            )}
 
-          {/* TOP-LEFT: Dynamic Title Badge (Shown on desktop when title exists) */}
-          {slide.title && (
+            {/* Vignette Gradient Overlay */}
             <div
-              className="absolute top-0 left-0 right-0 z-10 flex flex-col items-start justify-start pointer-events-none hidden sm:flex"
-              style={{ padding: 'clamp(10px, 3vw, 20px)' }}
-            >
-              <div className="max-w-[85%] flex flex-col gap-1">
-                {(slide.cornerText || slide.subtitle) && (
-                  <span className="font-semibold uppercase tracking-widest text-[8px] sm:text-[9px] text-white/40 pl-0.5 select-none">
-                    {slide.cornerText || slide.subtitle}
-                  </span>
-                )}
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background: [
+                  'linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.5) 100%)',
+                  'linear-gradient(to right, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0) 70%)',
+                ].join(', '),
+              }}
+            />
 
-                <div className="premium-glass flex items-center gap-1.5 px-2.5 py-1 rounded-full w-fit pointer-events-auto opacity-80">
-                  <Gift size={12} className="text-white shrink-0" />
-                  <h2
-                    style={{
-                      fontSize: 'clamp(10px, 2vw, 13px)',
-                      fontWeight: 600,
-                      lineHeight: 1.2,
-                      letterSpacing: '0.01em',
-                      color: '#ffffff',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 1,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                      margin: 0,
-                    }}
-                  >
-                    {slide.title}
-                  </h2>
+            {/* TOP-LEFT: Dynamic Title Badge (Shown on desktop when title exists) */}
+            {slide.title && (
+              <div
+                className="absolute top-0 left-0 right-0 z-10 flex-col items-start justify-start pointer-events-none hidden sm:flex"
+                style={{ padding: 'clamp(10px, 3vw, 20px)' }}
+              >
+                <div className="max-w-[85%] flex flex-col gap-1">
+                  {(slide.cornerText || slide.subtitle) && (
+                    <span className="font-semibold uppercase tracking-widest text-[8px] sm:text-[9px] text-white/40 pl-0.5 select-none">
+                      {slide.cornerText || slide.subtitle}
+                    </span>
+                  )}
+                  <div className="premium-glass flex items-center gap-1.5 px-2.5 py-1 rounded-full w-fit pointer-events-auto opacity-80">
+                    <Gift size={12} className="text-white shrink-0" />
+                    <h2
+                      style={{
+                        fontSize: 'clamp(10px, 2vw, 13px)',
+                        fontWeight: 600,
+                        lineHeight: 1.2,
+                        letterSpacing: '0.01em',
+                        color: '#ffffff',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 1,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        margin: 0,
+                      }}
+                    >
+                      {slide.title}
+                    </h2>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* BOTTOM-RIGHT: Action Button (Shown only when slide.buttonText is set) */}
-          {slide.buttonText && (
-            <div className="interactive-action-node absolute bottom-2.5 right-2.5 sm:bottom-4 sm:right-4 z-20 transition-transform duration-300 hover:scale-[1.02] pointer-events-auto">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (slide.link) window.location.href = slide.link;
-                }}
-                className="premium-glass flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold uppercase tracking-wider text-white/80 transition-all duration-200 active:scale-95 hover:bg-white/10 hover:text-white"
-                style={{
-                  fontSize: 'clamp(8px, 1.2vw, 10px)',
-                  minWidth: 0,
-                  minHeight: 0
-                }}
-              >
-                <span>{slide.buttonText}</span>
-                <ArrowRight size={10} className="shrink-0" />
-              </button>
-            </div>
-          )}
-        </motion.div>
-      </AnimatePresence>
+            {/* BOTTOM-RIGHT: Action Button */}
+            {slide.buttonText && (
+              <div className="interactive-action-node absolute bottom-2.5 right-2.5 sm:bottom-4 sm:right-4 z-20 transition-transform duration-300 hover:scale-[1.02] pointer-events-auto">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (slide.link) window.location.href = slide.link;
+                  }}
+                  className="premium-glass flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold uppercase tracking-wider text-white/80 transition-all duration-200 active:scale-95 hover:bg-white/10 hover:text-white"
+                  style={{
+                    fontSize: 'clamp(8px, 1.2vw, 10px)',
+                    minWidth: 0,
+                    minHeight: 0,
+                  }}
+                >
+                  <span>{slide.buttonText}</span>
+                  <ArrowRight size={10} className="shrink-0" />
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      })}
 
-      {/* Pagination Dots - Centered at bottom to prevent covering graphic text */}
+      {/* Loading shimmer — only shown until all images finish loading */}
+      {!allImagesReady && (
+        <div className="absolute inset-0 z-30 overflow-hidden pointer-events-none select-none bg-[var(--card-soft)]">
+          <div
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 dark:via-white/15 to-transparent -skew-x-20"
+            style={{ animation: 'bannerShimmer 0.85s infinite linear' }}
+          />
+          <style>{`
+            @keyframes bannerShimmer {
+              0% { transform: translateX(-150%) skewX(-20deg); }
+              100% { transform: translateX(200%) skewX(-20deg); }
+            }
+          `}</style>
+        </div>
+      )}
+
+      {/* Pagination Dots */}
       {banners.length > 1 && (
         <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex gap-1.5 z-20 items-center interactive-action-node">
           {banners.map((_, i) => (
@@ -254,3 +273,4 @@ const HomeBanner = () => {
 };
 
 export default HomeBanner;
+
