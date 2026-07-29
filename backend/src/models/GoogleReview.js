@@ -86,19 +86,28 @@ const googleReviewSchema = new mongoose.Schema(
 );
 
 googleReviewSchema.pre('save', function(next) {
+  const isNextFunc = typeof next === 'function';
   if (this.source === 'dummy') {
-    return next(new Error('Cannot save dummy data'));
+    const err = new Error('Cannot save dummy data');
+    if (isNextFunc) return next(err);
+    throw err;
   }
   
   if (DUMMY_NAMES.includes(this.authorName)) {
-    return next(new Error('Cannot save fake/dummy names'));
+    const err = new Error('Cannot save fake/dummy names');
+    if (isNextFunc) return next(err);
+    throw err;
   }
   
   if (this.rating < 1 || this.rating > 5 || isNaN(this.rating)) {
-    return next(new Error('Invalid rating value'));
+    const err = new Error('Invalid rating value');
+    if (isNextFunc) return next(err);
+    throw err;
   }
 
-  next();
+  if (isNextFunc) {
+    next();
+  }
 });
 
 // Indexes for faster querying

@@ -42,12 +42,12 @@ const NotificationBanner = () => {
   const hasFcmToken = user?.fcmTokens && user.fcmTokens.length > 0;
   const isBlocked = permissionState === 'denied';
 
-  // Show banner if not dismissed, user logged in, and notification isn't configured
-  const showBanner = !dismissed && user && (!hasPermission || !hasFcmToken);
+  // Show banner ONLY if user is logged in, hasn't dismissed it, and has not granted notification permission
+  const showBanner = !dismissed && user && !hasPermission;
 
-  // 1. AUTO-ATTEMPT BACKGROUND SYNC ON PAGE LOAD (Silent Migration)
+  // 1. AUTO-ATTEMPT BACKGROUND SYNC ON PAGE LOAD (Silent Sync)
   useEffect(() => {
-    if (!isSupported || !user || !hasPermission || hasFcmToken || !('serviceWorker' in navigator)) return;
+    if (!isSupported || !user || !hasPermission || !('serviceWorker' in navigator)) return;
 
     const silentMigration = async () => {
       try {
@@ -68,7 +68,7 @@ const NotificationBanner = () => {
     };
 
     silentMigration();
-  }, [hasPermission, hasFcmToken, user, isSupported, syncFcmToken]);
+  }, [hasPermission, user, isSupported, syncFcmToken]);
 
   // If user is not logged in or environment doesn't support notifications or banner is hidden, render nothing
   if (!user || !isSupported || !showBanner) return null;

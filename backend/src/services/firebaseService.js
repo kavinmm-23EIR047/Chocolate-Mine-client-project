@@ -85,11 +85,20 @@ const sendPushNotification = async (tokens, title, body, data = {}) => {
   stringifiedData.message = String(body);
 
   const message = {
-    // Data-only payload prevents Firebase SDK from intercepting the notification
     data: stringifiedData,
     webpush: {
       headers: {
-        Urgency: 'high'
+        Urgency: 'high',
+        TTL: '86400'
+      },
+      notification: {
+        title: String(title),
+        body: String(body),
+        icon: '/logo.png',
+        badge: '/logo.png'
+      },
+      fcmOptions: {
+        link: stringifiedData.url || '/'
       }
     },
     tokens: validTokens,

@@ -104,7 +104,9 @@ productSchema.pre('save', function(next) {
   if (this.name && typeof this.name === 'string') {
     this.name = toSentenceCase(this.name);
   }
-  next();
+  if (typeof next === 'function') {
+    next();
+  }
 });
 
 

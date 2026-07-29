@@ -28,11 +28,12 @@ try {
       body,
       icon: '/logo.png',
       badge: '/logo.png',
-      tag: data.type || 'general', // Prevents duplicate notifications of same type
+      tag: data.type || data.orderId || 'general',
       renotify: true,
       requireInteraction: false,
+      vibrate: [200, 100, 200],
       data: {
-        url: data.url || '/',
+        url: data.url || (data.orderId ? `/track/${data.orderId}` : '/'),
         type: data.type || 'general',
         orderId: data.orderId || null,
         productId: data.productId || null
@@ -53,6 +54,35 @@ try {
 
     // CRITICAL MOBILE FIX: Return the promise so the OS doesn't kill the worker early
     return self.registration.showNotification(title, notificationOptions);
+  });
+
+  // Native Push Fallback Listener for Mobile Background Lock Screen
+  self.addEventListener('push', (event) => {
+    if (!event.data) return;
+
+    try {
+      const payload = event.data.json();
+      const title = payload.data?.title || payload.notification?.title || 'The Chocolate Mine';
+      const body = payload.data?.message || payload.notification?.body || 'You have a new update!';
+      const data = payload.data || {};
+
+      event.waitUntil(
+        self.registration.showNotification(title, {
+          body,
+          icon: '/logo.png',
+          badge: '/logo.png',
+          tag: data.type || data.orderId || 'general',
+          renotify: true,
+          vibrate: [200, 100, 200],
+          data: {
+            url: data.url || (data.orderId ? `/track/${data.orderId}` : '/'),
+            type: data.type || 'general'
+          }
+        })
+      );
+    } catch (err) {
+      console.warn('[SW] Push event fallback processing skipped:', err);
+    }
   });
 
   // Handle notification click
