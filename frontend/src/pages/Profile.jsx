@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  User, Package, LogOut, ExternalLink, ShieldCheck,
+  User, Package, LogOut, Loader2, ExternalLink, ShieldCheck,
   MapPin, Settings, Bell, CreditCard, ChevronRight,
   ShoppingBag, Star, Heart, Trash2, X
 } from 'lucide-react';
@@ -20,14 +20,17 @@ import MapSelector from '../components/MapSelector';
 const Profile = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
     try {
+      setIsLoggingOut(true);
       await logout();
       navigate('/');
       toast.success('Logged out successfully');
     } catch (err) {
       toast.error('Failed to logout');
+      setIsLoggingOut(false);
     }
   };
 
@@ -132,10 +135,20 @@ const Profile = () => {
               <div className="pt-4 sm:pt-6 mt-4 sm:mt-6 border-t border-border/50">
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-3 sm:py-4 rounded-2xl font-black text-[10px] sm:text-[11px] text-error hover:bg-error-light transition-all uppercase tracking-widest"
+                  disabled={isLoggingOut}
+                  className="logout-btn-danger w-full flex items-center justify-center gap-3 px-4 sm:px-6 py-3 sm:py-3.5 rounded-2xl font-black text-xs active:scale-95 transition-all cursor-pointer disabled:opacity-80 uppercase tracking-widest"
                 >
-                  <LogOut size={16} className="sm:w-[18px] sm:h-[18px]" />
-                  <span>Logout</span>
+                  {isLoggingOut ? (
+                    <>
+                      <Loader2 size={16} className="sm:w-[18px] sm:h-[18px] animate-spin text-white shrink-0" />
+                      <span>Logging out...</span>
+                    </>
+                  ) : (
+                    <>
+                      <LogOut size={16} className="sm:w-[18px] sm:h-[18px] text-white shrink-0" />
+                      <span>Logout</span>
+                    </>
+                  )}
                 </button>
               </div>
             </nav>

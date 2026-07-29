@@ -26,6 +26,7 @@ const AdminProducts = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [deleteId, setDeleteId] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [allProducts, setAllProducts] = useState([]);
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -48,8 +49,6 @@ const AdminProducts = () => {
   }, [page, sort, category, search]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
-
-  const [allProducts, setAllProducts] = useState([]);
 
   useEffect(() => {
     const fetchMeta = async () => {
@@ -144,10 +143,12 @@ const AdminProducts = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-heading">Products</h2>
-          <p className="text-sm text-muted">Manage your product catalog</p>
+          <h2 className="text-2xl font-black text-heading">Products Management</h2>
+          <p className="text-sm text-muted">View, edit, and manage your store catalog</p>
         </div>
-        <Link to="/admin/products/create"><Button icon={Plus}>Add Product</Button></Link>
+        <Link to="/admin/products/create">
+          <Button icon={Plus}>Add Product</Button>
+        </Link>
       </div>
 
       <div className="flex flex-col gap-3">
@@ -216,21 +217,21 @@ const AdminProducts = () => {
         <EmptyState title="No products found" message="Start by adding your first product." action={<Link to="/admin/products/create"><Button icon={Plus}>Add Product</Button></Link>} />
       ) : (
         <>
-        {/* Desktop Table */}
-        <div className="hidden md:block bg-card border border-border rounded-2xl overflow-hidden">
-          <div className="overflow-x-auto">
+        {/* Desktop Table with Horizontal Scroll */}
+        <div className="hidden md:block bg-card border border-border rounded-2xl overflow-hidden shadow-soft">
+          <div className="overflow-x-auto w-full custom-scrollbar">
             <table className="w-full min-w-[1000px] whitespace-nowrap">
               <thead>
                 <tr className="border-b border-border bg-border/20">
-                  <th className="text-left px-4 py-3 text-xs font-bold text-muted uppercase">Product</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-muted uppercase">Category</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-muted uppercase">Flavours</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-muted uppercase">Occasion</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-muted uppercase">Location</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-muted uppercase">Price</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-muted uppercase">Stock</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-muted uppercase">Status</th>
-                  <th className="text-right px-4 py-3 text-xs font-bold text-muted uppercase">Actions</th>
+                  <th className="text-left px-4 py-3.5 text-xs font-black text-muted uppercase tracking-wider">Product</th>
+                  <th className="text-left px-4 py-3.5 text-xs font-black text-muted uppercase tracking-wider">Category</th>
+                  <th className="text-left px-4 py-3.5 text-xs font-black text-muted uppercase tracking-wider">Flavours</th>
+                  <th className="text-left px-4 py-3.5 text-xs font-black text-muted uppercase tracking-wider">Occasion</th>
+                  <th className="text-left px-4 py-3.5 text-xs font-black text-muted uppercase tracking-wider">Location</th>
+                  <th className="text-left px-4 py-3.5 text-xs font-black text-muted uppercase tracking-wider">Price</th>
+                  <th className="text-left px-4 py-3.5 text-xs font-black text-muted uppercase tracking-wider">Stock</th>
+                  <th className="text-left px-4 py-3.5 text-xs font-black text-muted uppercase tracking-wider">Status</th>
+                  <th className="text-right px-4 py-3.5 text-xs font-black text-muted uppercase tracking-wider">Actions</th>
                  </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -240,7 +241,7 @@ const AdminProducts = () => {
                     <motion.tr key={p._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }} className="hover:bg-border/20 transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <img src={getOptimizedCloudinaryUrl(p.image, 200)} alt={p.name} className="w-12 h-12 rounded-xl object-cover bg-border" onError={(e) => { e.target.src = 'https://placehold.co/100x100/3B1A0F/FAF0EC?text=🍫'; }} />
+                          <img src={getOptimizedCloudinaryUrl(p.image, 200)} alt={p.name} className="w-12 h-12 rounded-xl object-cover bg-border shadow-xs" onError={(e) => { e.target.src = 'https://placehold.co/100x100/3B1A0F/FAF0EC?text=🍫'; }} />
                           <div><p className="font-bold text-heading text-sm">{p.name}</p><p className="text-xs text-muted">{p.slug}</p></div>
                         </div>
                        </td>
@@ -283,10 +284,24 @@ const AdminProducts = () => {
                           {!p.isActive && <span className="text-xs font-bold text-error flex items-center gap-1"><EyeOff size={12} />Hidden</span>}
                         </div>
                        </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-2 shrink-0">
-                          <Link to={`/admin/products/edit/${p._id}`} className="p-2 hover:bg-border rounded-xl text-muted hover:text-heading block"><Edit3 size={16} /></Link>
-                          <button onClick={() => setDeleteId(p._id)} className="p-2 hover:bg-error/10 rounded-xl text-muted hover:text-error shrink-0"><Trash2 size={16} /></button>
+                          <Link 
+                            to={`/admin/products/edit/${p._id}`} 
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 text-white dark:bg-amber-500/20 dark:text-amber-400 hover:bg-amber-700 dark:hover:bg-amber-500 dark:hover:text-white rounded-xl text-xs font-black transition-all shadow-xs shrink-0 cursor-pointer active:scale-95 border border-amber-600/30 dark:border-amber-500/20"
+                            title="Edit Product"
+                          >
+                            <Edit3 size={14} />
+                            <span>Edit</span>
+                          </Link>
+                          <button 
+                            onClick={() => setDeleteId(p._id)} 
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 text-white dark:bg-rose-500/20 dark:text-rose-400 hover:bg-rose-700 dark:hover:bg-rose-500 dark:hover:text-white rounded-xl text-xs font-black transition-all shadow-xs shrink-0 cursor-pointer active:scale-95 border border-rose-600/30 dark:border-rose-500/20"
+                            title="Delete Product"
+                          >
+                            <Trash2 size={14} />
+                            <span>Delete</span>
+                          </button>
                         </div>
                        </td>
                     </motion.tr>
@@ -297,7 +312,7 @@ const AdminProducts = () => {
           </div>
         </div>
 
-        {/* Mobile Accordion */}
+        {/* Mobile Accordion View */}
         <div className="md:hidden flex flex-col gap-3">
           {products.map((p) => {
             const flavourSummary = getFlavourSummary(p);
@@ -305,7 +320,7 @@ const AdminProducts = () => {
               <details key={`mobile-${p._id}`} className="bg-card border border-border rounded-2xl overflow-hidden group">
                 <summary className="p-4 flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden">
                   <div className="flex items-center gap-3">
-                          <img src={getOptimizedCloudinaryUrl(p.image, 200)} alt={p.name} className="w-12 h-12 rounded-xl object-cover bg-border" onError={(e) => { e.target.src = 'https://placehold.co/100x100/3B1A0F/FAF0EC?text=🍫'; }} />
+                    <img src={getOptimizedCloudinaryUrl(p.image, 200)} alt={p.name} className="w-12 h-12 rounded-xl object-cover bg-border shadow-xs" onError={(e) => { e.target.src = 'https://placehold.co/100x100/3B1A0F/FAF0EC?text=🍫'; }} />
                     <div>
                       <p className="font-bold text-heading text-sm">{p.name}</p>
                       <div className="flex items-center gap-2 mt-1">
@@ -322,7 +337,7 @@ const AdminProducts = () => {
                   
                   <div className="flex justify-between items-center">
                     <span className="text-[10px] font-black text-muted uppercase tracking-widest">Category</span>
-                    <Badge>{p.category}</Badge>
+                    <Badge>{formatCategoryDisplay(p.category)}</Badge>
                   </div>
 
                   {p.category === 'cakes' && flavourSummary && (
@@ -359,13 +374,17 @@ const AdminProducts = () => {
                   </div>
 
                   <div className="pt-3 mt-3 border-t border-border/50 flex items-center justify-end gap-2">
-                    <Link to={`/admin/products/edit/${p._id}`}>
-                      <button className="flex items-center gap-1.5 px-3 py-1.5 bg-border/50 hover:bg-border rounded-lg text-xs font-bold transition-colors">
-                        <Edit3 size={14} /> Edit
-                      </button>
+                    <Link 
+                      to={`/admin/products/edit/${p._id}`}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-amber-600 text-white dark:bg-amber-500/20 dark:text-amber-400 hover:bg-amber-700 dark:hover:bg-amber-500 dark:hover:text-white rounded-xl text-xs font-black transition-all shadow-xs cursor-pointer active:scale-95 border border-amber-600/30 dark:border-amber-500/20"
+                    >
+                      <Edit3 size={14} /> <span>Edit</span>
                     </Link>
-                    <button onClick={() => setDeleteId(p._id)} className="flex items-center gap-1.5 px-3 py-1.5 bg-error/10 hover:bg-error/20 text-error rounded-lg text-xs font-bold transition-colors">
-                      <Trash2 size={14} /> Delete
+                    <button 
+                      onClick={() => setDeleteId(p._id)} 
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-rose-600 text-white dark:bg-rose-500/20 dark:text-rose-400 hover:bg-rose-700 dark:hover:bg-rose-500 dark:hover:text-white rounded-xl text-xs font-black transition-all shadow-xs cursor-pointer active:scale-95 border border-rose-600/30 dark:border-rose-500/20"
+                    >
+                      <Trash2 size={14} /> <span>Delete</span>
                     </button>
                   </div>
                 </div>

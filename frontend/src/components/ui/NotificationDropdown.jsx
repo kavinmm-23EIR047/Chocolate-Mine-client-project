@@ -174,9 +174,9 @@ const NotificationDropdown = ({ iconClass, buttonClass, showLabel, iconSize = 20
                 {notifications.length > 0 && (
                   <button
                     onClick={handleClearAll}
-                    className="px-2 py-1 text-[10px] text-rose-400 hover:text-rose-500 font-black uppercase tracking-wider rounded-md hover:bg-rose-500/10 transition-colors cursor-pointer flex items-center gap-1"
+                    className="px-2.5 py-1 text-[10px] bg-rose-600 hover:bg-rose-700 text-white font-black uppercase tracking-wider rounded-lg transition-colors cursor-pointer flex items-center gap-1 shadow-xs"
                   >
-                    <Trash2 size={12} /> Clear all
+                    <Trash2 size={12} className="text-white" /> Clear all
                   </button>
                 )}
                 <button 

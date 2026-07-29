@@ -8,6 +8,7 @@ import {
   ShoppingBag,
   Settings,
   LogOut,
+  Loader2,
   Menu,
   X,
   ChevronRight,
@@ -23,14 +24,17 @@ const DashboardLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
     try {
+      setIsLoggingOut(true);
       await logout();
       navigate('/');
       toast.success('Logged out successfully');
     } catch (err) {
       toast.error('Failed to logout');
+      setIsLoggingOut(false);
     }
   };
 
@@ -120,10 +124,20 @@ const DashboardLayout = () => {
                 <div className="pt-6 mt-6 border-t border-border/50">
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-black text-[11px] text-error hover:bg-error-light transition-all group uppercase tracking-widest"
+                    disabled={isLoggingOut}
+                    className="logout-btn-danger w-full flex items-center justify-center gap-3 px-6 py-3.5 rounded-2xl font-black text-xs active:scale-95 transition-all cursor-pointer disabled:opacity-80 uppercase tracking-widest"
                   >
-                    <LogOut size={18} className="text-error transition-all" />
-                    Logout
+                    {isLoggingOut ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin text-white shrink-0" />
+                        <span>Logging out...</span>
+                      </>
+                    ) : (
+                      <>
+                        <LogOut size={18} className="text-white shrink-0" />
+                        <span>Logout</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </nav>

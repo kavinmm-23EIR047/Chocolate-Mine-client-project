@@ -10,6 +10,7 @@ import {
   Sun,
   Moon,
   LogOut,
+  Loader2,
   ChevronRight,
   X,
   ShoppingCart,
@@ -44,10 +45,20 @@ const menuItems = [
 const StaffLayout = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { isDark, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const location = useLocation();
   const socketRef = useRef(null);
+
+  const handleStaffLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      await logout();
+    } catch (e) {
+      setIsLoggingOut(false);
+    }
+  };
 
   const { playSound, testSounds } = useNotificationSound();
 
@@ -162,11 +173,21 @@ const StaffLayout = () => {
               </div>
             </div>
             <button
-              onClick={logout}
-              className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-all cursor-pointer"
+              onClick={handleStaffLogout}
+              disabled={isLoggingOut}
+              className="logout-btn-danger flex items-center justify-center gap-2.5 w-full px-4 py-2.5 rounded-xl text-sm active:scale-95 transition-all cursor-pointer disabled:opacity-80 mt-2"
             >
-              <LogOut size={18} />
-              <span>Logout</span>
+              {isLoggingOut ? (
+                <>
+                  <Loader2 size={18} className="animate-spin text-white shrink-0" />
+                  <span>Logging out...</span>
+                </>
+              ) : (
+                <>
+                  <LogOut size={18} className="text-white shrink-0" />
+                  <span>Logout</span>
+                </>
+              )}
             </button>
           </div>
         </aside>
@@ -224,10 +245,21 @@ const StaffLayout = () => {
                 </nav>
                 <div className="p-4 border-t border-border">
                   <button
-                    onClick={logout}
-                    className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm font-medium text-error hover:bg-error/10 transition-all"
+                    onClick={handleStaffLogout}
+                    disabled={isLoggingOut}
+                    className="logout-btn-danger flex items-center justify-center gap-2.5 w-full px-4 py-2.5 rounded-xl text-sm active:scale-95 transition-all cursor-pointer disabled:opacity-80"
                   >
-                    <LogOut size={18} /><span>Logout</span>
+                    {isLoggingOut ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin text-white shrink-0" />
+                        <span>Logging out...</span>
+                      </>
+                    ) : (
+                      <>
+                        <LogOut size={18} className="text-white shrink-0" />
+                        <span>Logout</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </motion.aside>
@@ -254,29 +286,38 @@ const StaffLayout = () => {
             </div>
 
             <div className="flex items-center gap-3">
-              {/* Sound Notifications Toggle Button */}
+              {/* Sound Notifications Toggle Button (Solid Color) */}
               <button
                 onClick={() => setIsMuted(!isMuted)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer border ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer shadow-xs border ${
                   isMuted 
-                    ? 'bg-rose-500/10 text-rose-600 border-rose-500/30 dark:text-rose-400' 
-                    : 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30 dark:text-emerald-400'
+                    ? 'bg-rose-600 hover:bg-rose-700 text-white border-rose-600' 
+                    : 'bg-emerald-700 hover:bg-emerald-800 text-white border-emerald-700'
                 }`}
                 title={isMuted ? 'Notification Sounds Muted - Click to Unmute' : 'Notification Sounds Active - Click to Mute'}
               >
-                {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                {isMuted ? <VolumeX size={15} className="text-white" /> : <Volume2 size={15} className="text-white" />}
                 <span className="hidden sm:inline">{isMuted ? 'Muted' : 'Sound ON'}</span>
               </button>
 
               {/* Test Notification Sound Button */}
               <button
                 onClick={() => testSounds()}
-                className="p-2 rounded-xl bg-card-soft hover:bg-border/40 text-heading border border-border/60 transition-all active:scale-95 cursor-pointer hidden sm:flex items-center gap-1.5 text-xs font-bold"
+                className="px-3 py-1.5 rounded-xl bg-card hover:bg-border/40 text-heading border border-border/80 transition-all active:scale-95 cursor-pointer hidden sm:flex items-center gap-1.5 text-xs font-bold shadow-xs"
                 title="Test Notification Sound Chime"
               >
                 <BellRing size={15} className="text-primary" />
                 <span>Test Sound</span>
               </button>
+
+              {/* Live WebSockets Status Indicator */}
+              <div className="hidden md:inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-card border border-border/80 shadow-xs text-xs font-bold text-heading">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                </span>
+                <span>Live Synced</span>
+              </div>
 
               <NotificationDropdown />
             </div>

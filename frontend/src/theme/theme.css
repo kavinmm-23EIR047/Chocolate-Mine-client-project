@@ -129,31 +129,31 @@
    /* Semantic Colors - High-contrast Dark BG & Light Text for Badges */
    --success: #15803d;
    --success-rgb: 21 128 61;
-   --success-light: #15803d;
-   --success-light-rgb: 21 128 61;
-   --success-text: #FFFFFF;
-   --success-text-rgb: 255 255 255;
+   --success-light: #dcfce7;
+   --success-light-rgb: 220 252 231;
+   --success-text: #14532d;
+   --success-text-rgb: 20 83 45;
 
-   --error: #D32F2F;
-   --error-rgb: 211 47 47;
-   --error-light: #FFEBEE;
-   --error-light-rgb: 255 235 238;
-   --error-text: #B71C1C;
-   --error-text-rgb: 183 28 28;
+   --error: #b91c1c;
+   --error-rgb: 185 28 28;
+   --error-light: #fee2e2;
+   --error-light-rgb: 254 226 226;
+   --error-text: #7f1d1d;
+   --error-text-rgb: 127 29 29;
 
-   --warning: #F9A825;
-   --warning-rgb: 249 168 37;
-   --warning-light: #FFF8E1;
-   --warning-light-rgb: 255 248 225;
-   --warning-text: #E65100;
-   --warning-text-rgb: 230 81 0;
+   --warning: #b45309;
+   --warning-rgb: 180 83 9;
+   --warning-light: #fef3c7;
+   --warning-light-rgb: 254 243 199;
+   --warning-text: #78350f;
+   --warning-text-rgb: 120 53 15;
 
-   --info: #0288D1;
-   --info-rgb: 2 136 209;
-   --info-light: #E1F5FE;
-   --info-light-rgb: 225 245 254;
-   --info-text: #01579B;
-   --info-text-rgb: 1 87 155;
+   --info: #1d4ed8;
+   --info-rgb: 29 78 216;
+   --info-light: #dbeafe;
+   --info-light-rgb: 219 234 254;
+   --info-text: #1e3a8a;
+   --info-text-rgb: 30 58 138;
 
    /* E-Commerce */
    --sale: #E53935;

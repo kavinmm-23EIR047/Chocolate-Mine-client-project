@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Search, ShoppingCart, User, Menu, X, MapPin, Heart, ChevronDown, ShoppingBag, LogIn,
+  Search, ShoppingCart, User, Menu, X, MapPin, Heart, ChevronDown, ShoppingBag, LogIn, LogOut, Loader2,
   Cake, SlidersHorizontal, Bell, Sparkles, Flame, Zap, Star
 } from 'lucide-react';
 import { useSelector } from 'react-redux';
@@ -22,6 +22,17 @@ const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSearchOverlayOpen, setIsSearchOverlayOpen] = useState(false);
   const [isLocationOpen, setIsLocationOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleNavbarLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      setIsMenuOpen(false);
+      await logout();
+    } catch (e) {
+      setIsLoggingOut(false);
+    }
+  };
 
   const { location: deliveryCity, setLocation: setDeliveryCity } = useDeliveryLocation();
   const location = useLocation();
@@ -390,13 +401,21 @@ const Navbar = () => {
                 <div className="pt-3 border-t border-border/15">
                   {user ? (
                     <button
-                      onClick={async () => { setIsMenuOpen(false); await logout(); }}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-500 font-extrabold text-sm transition-colors"
+                      onClick={handleNavbarLogout}
+                      disabled={isLoggingOut}
+                      className="logout-btn-danger w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl font-black text-sm transition-all active:scale-95 cursor-pointer disabled:opacity-80"
                     >
-                      <div className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center shrink-0">
-                        <LogIn size={16} />
-                      </div>
-                      <span>Logout Account</span>
+                      {isLoggingOut ? (
+                        <>
+                          <Loader2 size={18} className="animate-spin text-white shrink-0" />
+                          <span>Logging out...</span>
+                        </>
+                      ) : (
+                        <>
+                          <LogOut size={18} className="text-white shrink-0" />
+                          <span>Logout Account</span>
+                        </>
+                      )}
                     </button>
                   ) : (
                     <Link

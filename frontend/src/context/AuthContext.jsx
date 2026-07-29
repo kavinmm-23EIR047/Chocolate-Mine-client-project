@@ -211,35 +211,29 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
+    // 1. Instant local state wipe for ultra-fast response
+    setUser(null);
     try {
-      // Remove current browser FCM token from database first (while still authenticated)
-      await disableNotifications();
-    } catch (err) {
-      console.error('Failed to disable FCM on logout:', err.message);
+      sessionStorage.clear();
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      localStorage.removeItem('auth_user');
+    } catch (e) {}
+
+    // 2. Perform network cleanups concurrently with safety fallback timeout
+    try {
+      await Promise.race([
+        Promise.allSettled([
+          disableNotifications().catch(() => {}),
+          api.post('/auth/logout').catch(() => {}),
+          logoutGoogle().catch(() => {})
+        ]),
+        new Promise((res) => setTimeout(res, 400)) // Max 400ms fallback timeout
+      ]);
+    } catch (e) {
+      // ignore
     }
 
-    try {
-      // Clear server cookie
-      await api.post('/auth/logout');
-    } catch (err) {
-      console.error('Logout API error:', err.message);
-    }
-    
-    // Firebase logout
-    try {
-      await logoutGoogle();
-    } catch (err) {
-      console.error('Firebase Logout error:', err.message);
-    }
-    
-    setUser(null);
-    sessionStorage.removeItem('user');
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('auth_user');
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    localStorage.removeItem('auth_user');
-    
     if (window.location.pathname !== '/login') {
       window.location.href = '/login';
     }

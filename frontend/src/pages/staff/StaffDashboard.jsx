@@ -1139,44 +1139,6 @@ const StaffDashboard = () => {
 
     return (
       <div className="space-y-8">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border/60">
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-heading tracking-tight">Kitchen & Store Operations</h2>
-            <p className="text-xs sm:text-sm font-semibold text-heading/80 mt-1">Live order pipeline, kitchen preparation & counter sales overview</p>
-          </div>
-          
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              onClick={() => setNotificationsMuted(!notificationsMuted)}
-              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-extrabold transition-all cursor-pointer border shadow-xs ${
-                notificationsMuted 
-                  ? 'bg-rose-500/10 text-rose-600 border-rose-500/30 dark:text-rose-400' 
-                  : 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30 dark:text-emerald-400'
-              }`}
-              title={notificationsMuted ? 'Audio Alerts Muted - Click to Unmute' : 'Audio Alerts Active - Click to Mute'}
-            >
-              {notificationsMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-              <span>{notificationsMuted ? 'Muted' : 'Sound ON'}</span>
-            </button>
-
-            <button
-              onClick={() => testSounds()}
-              className="px-3.5 py-2 rounded-2xl bg-card border border-border/80 hover:bg-border/40 text-heading transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 text-xs font-bold shadow-xs"
-              title="Test Notification Audio Chime"
-            >
-              <Volume2 size={15} className="text-primary" />
-              <span>Test Sound</span>
-            </button>
-
-            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-card border border-border/80 shadow-xs">
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-              </span>
-              <span className="text-xs font-extrabold text-heading">Live WebSockets Synced</span>
-            </div>
-          </div>
-        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {summaryItems.map((item) => (
