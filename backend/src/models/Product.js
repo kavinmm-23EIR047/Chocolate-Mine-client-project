@@ -93,9 +93,19 @@ const productSchema = new mongoose.Schema({
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
 
-// Indexes
-productSchema.index({ name: 'text', description: 'text' });
-productSchema.index({ category: 1, hasVariants: 1 });
+function toSentenceCase(str) {
+  if (!str || typeof str !== 'string') return str;
+  const trimmed = str.trim();
+  if (!trimmed) return trimmed;
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+}
+
+productSchema.pre('save', function(next) {
+  if (this.name && typeof this.name === 'string') {
+    this.name = toSentenceCase(this.name);
+  }
+  next();
+});
 
 
 

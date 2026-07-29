@@ -13,6 +13,7 @@ import 'swiper/css';
 import 'swiper/css/free-mode';
 import 'swiper/css/pagination';
 import ProductSimilar from '../product/components/ProductSimilar';
+import { toSentenceCase } from '../utils/textUtils';
 
 const VegIcon = () => (
   <img src={PureVegIcon} alt="Pure Veg" className="inline-block flex-shrink-0 w-5 h-5" style={{ marginTop: '-2px' }} />
@@ -421,7 +422,7 @@ export default function CustomCakeDetail({
         <div className="w-full lg:col-span-7 lg:sticky lg:top-24">
           <div className="bg-[var(--card)] sm:bg-transparent rounded-2xl sm:rounded-none border border-[var(--border)]/70 sm:border-0 p-5 sm:p-0 shadow-card sm:shadow-none space-y-6">
             <div>
-              <h1 className="font-black text-3xl sm:text-4xl lg:text-5xl text-[var(--heading)] leading-tight">{theme.name} Cake</h1>
+              <h1 className="font-black text-3xl sm:text-4xl lg:text-5xl text-[var(--heading)] leading-tight">{toSentenceCase(theme.name)} Cake</h1>
 
               <div className="mt-4">
                 <span className="inline-block px-5 py-2.5 rounded-xl border border-[var(--primary)] bg-[var(--primary)]/10 text-[var(--primary)] text-sm font-black uppercase tracking-wider shadow-sm">

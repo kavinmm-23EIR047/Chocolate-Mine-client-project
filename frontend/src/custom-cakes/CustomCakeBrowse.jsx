@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Filter, Eye, Check, Layers, Search, ChevronDown, ChevronUp, RotateCcw, Star, ChevronRight, ChevronLeft, Settings2, Heart, List, LayoutGrid, SlidersHorizontal, X, ArrowLeft } from 'lucide-react';
 import { TIERS } from './customCakeData';
 import ImageWithSkeleton from '../components/ui/ImageWithSkeleton';
+import { toSentenceCase } from '../utils/textUtils';
 
 // Premium Bolded Veg Icon 
 const VegIcon = () => (
@@ -470,8 +471,8 @@ export default function CustomCakeBrowse({
                                   )}
                                 </div>
 
-                                <h3 className="text-[14px] sm:text-[15px] font-bold leading-tight break-words capitalize" style={{ color: 'var(--heading)' }}>
-                                  {t.name}
+                                <h3 className="text-[14px] sm:text-[15px] font-bold leading-tight break-words" style={{ color: 'var(--heading)' }}>
+                                  {toSentenceCase(t.name)}
                                 </h3>
                                 {t.description && (
                                   <div className="text-[11px] font-medium mb-1 line-clamp-1" style={{ color: 'var(--muted)' }}>
@@ -606,8 +607,8 @@ export default function CustomCakeBrowse({
                                   )}
                                 </div>
 
-                                <h3 className="text-[14px] md:text-[15px] font-bold leading-tight mb-1 break-words capitalize" style={{ color: 'var(--heading)' }}>
-                                  {t.name}
+                                <h3 className="text-[14px] md:text-[15px] font-bold leading-tight mb-1 break-words" style={{ color: 'var(--heading)' }}>
+                                  {toSentenceCase(t.name)}
                                 </h3>
 
                                 {t.description && (

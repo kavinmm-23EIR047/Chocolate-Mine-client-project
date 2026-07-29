@@ -7,6 +7,7 @@ import productService from '../../services/productService';
 import api from '../../utils/api';
 import LottieImport from 'lottie-react';
 import searchLoaderAnimation from '../../assets/search-loader.json';
+import { toSentenceCase } from '../../utils/textUtils';
 
 const Lottie = LottieImport.default || LottieImport;
 
@@ -93,6 +94,7 @@ const SearchOverlay = ({ isOpen, onClose }) => {
       const bestIds = new Set(rawBests.map(b => String(b._id)));
       const flaggedProducts = prodsList.map(p => ({
         ...p,
+        name: toSentenceCase(p.name),
         bestseller: p.bestseller === true || p.isBestseller === true || bestIds.has(String(p._id))
       }));
       setAllProducts(flaggedProducts);
@@ -103,7 +105,7 @@ const SearchOverlay = ({ isOpen, onClose }) => {
       const mappedThemes = Array.isArray(rawThemes) ? rawThemes.map(t => ({
         _id: t._id,
         id: t._id,
-        name: t.name,
+        name: toSentenceCase(t.name),
         image: getThemeImage(t),
         price: t.basePrice || 1120,
         category: ['Custom Cakes'],
@@ -411,7 +413,7 @@ const SearchOverlay = ({ isOpen, onClose }) => {
                                   <ImageWithSkeleton src={p.image} alt={p.name} loading="eager" fetchPriority="high" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" showSparkles={false} imageWidth={200} />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <p className="font-bold text-[var(--heading)] text-sm leading-tight truncate group-hover:text-[var(--primary)] transition-colors uppercase tracking-tight">{p.name}</p>
+                                  <p className="font-bold text-[var(--heading)] text-sm leading-tight truncate group-hover:text-[var(--primary)] transition-colors tracking-tight">{toSentenceCase(p.name)}</p>
                                   <p className="text-[10px] text-[var(--muted)] font-extrabold uppercase tracking-wider mt-1">{catName}</p>
                                   <div className="flex items-center gap-2 mt-1.5">
                                     <span className="text-sm font-black text-[var(--primary)]">₹{p.offerPrice || p.price}</span>
@@ -522,7 +524,7 @@ const SearchOverlay = ({ isOpen, onClose }) => {
                                           {badgeText}
                                         </span>
                                       )}
-                                      <p className="text-sm font-extrabold text-white leading-tight uppercase tracking-tight line-clamp-1">{p.name}</p>
+                                      <p className="text-sm font-extrabold text-white leading-tight tracking-tight line-clamp-1">{toSentenceCase(p.name)}</p>
                                     </div>
                                     <div className="text-right shrink-0">
                                       <span className="text-sm font-black text-white block">

@@ -18,6 +18,7 @@ import { addToCart, updateCartQty, setCoupon } from '../redux/slices/cartSlice';
 import { useAuth } from '../context/AuthContext';
 import { useWishlist } from '../context/WishlistContext';
 import { formatCurrency, getCouponUnitDiscount, idsMatch } from '../utils/helpers';
+import { toSentenceCase } from '../utils/textUtils';
 import ProductCard from './ProductCard';
 import PureVegBadge from '../components/ui/PureVegBadge';
 
@@ -595,7 +596,7 @@ const ProductDetails = () => {
               <button onClick={() => navigate(`/shop?category=${product?.category}`)} className="hover:text-primary transition capitalize">{product?.category}</button>
             )}
             <ChevronRight size={12} />
-            <span className="text-heading truncate max-w-[200px]">{product?.name}</span>
+            <span className="text-heading truncate max-w-[200px]">{toSentenceCase(product?.name)}</span>
           </div>
         </div>
       </div>
@@ -642,7 +643,7 @@ const ProductDetails = () => {
                 </button>
               </div>
 
-              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-heading leading-[1.1] mb-3 sm:mb-4 capitalize tracking-tight">{productName}</h1>
+              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-heading leading-[1.1] mb-3 sm:mb-4 tracking-tight">{toSentenceCase(productName)}</h1>
 
               <div className="mb-4 flex flex-wrap items-center gap-2">
                 {(product?.isVeg !== false) && (
