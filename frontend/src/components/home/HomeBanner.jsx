@@ -4,6 +4,7 @@ import { Gift, ArrowRight } from 'lucide-react';
 import api from '../../utils/api';
 import Logo from '../Logo';
 import ImageWithSkeleton from '../ui/ImageWithSkeleton';
+import { getOptimizedCloudinaryUrl } from '../../utils/cloudinary';
 
 const HomeBanner = () => {
   const [banners, setBanners] = useState([]);
@@ -15,7 +16,20 @@ const HomeBanner = () => {
       try {
         setLoading(true);
         const res = await api.get('/banners/active');
-        setBanners(res.data.data || []);
+        const activeBanners = res.data.data || [];
+        setBanners(activeBanners);
+
+        // Preload all banner images into browser cache instantly
+        activeBanners.forEach((b) => {
+          if (b.image) {
+            const img = new Image();
+            img.src = getOptimizedCloudinaryUrl(b.image, 1600);
+            if (b.image.includes('cloudinary.com')) {
+              const mobileImg = new Image();
+              mobileImg.src = getOptimizedCloudinaryUrl(b.image, 600);
+            }
+          }
+        });
       } catch (error) {
         console.error('Failed to fetch banners:', error);
       } finally {
@@ -76,6 +90,15 @@ const HomeBanner = () => {
       className="banner-root relative w-full overflow-hidden rounded-[16px] sm:rounded-[24px] select-none border-0 sm:border border-border/20 bg-transparent"
       style={{ aspectRatio: 'var(--banner-ratio, 16/9)' }}
     >
+      {/* Hidden preloader elements for smooth instant slide transitions */}
+      <div className="hidden" aria-hidden="true">
+        {banners.map((b, idx) => (
+          idx !== current && b.image ? (
+            <img key={b._id || idx} src={getOptimizedCloudinaryUrl(b.image, 1600)} alt="" />
+          ) : null
+        ))}
+      </div>
+
       <style>{`
         @media (max-width: 640px) {
           .banner-root { aspect-ratio: 16/4.6 !important; } 
@@ -111,7 +134,7 @@ const HomeBanner = () => {
           onClick={handleBannerClick}
           style={{ cursor: slide.link ? 'pointer' : 'default' }}
         >
-          {/* Banner Image - Seamless Full-Bleed object-cover (eliminates corner gaps/glitches) */}
+          {/* Banner Image - Seamless Full-Bleed object-cover with pre-loaded responsive srcset */}
           <ImageWithSkeleton
             src={slide.image}
             alt={slide.title || "Banner Image"}
@@ -119,8 +142,10 @@ const HomeBanner = () => {
             containerClassName="absolute inset-0 w-full h-full bg-transparent"
             style={{ objectPosition: 'center center' }}
             imageWidth={1600}
+            sizes="(max-width: 640px) 600px, (max-width: 1024px) 1000px, 1600px"
             loading="eager"
             fetchPriority="high"
+            decoding="async"
             draggable={false}
           />
 
