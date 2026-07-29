@@ -465,12 +465,12 @@ const AddressModal = ({ address, onClose, onSuccess }) => {
 
         <AnimatePresence>
           {showMap && (
-            <div className="fixed inset-0 z-[9999] bg-background flex flex-col w-full h-full p-0 overflow-hidden">
+            <div className="fixed inset-0 z-[9999] bg-background flex flex-col w-full h-full h-[100dvh] max-h-[100dvh] p-0 overflow-hidden">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
-                className="w-full h-full flex flex-col"
+                className="w-full h-full h-[100dvh] max-h-[100dvh] flex flex-col"
               >
                 <MapSelector 
                   onClose={() => setShowMap(false)}

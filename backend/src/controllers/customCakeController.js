@@ -40,6 +40,12 @@ exports.getThemes = asyncHandler(async (req, res) => {
   res.status(200).json({ status: 'success', data: themes });
 });
 
+exports.getThemeById = asyncHandler(async (req, res, next) => {
+  const theme = await CustomCakeTheme.findById(req.params.id).lean();
+  if (!theme) return next(new AppError('Theme not found', 404));
+  res.status(200).json({ status: 'success', data: theme });
+});
+
 const toSentenceCase = (str) => {
   if (!str || typeof str !== 'string') return str;
   const trimmed = str.trim();

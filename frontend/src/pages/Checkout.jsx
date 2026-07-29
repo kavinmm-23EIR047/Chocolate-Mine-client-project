@@ -1887,7 +1887,7 @@ const Checkout = () => {
             </div>
           </div>
 
-          {/* RIGHT COLUMN — ORDER SUMMARY (same as before, keeping it short) */}
+          {/* RIGHT COLUMN — ORDER SUMMARY */}
           <div className="lg:col-span-1 w-full min-w-0">
             <div className="lg:sticky lg:top-24 space-y-4">
               <motion.div
@@ -1897,7 +1897,6 @@ const Checkout = () => {
                 id="order-summary-section"
                 className="bg-card rounded-2xl sm:rounded-3xl shadow-card border-2 border-border-card overflow-hidden w-full min-w-0"
               >
-                {/* ... Order summary content remains the same ... */}
                 <div className="p-5 sm:p-6 border-b border-border/30 bg-gradient-to-r from-card-soft to-card">
                   <div className="flex items-center gap-3">
                     <Package size={20} className="text-primary" />
@@ -1932,67 +1931,12 @@ const Checkout = () => {
                             </>
                           );
                         })()}
-
-                        {item.addons && item.addons.length > 0 && (
-                          <div className="mt-2 p-3 bg-card-soft border border-border/40 rounded-xl">
-                            <p className="text-xs sm:text-sm text-muted font-black uppercase tracking-widest mb-2">Add-ons included:</p>
-                            <div className="flex flex-col gap-2">
-                              {item.addons.map((addon, idx) => (
-                                <div key={idx} className="flex justify-between items-center text-xs sm:text-sm text-heading font-medium">
-                                  <span className="flex items-center gap-2">
-                                    <Plus size={14} className="text-primary" /> {addon.name}
-                                    <span className="text-xs text-muted/60 font-bold ml-1">x{addon.qty || 1}</span>
-                                  </span>
-                                  <div className="flex items-center gap-3">
-                                    <span className="mr-1 text-muted/80 font-bold">{formatCurrency(addon.price * (addon.qty || 1))}</span>
-                                    <div className="flex items-center gap-1 bg-muted/10 rounded-full px-3 py-1 select-none">
-                                      <button
-                                        onClick={() => handleCheckoutAddonDecrement(item, addon)}
-                                        className="hover:scale-110 font-black text-sm sm:text-base px-1.5 text-heading"
-                                      >
-                                        −
-                                      </button>
-                                      <span className="text-xs sm:text-sm font-black w-5 text-center">{addon.qty || 1}</span>
-                                      <button
-                                        onClick={() => handleCheckoutAddonIncrement(item, addon)}
-                                        className="hover:scale-110 font-black text-sm sm:text-base px-1.5 text-heading"
-                                      >
-                                        +
-                                      </button>
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {availableAddons.length > 0 && (
-                          <div className="mt-2.5 flex flex-wrap gap-1.5 items-center">
-                            <span className="text-xs text-muted/60 font-black uppercase tracking-widest mr-1">Add:</span>
-                            {availableAddons
-                              .filter(addon => !item.addons?.some(a => a._id === addon._id || a.addonId === addon._id))
-                              .map(addon => (
-                                <button
-                                  key={addon._id}
-                                  onClick={() => handleCheckoutAddonIncrement(item, addon)}
-                                  className="text-xs font-black text-muted hover:text-primary bg-muted/5 hover:bg-primary/10 border border-border/40 rounded-full px-3 py-1 transition-all uppercase tracking-wider"
-                                >
-                                  + {addon.name} (₹{addon.price})
-                                </button>
-                              ))}
-                          </div>
-                        )}
-
                         <p className="text-xs sm:text-sm text-muted/60 font-black mt-2">QTY {item.qty}</p>
                       </div>
                       <div className="text-right shrink-0">
                         <p className="font-black text-heading text-base sm:text-lg">
-                          {formatCurrency((getFinalItemPrice(item) - (item.addons?.reduce((sum, a) => sum + (Number(a.price || 0) * (a.qty || 1)), 0) || 0)) * item.qty)}
+                          {formatCurrency(getFinalItemPrice(item) * item.qty)}
                         </p>
-                        {Number(item.price) > (getFinalItemPrice(item) - (item.addons?.reduce((sum, a) => sum + (Number(a.price || 0) * (a.qty || 1)), 0) || 0)) && (
-                          <p className="text-xs line-through text-muted/40 font-bold">{formatCurrency(Number(item.price) * item.qty)}</p>
-                        )}
                       </div>
                     </div>
                   ))}
@@ -2040,69 +1984,18 @@ const Checkout = () => {
                     <span className="text-muted font-medium">Convenience Fee (2.5%)</span>
                     <span className="font-black text-heading">{formatCurrency(convenienceFee)}</span>
                   </div>
-                  <div className="flex justify-between text-xs text-muted/70 pt-0.5">
-                    <span>GST (18%)</span>
-                    <span className="font-bold text-success-text">Included in Product Price</span>
-                  </div>
-
-                  {(offerDiscount + couponDiscount) > 0 && (
-                    <div className="flex items-center justify-between bg-success-light border-2 border-success/30 rounded-xl px-4 py-3 text-success-text font-black text-sm sm:text-base uppercase tracking-widest w-full min-w-0">
-                      <div className="flex items-center gap-2">
-                        <Star size={14} /> You Save
-                      </div>
-                      <span>− {formatCurrency(offerDiscount + couponDiscount)}</span>
-                    </div>
-                  )}
 
                   <div className="border-t border-border/30 pt-4">
                     <div className="flex justify-between items-baseline font-black w-full min-w-0">
                       <span className="text-base sm:text-lg text-heading uppercase tracking-widest">Total</span>
                       <div className="text-right">
                         <span className="text-2xl sm:text-3xl text-primary tracking-tight">{formatCurrency(displayTotal)}</span>
-                        {backendTotal !== null && (
-                          <p className="text-xs text-success-text font-black uppercase tracking-widest mt-1">✓ Confirmed by server</p>
-                        )}
                       </div>
                     </div>
-                    {subtotal >= 300 && !isAddressSelected && <p className="text-xs sm:text-sm text-warning-text mt-2 text-center font-bold">Select delivery address to calculate delivery fee</p>}
                   </div>
                 </div>
 
-
-
-                {hasAppliedCoupon && (
-                  <div className="mx-4 sm:mx-5 mb-4 sm:mb-5 p-3 sm:p-3.5 bg-success-light rounded-2xl flex justify-between items-center border-2 border-success/30">
-                    <div>
-                      <span className="text-[9px] font-black text-success-text uppercase tracking-widest opacity-70">Coupon Applied</span>
-                      <p className="text-sm font-mono font-black text-success-text tracking-widest">{appliedCouponDisplay}</p>
-                    </div>
-                    <button type="button" onClick={handleRemoveCoupon} className="p-2 hover:bg-error-light rounded-xl text-error-text transition-colors">Remove</button>
-                  </div>
-                )}
-
                 <div className="p-4 sm:p-5 pt-0">
-                  {availableUnappliedCoupons.length > 0 && (
-                    <div className="mb-4 p-3.5 bg-warning-light rounded-2xl border-2 border-warning/20 text-warning-text flex gap-3 items-center justify-between">
-                      <div className="flex gap-3 items-center min-w-0 flex-1">
-                        <div className="bg-card p-2 rounded-xl border border-warning/10 shrink-0">
-                          <Sparkles size={16} className="text-warning-text animate-pulse" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[10px] font-black uppercase tracking-wider">Forgot to apply coupon?</p>
-                          <p className="text-xs font-bold mt-0.5 leading-snug">
-                            Apply <span className="font-mono font-black">{availableUnappliedCoupons[0].code}</span> to save {formatCurrency(availableUnappliedCoupons[0].savings)}!
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleApplyCoupon(availableUnappliedCoupons[0].code)}
-                        className="bg-primary text-button-text font-black uppercase tracking-widest text-[10px] px-4 py-2 rounded-xl hover:brightness-110 active:scale-95 transition-all shadow-sm shrink-0 border border-primary/20"
-                      >
-                        Apply
-                      </button>
-                    </div>
-                  )}
                   <Button
                     onClick={handlePlaceOrder}
                     className="w-full h-12 sm:h-14 text-xs sm:text-sm font-black uppercase tracking-widest rounded-2xl"
@@ -2124,21 +2017,6 @@ const Checkout = () => {
                       </>
                     )}
                   </Button>
-                </div>
-
-                <div className="px-4 sm:px-5 pb-4 sm:pb-5">
-                  <div className="grid grid-cols-3 gap-2 w-full min-w-0">
-                    {[
-                      { icon: ShieldCheck, label: 'Secure Pay' },
-                      { icon: Truck, label: 'Fresh Delivery' },
-                      { icon: Sparkles, label: 'Handcrafted' },
-                    ].map(({ icon: Icon, label }) => (
-                      <div key={label} className="flex flex-col items-center gap-1 p-2 rounded-xl bg-surface/30 border-2 border-border-muted">
-                        <Icon size={13} className="text-primary shrink-0" />
-                        <span className="text-[10px] font-black text-primary/80 uppercase tracking-widest text-center leading-tight">{label}</span>
-                      </div>
-                    ))}
-                  </div>
                 </div>
               </motion.div>
             </div>

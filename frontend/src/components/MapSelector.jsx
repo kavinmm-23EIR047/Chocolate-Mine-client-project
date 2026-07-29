@@ -248,7 +248,7 @@ const MapSelector = ({ onSelect, onClose }) => {
   };
 
   return (
-    <div className="w-full h-full flex flex-col bg-[var(--background)] text-[var(--foreground)] relative z-[9999] overflow-hidden">
+    <div className="w-full h-full h-[100dvh] max-h-[100dvh] flex flex-col bg-[var(--background)] text-[var(--foreground)] relative z-[9999] overflow-hidden">
       {/* ── TOP HEADER BAR ── */}
       <div className="px-4 sm:px-8 py-3.5 bg-[var(--card)] border-b border-[var(--border)] flex items-center justify-between shadow-sm shrink-0">
         <div className="flex items-center gap-2.5">
@@ -342,8 +342,8 @@ const MapSelector = ({ onSelect, onClose }) => {
       </div>
 
       {/* ── LEAFLET MAP CONTAINER ── */}
-      <div className="flex-1 w-full relative z-10 min-h-[250px]">
-        <MapContainer center={position} zoom={15} style={{ height: '100%', width: '100%' }}>
+      <div className="flex-1 w-full relative z-10 min-h-[180px] sm:min-h-[250px] overflow-hidden">
+        <MapContainer center={position} zoom={15} style={{ height: '100%', width: '100%', touchAction: 'pan-x pan-y' }}>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
           <LocationMarker 
             position={position} 
@@ -356,20 +356,20 @@ const MapSelector = ({ onSelect, onClose }) => {
         </MapContainer>
       </div>
 
-      {/* ── FOOTER ADDRESS CONFIRMATION CARD ── */}
-      <div className="p-4 sm:p-6 bg-[var(--card)] border-t border-[var(--border)] z-20 shrink-0 shadow-2xl">
-        <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-center gap-4">
-          <div className="flex items-center gap-3.5 flex-1 w-full min-w-0">
-            <div className="p-3 bg-[var(--primary)]/10 text-[var(--primary)] rounded-2xl shrink-0">
-              {isGeocoding ? <Loader2 size={24} className="animate-spin" /> : <MapPin size={24} />}
+      {/* ── FOOTER ADDRESS CONFIRMATION CARD (Safari Safe Area Aware) ── */}
+      <div className="p-3.5 sm:p-6 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] bg-[var(--card)] border-t border-[var(--border)] z-30 shrink-0 shadow-2xl">
+        <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-3 flex-1 w-full min-w-0">
+            <div className="p-2.5 sm:p-3 bg-[var(--primary)]/10 text-[var(--primary)] rounded-2xl shrink-0">
+              {isGeocoding ? <Loader2 size={22} className="animate-spin" /> : <MapPin size={22} />}
             </div>
             <div className="text-sm min-w-0 flex-1">
-              <p className="font-black text-[var(--heading)] uppercase tracking-wider text-xs flex items-center gap-2">
+              <p className="font-black text-[var(--heading)] uppercase tracking-wider text-xs flex items-center gap-2 flex-wrap">
                 <span>DELIVER TO</span>
                 {pincode && <span className="text-[10px] bg-[var(--primary)]/10 text-[var(--primary)] px-2 py-0.5 rounded-full font-bold">PIN: {pincode}</span>}
                 {isGeocoding && <span className="text-xs text-[var(--primary)] font-bold lowercase">updating address...</span>}
               </p>
-              <p className="text-[var(--foreground)] line-clamp-2 text-sm font-bold mt-1 leading-snug">
+              <p className="text-[var(--foreground)] line-clamp-2 text-xs sm:text-sm font-bold mt-0.5 leading-snug">
                 {address}
               </p>
             </div>
@@ -378,7 +378,7 @@ const MapSelector = ({ onSelect, onClose }) => {
             type="button"
             onClick={handleConfirm}
             disabled={isGeocoding}
-            className="btn-primary w-full sm:w-auto px-8 py-3.5 shadow-premium text-sm font-black uppercase tracking-wider shrink-0 flex items-center justify-center gap-2 disabled:opacity-50"
+            className="btn-primary w-full sm:w-auto px-6 sm:px-8 py-3.5 shadow-premium text-xs sm:text-sm font-black uppercase tracking-wider shrink-0 flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95 transition-all"
           >
             <Check size={18} />
             <span>CONFIRM LOCATION</span>
