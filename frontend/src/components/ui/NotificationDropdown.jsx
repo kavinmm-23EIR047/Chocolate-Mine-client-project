@@ -7,7 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import { getSocket } from '../../sockets/socketManager';
 import toast from 'react-hot-toast';
 
-const NotificationDropdown = ({ iconClass, buttonClass, showLabel, iconSize = 20 }) => {
+const NotificationDropdown = ({ iconClass, buttonClass, showLabel, iconSize = 24 }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
@@ -142,9 +142,9 @@ const NotificationDropdown = ({ iconClass, buttonClass, showLabel, iconSize = 20
         aria-label="Notifications"
       >
         <div className="relative inline-flex items-center justify-center shrink-0">
-          <Bell size={iconSize} className={iconClass || "text-heading"} />
+          <Bell size={iconSize} strokeWidth={1.75} className={iconClass || "text-heading"} />
           {unreadCount > 0 && (
-            <span className="absolute -top-1.5 -right-2.5 min-w-[18px] h-[18px] px-1 text-[10px] font-black leading-none z-10 shadow-sm notification-dot">
+            <span className="absolute -top-1 -right-1.5 min-w-[18px] h-[18px] px-1 text-[10px] font-bold leading-none z-10 shadow-sm notification-dot">
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}

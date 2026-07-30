@@ -160,7 +160,7 @@ const Navbar = () => {
                 />
               ) : (
                 <button onClick={() => window.dispatchEvent(new Event('openNotificationPrompt'))} className="flex flex-col items-center gap-0.5 px-2 py-0.5 rounded-xl hover:bg-primary/8 group transition-colors min-w-[52px]">
-                  <Bell size={18} className="text-heading group-hover:text-primary transition-colors" />
+                  <Bell size={24} className="text-heading group-hover:text-primary transition-colors" />
                   <span className="text-[10px] font-bold text-muted group-hover:text-primary uppercase tracking-wide whitespace-nowrap transition-colors">Alerts</span>
                 </button>
               )}
