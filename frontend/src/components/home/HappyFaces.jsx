@@ -10,20 +10,20 @@ const HAPPY_FACES = [
   {
     id: 'happy-1',
     title: 'A Royal Birthday Celebration 👑',
-    tag: 'Birthday Cake',
-    image: 'https://res.cloudinary.com/djkfvoxpx/image/upload/v1784865898/categories/uo822q9gaftknwyldjtg.png',
+    tag: 'Birthday Party',
+    image: '/happy-faces/face1.png',
   },
   {
     id: 'happy-2',
     title: 'Wild Jungle Theme Party 🦁',
     tag: 'Jungle Theme',
-    image: 'https://res.cloudinary.com/djkfvoxpx/image/upload/v1784866478/categories/k86t1wm1kmkqgkhnirwp.png',
+    image: '/happy-faces/face2.png',
   },
   {
     id: 'happy-3',
     title: 'Sweet Half-Year Milestone 🍓',
     tag: 'Half Birthday',
-    image: 'https://res.cloudinary.com/djkfvoxpx/image/upload/v1784865898/categories/uo822q9gaftknwyldjtg.png',
+    image: '/happy-faces/face3.png',
   },
 ];
 

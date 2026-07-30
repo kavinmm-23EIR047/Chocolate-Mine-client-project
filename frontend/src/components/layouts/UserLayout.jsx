@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { Truck, Phone, HelpCircle, MapPin } from 'lucide-react';
+import { Truck, Phone, HelpCircle, MapPin, ArrowLeft } from 'lucide-react';
 import Navbar from '../Navbar';
 import Footer from '../Footer';
+import Logo from '../Logo';
 import MobileBottomNav from '../layout/MobileBottomNav';
 import PureVegBadge from '../ui/PureVegBadge';
 import NotificationPrompt from '../ui/NotificationPrompt';
@@ -61,13 +62,13 @@ const UserLayout = () => {
     <div className="min-h-screen flex flex-col bg-background relative overflow-x-hidden">
       {/* ── COCOA LEAF BACKGROUND WATERMARKS (LIGHT THEME: DARK BROWN, DARK THEME: LIGHT BEIGE) ── */}
       <CocoaLeavesBackground />
-      <header className="sticky top-0 z-[200] w-full">
+      <header className={`sticky top-0 z-[200] w-full ${isAuthPage ? 'hidden md:block' : ''}`}>
         <NotificationBanner />
         <Navbar />
       </header>
 
       {/* ── RESPONSIVE INFO BANNER ── */}
-      <div className="bg-[#4E2820] dark:bg-[#E8D3CB] py-2 px-4 sm:px-6 lg:px-8 overflow-hidden transition-colors duration-300">
+      <div className={`bg-[#4E2820] dark:bg-[#E8D3CB] py-2 px-4 sm:px-6 lg:px-8 overflow-hidden transition-colors duration-300 ${isAuthPage ? 'hidden md:block' : ''}`}>
 
         {/* DESKTOP/TABLET LAYOUT (md and up) */}
         <div className="hidden md:flex items-center justify-between responsive-container gap-4">
@@ -130,7 +131,8 @@ const UserLayout = () => {
       <main className="flex-grow min-w-0">
         <Outlet />
       </main>
-      <div className={isProductPage ? "hidden lg:block" : "block"}>
+      
+      <div className={`${isProductPage ? "hidden lg:block" : "block"} ${isAuthPage ? 'hidden md:block' : ''}`}>
         <Footer />
       </div>
       {!isAuthPage && <MobileBottomNav />}

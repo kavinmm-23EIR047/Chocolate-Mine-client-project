@@ -34,6 +34,15 @@ const resetPasswordSchema = Joi.object({
   password: Joi.string().min(6).max(100).required()
 });
 
+const verifySignupSchema = Joi.object({
+  email: Joi.string().trim().email().required(),
+  otp: Joi.string().required()
+});
+
+const resendSignupOtpSchema = Joi.object({
+  email: Joi.string().trim().email().required()
+});
+
 /* ==================================
    AUTH ROUTES
 ================================== */
@@ -41,6 +50,12 @@ const resetPasswordSchema = Joi.object({
 // POST /api/v1/auth/signup
 router.post('/signup', validate(signupSchema), authController.signup);
 router.post('/register', validate(signupSchema), authController.signup);
+
+// POST /api/v1/auth/verify-signup
+router.post('/verify-signup', validate(verifySignupSchema), authController.verifySignup);
+
+// POST /api/v1/auth/resend-signup-otp
+router.post('/resend-signup-otp', validate(resendSignupOtpSchema), authController.resendSignupOtp);
 
 // POST /api/v1/auth/login
 router.post('/login', validate(loginSchema), authController.login);

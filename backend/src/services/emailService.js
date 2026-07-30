@@ -750,6 +750,35 @@ const emailService = {
       `,
     });
   },
+  sendSignupOTP: async (email, otp) => {
+    return await sendMail({
+      to: email,
+      subject: 'Verify your account - The Chocolate Mine',
+      html: `
+        <html>
+          <head>
+            <link href="https://fonts.googleapis.com/css2?family=Helvetica+Neue:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+            ${getThemeStyles()}
+          </head>
+          <body style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #F5F2EF; color: #2C1A16; margin: 0; padding: 24px 12px; -webkit-font-smoothing: antialiased;">
+            <div class="receipt-container" style="background-color: #FFFFFF; color: #2C1A16; border: 1px solid #D8CFC8; max-width: 540px; margin: 0 auto; padding: 36px 32px; border-radius: 0px; text-align: center;">
+              ${getLogoMarkup()}
+              <h2 class="title-text" style="color: #3C1B13; font-size: 20px; font-weight: 900; text-transform: uppercase; margin-top: 0;">Verify your email address</h2>
+              <p style="font-size: 14px; font-weight: 600; margin: 0 0 24px 0;">Hi,</p>
+              <p style="font-size: 13px; color: #52443F; line-height: 1.6; margin: 0 0 24px 0;">Welcome to The Chocolate Mine! Please use the following one-time password (OTP) to complete your registration. This code will expire in 10 minutes.</p>
+              
+              <div class="otp-display">
+                ${otp}
+              </div>
+              
+              <p style="font-size: 12px; color: #7A6B65; margin-top: 32px; font-weight: 600;">If you didn't request this, please ignore this email.</p>
+              ${getReceiptBarcodeMarkup('REGISTRATION')}
+            </div>
+          </body>
+        </html>
+      `,
+    });
+  }
 };
 
 module.exports = emailService;

@@ -164,12 +164,19 @@ const Navbar = () => {
                 </button>
               )}
 
-              {[user ? { icon: User, label: user.name.split(' ')[0], to: user.role === 'admin' ? '/admin/dashboard' : '/account/dashboard' } : { icon: LogIn, label: 'Sign In', to: '/login' }].map(({ icon: Icon, label, to }) => (
-                <Link key={label} to={to} className="flex flex-col items-center gap-0.5 px-2 py-0.5 rounded-xl hover:bg-primary/8 group transition-colors min-w-[52px]">
-                  <Icon size={18} className="text-heading group-hover:text-primary transition-colors" />
-                  <span className="text-[10px] font-bold text-muted group-hover:text-primary uppercase tracking-wide whitespace-nowrap transition-colors">{label}</span>
+              {user ? (
+                <Link to={user.role === 'admin' ? '/admin/dashboard' : '/account/dashboard'} className="flex flex-col items-center gap-0.5 px-2 py-0.5 rounded-xl hover:bg-primary/8 group transition-colors min-w-[52px]">
+                  <User size={18} className="text-heading group-hover:text-primary transition-colors" />
+                  <span className="text-[10px] font-bold text-muted group-hover:text-primary uppercase tracking-wide whitespace-nowrap transition-colors">{user.name.split(' ')[0]}</span>
                 </Link>
-              ))}
+              ) : (
+                <>
+                  <Link to="/login" className="flex flex-col items-center gap-0.5 px-2 py-0.5 rounded-xl hover:bg-primary/8 group transition-colors min-w-[52px]">
+                    <User size={18} className="text-heading group-hover:text-primary transition-colors" />
+                    <span className="text-[10px] font-bold text-muted group-hover:text-primary uppercase tracking-wide whitespace-nowrap transition-colors">Sign In</span>
+                  </Link>
+                </>
+              )}
 
               <Link to="/cart" className="flex flex-col items-center gap-0.5 px-2 py-0.5 rounded-xl hover:bg-primary/8 group transition-colors relative min-w-[52px]">
                 <ShoppingCart size={18} className="text-heading group-hover:text-primary transition-colors" />
@@ -418,14 +425,16 @@ const Navbar = () => {
                       )}
                     </button>
                   ) : (
-                    <Link
-                      to="/login"
-                      onClick={() => setIsMenuOpen(false)}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-primary text-button-text font-extrabold text-sm transition-colors justify-center shadow-md"
-                    >
-                      <LogIn size={16} />
-                      <span>Sign In / Register</span>
-                    </Link>
+                    <div className="flex flex-col gap-2">
+                      <Link
+                        to="/login"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="w-full flex items-center gap-2 px-3 py-3 rounded-xl bg-[var(--primary)] text-[var(--button-text)] font-extrabold text-sm transition-colors justify-center shadow-md hover:brightness-110"
+                      >
+                        <User size={16} />
+                        <span>Sign In / Register</span>
+                      </Link>
+                    </div>
                   )}
                 </div>
 

@@ -137,6 +137,17 @@ export const AuthProvider = ({ children }) => {
     // Firebase onAuthStateChanged listener
     if (auth) {
       const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        // If a standard email/password user is already logged in, ignore Firebase's cached session
+        const storedUser = sessionStorage.getItem('user') || localStorage.getItem('user');
+        if (storedUser) {
+           try {
+              const parsed = JSON.parse(storedUser);
+              if (!parsed.isFirebase) {
+                  return; // Don't override standard login
+              }
+           } catch(e) {}
+        }
+
         if (firebaseUser) {
           try {
             // Get a standard backend session via Firebase Login route

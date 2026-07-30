@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate, Link, useSearchParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Mail, Lock, LogIn, ArrowLeft, Eye, EyeOff, Sparkles, Cake, Candy, ShieldCheck } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Mail, Lock, LogIn, ArrowLeft, Eye, EyeOff, ShieldCheck, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
+import LightLogo from '../assets/light logo.png';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -21,239 +22,142 @@ const Login = () => {
       toast.success('Welcome back to The Chocolate Mine!');
       navigate('/');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Invalid email or password');
+      if (err.response?.data?.requiresOtp) {
+        toast.error('Please verify your email first.');
+        // User could be redirected to an OTP verify page, or login via OTP if implemented.
+      } else {
+        toast.error(err.response?.data?.message || 'Invalid email or password');
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-[var(--background)] p-4 sm:p-6 lg:p-10 relative">
-      {/* Background Glow */}
-      <div className="absolute top-10 left-10 w-96 h-96 bg-[var(--accent)]/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 right-10 w-96 h-96 bg-[var(--primary)]/10 rounded-full blur-3xl pointer-events-none" />
-
-      {/* 2-Column Split Card */}
+    <div className="min-h-[100dvh] w-full flex items-center justify-center bg-gray-50/50 dark:bg-[#0C0503] p-0 sm:p-6 lg:p-10 relative">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, ease: 'easeOut' }}
-        className="w-full max-w-5xl bg-[var(--card)] border-2 border-[var(--border)] rounded-3xl shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 relative z-10"
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4 }}
+        className="w-full min-h-[100dvh] sm:min-h-0 sm:h-auto sm:max-w-6xl bg-[var(--card)] sm:rounded-3xl sm:shadow-2xl overflow-hidden flex flex-col md:flex-row relative z-10 sm:border border-[var(--border)]/30"
       >
-        {/* Left Side: Real Website Content & Brand Panel */}
-        <div className="lg:col-span-5 bg-gradient-to-br from-[#2A160E] via-[#1C0E09] to-[#120806] p-8 sm:p-10 text-white flex flex-col justify-between relative overflow-hidden border-b lg:border-b-0 lg:border-r-2 border-[var(--border)]">
-          {/* Subtle overlay background */}
-          <div className="absolute inset-0 bg-[url('https://res.cloudinary.com/djkfvoxpx/image/upload/v1784865898/categories/uo822q9gaftknwyldjtg.png')] bg-cover bg-center opacity-15 mix-blend-luminosity pointer-events-none" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#120806] via-[#1C0E09]/85 to-[#2A160E]/80 pointer-events-none" />
-
-          {/* Floating subtle background icons */}
-          <motion.div
-            animate={{ y: [0, -10, 0] }}
-            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-            className="absolute top-10 right-6 text-amber-400/20 pointer-events-none"
-          >
-            <Cake size={90} strokeWidth={1} />
-          </motion.div>
-          <motion.div
-            animate={{ y: [0, 10, 0] }}
-            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-            className="absolute bottom-16 left-6 text-amber-500/20 pointer-events-none"
-          >
-            <Candy size={76} strokeWidth={1} />
-          </motion.div>
-
-          {/* Top Back Link */}
-          <div className="relative z-10">
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-[#DDB68A] hover:text-[#FAF0E6] transition-colors"
-            >
-              <ArrowLeft size={16} /> Back to Shop
-            </Link>
-          </div>
-
-          {/* Main Website Content */}
-          <div className="relative z-10 my-6 space-y-5">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#4A2C18]/60 border border-[#8C5124]/60 text-[#F5E6D3] text-xs font-bold uppercase tracking-wider">
-              <Sparkles size={14} className="animate-pulse text-[#DDB68A]" />
-              <span>The Chocolate Mine</span>
-            </div>
-
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight leading-tight text-white uppercase">
-              Handcrafted <br />
-              <span className="bg-gradient-to-r from-[#F5E6D3] via-[#DDB68A] to-[#C89D5A] bg-clip-text text-transparent">
-                Special Cakes & Bento Delights
-              </span>
+        {/* Left Side: Brand Panel (Hidden on Mobile) */}
+        <div className="hidden md:flex md:w-1/2 relative flex-col justify-center items-center text-white overflow-hidden p-12">
+          {/* Background image */}
+          <div className="absolute inset-0 bg-[url('/assets/auth-bg.png')] bg-cover bg-center"></div>
+          <div className="absolute inset-0 bg-black/30"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+          
+          <div className="relative z-10 text-center w-full max-w-sm">
+            <h1 className="text-4xl lg:text-5xl font-black tracking-tight leading-tight uppercase mb-6 text-white drop-shadow-md">
+              Welcome <br /> <span className="text-[#DDB68A]">Back</span>
             </h1>
-
-            <p className="text-xs sm:text-sm font-medium text-white/80 leading-relaxed">
-              Order fresh custom birthday cakes, bento treats (250g), and signature cocoa creations online.
+            <p className="text-sm font-medium text-white/95 leading-relaxed mb-8 drop-shadow">
+              Sign in to manage your special cake orders, bento delights, and enjoy exclusive member perks.
             </p>
-
-            {/* Real Store Product Categories */}
-            <div className="pt-2 space-y-2.5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-[#DDB68A]">
-                Explore Popular Categories:
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Link
-                  to="/shop?category=special cakes"
-                  className="px-3 py-1 rounded-xl bg-white/10 hover:bg-[#8C5124]/40 border border-white/15 text-xs font-bold text-[#F5E6D3] transition-all"
-                >
-                  ⭐ Special Cakes
-                </Link>
-                <Link
-                  to="/shop?category=birthday cakes"
-                  className="px-3 py-1 rounded-xl bg-white/10 hover:bg-[#8C5124]/40 border border-white/15 text-xs font-bold text-[#F5E6D3] transition-all"
-                >
-                  🎂 Birthday Cakes
-                </Link>
-                <Link
-                  to="/shop?category=bento cakes"
-                  className="px-3 py-1 rounded-xl bg-white/10 hover:bg-[#8C5124]/40 border border-white/15 text-xs font-bold text-[#F5E6D3] transition-all"
-                >
-                  🍰 Bento Cakes (250g)
-                </Link>
-              </div>
-            </div>
-
-            {/* Bakery Service Features */}
-            <div className="pt-3 border-t border-white/10 space-y-2">
-              <div className="flex items-center gap-2 text-xs font-bold text-white/90">
-                <ShieldCheck size={15} className="text-[#DDB68A] shrink-0" />
-                <span>Custom Weight Pricing (250g, 500g, 1kg+)</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs font-bold text-white/90">
-                <ShieldCheck size={15} className="text-[#DDB68A] shrink-0" />
-                <span>Fresh Local Delivery & Live Order Tracking</span>
-              </div>
-            </div>
           </div>
-
-          {/* Bottom Security & Brand Footer */}
-          <div className="relative z-10 pt-4 border-t border-white/10 flex items-center justify-between text-[11px] text-white/60 font-semibold">
-            <span className="flex items-center gap-1.5">
-              <ShieldCheck size={15} className="text-emerald-400" /> 256-bit Secure
-            </span>
-            <span className="font-extrabold text-[#DDB68A]">The Chocolate Mine</span>
+          
+          <div className="absolute bottom-8 left-8 right-8 flex justify-between items-center text-xs font-bold text-white/60">
+            <span className="flex items-center gap-1.5"><ShieldCheck size={16} className="text-emerald-400" /> Secure Login</span>
+            <span>The Chocolate Mine &copy; {new Date().getFullYear()}</span>
           </div>
         </div>
 
         {/* Right Side: Form Panel */}
-        <div className="lg:col-span-7 p-6 sm:p-10 lg:p-12 bg-[var(--card)] flex flex-col justify-center">
-          <div className="max-w-md w-full mx-auto space-y-7">
+        <div className="w-full md:w-1/2 flex flex-col justify-start md:justify-center p-6 sm:p-10 lg:p-14 bg-[var(--card)] min-h-[100dvh] sm:min-h-[600px] overflow-y-auto">
+          <div className="max-w-sm w-full mx-auto mt-0 md:mt-auto">
             
-            {/* Form Header */}
-            <div className="flex items-center justify-between gap-4 pb-4 border-b border-[var(--border)]/40">
-              <div>
-                <h2 className="text-2xl sm:text-3xl font-black text-[var(--heading)] tracking-tight uppercase">
-                  Sign In
-                </h2>
-                <p className="text-xs font-bold text-[var(--muted)] mt-1">
-                  Log in to manage your orders & profile
-                </p>
-              </div>
-
-              {/* Horizontal Pill Switcher */}
-              <div className="flex items-center bg-[var(--background)] p-1 rounded-xl border border-[var(--border)] shrink-0">
-                <span className="px-3.5 py-1.5 rounded-lg text-xs font-black bg-[var(--primary)] text-[var(--button-text)] shadow-sm whitespace-nowrap">
-                  Sign In
-                </span>
-                <Link
-                  to="/register"
-                  className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-[var(--muted)] hover:text-[var(--heading)] transition-colors whitespace-nowrap"
-                >
-                  Register
-                </Link>
-              </div>
-            </div>
-
-            {/* Login Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Mobile App Style Header */}
+            <div className="md:hidden -mx-6 sm:-mx-10 -mt-6 sm:-mt-10 mb-8 rounded-b-[2.5rem] overflow-hidden relative shadow-md h-[260px]">
+              <div className="absolute inset-0 bg-[url('/assets/auth-bg.png')] bg-cover bg-center"></div>
+              <div className="absolute inset-0 bg-black/20"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
               
-              {/* Email Input */}
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-black uppercase tracking-wider text-[var(--heading)] block ml-1">
-                  Email Address
-                </label>
-                <div className="relative flex items-center">
-                  <Mail className="absolute left-3.5 text-[#4E321E] dark:text-amber-400/80 pointer-events-none" size={16} />
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@example.com"
-                    className="w-full bg-[#DED0BD] focus:bg-[#E6D9C8] dark:bg-[#1A0E0A] border-2 border-[#A88D6F]/70 dark:border-amber-900/40 text-[#27190e] dark:text-[#F5E6D3] pl-10 pr-4 py-3 rounded-xl outline-none font-bold text-sm focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/20 transition-all placeholder:text-[#665040]/70 dark:placeholder:text-white/40 shadow-inner"
-                  />
-                </div>
-              </div>
+              <Link to="/" className="absolute top-6 left-6 p-2.5 text-white bg-white/20 backdrop-blur-md rounded-full transition-all hover:bg-white/30 active:scale-95 z-10 shadow-lg">
+                <ArrowLeft size={20} />
+              </Link>
 
-              {/* Password Input */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between px-1">
-                  <label className="text-[11px] font-black uppercase tracking-wider text-[var(--heading)]">
-                    Password
-                  </label>
-                  <Link
-                    to="/forgot-password"
-                    className="text-[11px] font-black text-[var(--primary)] hover:underline uppercase tracking-wider"
-                  >
-                    Forgot Password?
-                  </Link>
+              <div className="absolute bottom-6 left-0 right-0 text-center px-6 z-10 flex flex-col items-center">
+                <div className="flex items-center justify-center w-20 h-20 rounded-[1.25rem] bg-white shadow-2xl mb-3 overflow-hidden relative p-2">
+                  <img src={LightLogo} alt="The Chocolate Mine" className="w-full h-full object-contain" />
                 </div>
-                <div className="relative flex items-center">
-                  <Lock className="absolute left-3.5 text-[#4E321E] dark:text-amber-400/80 pointer-events-none" size={16} />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full bg-[#DED0BD] focus:bg-[#E6D9C8] dark:bg-[#1A0E0A] border-2 border-[#A88D6F]/70 dark:border-amber-900/40 text-[#27190e] dark:text-[#F5E6D3] pl-10 pr-10 py-3 rounded-xl outline-none font-bold text-sm focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/20 transition-all placeholder:text-[#665040]/70 dark:placeholder:text-white/40 shadow-inner"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 text-[#4E321E] dark:text-amber-400 hover:text-[var(--heading)] transition-colors p-1"
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
+                <h1 className="text-2xl font-black tracking-tight text-white drop-shadow-md">
+                  The Chocolate Mine
+                </h1>
+                <p className="text-white/80 font-bold text-sm mt-1 drop-shadow">Log in to manage your orders</p>
               </div>
-
-              {/* Submit Button */}
-              <div className="pt-2">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-3.5 px-6 rounded-xl bg-[var(--primary)] text-[var(--button-text)] hover:brightness-110 font-black text-xs uppercase tracking-widest shadow-md hover:shadow-lg active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  {loading ? (
-                    <span>Signing In...</span>
-                  ) : (
-                    <>
-                      <LogIn size={16} />
-                      <span>Sign In</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-
-            {/* Footer Redirect */}
-            <div className="text-center pt-3 border-t border-[var(--border)]/30">
-              <p className="text-xs font-bold text-[var(--muted)]">
-                New explorer?{' '}
-                <Link
-                  to="/register"
-                  className="font-black text-[var(--primary)] hover:underline uppercase tracking-wider ml-1"
-                >
-                  Create an account →
-                </Link>
-              </p>
             </div>
+
+            <AnimatePresence mode="wait">
+              <motion.div
+                key="step1"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-6"
+              >
+                <div className="hidden md:block text-center md:text-left mb-8">
+                  <h2 className="text-2xl sm:text-3xl font-black text-[var(--heading)] tracking-tight uppercase">Sign In</h2>
+                  <p className="text-sm font-bold text-[var(--muted)] mt-1">Please enter your credentials to login</p>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-black uppercase tracking-wider text-[var(--heading)] block ml-1">Email Address</label>
+                    <div className="relative flex items-center">
+                      <Mail className="absolute left-3.5 text-[var(--muted)] pointer-events-none" size={18} />
+                      <input
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="john@example.com"
+                        className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--heading)] pl-11 pr-4 py-3.5 rounded-xl outline-none font-bold text-sm focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/20 transition-all placeholder-[#4E2820]/50 dark:placeholder-[#E8D3CB]/50"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between px-1">
+                      <label className="text-[11px] font-black uppercase tracking-wider text-[var(--heading)]">Password</label>
+                      <Link to="/forgot-password" className="text-[11px] font-black text-[var(--primary)] hover:underline uppercase tracking-wider">
+                        Forgot Password?
+                      </Link>
+                    </div>
+                    <div className="relative flex items-center">
+                      <Lock className="absolute left-3.5 text-[var(--muted)] pointer-events-none" size={18} />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--heading)] pl-11 pr-10 py-3.5 rounded-xl outline-none font-bold text-sm focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/20 transition-all placeholder-[#4E2820]/50 dark:placeholder-[#E8D3CB]/50"
+                      />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 text-[var(--muted)] hover:text-[var(--heading)] transition-colors p-1">
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full mt-4 py-4 px-6 rounded-xl bg-[var(--primary)] text-[var(--button-text)] hover:brightness-110 font-black text-sm uppercase tracking-widest shadow-lg active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    {loading ? 'Signing In...' : 'Sign In'}
+                    {!loading && <ArrowRight size={18} />}
+                  </button>
+                </form>
+
+                <div className="text-center pt-6 pb-8 md:pb-0">
+                  <p className="text-sm font-bold text-[var(--muted)]">
+                    New explorer?{' '}
+                    <Link to="/register" className="font-black text-[var(--primary)] hover:underline ml-1">Create an account</Link>
+                  </p>
+                </div>
+              </motion.div>
+            </AnimatePresence>
 
           </div>
         </div>
@@ -263,5 +167,3 @@ const Login = () => {
 };
 
 export default Login;
-
-

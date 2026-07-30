@@ -8,6 +8,8 @@ const authService = {
     window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`;
   },
   forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
+  verifySignup: (data) => api.post('/auth/verify-signup', data),
+  resendSignupOtp: (email) => api.post('/auth/resend-signup-otp', { email }),
 };
 
 export default authService;

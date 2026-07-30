@@ -63,23 +63,95 @@ const sendTokenResponse = (user, statusCode, res) => {
 // @route   POST /api/v1/auth/signup
 exports.signup = asyncHandler(async (req, res, next) => {
   const { name, email, password, phone } = req.body;
+  const targetEmail = email.trim().toLowerCase();
 
-  const existingUser = await User.findOne({ email: email.toLowerCase() });
+  let user = await User.findOne({ email: targetEmail });
 
-  if (existingUser) {
-    return next(new AppError('Email already in use', 400));
+  if (user) {
+    if (user.isVerified) {
+      return next(new AppError('Email already in use', 400));
+    }
+    // If not verified, update details and resend OTP
+    user.name = name;
+    user.password = password;
+    user.phone = phone;
+    await user.save();
+  } else {
+    user = await User.create({
+      name,
+      email: targetEmail,
+      password,
+      phone,
+      role: 'user',
+      active: true,
+      isVerified: false,
+      provider: 'local'
+    });
   }
 
-  const user = await User.create({
-    name,
-    email: email.toLowerCase(),
-    password,
-    phone,
-    role: 'user',
-    active: true,
-    isVerified: true,
-    provider: 'local'
+  // 1. Generate OTP and Hash it
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const hashedOtp = await bcrypt.hash(otp, 12);
+
+  // 2. Wait for the Database record creation
+  await OtpSession.create({
+    email: targetEmail,
+    hashedOtp,
+    type: 'register',
+    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
   });
+
+  // 3. Send email in background
+  emailService.sendSignupOTP(targetEmail, otp).catch((err) => {
+    console.error('Background Email Sending Failed:', err.message);
+  });
+
+  // 4. Respond to frontend
+  res.status(201).json({
+    status: 'success',
+    message: 'OTP sent to your email',
+    requiresOtp: true,
+    email: targetEmail
+  });
+});
+
+// @desc    Verify Signup OTP
+// @route   POST /api/v1/auth/verify-signup
+exports.verifySignup = asyncHandler(async (req, res, next) => {
+  const { email, otp } = req.body;
+
+  if (!email || !otp) {
+    return next(new AppError('Please provide email and otp', 400));
+  }
+
+  const session = await OtpSession.findOne({
+    email: email.trim().toLowerCase(),
+    type: 'register',
+    isUsed: false,
+    expiresAt: { $gt: new Date() }
+  }).sort('-createdAt');
+
+  if (!session) {
+    return next(new AppError('OTP expired or not found. Please request a new one.', 400));
+  }
+
+  const isCorrect = await bcrypt.compare(otp, session.hashedOtp);
+
+  if (!isCorrect) {
+    return next(new AppError('Invalid OTP. Please try again.', 400));
+  }
+
+  const user = await User.findOne({ email: email.trim().toLowerCase() });
+
+  if (!user) {
+    return next(new AppError('User not found', 404));
+  }
+
+  user.isVerified = true;
+  await user.save({ validateBeforeSave: false });
+
+  session.isUsed = true;
+  await session.save();
 
   try {
     const notificationManager = require('../services/notificationManager');
@@ -88,7 +160,47 @@ exports.signup = asyncHandler(async (req, res, next) => {
     console.error('Notification Error:', err);
   }
 
-  sendTokenResponse(user, 201, res);
+  sendTokenResponse(user, 200, res);
+});
+
+// @desc    Resend Signup OTP
+// @route   POST /api/v1/auth/resend-signup-otp
+exports.resendSignupOtp = asyncHandler(async (req, res, next) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return next(new AppError('Please provide an email address', 400));
+  }
+
+  const targetEmail = email.trim().toLowerCase();
+  const user = await User.findOne({ email: targetEmail });
+
+  if (!user) {
+    return next(new AppError('No user found with that email address', 404));
+  }
+
+  if (user.isVerified) {
+    return next(new AppError('Account is already verified. Please login.', 400));
+  }
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const hashedOtp = await bcrypt.hash(otp, 12);
+
+  await OtpSession.create({
+    email: targetEmail,
+    hashedOtp,
+    type: 'register',
+    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+  });
+
+  emailService.sendSignupOTP(targetEmail, otp).catch((err) => {
+    console.error('Background Email Sending Failed:', err.message);
+  });
+
+  res.status(200).json({
+    status: 'success',
+    message: 'OTP resent to your email'
+  });
 });
 
 // @desc    Normal Login
@@ -115,6 +227,18 @@ exports.login = asyncHandler(async (req, res, next) => {
   if (!user.password) {
     console.log(`❌ Login failed: User ${trimmedEmail} has no password set (likely a Google user)`);
     return next(new AppError('This account does not have a password. Please login with Google.', 401));
+  }
+
+  if (!user.isVerified) {
+    console.log(`❌ Login failed: User ${trimmedEmail} is not verified`);
+    // We send a specific error format or message so frontend can handle it and redirect to OTP screen if needed,
+    // or just return 403
+    return res.status(403).json({
+      status: 'fail',
+      message: 'Please verify your email first',
+      requiresOtp: true,
+      email: trimmedEmail
+    });
   }
 
   let isCorrect = false;
