@@ -64,7 +64,7 @@ export const getExistingFcmToken = async () => {
   if (!messaging) return null;
 
   // Only proceed if permission is already granted. Avoids prompting.
-  if (Notification.permission !== 'granted') return null;
+  if (!('Notification' in window) || Notification.permission !== 'granted') return null;
 
   const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
   if (!vapidKey) return null;
@@ -92,6 +92,10 @@ export const requestFirebaseNotificationPermission = async () => {
   }
 
   try {
+    if (!('Notification' in window)) {
+      console.warn('This browser does not support notifications, or you are not on a secure HTTPS connection.');
+      return null;
+    }
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
       const registration = await navigator.serviceWorker.ready;
