@@ -124,9 +124,10 @@ const Navbar = () => {
                       {['coimbatore', 'pan india'].map((city) => (
                         <button
                           key={city} onClick={() => { setDeliveryCity(city); setIsLocationOpen(false); }}
-                          className="w-full text-left px-4 py-2 text-[11px] font-black uppercase tracking-wider hover:bg-[var(--primary)] hover:text-[var(--button-text)] rounded-xl text-[var(--heading)] transition-colors cursor-pointer"
+                          disabled={city === 'pan india'}
+                          className={`w-full text-left px-4 py-2 text-[11px] font-black uppercase tracking-wider rounded-xl transition-colors ${city === 'pan india' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[var(--primary)] hover:text-[var(--button-text)] text-[var(--heading)] cursor-pointer'}`}
                         >
-                          {city === 'pan india' ? 'PAN INDIA' : 'COIMBATORE'}
+                          {city === 'pan india' ? 'PAN INDIA (Coming Soon)' : 'COIMBATORE'}
                         </button>
                       ))}
                     </motion.div>
@@ -244,9 +245,10 @@ const Navbar = () => {
                     {['coimbatore', 'pan india'].map((city) => (
                       <button
                         key={city} onClick={() => { setDeliveryCity(city); setIsLocationOpen(false); }}
-                        className="w-full text-left px-5 py-3 text-[11px] font-black uppercase tracking-wider hover:bg-[var(--primary)] hover:text-[var(--button-text)] rounded-xl text-[var(--heading)] transition-colors cursor-pointer"
+                        disabled={city === 'pan india'}
+                        className={`w-full text-left px-5 py-3 text-[11px] font-black uppercase tracking-wider rounded-xl transition-colors ${city === 'pan india' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[var(--primary)] hover:text-[var(--button-text)] text-[var(--heading)] cursor-pointer'}`}
                       >
-                        {city === 'pan india' ? 'PAN INDIA' : 'COIMBATORE'}
+                        {city === 'pan india' ? 'PAN INDIA (Coming Soon)' : 'COIMBATORE'}
                       </button>
                     ))}
                   </motion.div>
