@@ -268,7 +268,7 @@ const AdminStaff = () => {
               value={formData.name}
               onChange={(e) => setFormData({...formData, name: e.target.value})}
               className="w-full bg-input border border-border rounded-xl px-4 py-3 outline-none focus:border-secondary transition-all font-bold"
-              placeholder="e.g. John Doe"
+              placeholder="Name"
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
