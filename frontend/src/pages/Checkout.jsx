@@ -1452,21 +1452,21 @@ const Checkout = () => {
                               )}
                             </div>
                           </div>
-                          <div className="flex flex-col sm:flex-row items-center gap-2">
+                          <div className="flex flex-row items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
                             {deliveryInfo.position && (
                               <Button
                                 onClick={() => setDeliveryInfo({ ...deliveryInfo, position: null })}
-                                className="bg-red-50 text-red-600 border border-red-200 dark:bg-red-500/10 dark:text-red-500 dark:border-red-500/20 hover:bg-red-100 dark:hover:bg-red-500/20 text-xs font-black uppercase tracking-widest px-4 py-2.5 whitespace-nowrap transition-colors"
+                                className="flex-1 sm:flex-none justify-center bg-red-50 text-red-600 border border-red-200 dark:bg-red-500/10 dark:text-red-500 dark:border-red-500/20 hover:bg-red-100 dark:hover:bg-red-500/20 text-[10px] sm:text-xs font-black uppercase tracking-widest px-2 sm:px-3 py-2 whitespace-nowrap transition-colors"
                               >
-                                <Trash2 size={12} className="mr-1.5 inline" />
+                                <Trash2 size={12} className="mr-1 inline" />
                                 Remove
                               </Button>
                             )}
                             <Button
                               onClick={() => setShowMap(true)}
-                              className="bg-primary text-button-text hover:bg-primary/90 text-xs font-black uppercase tracking-widest px-4 py-2.5 whitespace-nowrap shadow-md transition-colors"
+                              className="flex-1 sm:flex-none justify-center bg-primary text-button-text hover:bg-primary/90 text-[10px] sm:text-xs font-black uppercase tracking-widest px-2 sm:px-3 py-2 whitespace-nowrap shadow-md transition-colors"
                             >
-                              <Navigation size={12} className="mr-1.5 inline" />
+                              <Navigation size={12} className="mr-1 inline" />
                               {deliveryInfo.position ? 'Update Map' : 'Select on Map'}
                             </Button>
                           </div>
