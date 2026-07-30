@@ -4,6 +4,7 @@ const Order = require('../models/Order');
 const Product = require('../models/Product');
 const User = require('../models/User');
 const Payment = require('../models/Payment');
+const Addon = require('../models/Addon');
 const cacheService = require('../services/cacheService');
 const telegramService = require('../services/telegramService');
 const asyncHandler = require('../utils/asyncHandler');
@@ -41,6 +42,14 @@ const calculateDistanceKm = (lat1, lon1, lat2, lon2) => {
   return R * c;
 };
 
+const validateQuantity = (qty) => {
+  const num = Number(qty);
+  if (!Number.isInteger(num) || num <= 0 || num > 100) {
+    throw new AppError('Invalid quantity. Must be an integer between 1 and 100.', 400);
+  }
+  return num;
+};
+
 const getWeightMultiplier = (weightStr) => {
   if (!weightStr) return 1;
   const w = String(weightStr).toLowerCase().replace(/\s+/g, '');
@@ -51,7 +60,7 @@ const getWeightMultiplier = (weightStr) => {
   if (w.includes('1kg')) return 2;
   if (w.includes('2kg')) return 4;
   if (w.includes('3kg')) return 6;
-  return 1;
+  throw new AppError(`Invalid weight selected: ${weightStr}`, 400);
 };
 
 const BENTO_FLAVOR_PRICES = {
@@ -83,12 +92,12 @@ const getFlavorPriceHelper = (flavor) => {
 const computePricing = ({ cartItems, addressLat, addressLng, discount = 0, paymentMethod = 'ONLINE' }) => {
   const subtotal = cartItems.reduce((sum, item) => {
     const unitPrice = Number(item.finalPrice ?? item.price ?? 0);
-    const qty = Number(item.qty ?? 0);
+    const qty = validateQuantity(item.qty);
     
     let itemTotal = unitPrice * qty;
     if (item.addons && Array.isArray(item.addons)) {
       item.addons.forEach(addon => {
-        itemTotal += Number(addon.price || 0) * (addon.qty || 1) * qty;
+        itemTotal += Number(addon.price || 0) * validateQuantity(addon.qty || 1) * qty;
       });
     }
     
@@ -175,25 +184,10 @@ const computeCustomCakePrice = async (options) => {
 };
 
 /**
- * Extract price from frontend payload or compute from database.
- * Priority: 1) frontend price fields, 2) database computation.
+ * Compute custom cake price from database.
+ * Ignores any frontend price fields to prevent tampering.
  */
 const getCustomCakePrice = async (item) => {
-  // First try frontend-provided price fields
-  const priceFields = [
-    item.variantPrice,
-    item.offerPrice,
-    item.price,
-    item.finalPrice,
-    item.totalPrice,
-    item.options?.price,
-    item.options?.totalPrice
-  ];
-  for (const val of priceFields) {
-    const num = Number(val);
-    if (!isNaN(num) && num > 0) return num;
-  }
-  // If none, compute from database using options
   const options = item.options || {};
   if (!options.theme || !options.flavor || !options.weight) {
     throw new AppError('Missing required custom cake options (theme, flavor, weight)', 400);
@@ -217,8 +211,7 @@ const buildCustomBuilderCartItem = async (item) => {
   const productId = getCustomBuilderObjectId(item);
   const options = item.options || {};
   const price = await getCustomCakePrice(item);   // now async
-  const qty = Number(item.qty ?? item.quantity ?? 1);
-  if (qty <= 0) throw new AppError('Invalid quantity for custom cake.', 400);
+  const qty = validateQuantity(item.qty ?? item.quantity ?? 1);
 
   return {
     productId,
@@ -271,6 +264,60 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
 
   let cart;
 
+  // Securely resolve addons from DB
+  const addonIdsToFetch = new Set();
+  const processItemAddons = (item) => {
+    if (item.addons && Array.isArray(item.addons)) {
+      item.addons.forEach(a => {
+        const id = a._id || a.addonId;
+        if (id && isValidObjectIdString(id)) addonIdsToFetch.add(id);
+      });
+    }
+  };
+
+  if (directItem) {
+    processItemAddons(directItem);
+  } else if (req.body.items && Array.isArray(req.body.items)) {
+    req.body.items.forEach(processItemAddons);
+  }
+
+  const addonMap = {};
+  if (addonIdsToFetch.size > 0) {
+    const addonsFromDb = await Addon.find({ _id: { $in: Array.from(addonIdsToFetch) }, isActive: true });
+    addonsFromDb.forEach(addon => {
+      addonMap[addon._id.toString()] = addon;
+    });
+  }
+
+  const validateAndMapAddons = (itemAddons) => {
+    if (!itemAddons || !Array.isArray(itemAddons)) return [];
+    
+    const seenIds = new Set();
+    const uniqueAddons = [];
+    
+    for (const a of itemAddons) {
+      const aId = a._id || a.addonId;
+      
+      if (seenIds.has(aId)) {
+        throw new AppError('Duplicate addons are not allowed', 400);
+      }
+      seenIds.add(aId);
+      
+      const dbAddon = addonMap[aId];
+      if (!dbAddon) throw new AppError('Invalid or inactive addon selected', 400);
+      
+      const aQty = validateQuantity(a.qty || 1);
+      uniqueAddons.push({
+        addonId: dbAddon._id,
+        name: dbAddon.name,
+        price: dbAddon.price,
+        qty: aQty,
+        image: dbAddon.image
+      });
+    }
+    return uniqueAddons;
+  };
+
   // Direct item (Buy Now)
   if (directItem) {
     if (isCustomBuilderItem(directItem)) {
@@ -284,9 +331,9 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
         dbProductId = parts[parts.length - 1];
       }
       const product = await Product.findById(dbProductId);
-      if (!product || product.stock === false) {
-        console.error('❌ Stock validation failed for directItem product ID:', dbProductId, 'Found product:', product?.name, 'Stock state:', product?.stock);
-        throw new AppError(`Stock error: ${product?.name || 'Item'} is out of stock`, 400);
+      if (!product || product.stock === false || product.isActive === false) {
+        console.error('❌ Stock/Status validation failed for directItem product ID:', dbProductId);
+        throw new AppError(`Stock error: ${product?.name || 'Item'} is out of stock or unavailable`, 400);
       }
 
       let isCustomCake = false;
@@ -335,10 +382,7 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
           throw new AppError(`Stock error: Selected combination is out of stock`, 400);
       }
 
-      const payloadPriceDirect = Number(directItem.variantPrice || directItem.finalPrice || directItem.price);
-      if (!isNaN(payloadPriceDirect) && payloadPriceDirect > salePrice) {
-        salePrice = payloadPriceDirect;
-      }
+      // Completely ignore payloadPriceDirect as DB price is the sole source of truth
 
       let finalPrice = salePrice;
       let activeCouponCode = null;
@@ -356,14 +400,18 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
         }
       }
 
+      const validatedQty = validateQuantity(directItem.qty);
+      const safeAddons = validateAndMapAddons(directItem.addons);
+      const addonSum = safeAddons.reduce((sum, a) => sum + (a.price * a.qty), 0);
+
       cart = {
         items: [{
-          productId: product._id, name: product.name, qty: directItem.qty, price: product.price, image: product.image,
+          productId: product._id, name: product.name, qty: validatedQty, price: product.price, image: product.image,
           finalPrice, activeCouponCode, selectedFlavor: directItem.selectedFlavor || (directItem.options && (directItem.options.color || directItem.options.flavor)),
           selectedWeight: directItem.selectedWeight || (directItem.options && directItem.options.weight), isCustomCake, customDetails,
-          category: product.category, addons: directItem.addons
+          category: product.category, addons: safeAddons
         }],
-        total: (finalPrice * directItem.qty) + (directItem.addons?.reduce((sum, a) => sum + (Number(a.price || 0) * (a.qty || 1) * directItem.qty), 0) || 0)
+        total: (finalPrice * validatedQty) + (addonSum * validatedQty)
       };
     }
   } else {
@@ -400,9 +448,9 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
           dbProductId = parts[parts.length - 1];
         }
         const product = productMap[dbProductId];
-        if (!product || product.stock === false) {
-          console.error('❌ Stock validation failed for cart item product ID:', dbProductId, 'Found product:', product?.name, 'Stock state:', product?.stock);
-          throw new AppError(`Stock error: ${product?.name || 'Item'} is out of stock`, 400);
+        if (!product || product.stock === false || product.isActive === false) {
+          console.error('❌ Stock/Status validation failed for cart item product ID:', dbProductId);
+          throw new AppError(`Stock error: ${product?.name || 'Item'} is out of stock or unavailable`, 400);
         }
 
         let isCustomCake = false;
@@ -449,10 +497,7 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
           if (variant) salePrice = variant.price;
         }
 
-        const payloadPriceCart = Number(item.variantPrice || item.finalPrice || item.price);
-        if (!isNaN(payloadPriceCart) && payloadPriceCart > salePrice) {
-          salePrice = payloadPriceCart;
-        }
+        // Completely ignore payloadPriceCart as DB price is the sole source of truth
 
         let finalPrice = salePrice;
         let activeCouponCode = null;
@@ -470,18 +515,18 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
           }
         }
 
+        const validatedQty = validateQuantity(item.qty);
+        const safeAddons = validateAndMapAddons(item.addons);
+        const addonSum = safeAddons.reduce((sum, a) => sum + (a.price * a.qty), 0);
+
         validatedItems.push({
-          productId: product._id, name: product.name, qty: item.qty, price: product.price, image: product.image,
+          productId: product._id, name: product.name, qty: validatedQty, price: product.price, image: product.image,
           finalPrice, activeCouponCode, selectedFlavor: item.options?.color || item.options?.flavor || item.selectedFlavor,
           selectedWeight: item.options?.weight || item.selectedWeight, isCustomCake, customDetails,
-          category: product.category, addons: item.addons
+          category: product.category, addons: safeAddons
         });
         
-        let addonSum = 0;
-        if (item.addons && Array.isArray(item.addons)) {
-          addonSum = item.addons.reduce((sum, a) => sum + (Number(a.price || 0) * (a.qty || 1)), 0);
-        }
-        total += (finalPrice + addonSum) * item.qty;
+        total += (finalPrice + addonSum) * validatedQty;
       }
       cart = { items: validatedItems, total };
     } else {
@@ -527,9 +572,9 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
       if (!dbProductId || !/^[0-9a-fA-F]{24}$/.test(String(dbProductId))) continue;
       
       const product = validationMap[dbProductId.toString()];
-      if (!product || product.stock === false) {
-        console.error('❌ Stock validation failed for product ID:', dbProductId, 'Found product:', product?.name, 'Stock state:', product?.stock);
-        throw new AppError(`Stock error: ${product?.name || 'Item'} is currently out of stock`, 400);
+      if (!product || product.stock === false || product.isActive === false) {
+        console.error('❌ Stock/Status validation failed for product ID:', dbProductId);
+        throw new AppError(`Stock error: ${product?.name || 'Item'} is currently out of stock or unavailable`, 400);
       }
     }
   }
@@ -661,9 +706,17 @@ exports.verifyPayment = asyncHandler(async (req, res) => {
   if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature)
     throw new AppError('Missing payment verification fields', 400);
 
-  const existingOrder = await Order.findById(orderId);
-  if (existingOrder && existingOrder.paymentStatus === 'paid') {
+  const existingOrder = await Order.findOne({ _id: orderId, userId: req.user._id });
+  if (!existingOrder) {
+    throw new AppError('Order not found or unauthorized', 404);
+  }
+
+  if (existingOrder.paymentStatus === 'paid') {
     return res.status(200).json({ status: 'success', message: 'Order already verified', data: existingOrder });
+  }
+
+  if (existingOrder.razorpayOrderId !== razorpay_order_id) {
+    throw new AppError('Invalid order ID for payment verification', 400);
   }
 
   const body = razorpay_order_id + "|" + razorpay_payment_id;
@@ -714,9 +767,13 @@ exports.verifyPayment = asyncHandler(async (req, res) => {
 exports.handlePaymentFailure = asyncHandler(async (req, res) => {
   const { orderId, reason } = req.body;
   if (orderId) {
-    const order = await Order.findByIdAndUpdate(orderId, { paymentStatus: 'failed', paymentFailureReason: reason || 'Payment failed' }, { new: true });
-    await Payment.findOneAndUpdate({ orderId }, { status: 'failed', failureReason: reason || 'Payment failed' });
+    const order = await Order.findOneAndUpdate(
+      { _id: orderId, userId: req.user._id },
+      { paymentStatus: 'failed', paymentFailureReason: reason || 'Payment failed' },
+      { new: true }
+    );
     if (order) {
+      await Payment.findOneAndUpdate({ orderId }, { status: 'failed', failureReason: reason || 'Payment failed' });
       try {
         const notificationManager = require('../services/notificationManager');
         if (notificationManager?.notifyPaymentFailure) notificationManager.notifyPaymentFailure(order, reason).catch(err => console.error(err));
