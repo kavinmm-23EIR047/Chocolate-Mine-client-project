@@ -189,11 +189,11 @@ const OrderDetailsModal = ({ order, onClose }) => {
                 <span className="font-bold">{order.paymentMethod || 'ONLINE'}</span>
               </div>
               {order.paymentMethod === 'ONLINE' && order.paymentStatus !== 'paid' && (
-                <div className="mt-3 p-3 bg-red-600/10 border border-red-600/20 rounded-xl">
-                  <p className="text-xs font-bold text-red-600 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                <div className="mt-3 p-3 bg-red-600 text-white rounded-xl shadow-md">
+                  <p className="text-xs font-black uppercase tracking-wider mb-1 flex items-center gap-1.5">
                     <X size={14} /> Payment Issue ({order.paymentStatus})
                   </p>
-                  <p className="text-xs text-red-600/80 font-medium">
+                  <p className="text-xs font-medium text-white/90">
                     {order.paymentFailureReason || 'Customer initiated the payment but did not complete the transaction successfully.'}
                   </p>
                 </div>
@@ -498,7 +498,7 @@ const AdminOrders = () => {
                         <div className="flex items-center justify-end gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
                           <button
                             onClick={() => handleViewOrderDetails(order._id)}
-                            className="p-2 hover:bg-secondary/10 text-muted hover:text-secondary rounded-xl transition-colors shrink-0"
+                            className="p-2 bg-heading text-background hover:opacity-90 rounded-xl transition-colors shrink-0 shadow-sm"
                             title="View Order Details"
                           >
                             <Eye size={18} />
@@ -600,7 +600,7 @@ const AdminOrders = () => {
                       </Badge>
                     </div>
                     {order.paymentMethod === 'ONLINE' && order.paymentStatus !== 'paid' && order.paymentFailureReason && (
-                      <p className="text-[10px] text-red-600 text-right leading-tight w-full mt-1">
+                      <p className="text-[10px] text-heading font-bold text-right leading-tight w-full mt-1">
                         Issue: {order.paymentFailureReason}
                       </p>
                     )}
@@ -614,7 +614,7 @@ const AdminOrders = () => {
                   <div className="pt-3 mt-3 border-t border-border/50 flex items-center justify-end gap-2">
                     <button
                       onClick={(e) => { e.stopPropagation(); handleViewOrderDetails(order._id); }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-secondary/10 hover:bg-secondary/20 text-secondary rounded-lg text-xs font-bold transition-colors"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-heading text-background rounded-lg text-xs font-bold hover:opacity-90 transition-all shadow-sm"
                     >
                       <Eye size={14} /> View Details
                     </button>
@@ -632,7 +632,7 @@ const AdminOrders = () => {
                             link.click();
                           } catch (err) { toast.error('Failed to download invoice'); }
                         }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-border/50 hover:bg-border text-heading rounded-lg text-xs font-bold transition-colors"
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-heading text-background rounded-lg text-xs font-bold hover:opacity-90 transition-all shadow-sm"
                       >
                         <Download size={14} /> Invoice
                       </button>
