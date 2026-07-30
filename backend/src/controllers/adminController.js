@@ -54,7 +54,7 @@ exports.createStaff = asyncHandler(async (req, res, next) => {
 // @desc    Get All Staff
 // @route   GET /api/admin/staff
 exports.getAllStaff = asyncHandler(async (req, res) => {
-  const staff = await User.find({ role: 'staff' }).select('-password');
+  const staff = await User.find({ role: { $in: ['staff', 'admin'] } }).select('-password');
   res.status(200).json({
     status: 'success',
     count: staff.length,
