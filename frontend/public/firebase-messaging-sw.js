@@ -52,8 +52,16 @@ try {
       ];
     }
 
-    // CRITICAL MOBILE FIX: Return the promise so the OS doesn't kill the worker early
-    return self.registration.showNotification(title, notificationOptions);
+    // CRITICAL MOBILE FIX: Wrap in try/catch for iOS Safari which crashes if 'actions' or 'vibrate' are used
+    try {
+      return self.registration.showNotification(title, notificationOptions);
+    } catch (err) {
+      console.warn('[SW] Notification failed with options, retrying safe version for Safari:', err);
+      // Strip out unsupported Safari options
+      delete notificationOptions.actions;
+      delete notificationOptions.vibrate;
+      return self.registration.showNotification(title, notificationOptions);
+    }
   });
 
   // Removed manual push listener to prevent conflicts with Firebase SDK

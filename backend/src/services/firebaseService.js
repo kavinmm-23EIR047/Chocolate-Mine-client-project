@@ -80,19 +80,19 @@ const sendPushNotification = async (tokens, title, body, data = {}) => {
     }
   });
 
-  // Inject title and message into the data object for Data-only notifications
+  // Inject title and message into the data object for foreground handling
   stringifiedData.title = String(title);
   stringifiedData.message = String(body);
 
   const message = {
+    notification: {
+      title: title,
+      body: body
+    },
     data: stringifiedData,
     webpush: {
-      headers: {
-        Urgency: 'high',
-        TTL: '86400'
-      },
       fcmOptions: {
-        link: stringifiedData.url || '/'
+        link: stringifiedData.url || (stringifiedData.orderId ? `/track/${stringifiedData.orderId}` : '/')
       }
     },
     tokens: validTokens,
