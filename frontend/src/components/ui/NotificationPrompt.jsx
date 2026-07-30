@@ -8,7 +8,7 @@ import Modal from './Modal';
 import Button from './Button';
 
 const NotificationPrompt = () => {
-  const { user, syncFcmToken, disableNotifications } = useAuth();
+  const { user, enableNotifications, disableNotifications } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -16,7 +16,7 @@ const NotificationPrompt = () => {
 
   useEffect(() => {
     // Auto-prompt on each session for logged-in users who haven't enabled notifications yet
-    if (user && !hasFcmToken) {
+    if (user && !hasFcmToken && Notification.permission !== 'denied') {
       // Use sessionStorage so the prompt re-appears each new browser session
       const hasSeenPromptThisSession = sessionStorage.getItem('notificationPromptSeen');
       if (!hasSeenPromptThisSession) {
@@ -48,11 +48,9 @@ const NotificationPrompt = () => {
         await disableNotifications();
         toast.success("Push notifications disabled");
       } else {
-        // Enable notifications
-        await syncFcmToken();
-        // Check if enabled successfully
-        const isPermissionGranted = Notification.permission === 'granted';
-        if (isPermissionGranted) {
+        // Enable notifications (Explicit request)
+        const success = await enableNotifications();
+        if (success) {
           toast.success("🎉 Push notifications enabled! You'll get order updates and offers.");
         } else if (Notification.permission === 'denied') {
           toast.error(

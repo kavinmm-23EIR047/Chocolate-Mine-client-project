@@ -91,12 +91,6 @@ const sendPushNotification = async (tokens, title, body, data = {}) => {
         Urgency: 'high',
         TTL: '86400'
       },
-      notification: {
-        title: String(title),
-        body: String(body),
-        icon: '/logo.png',
-        badge: '/logo.png'
-      },
       fcmOptions: {
         link: stringifiedData.url || '/'
       }

@@ -60,6 +60,28 @@ export const logoutGoogle = async () => {
 export { auth, onAuthStateChanged };
 
 // Messaging Helper Functions
+export const getExistingFcmToken = async () => {
+  if (!messaging) return null;
+
+  // Only proceed if permission is already granted. Avoids prompting.
+  if (Notification.permission !== 'granted') return null;
+
+  const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+  if (!vapidKey) return null;
+
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    const currentToken = await getToken(messaging, { 
+      vapidKey,
+      serviceWorkerRegistration: registration
+    });
+    return currentToken || null;
+  } catch (err) {
+    console.warn('Silent FCM token fetch failed:', err);
+    return null;
+  }
+};
+
 export const requestFirebaseNotificationPermission = async () => {
   if (!messaging) return null;
 
@@ -74,7 +96,7 @@ export const requestFirebaseNotificationPermission = async () => {
     if (permission === 'granted') {
       const registration = await navigator.serviceWorker.ready;
       const currentToken = await getToken(messaging, { 
-        vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
+        vapidKey,
         serviceWorkerRegistration: registration
       });
       if (currentToken) {

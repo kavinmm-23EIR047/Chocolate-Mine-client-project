@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../utils/api';
-import { requestFirebaseNotificationPermission, auth, onAuthStateChanged, logoutGoogle } from '../firebase';
+import { requestFirebaseNotificationPermission, getExistingFcmToken, auth, onAuthStateChanged, logoutGoogle } from '../firebase';
 
 const AuthContext = createContext();
 
@@ -22,7 +22,7 @@ export const AuthProvider = ({ children }) => {
   // Register FCM token with backend
   const syncFcmToken = async () => {
     try {
-      const token = await requestFirebaseNotificationPermission();
+      const token = await getExistingFcmToken();
       if (token) {
         const deviceName = getDeviceName();
         await api.put('/users/fcm-token', {
@@ -49,6 +49,42 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (err) {
       console.error('FCM sync failed:', err.message);
+    }
+  };
+
+  // Explicitly request permission and register token (called by user action)
+  const enableNotifications = async () => {
+    try {
+      const token = await requestFirebaseNotificationPermission();
+      if (token) {
+        const deviceName = getDeviceName();
+        await api.put('/users/fcm-token', {
+          fcmToken: token,
+          deviceName
+        });
+        console.log('🔔 FCM token enabled successfully');
+        
+        // Update user fcmTokens array locally
+        setUser(prev => {
+          if (!prev) return prev;
+          const updatedTokens = prev.fcmTokens ? [...prev.fcmTokens] : [];
+          const idx = updatedTokens.findIndex(t => t.token === token);
+          if (idx >= 0) {
+            updatedTokens[idx].deviceName = deviceName;
+            updatedTokens[idx].createdAt = new Date();
+          } else {
+            updatedTokens.push({ token, deviceName, createdAt: new Date() });
+          }
+          const updatedUser = { ...prev, fcmTokens: updatedTokens };
+          sessionStorage.setItem('user', JSON.stringify(updatedUser));
+          return updatedUser;
+        });
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('Failed to enable notifications:', err.message);
+      return false;
     }
   };
 
@@ -235,7 +271,6 @@ export const AuthProvider = ({ children }) => {
     try {
       await Promise.race([
         Promise.allSettled([
-          disableNotifications().catch(() => {}),
           api.post('/auth/logout').catch(() => {}),
           logoutGoogle().catch(() => {})
         ]),
@@ -266,6 +301,7 @@ export const AuthProvider = ({ children }) => {
       logout, 
       updateUser,
       syncFcmToken,
+      enableNotifications,
       disableNotifications
     }}>
       {children}

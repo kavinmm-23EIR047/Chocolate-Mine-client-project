@@ -20,7 +20,7 @@ const NotificationDropdown = ({ iconClass, buttonClass, showLabel, iconSize = 20
       const res = await api.get('/notifications');
       const data = res.data.data || [];
       setNotifications(data.slice(0, 5)); // show top 5 in dropdown
-      
+
       const countRes = await api.get('/notifications/unread-count');
       setUnreadCount(countRes.data.count || 0);
     } catch (err) {
@@ -35,7 +35,7 @@ const NotificationDropdown = ({ iconClass, buttonClass, showLabel, iconSize = 20
 
   useEffect(() => {
     if (!user) return;
-    
+
     const socket = getSocket();
     if (socket) {
       const handleNewNotification = (data) => {
@@ -102,7 +102,7 @@ const NotificationDropdown = ({ iconClass, buttonClass, showLabel, iconSize = 20
 
   const handleNotificationClick = async (notif) => {
     setIsOpen(false);
-    
+
     if (!notif.isRead) {
       try {
         await api.patch(`/notifications/${notif._id}/read`);
@@ -121,10 +121,10 @@ const NotificationDropdown = ({ iconClass, buttonClass, showLabel, iconSize = 20
 
   const getIcon = (type) => {
     const t = String(type).toLowerCase();
-    if (t.includes('delivered') || t.includes('success')) return <CheckCircle size={16} className="text-green-500" />;
-    if (t.includes('preparing') || t.includes('packed')) return <Package size={16} className="text-yellow-500" />;
-    if (t.includes('delivery')) return <ShoppingBag size={16} className="text-blue-500" />;
-    return <Clock size={16} className="text-primary" />;
+    if (t.includes('delivered') || t.includes('success')) return <CheckCircle size={15} className="text-emerald-700 dark:text-green-500" />;
+    if (t.includes('preparing') || t.includes('packed')) return <Package size={15} className="text-amber-700 dark:text-yellow-500" />;
+    if (t.includes('delivery')) return <ShoppingBag size={15} className="text-blue-700 dark:text-blue-500" />;
+    return <Clock size={15} className="text-[#5C4028] dark:text-primary" />;
   };
 
   const toggleDropdown = () => {
@@ -135,22 +135,28 @@ const NotificationDropdown = ({ iconClass, buttonClass, showLabel, iconSize = 20
 
   return (
     <div className="relative" ref={dropdownRef}>
+      {/* Button Trigger */}
       <button
         onClick={toggleDropdown}
-        className={buttonClass || "relative p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center"}
+        className={buttonClass || "relative p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center gap-2"}
         aria-label="Notifications"
       >
-        <div className="relative inline-flex items-center justify-center">
+        <div className="relative inline-flex items-center justify-center shrink-0">
           <Bell size={iconSize} className={iconClass || "text-heading"} />
           {unreadCount > 0 && (
-            <span className="absolute -top-1.5 -right-2.5 min-w-[18px] h-[18px] px-1 bg-accent text-[#120807] text-[10px] font-black rounded-full flex items-center justify-center leading-none z-10 shadow-sm border border-background">
+            <span className="absolute -top-1.5 -right-2.5 min-w-[18px] h-[18px] px-1 text-[10px] font-black leading-none z-10 shadow-sm notification-dot">
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
         </div>
-        {showLabel && <span className="text-[10px] sm:text-[11px] font-extrabold text-muted group-hover:text-primary uppercase tracking-wider whitespace-nowrap leading-none transition-colors mt-0.5">Alerts</span>}
+        {showLabel && (
+          <span className="text-[10px] sm:text-[11px] font-extrabold text-muted group-hover:text-primary uppercase tracking-wider whitespace-nowrap leading-none transition-colors">
+            Alerts
+          </span>
+        )}
       </button>
 
+      {/* Main Dropdown */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -158,15 +164,20 @@ const NotificationDropdown = ({ iconClass, buttonClass, showLabel, iconSize = 20
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="fixed top-[80px] left-4 right-4 mx-auto w-auto max-w-[420px] sm:absolute sm:top-full sm:mt-2 sm:left-auto sm:right-0 sm:mx-0 sm:w-[420px] bg-card border border-border/50 rounded-2xl shadow-xl z-[999] overflow-hidden origin-top"
+            className="fixed top-[80px] left-3 right-3 mx-auto w-auto max-w-[420px] sm:absolute sm:top-full sm:mt-2 sm:left-auto sm:right-0 sm:mx-0 sm:w-[420px] bg-[#E6D2B8] dark:bg-card border border-[#C8B097] dark:border-white/15 rounded-2xl shadow-2xl z-[999] overflow-hidden origin-top"
           >
-            <div className="px-4 py-3.5 border-b border-border/50 flex items-center justify-between bg-black/5 dark:bg-white/5">
-              <h3 className="font-black text-heading text-xs uppercase tracking-wider">Notifications</h3>
-              <div className="flex items-center gap-2">
+            {/* Header */}
+            <div className="px-3.5 py-3 border-b border-[#C8B097] dark:border-white/10 flex items-center justify-between bg-black/5 dark:bg-white/5">
+              <h3 className="font-black text-[#3B2818] dark:text-heading text-xs uppercase tracking-wider">
+                Notifications
+              </h3>
+
+              {/* Compact Header Actions */}
+              <div className="flex items-center gap-1.5">
                 {unreadCount > 0 && (
                   <button
                     onClick={handleMarkAllRead}
-                    className="px-2 py-1 text-[10px] text-primary font-black uppercase tracking-wider rounded-md hover:bg-primary/10 transition-colors cursor-pointer"
+                    className="px-1.5 py-1 text-[9px] text-[#5C4028] dark:text-primary font-black uppercase tracking-wider rounded hover:bg-black/5 transition-colors cursor-pointer whitespace-nowrap"
                   >
                     Mark read
                   </button>
@@ -174,50 +185,50 @@ const NotificationDropdown = ({ iconClass, buttonClass, showLabel, iconSize = 20
                 {notifications.length > 0 && (
                   <button
                     onClick={handleClearAll}
-                    className="px-2.5 py-1 text-[10px] bg-rose-600 hover:bg-rose-700 text-white font-black uppercase tracking-wider rounded-lg transition-colors cursor-pointer flex items-center gap-1 shadow-xs"
+                    className="px-2 py-1 text-[9px] bg-rose-600 hover:bg-rose-700 text-white font-black uppercase tracking-wider rounded-md transition-colors cursor-pointer flex items-center gap-1 shadow-xs whitespace-nowrap"
                   >
-                    <Trash2 size={12} className="text-white" /> Clear all
+                    <Trash2 size={10} className="text-white" /> Clear all
                   </button>
                 )}
-                <button 
+                <button
                   onClick={() => setIsOpen(false)}
-                  className="w-7 h-7 ml-1 flex items-center justify-center bg-background rounded-full border border-border/50 text-muted hover:text-heading hover:bg-border/30 transition-all cursor-pointer shrink-0"
+                  className="w-6 h-6 ml-0.5 flex items-center justify-center bg-[#D8C2A8] dark:bg-background rounded-full border border-[#BFA48A] dark:border-white/10 text-[#5C4028] dark:text-muted hover:text-[#3B2818] dark:hover:text-heading hover:bg-[#C8B097] transition-all cursor-pointer shrink-0"
                   aria-label="Close"
                 >
-                  <X size={14} />
+                  <X size={12} />
                 </button>
               </div>
             </div>
 
-            <div className="max-h-96 overflow-y-auto custom-scrollbar p-2">
+            {/* List Items */}
+            <div className="max-h-96 overflow-y-auto custom-scrollbar p-2.5">
               {notifications.length === 0 ? (
-                <div className="p-8 text-center text-muted">
-                  <Bell size={32} className="mx-auto mb-3 opacity-20" />
+                <div className="p-8 text-center text-[#7A5B40] dark:text-muted">
+                  <Bell size={32} className="mx-auto mb-3 opacity-40" />
                   <p className="text-sm font-bold">No notifications yet</p>
                 </div>
               ) : (
-                <div className="space-y-1">
+                <div className="space-y-2">
                   {notifications.map((notif) => (
                     <div
                       key={notif._id}
                       onClick={() => handleNotificationClick(notif)}
-                      className={`p-3 rounded-xl flex gap-3 transition-colors cursor-pointer group hover:bg-[var(--button-bg)] hover:text-[var(--button-text)] ${
-                        notif.isRead 
-                          ? 'bg-transparent' 
-                          : 'bg-primary/5'
-                      }`}
+                      className={`p-3 rounded-xl flex gap-3 transition-colors cursor-pointer border ${notif.isRead
+                          ? 'bg-[#D8C2A8]/60 dark:bg-white/[0.02] border-[#A88B6E]/50 dark:border-white/10'
+                          : 'bg-[#D8C2A8] dark:bg-primary/10 border-[#A88B6E] dark:border-primary/30'
+                        }`}
                     >
-                      <div className="mt-1 shrink-0 bg-card rounded-full p-1.5 shadow-sm h-8 w-8 flex items-center justify-center border border-border/40 group-hover:bg-[var(--card)]">
+                      <div className="mt-0.5 shrink-0 bg-[#E6D2B8] dark:bg-card rounded-full p-1.5 shadow-xs h-7 w-7 flex items-center justify-center border border-[#A88B6E]/40 dark:border-white/10">
                         {getIcon(notif.type)}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className={`text-xs ${notif.isRead ? 'text-heading font-bold' : 'text-primary font-black'} group-hover:text-[var(--button-text)]`}>
+                        <p className={`text-xs ${notif.isRead ? 'text-[#3B2818] dark:text-heading font-bold' : 'text-[#24170E] dark:text-primary font-black'}`}>
                           {notif.title}
                         </p>
-                        <p className="text-[11px] text-muted group-hover:text-[var(--button-text)] opacity-90 mt-0.5 leading-relaxed whitespace-pre-line line-clamp-3">
+                        <p className="text-[11px] text-[#5C4028] dark:text-muted font-medium mt-0.5 leading-relaxed whitespace-pre-line line-clamp-3">
                           {notif.message}
                         </p>
-                        <p className="text-[9px] text-muted/60 group-hover:text-[var(--button-text)] opacity-75 font-bold mt-1.5 uppercase tracking-wider">
+                        <p className="text-[9px] text-[#7A5B40] dark:text-muted/70 font-bold mt-1.5 uppercase tracking-wider">
                           {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
@@ -227,11 +238,12 @@ const NotificationDropdown = ({ iconClass, buttonClass, showLabel, iconSize = 20
               )}
             </div>
 
-            <div className="p-3 border-t border-border/50 text-center bg-black/5 dark:bg-white/5">
+            {/* Footer */}
+            <div className="p-2.5 border-t border-[#C8B097] dark:border-white/10 text-center bg-black/5 dark:bg-white/5">
               <Link
                 to="/account/notifications"
                 onClick={() => setIsOpen(false)}
-                className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline inline-block w-full"
+                className="text-[10px] font-black uppercase tracking-widest text-[#3B2818] dark:text-primary hover:underline inline-block w-full"
               >
                 View all notifications
               </Link>

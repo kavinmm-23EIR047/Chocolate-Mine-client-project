@@ -56,34 +56,7 @@ try {
     return self.registration.showNotification(title, notificationOptions);
   });
 
-  // Native Push Fallback Listener for Mobile Background Lock Screen
-  self.addEventListener('push', (event) => {
-    if (!event.data) return;
-
-    try {
-      const payload = event.data.json();
-      const title = payload.data?.title || payload.notification?.title || 'The Chocolate Mine';
-      const body = payload.data?.message || payload.notification?.body || 'You have a new update!';
-      const data = payload.data || {};
-
-      event.waitUntil(
-        self.registration.showNotification(title, {
-          body,
-          icon: '/logo.png',
-          badge: '/logo.png',
-          tag: data.type || data.orderId || 'general',
-          renotify: true,
-          vibrate: [200, 100, 200],
-          data: {
-            url: data.url || (data.orderId ? `/track/${data.orderId}` : '/'),
-            type: data.type || 'general'
-          }
-        })
-      );
-    } catch (err) {
-      console.warn('[SW] Push event fallback processing skipped:', err);
-    }
-  });
+  // Removed manual push listener to prevent conflicts with Firebase SDK
 
   // Handle notification click
   self.addEventListener('notificationclick', (event) => {
