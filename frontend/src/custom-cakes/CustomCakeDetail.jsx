@@ -168,10 +168,10 @@ export default function CustomCakeDetail({
               placeholder="e.g. 'Happy Birthday, name"
               value={customerName}
               onChange={e => setCustomerName(e.target.value)}
-              className="w-full bg-[var(--input)] border border-[var(--input-border)] text-[var(--foreground)] placeholder:text-[var(--muted)] rounded-xl px-4 py-3 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[var(--primary)] pr-14 transition-all font-bold"
+              className="w-full bg-[var(--input)] border border-[var(--input-border)] text-[var(--foreground)] placeholder:text-[var(--muted)] placeholder:opacity-50 placeholder:font-normal rounded-xl px-4 py-3 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[var(--primary)] pr-14 transition-all font-bold"
             />
             <span className="absolute right-3.5 top-3.5 text-xs text-[var(--muted)] font-bold">{customerName.length}/20</span>
-            <p className="mt-2 text-xs text-[var(--muted)]">Use this for the exact text to appear on cake — short names or titles (e.g. "Happy Birthday, name" or "My Life").</p>
+            <p className="mt-2 text-xs text-[var(--muted)]">Use this for the exact text to appear on cake — short names or titles (e.g. "Happy Birthday, name").</p>
           </div>
         </div>
         <div>
@@ -200,7 +200,7 @@ export default function CustomCakeDetail({
             placeholder="e.g. Less sugar, less cream — important notes"
             value={message}
             onChange={e => setMessage(e.target.value)}
-            className="w-full bg-[var(--input)] border border-[var(--input-border)] text-[var(--foreground)] placeholder:text-[var(--muted)] rounded-xl px-4 py-3 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[var(--primary)] pr-16 transition-all font-bold"
+            className="w-full bg-[var(--input)] border border-[var(--input-border)] text-[var(--foreground)] placeholder:text-[var(--muted)] placeholder:opacity-50 placeholder:font-normal rounded-xl px-4 py-3 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[var(--primary)] pr-16 transition-all font-bold"
           />
           <span className="absolute right-3.5 top-3.5 text-xs text-[var(--muted)] font-bold">{message.length}/60</span>
           <p className="mt-2 text-xs text-[var(--muted)]">Add special requests or important notes (e.g., less sugar, less cream, allergy info, delivery instructions).</p>

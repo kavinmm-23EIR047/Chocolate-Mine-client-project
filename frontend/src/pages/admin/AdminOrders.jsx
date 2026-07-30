@@ -184,6 +184,20 @@ const OrderDetailsModal = ({ order, onClose }) => {
                 <span>Total Amount</span>
                 <span className="text-primary">{formatCurrency(order.total)}</span>
               </div>
+              <div className="flex justify-between items-center text-xs mt-2 pt-2 border-t border-border/20">
+                <span className="text-muted">Payment Method</span>
+                <span className="font-bold">{order.paymentMethod || 'ONLINE'}</span>
+              </div>
+              {order.paymentMethod === 'ONLINE' && order.paymentStatus !== 'paid' && (
+                <div className="mt-3 p-3 bg-red-600/10 border border-red-600/20 rounded-xl">
+                  <p className="text-xs font-bold text-red-600 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                    <X size={14} /> Payment Issue ({order.paymentStatus})
+                  </p>
+                  <p className="text-xs text-red-600/80 font-medium">
+                    {order.paymentFailureReason || 'Customer initiated the payment but did not complete the transaction successfully.'}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -578,11 +592,18 @@ const AdminOrders = () => {
                     </div>
                   </div>
 
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs font-black text-muted uppercase tracking-widest">Payment</span>
-                    <Badge variant={order.paymentStatus === 'paid' ? 'success' : 'warning'}>
-                      {order.paymentStatus?.toUpperCase()}
-                    </Badge>
+                  <div className="flex flex-col gap-1">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-black text-muted uppercase tracking-widest">Payment</span>
+                      <Badge variant={order.paymentStatus === 'paid' ? 'success' : 'warning'}>
+                        {order.paymentStatus?.toUpperCase()}
+                      </Badge>
+                    </div>
+                    {order.paymentMethod === 'ONLINE' && order.paymentStatus !== 'paid' && order.paymentFailureReason && (
+                      <p className="text-[10px] text-red-600 text-right leading-tight w-full mt-1">
+                        Issue: {order.paymentFailureReason}
+                      </p>
+                    )}
                   </div>
 
                   <div className="flex justify-between items-center">

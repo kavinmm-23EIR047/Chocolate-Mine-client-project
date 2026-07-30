@@ -371,6 +371,21 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
     if (req.body.items && Array.isArray(req.body.items) && req.body.items.length > 0) {
       const validatedItems = [];
       let total = 0;
+
+      // Optimize: Fetch all products in one go to prevent sequential DB queries
+      const productIdsToFetch = req.body.items
+        .filter(item => !isCustomBuilderItem(item))
+        .map(item => {
+          let dbId = item.productId;
+          if (typeof dbId === 'string' && dbId.startsWith('custom-')) return dbId.split('-').pop();
+          return dbId;
+        })
+        .filter(id => id && /^[0-9a-fA-F]{24}$/.test(String(id)));
+
+      const productsList = await Product.find({ _id: { $in: productIdsToFetch } });
+      const productMap = {};
+      productsList.forEach(p => productMap[p._id.toString()] = p);
+
       for (const item of req.body.items) {
         if (isCustomBuilderItem(item)) {
           const customCartItem = await buildCustomBuilderCartItem(item);
@@ -378,13 +393,13 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
           total += customCartItem.finalPrice * customCartItem.qty;
           continue;
         }
-        // Normal product processing (unchanged)
+        // Normal product processing
         let dbProductId = item.productId;
         if (typeof dbProductId === 'string' && dbProductId.startsWith('custom-')) {
           const parts = dbProductId.split('-');
           dbProductId = parts[parts.length - 1];
         }
-        const product = await Product.findById(dbProductId);
+        const product = productMap[dbProductId];
         if (!product || product.stock === false) {
           console.error('❌ Stock validation failed for cart item product ID:', dbProductId, 'Found product:', product?.name, 'Stock state:', product?.stock);
           throw new AppError(`Stock error: ${product?.name || 'Item'} is out of stock`, 400);
@@ -488,6 +503,19 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
 
   // Stock validation (skip custom cakes)
   if (!directItem) {
+    const productIdsToValidate = cart.items
+      .filter(item => !item.isCustomCake && (!item.productId || !String(item.productId).startsWith('CUSTOM_')))
+      .map(item => {
+        let dbId = item.productId;
+        if (typeof dbId === 'string' && dbId.startsWith('custom-')) return dbId.split('-').pop();
+        return dbId;
+      })
+      .filter(id => id && /^[0-9a-fA-F]{24}$/.test(String(id)));
+
+    const productsForValidation = await Product.find({ _id: { $in: productIdsToValidate } });
+    const validationMap = {};
+    productsForValidation.forEach(p => validationMap[p._id.toString()] = p);
+
     for (const item of cart.items) {
       if (item.isCustomCake) continue;
       let dbProductId = item.productId;
@@ -496,7 +524,9 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
         const parts = dbProductId.split('-');
         dbProductId = parts[parts.length - 1];
       }
-      const product = await Product.findById(dbProductId);
+      if (!dbProductId || !/^[0-9a-fA-F]{24}$/.test(String(dbProductId))) continue;
+      
+      const product = validationMap[dbProductId.toString()];
       if (!product || product.stock === false) {
         console.error('❌ Stock validation failed for product ID:', dbProductId, 'Found product:', product?.name, 'Stock state:', product?.stock);
         throw new AppError(`Stock error: ${product?.name || 'Item'} is currently out of stock`, 400);

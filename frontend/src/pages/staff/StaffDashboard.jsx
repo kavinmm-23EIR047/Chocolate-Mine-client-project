@@ -86,6 +86,14 @@ const OrderStatusDropdown = ({ order, onUpdate }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  if (order.paymentMethod === 'ONLINE' && order.paymentStatus !== 'paid') {
+    return (
+      <div className="flex-1 inline-flex items-center justify-center gap-1.5 py-3 px-4 rounded-2xl bg-red-600/10 text-red-600 border border-red-600/20 text-[10px] sm:text-xs font-black uppercase tracking-wider shadow-sm">
+        <X size={14} /> PAYMENT {order.paymentStatus?.toUpperCase() || 'FAILED'}
+      </div>
+    );
+  }
+
   const actions = [];
   if (order.orderStatus === 'confirmed') {
     actions.push({ id: 'out_for_delivery', label: 'Out For Delivery', icon: Truck, color: 'text-primary', hover: 'hover:bg-primary/10' });
@@ -429,6 +437,17 @@ const OrderDetailsModal = ({ order, onClose }) => {
                 </span>
               </div>
             </div>
+
+            {order.paymentMethod === 'ONLINE' && order.paymentStatus !== 'paid' && (
+              <div className="mt-3 p-3 bg-red-600/10 border border-red-600/20 rounded-xl">
+                <p className="text-xs font-bold text-red-600 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                  <X size={14} /> Payment Issue ({order.paymentStatus})
+                </p>
+                <p className="text-xs text-red-600/80 font-medium">
+                  {order.paymentFailureReason || 'Customer initiated the payment but did not complete the transaction successfully.'}
+                </p>
+              </div>
+            )}
           </div>
 
         </div>
@@ -1636,6 +1655,11 @@ const StaffDashboard = () => {
                       <span className="font-extrabold text-heading">
                         {order.paymentMethod || 'ONLINE'} · <span className={order.paymentStatus === 'paid' ? 'bg-emerald-700 text-white font-black px-2 py-0.5 rounded-md' : 'text-amber-600 dark:text-amber-400'}>{order.paymentStatus === 'paid' ? 'Paid' : 'Pending'}</span>
                       </span>
+                      {order.paymentMethod === 'ONLINE' && order.paymentStatus !== 'paid' && order.paymentFailureReason && (
+                        <p className="text-[10px] text-red-600 mt-1 leading-tight max-w-[150px]">
+                          Issue: {order.paymentFailureReason}
+                        </p>
+                      )}
                     </div>
                     <div className="text-right">
                       <span className="text-[10px] font-black text-muted uppercase tracking-widest block">Total</span>

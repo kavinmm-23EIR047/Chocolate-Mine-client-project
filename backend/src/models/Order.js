@@ -206,7 +206,8 @@ const orderSchema = new mongoose.Schema(
     razorpayOrderId: { type: String },
     razorpayPaymentId: { type: String },
     razorpaySignature: { type: String },
-    paymentAttemptAt: { type: Date }
+    paymentAttemptAt: { type: Date },
+    paymentFailureReason: { type: String }
   },
   {
     timestamps: true

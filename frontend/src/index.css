@@ -226,7 +226,7 @@
 
   /* Forms */
   .input-field {
-    @apply w-full bg-input text-foreground border border-border rounded-2xl px-5 py-3.5 outline-none transition-all focus:border-primary placeholder:text-muted font-medium;
+    @apply w-full bg-input text-foreground border border-border rounded-2xl px-5 py-3.5 outline-none transition-all focus:border-primary placeholder:text-muted/40 font-medium;
   }
 
   .select-field {
@@ -789,4 +789,12 @@ td {
   font-weight: 400;
   font-style: normal;
   font-variation-settings: "ELSH" 0;
+}
+
+/* Disable truncate globally as requested */
+.truncate {
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+  word-break: break-word !important;
 }

@@ -210,11 +210,18 @@ const StepBadge = ({ n, label, isActive, isCompleted, onEdit, summary }) => (
           }`}>
           {label}
         </h2>
-        {isCompleted && !isActive && (
-          <button className="text-xs font-black text-primary uppercase tracking-widest hover:underline px-3 py-1 bg-primary/5 rounded-lg border border-primary/20">
-            Change
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {isCompleted && !isActive && (
+            <button className="text-xs font-black text-primary uppercase tracking-widest hover:underline px-3 py-1 bg-primary/5 rounded-lg border border-primary/20">
+              Change
+            </button>
+          )}
+          {isActive ? (
+            <ChevronUp size={16} className="text-primary" />
+          ) : (
+            <ChevronDown size={16} className="text-muted" />
+          )}
+        </div>
       </div>
       {isCompleted && !isActive && summary && (
         <p className="text-xs text-muted font-bold mt-1 truncate uppercase tracking-tight">{summary}</p>
@@ -1419,18 +1426,50 @@ const Checkout = () => {
                             </div>
                             <div className="min-w-0">
                               <p className="text-xs font-black text-heading uppercase tracking-widest">Pin Location on Map *</p>
-                              <p className="text-[10px] text-muted font-bold uppercase tracking-widest mt-0.5">
-                                {deliveryInfo.position ? 'Location Pinned' : 'Required for accurate delivery'}
-                              </p>
+                              {deliveryInfo.position ? (
+                                <>
+                                  {!locationValid ? (
+                                    <p className="text-[10px] text-red-500 font-bold uppercase tracking-widest mt-0.5 leading-tight">
+                                      {locationError || 'Outside delivery area'}
+                                    </p>
+                                  ) : (
+                                    <>
+                                      <p className="text-[10px] text-heading font-bold uppercase tracking-widest mt-0.5 leading-tight">
+                                        Location Pinned • {distance.toFixed(1)} km • Delivery: {formatCurrency(deliveryFee)}
+                                      </p>
+                                      {deliveryInfo.address && (
+                                        <p className="text-[10px] text-muted font-bold mt-1 leading-snug line-clamp-2">
+                                          {deliveryInfo.address}
+                                        </p>
+                                      )}
+                                    </>
+                                  )}
+                                </>
+                              ) : (
+                                <p className="text-[10px] text-muted font-bold uppercase tracking-widest mt-0.5">
+                                  Required for accurate delivery
+                                </p>
+                              )}
                             </div>
                           </div>
-                          <Button
-                            onClick={() => setShowMap(true)}
-                            className="btn-secondary text-xs font-black uppercase tracking-widest px-4 py-2.5 whitespace-nowrap border-primary/30 text-primary"
-                          >
-                            <Navigation size={12} className="mr-1.5 inline" />
-                            {deliveryInfo.position ? 'Change Pin' : 'Select on Map'}
-                          </Button>
+                          <div className="flex flex-col sm:flex-row items-center gap-2">
+                            {deliveryInfo.position && (
+                              <Button
+                                onClick={() => setDeliveryInfo({ ...deliveryInfo, position: null })}
+                                className="bg-red-50 text-red-600 border border-red-200 dark:bg-red-500/10 dark:text-red-500 dark:border-red-500/20 hover:bg-red-100 dark:hover:bg-red-500/20 text-xs font-black uppercase tracking-widest px-4 py-2.5 whitespace-nowrap transition-colors"
+                              >
+                                <Trash2 size={12} className="mr-1.5 inline" />
+                                Remove
+                              </Button>
+                            )}
+                            <Button
+                              onClick={() => setShowMap(true)}
+                              className="bg-primary text-button-text hover:bg-primary/90 text-xs font-black uppercase tracking-widest px-4 py-2.5 whitespace-nowrap shadow-md transition-colors"
+                            >
+                              <Navigation size={12} className="mr-1.5 inline" />
+                              {deliveryInfo.position ? 'Update Map' : 'Select on Map'}
+                            </Button>
+                          </div>
                         </div>
                       )}
 
