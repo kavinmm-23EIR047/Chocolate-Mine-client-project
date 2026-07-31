@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, LogIn, ArrowLeft, Eye, EyeOff, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Mail, Lock, ArrowLeft, Eye, EyeOff, ShieldCheck, ArrowRight, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import LightLogo from '../assets/light logo.png';
 
@@ -145,7 +145,12 @@ const Login = () => {
                     disabled={loading}
                     className="w-full mt-4 py-4 px-6 rounded-xl bg-[var(--primary)] text-[var(--button-text)] hover:brightness-110 font-black text-sm uppercase tracking-widest shadow-lg active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    {loading ? 'Signing In...' : 'Sign In'}
+                    {loading ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin" />
+                        Signing In...
+                      </>
+                    ) : 'Sign In'}
                     {!loading && <ArrowRight size={18} />}
                   </button>
                 </form>

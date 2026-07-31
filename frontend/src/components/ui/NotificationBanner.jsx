@@ -45,30 +45,6 @@ const NotificationBanner = () => {
   // Show banner ONLY if user is logged in, hasn't dismissed it, and has not granted notification permission
   const showBanner = !dismissed && user && !hasPermission;
 
-  // 1. AUTO-ATTEMPT BACKGROUND SYNC ON PAGE LOAD (Silent Sync)
-  useEffect(() => {
-    if (!isSupported || !user || !hasPermission || !('serviceWorker' in navigator)) return;
-
-    const silentMigration = async () => {
-      try {
-        const registration = await navigator.serviceWorker.ready;
-        const messaging = getMessaging();
-
-        const token = await getToken(messaging, {
-          vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
-          serviceWorkerRegistration: registration,
-        });
-
-        if (token && typeof syncFcmToken === 'function') {
-          await syncFcmToken(token);
-        }
-      } catch (error) {
-        console.warn('Silent mobile background token re-sync skipped/failed:', error.message);
-      }
-    };
-
-    silentMigration();
-  }, [hasPermission, user, isSupported, syncFcmToken]);
 
   // If user is not logged in or environment doesn't support notifications or banner is hidden, render nothing
   if (!user || !isSupported || !showBanner) return null;

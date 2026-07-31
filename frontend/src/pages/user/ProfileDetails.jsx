@@ -212,19 +212,10 @@ const ProfileDetails = () => {
               variant={hasFcmToken ? "outline" : "primary"}
               onClick={handleToggleNotifications}
               loading={notifLoading}
+              icon={hasFcmToken ? BellOff : Bell}
               className="w-full sm:w-auto shrink-0"
             >
-              {hasFcmToken ? (
-                <>
-                  <BellOff size={14} className="mr-2" />
-                  DISABLE NOTIFICATIONS
-                </>
-              ) : (
-                <>
-                  <Bell size={14} className="mr-2" />
-                  ENABLE NOTIFICATIONS
-                </>
-              )}
+              {hasFcmToken ? "DISABLE NOTIFICATIONS" : "ENABLE NOTIFICATIONS"}
             </Button>
           </div>
         </div>
