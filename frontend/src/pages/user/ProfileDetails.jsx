@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import api from '../../utils/api';
 
 const ProfileDetails = () => {
-  const { user, updateUser, syncFcmToken, disableNotifications } = useAuth();
+  const { user, updateUser, syncFcmToken, enableNotifications, disableNotifications } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [notifLoading, setNotifLoading] = useState(false);
@@ -54,13 +54,18 @@ const ProfileDetails = () => {
         await disableNotifications();
         toast.success("Push notifications disabled");
       } else {
-        // Enable notifications
-        await syncFcmToken();
-        const isPermissionGranted = Notification.permission === 'granted';
-        if (isPermissionGranted) {
+        // Enable notifications explicitly (prompts user if not already granted)
+        const success = await enableNotifications();
+        if (success) {
           toast.success("Push notifications enabled");
         } else {
-          toast.error("Please allow notification permissions in your browser settings.");
+          // If success is false, it means permission was denied or token generation failed
+          const permission = Notification.permission;
+          if (permission === 'denied') {
+            toast.error("Notifications are blocked. Please enable them in your browser settings.");
+          } else {
+            toast.error("Failed to enable notifications. Please try again.");
+          }
         }
       }
     } catch (err) {
