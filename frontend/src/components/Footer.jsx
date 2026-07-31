@@ -6,9 +6,6 @@ import {
   Cake, Cookie, Candy, Flower2, Flame, IceCream
 } from 'lucide-react';
 import {
-  FaFacebookF as Facebook,
-  FaTwitter as Twitter,
-  FaYoutube as Youtube,
   FaInstagram as InstagramIcon,
   FaWhatsapp as Whatsapp
 } from 'react-icons/fa';
@@ -138,13 +135,18 @@ const Footer = () => {
 
             {/* Social Icons - Neumorphic Style */}
             <div className="flex justify-start gap-4 w-full pt-1">
-              {[InstagramIcon, Whatsapp, Youtube, Facebook].map((Icon, i) => (
+              {[
+                { Icon: InstagramIcon, href: 'https://www.instagram.com/thechocolatemine/' },
+                { Icon: Whatsapp, href: 'https://wa.me/919150670077' }
+              ].map((item, i) => (
                 <a
                   key={i}
-                  href="#"
+                  href={item.href}
+                  target={item.href !== '#' ? '_blank' : undefined}
+                  rel={item.href !== '#' ? 'noopener noreferrer' : undefined}
                   className="w-11 h-11 flex items-center justify-center rounded-2xl transition-all duration-300 bg-card border border-border shadow-card hover:shadow-sm hover:scale-105"
                 >
-                  <Icon size={18} className="text-foreground" />
+                  <item.Icon size={18} className="text-foreground" />
                 </a>
               ))}
             </div>
