@@ -73,7 +73,7 @@ const Shop = () => {
   const isOffers = searchParams.get('offers') === 'true' || searchParams.get('offer') === 'true';
 
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 24;
+  const ITEMS_PER_PAGE = 100;
 
   const [priceRange, setPriceRange] = useState([
     searchParams.get('minPrice') !== null ? Number(searchParams.get('minPrice')) : 0,

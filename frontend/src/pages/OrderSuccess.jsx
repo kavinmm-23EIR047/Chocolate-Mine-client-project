@@ -8,6 +8,8 @@ import {
   Share2,
   Copy,
   Sparkles,
+  CheckCircle,
+  Truck
 } from 'lucide-react';
 import { Link, useSearchParams, useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -18,67 +20,15 @@ import orderService from '../services/orderService';
 // Safely resolve the Lottie component function in both ESM and CJS bundling environments
 const Lottie = LottieImport.default || LottieImport;
 
-/** Premium brand Lottie animation instead of standard scooter illustration */
 const DeliveryIllustration = () => (
-  <div className="w-40 sm:w-48 aspect-square mx-auto flex items-center justify-center overflow-hidden">
-    <Lottie
-      animationData={brandAnimation}
-      loop={true}
-      className="w-full h-full scale-110"
-    />
+  <div className="w-32 h-32 mx-auto flex items-center justify-center text-primary bg-card-soft rounded-full mb-6">
+    <Truck size={64} />
   </div>
 );
 
-// ─── Animated SVG Tick (replaces tick.gif) ───────────────────────────────────
+// ─── Static SVG Tick ───────────────────────────────────
 const AnimatedTick = () => (
-  <>
-    <style>{`
-      .tick-bg {
-        fill: #16a34a;
-        r: 0;
-        animation: tickBgPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s forwards;
-      }
-      .tick-ring {
-        fill: none;
-        stroke: #15803d;
-        stroke-width: 3;
-        stroke-linecap: round;
-        stroke-dasharray: 283;
-        stroke-dashoffset: 283;
-        animation: tickCircle 0.9s cubic-bezier(0.4, 0, 0.2, 1) 0.2s forwards;
-      }
-      .tick-check {
-        fill: none;
-        stroke: #ffffff;
-        stroke-width: 5.5;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-        stroke-dasharray: 60;
-        stroke-dashoffset: 60;
-        animation: tickCheck 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.85s forwards;
-      }
-      @keyframes tickBgPop  { to { r: 42px; } }
-      @keyframes tickCircle { to { stroke-dashoffset: 0; } }
-      @keyframes tickCheck  { to { stroke-dashoffset: 0; } }
-    `}</style>
-    <svg
-      viewBox="0 0 96 96"
-      width="96"
-      height="96"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-label="Order confirmed"
-    >
-      <circle className="tick-bg" cx="48" cy="48" r="0" />
-      <circle
-        className="tick-ring"
-        cx="48"
-        cy="48"
-        r="44"
-        transform="rotate(-90 48 48)"
-      />
-      <polyline className="tick-check" points="28,50 42,64 68,34" />
-    </svg>
-  </>
+  <CheckCircle size={96} className="text-success mx-auto" />
 );
 
 const formatOrderRef = (raw) => {
@@ -155,7 +105,7 @@ const OrderSuccess = () => {
   const fullRef = orderNumber ? String(orderNumber).replace(/\s+/g, '') : '';
 
   useEffect(() => {
-    fireSuccessCrackerBlast();
+    // fireSuccessCrackerBlast(); // Disabled per client request for no animations/gifs
     
     if (location.state?.waLink) {
       const timer = setTimeout(() => {

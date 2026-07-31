@@ -15,14 +15,14 @@
    ─────────────────────────────────────────── */
 :root {
    /* Base Surfaces */
-   --background: #ccb396;
-   --background-rgb: 204 179 150;
-   --surface: #ccb396;
-   --surface-rgb: 204 179 150;
-   --card: #c6aa8a;
-   --card-rgb: 198 170 138;
-   --card-soft: #d1bba1;
-   --card-soft-rgb: 209 187 161;
+   --background: #DCC6B2;
+   --background-rgb: 220 198 178;
+   --surface: #DCC6B2;
+   --surface-rgb: 220 198 178;
+   --card: #F0E5D8;
+   --card-rgb: 240 229 216;
+   --card-soft: #EFE4DA;
+   --card-soft-rgb: 239 228 218;
 
    /* Typography */
    --foreground: #27190e;
@@ -49,8 +49,8 @@
    --accent-hover-rgb: 230 178 90;
 
    /* Navigation */
-   --navbar: #ccb396;
-   --navbar-rgb: 204 179 150;
+   --navbar: #DCC6B2;
+   --navbar-rgb: 220 198 178;
    --navbar-text: #27190e;
    --navbar-text-rgb: 39 25 14;
 
@@ -60,21 +60,21 @@
    --footer-text: #F8F1E7;
    --footer-text-rgb: 248 241 231;
 
-   /* Borders - User Specified Light Theme Border (RGB: 171, 149, 125) */
-   --border: rgba(171, 149, 125, 0.4);
-   --border-rgb: 171 149 125;
-   --border-light: rgba(171, 149, 125, 0.25);
-   --border-light-rgb: 171 149 125;
-   --border-dark: rgb(171, 149, 125);
-   --border-dark-rgb: 171 149 125;
+   /* Borders - High Contrast Outline */
+   --border: #BFA892;
+   --border-rgb: 191 168 146;
+   --border-light: rgba(191, 168, 146, 0.4);
+   --border-light-rgb: 191 168 146;
+   --border-dark: #A68C76;
+   --border-dark-rgb: 166 140 118;
 
    /* Inputs */
-   --input: #E7D6C4;
-   --input-rgb: 231 214 196;
-   --input-border: rgba(171, 149, 125, 0.4);
-   --input-border-rgb: 171 149 125;
+   --input: #F0E5D8;
+   --input-rgb: 240 229 216;
+   --input-border: #A68C76;
+   --input-border-rgb: 166 140 118;
    --input-focus: #27190e;
-   --ring: rgba(171, 149, 125, 0.2);
+   --ring: rgba(191, 168, 146, 0.3);
 
    /* Solid UI Shadows */
    --shadow-color: 39, 25, 14;
@@ -86,12 +86,12 @@
    --button-text-rgb: 248 241 231;
    --button-hover: #3b2515;
    --button-hover-rgb: 59 37 21;
-   --button-alt-bg: #c6aa8a;
-   --button-alt-bg-rgb: 198 170 138;
+   --button-alt-bg: #F0E5D8;
+   --button-alt-bg-rgb: 240 229 216;
    --button-alt-text: #27190e;
    --button-alt-text-rgb: 39 25 14;
-   --button-alt-hover: #d1bba1;
-   --button-alt-hover-rgb: 209 187 161;
+   --button-alt-hover: #EFE4DA;
+   --button-alt-hover-rgb: 239 228 218;
 
    /* ─── BADGE COLORS - Light Theme ─── */
    --badge-bestseller-bg: var(--accent);
@@ -186,14 +186,14 @@
    ─────────────────────────────────────────── */
 .dark {
    /* Base Surfaces */
-   --background: #24100A;
-   --background-rgb: 36 16 10;
-   --surface: #2E160F;
-   --surface-rgb: 46 22 15;
-   --card: #2E160F;
-   --card-rgb: 46 22 15;
-   --card-soft: #3B1B13;
-   --card-soft-rgb: 59 27 19;
+   --background: #1A0C08;
+   --background-rgb: 26 12 8;
+   --surface: #1A0C08;
+   --surface-rgb: 26 12 8;
+   --card: #2A1610;
+   --card-rgb: 42 22 16;
+   --card-soft: #361F17;
+   --card-soft-rgb: 54 31 23;
 
    /* Typography */
    --foreground: #F2EADF;
@@ -220,32 +220,32 @@
    --accent-hover-rgb: 217 179 111;
 
    /* Navigation */
-   --navbar: #24100A;
-   --navbar-rgb: 36 16 10;
+   --navbar: #1A0C08;
+   --navbar-rgb: 26 12 8;
    --navbar-text: #F2EADF;
    --navbar-text-rgb: 242 234 223;
 
    /* Footer */
-   --footer: #1F0E09;
-   --footer-rgb: 31 14 9;
+   --footer: #1A0C08;
+   --footer-rgb: 26 12 8;
    --footer-text: #F2EADF;
    --footer-text-rgb: 242 234 223;
 
-   /* Borders - User Specified Dark Theme Border (RGB: 84, 46, 35) */
-   --border: rgba(84, 46, 35, 0.7);
-   --border-rgb: 84 46 35;
-   --border-light: rgba(84, 46, 35, 0.4);
-   --border-light-rgb: 84 46 35;
-   --border-dark: rgb(84, 46, 35);
-   --border-dark-rgb: 84 46 35;
+   /* Borders - Dark Theme */
+   --border: #5C3626;
+   --border-rgb: 92 54 38;
+   --border-light: rgba(92, 54, 38, 0.4);
+   --border-light-rgb: 92 54 38;
+   --border-dark: #3D2217;
+   --border-dark-rgb: 61 34 23;
 
    /* Inputs */
-   --input: #2F190F;
-   --input-rgb: 58 36 25;
-   --input-border: rgba(84, 46, 35, 0.7);
-   --input-border-rgb: 84 46 35;
+   --input: #1A0C08;
+   --input-rgb: 26 12 8;
+   --input-border: #5C3626;
+   --input-border-rgb: 92 54 38;
    --input-focus: #E8D3CB;
-   --ring: rgba(84, 46, 35, 0.3);
+   --ring: rgba(92, 54, 38, 0.3);
 
    /* Solid UI Shadows - Dark Theme */
    --shadow-color: 0, 0, 0;
