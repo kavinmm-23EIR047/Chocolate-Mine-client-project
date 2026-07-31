@@ -38,7 +38,7 @@ import ReviewPage from './pages/ReviewPage';
 import Contact from './pages/Contact';
 import Help from './pages/Help';
 import Stores from './pages/Stores';
-import PrivacyPolicy from './pages/PrivacyPolicy';
+import PrivacyInfo from './pages/PrivacyInfo';
 import TermsConditions from './pages/TermsConditions';
 import RefundPolicy from './pages/RefundPolicy';
 import Shop from './pages/Shop';
@@ -221,15 +221,15 @@ function App() {
                   <Route path="/product/:slug" element={<ErrorBoundary><ProductDetails /></ErrorBoundary>} />
                   <Route path="/occasion/:name" element={<ErrorBoundary><OccasionProducts /></ErrorBoundary>} />
                   <Route path="/cart" element={<ErrorBoundary><Cart /></ErrorBoundary>} />
-                  <Route path="/track/:orderId?" element={<OrderTracking />} />
-                  <Route path="/order-success" element={<OrderSuccess />} />
-                  <Route path="/oauth-callback" element={<OAuthCallback />} />
-                  <Route path="/contact" element={<Contact />} />
-                  <Route path="/help" element={<Help />} />
-                  <Route path="/stores" element={<Stores />} />
-                  <Route path="/privacy" element={<PrivacyPolicy />} />
-                  <Route path="/terms" element={<TermsConditions />} />
-                  <Route path="/refund" element={<RefundPolicy />} />
+                  <Route path="/track/:orderId?" element={<ErrorBoundary><OrderTracking /></ErrorBoundary>} />
+                  <Route path="/order-success" element={<ErrorBoundary><OrderSuccess /></ErrorBoundary>} />
+                  <Route path="/oauth-callback" element={<ErrorBoundary><OAuthCallback /></ErrorBoundary>} />
+                  <Route path="/contact" element={<ErrorBoundary><Contact /></ErrorBoundary>} />
+                  <Route path="/help" element={<ErrorBoundary><Help /></ErrorBoundary>} />
+                  <Route path="/stores" element={<ErrorBoundary><Stores /></ErrorBoundary>} />
+                  <Route path="/privacy" element={<ErrorBoundary><PrivacyInfo /></ErrorBoundary>} />
+                  <Route path="/terms" element={<ErrorBoundary><TermsConditions /></ErrorBoundary>} />
+                  <Route path="/refund" element={<ErrorBoundary><RefundPolicy /></ErrorBoundary>} />
 
                   {/* Guest Routes */}
                   <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />

@@ -1148,9 +1148,8 @@ const Checkout = () => {
         const waLink = `https://wa.me/91${adminPhone}?text=${encodeURIComponent(messageText)}`;
 
         toast.success("Order registered! Redirecting to WhatsApp...");
-        window.location.href = waLink;
         navigate("/order-success", {
-          state: { orderId },
+          state: { orderId, waLink },
         });
         return;
       }

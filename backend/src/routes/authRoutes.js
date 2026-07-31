@@ -5,6 +5,7 @@ const Joi = require('joi');
 const authController = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
+const rateLimiter = require('../middleware/rateLimiter');
 
 const router = express.Router();
 
@@ -47,9 +48,12 @@ const resendSignupOtpSchema = Joi.object({
    AUTH ROUTES
 ================================== */
 
+// Auth Rate Limiter
+const authLimiter = rateLimiter({ windowMs: 15 * 60 * 1000, max: 20, message: 'Too many authentication attempts. Please try again later.' });
+
 // POST /api/v1/auth/signup
-router.post('/signup', validate(signupSchema), authController.signup);
-router.post('/register', validate(signupSchema), authController.signup);
+router.post('/signup', authLimiter, validate(signupSchema), authController.signup);
+router.post('/register', authLimiter, validate(signupSchema), authController.signup);
 
 // POST /api/v1/auth/verify-signup
 router.post('/verify-signup', validate(verifySignupSchema), authController.verifySignup);
@@ -58,10 +62,10 @@ router.post('/verify-signup', validate(verifySignupSchema), authController.verif
 router.post('/resend-signup-otp', validate(resendSignupOtpSchema), authController.resendSignupOtp);
 
 // POST /api/v1/auth/login
-router.post('/login', validate(loginSchema), authController.login);
+router.post('/login', authLimiter, validate(loginSchema), authController.login);
 
 // POST /api/v1/auth/firebase-login
-router.post('/firebase-login', authController.firebaseLogin);
+router.post('/firebase-login', authLimiter, authController.firebaseLogin);
 
 // GET /api/v1/auth/me
 router.get('/me', protect, authController.getMe);

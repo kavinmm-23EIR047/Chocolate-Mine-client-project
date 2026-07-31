@@ -93,7 +93,7 @@ const CRACKER_COLORS = ['#5c3d36', '#c9a227', '#66BB6A', '#f59e0b', '#fcd34d', '
 
 function fireSuccessCrackerBlast() {
   if (typeof window === 'undefined') return;
-  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) return;
 
   const shoot = (originX, opts = {}) => {
     confetti({
@@ -156,6 +156,14 @@ const OrderSuccess = () => {
 
   useEffect(() => {
     fireSuccessCrackerBlast();
+    
+    if (location.state?.waLink) {
+      const timer = setTimeout(() => {
+        window.location.href = location.state.waLink;
+      }, 1500);
+      // Let the rest of the effect run but we don't return the cleanup here to avoid interfering with order fetch if needed
+    }
+
     if (orderId) {
       orderService.getOrder(orderId)
         .then((res) => {

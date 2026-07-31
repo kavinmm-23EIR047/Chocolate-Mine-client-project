@@ -790,7 +790,17 @@ exports.getPaymentStatus = asyncHandler(async (req, res) => {
 });
 
 exports.handleWebhook = asyncHandler(async (req, res) => {
-  console.log('Webhook:', req.body);
+  const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+  if (secret && req.headers['x-razorpay-signature']) {
+    const crypto = require('crypto');
+    const signature = req.headers['x-razorpay-signature'];
+    const expectedSignature = crypto.createHmac('sha256', secret).update(JSON.stringify(req.body)).digest('hex');
+    if (expectedSignature !== signature) {
+      console.error('❌ Invalid Razorpay Webhook Signature');
+      return res.status(400).send('Invalid signature');
+    }
+  }
+  console.log('Webhook received:', req.body?.event || 'Unknown event');
   res.status(200).send('OK');
 });
 

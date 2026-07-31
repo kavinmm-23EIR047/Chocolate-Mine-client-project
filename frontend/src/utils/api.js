@@ -10,20 +10,26 @@ const api = axios.create({
 ---------------------------------------- */
 api.interceptors.request.use(
   (config) => {
-    let token = sessionStorage.getItem('token') || localStorage.getItem('token');
+    let token = null;
+    let authUser = null;
+    try {
+      token = sessionStorage.getItem('token') || localStorage.getItem('token');
+      if (!token) {
+        authUser = sessionStorage.getItem('auth_user') || localStorage.getItem('auth_user');
+      }
+    } catch (err) {
+      console.warn('Storage access restricted:', err);
+    }
 
     // Fallback for OAuth sessions
-    if (!token) {
-      const authUser = sessionStorage.getItem('auth_user') || localStorage.getItem('auth_user');
-      if (authUser) {
-        try {
-          const parsed = JSON.parse(authUser);
-          if (parsed?.token) {
-            token = parsed.token;
-          }
-        } catch (e) {
-          console.error('Failed to parse auth_user in interceptor', e);
+    if (!token && authUser) {
+      try {
+        const parsed = JSON.parse(authUser);
+        if (parsed?.token) {
+          token = parsed.token;
         }
+      } catch (e) {
+        console.error('Failed to parse auth_user in interceptor', e);
       }
     }
 

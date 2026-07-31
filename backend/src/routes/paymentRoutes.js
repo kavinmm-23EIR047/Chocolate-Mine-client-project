@@ -1,6 +1,7 @@
 const express = require('express');
 const paymentController = require('../controllers/paymentController');
 const { protect, restrictTo } = require('../middleware/auth');
+const rateLimiter = require('../middleware/rateLimiter');
 
 const router = express.Router();
 
@@ -11,7 +12,8 @@ router.post('/webhook', paymentController.handleWebhook);
 router.use(protect);
 
 // User Routes
-router.post('/create-order', paymentController.createRazorpayOrder);
+const paymentLimiter = rateLimiter({ windowMs: 15 * 60 * 1000, max: 20, message: 'Too many payment requests. Please try again later.' });
+router.post('/create-order', paymentLimiter, paymentController.createRazorpayOrder);
 router.post('/verify', paymentController.verifyPayment);
 router.post('/log-failure', paymentController.handlePaymentFailure);
 
