@@ -134,7 +134,7 @@ const OrderStatusDropdown = ({ order, onUpdate }) => {
     return (
       <div className="flex-1">
         <Button
-          className="w-full rounded-2xl py-3 text-xs flex justify-center items-center gap-2 !border !border-amber-700/50 dark:!border-amber-300/50 bg-amber-50/70 dark:bg-amber-400/10 hover:bg-amber-100 dark:hover:bg-amber-400/20 text-amber-900 dark:text-amber-200 shadow-sm hover:shadow-md focus-visible:outline-none cursor-pointer"
+          className="w-full rounded-2xl py-3 text-xs flex justify-center items-center gap-2 !border !border-amber-700/50 dark:!border-amber-300/50 !bg-amber-50/70 dark:!bg-amber-400/10 hover:!bg-amber-100 dark:hover:!bg-amber-400/20 !text-amber-900 dark:!text-amber-200 shadow-sm hover:shadow-md focus-visible:outline-none cursor-pointer"
           onClick={async () => {
             setUpdatingStatus('out_for_delivery');
             try {
@@ -159,7 +159,7 @@ const OrderStatusDropdown = ({ order, onUpdate }) => {
       <div className="flex-1 min-w-[200px]">
         {!showOtpInput ? (
           <Button
-            className="w-full rounded-2xl py-3 text-xs flex justify-center items-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white font-black shadow-md cursor-pointer"
+            className="w-full rounded-2xl py-3 text-xs flex justify-center items-center gap-2 !bg-emerald-700 hover:!bg-emerald-800 !text-white font-black shadow-md cursor-pointer"
             onClick={handleSendOtp}
             disabled={sendingOtp}
           >
@@ -189,7 +189,7 @@ const OrderStatusDropdown = ({ order, onUpdate }) => {
             />
             <div className="flex gap-2">
               <Button
-                className="flex-1 rounded-xl py-2 text-xs bg-emerald-700 hover:bg-emerald-800 text-white font-black shadow-sm cursor-pointer"
+                className="flex-1 rounded-xl py-2 text-xs !bg-emerald-700 hover:!bg-emerald-800 !text-white font-black shadow-sm cursor-pointer"
                 onClick={handleVerifyOtp}
                 disabled={verifyingOtp || otp.length !== 6}
               >
@@ -1421,10 +1421,11 @@ const StaffDashboard = () => {
     const q = orderSearch.toLowerCase().trim();
     const numMatch = order.orderNumber?.toString().toLowerCase().includes(q);
     const trackMatch = order.trackingCode?.toString().toLowerCase().includes(q);
-    const nameMatch = order.address?.fullName?.toLowerCase().includes(q);
-    const phoneMatch = order.address?.phone?.toLowerCase().includes(q);
+    const nameMatch = order.address?.fullName?.toLowerCase().includes(q) || order.user?.name?.toLowerCase().includes(q) || order.userId?.name?.toLowerCase().includes(q);
+    const phoneMatch = order.address?.phone?.toLowerCase().includes(q) || order.user?.phone?.toLowerCase().includes(q) || order.userId?.phone?.toLowerCase().includes(q);
+    const emailMatch = order.user?.email?.toLowerCase().includes(q) || order.userId?.email?.toLowerCase().includes(q);
     const itemMatch = order.items?.some(i => i.name?.toLowerCase().includes(q));
-    return numMatch || trackMatch || nameMatch || phoneMatch || itemMatch;
+    return numMatch || trackMatch || nameMatch || phoneMatch || emailMatch || itemMatch;
   });
 
   return (
