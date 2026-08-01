@@ -4,22 +4,56 @@ import api from '../../utils/api';
 import Logo from '../Logo';
 import { getOptimizedCloudinaryUrl } from '../../utils/cloudinary';
 
+// Keep the banner payload alive while users move between routes (for example,
+// Home -> Cart -> Home). The browser will cache the images, but without this
+// cache the component still shows its loading state and refetches on remount.
+const BANNER_CACHE_TTL = 5 * 60 * 1000;
+let bannerCache = null;
+let bannerRequest = null;
+
+const getActiveBanners = async () => {
+  const cacheIsFresh = bannerCache && Date.now() - bannerCache.fetchedAt < BANNER_CACHE_TTL;
+  if (cacheIsFresh) return bannerCache.data;
+  if (bannerRequest) return bannerRequest;
+
+  bannerRequest = api.get('/banners/active')
+    .then((res) => {
+      const data = res.data.data || [];
+      bannerCache = { data, fetchedAt: Date.now() };
+      return data;
+    })
+    .finally(() => {
+      bannerRequest = null;
+    });
+
+  return bannerRequest;
+};
+
 const HomeBanner = () => {
-  const [banners, setBanners] = useState([]);
+  const hasCachedBanners = Boolean(bannerCache);
+  const cachedBanners = bannerCache?.data || [];
+  const [banners, setBanners] = useState(cachedBanners);
   const [current, setCurrent] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [allImagesReady, setAllImagesReady] = useState(false);
+  const [loading, setLoading] = useState(!hasCachedBanners);
+  const [allImagesReady, setAllImagesReady] = useState(hasCachedBanners);
   const loadedCountRef = useRef(0);
   const totalCountRef = useRef(0);
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchBanners = async () => {
       try {
-        setLoading(true);
-        const res = await api.get('/banners/active');
-        const activeBanners = res.data.data || [];
+        // Cached banners render immediately. Revalidate in the background so
+        // newly changed admin banners appear without a visible reload.
+        if (!bannerCache) setLoading(true);
+        const activeBanners = await getActiveBanners();
+        if (cancelled) return;
+
         setBanners(activeBanners);
-        totalCountRef.current = activeBanners.filter(b => b.image).length;
+        // Only the first visible slide should block the initial banner paint.
+        // The remaining slides can load lazily in the background.
+        totalCountRef.current = activeBanners.some(b => b.image) ? 1 : 0;
 
         if (totalCountRef.current === 0) {
           setAllImagesReady(true);
@@ -27,10 +61,14 @@ const HomeBanner = () => {
       } catch (error) {
         console.error('Failed to fetch banners:', error);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
     fetchBanners();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Track when each slide image finishes loading
@@ -141,8 +179,8 @@ const HomeBanner = () => {
                 srcSet={srcSet}
                 sizes="(max-width: 640px) 600px, (max-width: 1024px) 1000px, 1600px"
                 alt={slide.title || 'Banner Image'}
-                loading="eager"
-                fetchPriority={idx === 0 ? 'high' : 'auto'}
+                loading={idx === 0 ? 'eager' : 'lazy'}
+                fetchPriority={idx === 0 ? 'high' : 'low'}
                 decoding="async"
                 draggable={false}
                 onLoad={handleImageLoaded}
@@ -273,4 +311,3 @@ const HomeBanner = () => {
 };
 
 export default HomeBanner;
-

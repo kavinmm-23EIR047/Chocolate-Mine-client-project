@@ -17,19 +17,19 @@ exports.getCategories = asyncHandler(async (req, res) => {
       { categoryType: null }
     ];
   }
-  const categories = await Category.find(filter).sort('name');
+  const categories = await Category.find(filter).sort('name').lean();
   res.status(200).json({ status: 'success', data: categories });
 });
 
 // GET /api/v1/categories/active
 exports.getActiveCategories = asyncHandler(async (req, res) => {
-  const categories = await Category.find({ active: true }).sort('name');
+  const categories = await Category.find({ active: true }).sort('name').lean();
   res.status(200).json({ status: 'success', data: categories });
 });
 
 // GET /api/v1/categories/:id
 exports.getCategory = asyncHandler(async (req, res, next) => {
-  const category = await Category.findById(req.params.id);
+  const category = await Category.findById(req.params.id).lean();
   if (!category) {
     return next(new AppError('Category not found', 404));
   }

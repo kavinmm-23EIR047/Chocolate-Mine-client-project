@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChefHat, ShoppingBag, Clock, CheckCircle, Printer, RefreshCw, Eye, Flame, Truck, Package, X, KeyRound, Phone, ChevronDown, ChevronUp, ChevronRight, LayoutDashboard, History, ClipboardList, MapPin, CreditCard, Calendar, Hash, Search, Plus, Minus, Trash2, Store, ShoppingCart, User, Cake, Filter, Volume2, VolumeX, LayoutGrid, List } from 'lucide-react';
+import { ChefHat, ShoppingBag, Clock, CheckCircle, Printer, RefreshCw, Eye, Flame, Truck, Package, X, KeyRound, Phone, ChevronDown, ChevronUp, ChevronRight, LayoutDashboard, History, ClipboardList, MapPin, CreditCard, Calendar, Hash, Search, Plus, Minus, Trash2, Store, ShoppingCart, User, Cake, Filter, Volume2, VolumeX, LayoutGrid, List, Loader2 } from 'lucide-react';
 import staffService from '../../services/staffService';
 import { getOptimizedCloudinaryUrl } from '../../utils/cloudinary';
 import productService from '../../services/productService';
@@ -76,6 +76,7 @@ const handleCallCustomer = (phone, e) => {
 // Order Status Dropdown – fully theme-aware with solid high-contrast green completed button
 const OrderStatusDropdown = ({ order, onUpdate }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(null);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -112,11 +113,12 @@ const OrderStatusDropdown = ({ order, onUpdate }) => {
   return (
     <div className="flex-1 relative" ref={dropdownRef}>
       <Button
-        className="w-full rounded-2xl py-3 text-xs flex justify-center items-center gap-2"
-        onClick={() => setIsOpen(!isOpen)}
+        className="w-full rounded-2xl py-3 text-xs flex justify-center items-center gap-2 !border !border-amber-700/50 dark:!border-amber-300/50 bg-amber-50/70 dark:bg-amber-400/10 hover:bg-amber-100 dark:hover:bg-amber-400/20 text-amber-900 dark:text-amber-200 shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
+        onClick={() => setIsOpen(prev => !prev)}
         variant="outline"
+        disabled={Boolean(updatingStatus)}
       >
-        <span>UPDATE STATUS</span>
+        <span>{updatingStatus ? 'UPDATING STATUS…' : 'UPDATE STATUS'}</span>
         <ChevronDown size={16} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </Button>
       <AnimatePresence>
@@ -130,14 +132,24 @@ const OrderStatusDropdown = ({ order, onUpdate }) => {
             {actions.map(action => (
               <button
                 key={action.id}
-                onClick={() => {
-                  setIsOpen(false);
-                  onUpdate(order._id, action.id);
+                type="button"
+                disabled={Boolean(updatingStatus)}
+                onClick={async () => {
+                  setUpdatingStatus(action.id);
+                  try {
+                    await onUpdate(order._id, action.id);
+                    setIsOpen(false);
+                  } catch {
+                    // The parent displays the API error; keep the menu available for retry.
+                  } finally {
+                    setUpdatingStatus(null);
+                  }
                 }}
-                className={`w-full text-left px-4 py-3 text-xs font-bold flex items-center gap-3 transition-colors ${action.color} ${action.hover}`}
+                className={`w-full text-left px-4 py-3 text-xs font-bold flex items-center gap-3 transition-colors disabled:opacity-60 disabled:cursor-wait ${action.color} ${action.hover}`}
               >
-                <action.icon size={16} />
+                {updatingStatus === action.id ? <Loader2 size={16} className="animate-spin" /> : <action.icon size={16} />}
                 {action.label}
+                {updatingStatus === action.id && <span className="ml-auto text-[10px] uppercase tracking-wider">Saving…</span>}
               </button>
             ))}
           </motion.div>
@@ -1142,7 +1154,8 @@ const StaffDashboard = () => {
     try {
       await staffService.updateKitchenStatus(id, status);
       toast.success(`Order marked as ${status.replace(/_/g, ' ')}`);
-      fetchData();
+      // Keep the spinner active until the refreshed list reflects the server state.
+      await fetchData();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to update status');
     }

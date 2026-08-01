@@ -4,7 +4,6 @@ const socketIo = require('socket.io');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 const passport = require('passport');
 const compression = require('compression');
@@ -87,16 +86,45 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser());
 
 /* ==================================
-   RATE LIMIT
+   RATE LIMIT (Distributed & Ultra-Fast 0-2ms via Ephemeral Cache)
 ================================== */
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: process.env.NODE_ENV === 'development' ? 1000 : 200,
-  message: {
-    success: false,
-    message: 'Too many requests. Please try again later.'
-  }
+const { Ratelimit } = require('@upstash/ratelimit');
+const redisClient = require('./src/config/redis');
+
+const rateCache = new Map();
+
+const ratelimit = new Ratelimit({
+  redis: redisClient,
+  limiter: Ratelimit.slidingWindow(
+    process.env.NODE_ENV === 'development' ? 1000 : 200,
+    "15 m"
+  ),
+  ephemeralCache: rateCache,
 });
+
+const limiter = async (req, res, next) => {
+  try {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+    const identifier = Array.isArray(ip) ? ip[0] : ip.split(',')[0].trim();
+    
+    const { success, limit, reset, remaining } = await ratelimit.limit(identifier);
+    
+    res.setHeader('X-RateLimit-Limit', limit);
+    res.setHeader('X-RateLimit-Remaining', remaining);
+    res.setHeader('X-RateLimit-Reset', reset);
+
+    if (!success) {
+      return res.status(429).json({
+        success: false,
+        message: 'Too many requests. Please try again later.'
+      });
+    }
+    next();
+  } catch (error) {
+    console.error('Rate limit error:', error);
+    next(); // Fail open if Redis is down
+  }
+};
 
 app.use('/api/', limiter);
 
@@ -137,6 +165,7 @@ app.get('/api/customcakethemes/search', customCakeController.searchThemesAtlas);
 app.get('/api/v1/customcakethemes/search', customCakeController.searchThemesAtlas);
 
 // Public routes first
+app.use('/api/v1/bootstrap', require('./src/routes/bootstrapRoutes'));
 app.use('/api/v1/auth', require('./src/routes/authRoutes'));
 app.use('/api/auth', require('./src/routes/authRoutes'));
 app.use('/api/v1/products', require('./src/routes/productRoutes'));

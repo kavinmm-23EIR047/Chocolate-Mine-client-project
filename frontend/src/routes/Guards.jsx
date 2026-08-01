@@ -71,7 +71,23 @@ export const StaffRoute = ({ children }) => {
 export const GuestRoute = ({ children }) => {
   const { user, loading } = useAuth();
 
-  if (loading) {
+  // A first-time guest should not wait for auth initialization. If local
+  // session data exists, keep the existing loading gate until AuthContext has
+  // restored or rejected it, avoiding an authenticated-user/page flicker and
+  // preserving correct handling of expired sessions.
+  let hasStoredSession = false;
+  try {
+    hasStoredSession = Boolean(
+      sessionStorage.getItem('user') ||
+      sessionStorage.getItem('token') ||
+      localStorage.getItem('user') ||
+      localStorage.getItem('token')
+    );
+  } catch {
+    // Storage may be unavailable in privacy-restricted environments.
+  }
+
+  if (loading && hasStoredSession && !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 size={32} className="animate-spin text-secondary" />

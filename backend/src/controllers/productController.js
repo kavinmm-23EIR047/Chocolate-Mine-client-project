@@ -249,7 +249,8 @@ exports.getProducts = asyncHandler(async (req, res) => {
   const rawProducts = await Product.find(query)
     .sort(sortQuery)
     .skip((page - 1) * limit)
-    .limit(parseInt(limit));
+    .limit(parseInt(limit))
+    .lean();
 
   const BENTO_FLAVOR_PRICES = {
     'White Forest': 380,

@@ -36,6 +36,18 @@ const ImageWithSkeleton = ({
     if (!optimizedSrc || optimizedSrc === 'none' || optimizedSrc.trim() === '') return;
     setIsLoaded(false);
     setHasError(false);
+
+    // A cached image can already be complete by the time this effect runs.
+    // Handle that case immediately instead of keeping the skeleton visible
+    // until another render or relying only on a future load event.
+    if (imgRef.current?.complete) {
+      if (imgRef.current.naturalWidth > 0) {
+        setIsLoaded(true);
+      } else {
+        setHasError(true);
+        setIsLoaded(true);
+      }
+    }
   }, [optimizedSrc]);
 
   const handleLoad = () => {
