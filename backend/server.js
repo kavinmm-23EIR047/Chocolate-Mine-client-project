@@ -86,45 +86,15 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser());
 
 /* ==================================
-   RATE LIMIT (Distributed & Ultra-Fast 0-2ms via Ephemeral Cache)
+   RATE LIMIT (Ultra-Fast 0ms In-Memory)
 ================================== */
-const { Ratelimit } = require('@upstash/ratelimit');
-const redisClient = require('./src/config/redis');
-
-const rateCache = new Map();
-
-const ratelimit = new Ratelimit({
-  redis: redisClient,
-  limiter: Ratelimit.slidingWindow(
-    process.env.NODE_ENV === 'development' ? 1000 : 200,
-    "15 m"
-  ),
-  ephemeralCache: rateCache,
+const rateLimiter = require('./src/middleware/rateLimiter');
+// Use the local rate limiter instead of Upstash to eliminate HTTP overhead
+const limiter = rateLimiter({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: process.env.NODE_ENV === 'development' ? 1000 : 200, // limit each IP
+  message: 'Too many requests. Please try again later.'
 });
-
-const limiter = async (req, res, next) => {
-  try {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
-    const identifier = Array.isArray(ip) ? ip[0] : ip.split(',')[0].trim();
-    
-    const { success, limit, reset, remaining } = await ratelimit.limit(identifier);
-    
-    res.setHeader('X-RateLimit-Limit', limit);
-    res.setHeader('X-RateLimit-Remaining', remaining);
-    res.setHeader('X-RateLimit-Reset', reset);
-
-    if (!success) {
-      return res.status(429).json({
-        success: false,
-        message: 'Too many requests. Please try again later.'
-      });
-    }
-    next();
-  } catch (error) {
-    console.error('Rate limit error:', error);
-    next(); // Fail open if Redis is down
-  }
-};
 
 app.use('/api/', limiter);
 

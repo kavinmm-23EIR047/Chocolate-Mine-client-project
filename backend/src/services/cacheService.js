@@ -13,7 +13,8 @@ const cacheService = {
 
   set: async (key, value, ttl = 300) => {
     try {
-      await redis.set(key, value, { ex: ttl });
+      const valueStr = typeof value === 'string' ? value : JSON.stringify(value);
+      await redis.set(key, valueStr, 'EX', ttl);
     } catch (err) {
       logger.error(`Redis Set Error [${key}]:`, err);
     }
