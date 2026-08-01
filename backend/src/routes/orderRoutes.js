@@ -59,6 +59,20 @@ router.get('/:id/invoice', orderController.downloadInvoice);
 router.get('/:id', orderController.getOrder);
 
 /**
+ * @route   POST /api/v1/orders/:id/delivery-otp/send
+ * @desc    Send delivery verification OTP to customer (SMS + Email)
+ * @access  Staff/Admin only
+ */
+router.post('/:id/delivery-otp/send', restrictTo('staff', 'admin'), orderController.sendDeliveryOtp);
+
+/**
+ * @route   POST /api/v1/orders/:id/delivery-otp/verify
+ * @desc    Verify delivery OTP and mark order as delivered
+ * @access  Staff/Admin only
+ */
+router.post('/:id/delivery-otp/verify', restrictTo('staff', 'admin'), orderController.verifyDeliveryOtp);
+
+/**
  * @route   PATCH /api/v1/orders/:id/status
  * @desc    Update order status (Staff only: confirmed → out_for_delivery → delivered)
  * @access  Staff only (Admin cannot update status)

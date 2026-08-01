@@ -504,6 +504,15 @@ exports.updateKitchenStatus = asyncHandler(async (req, res, next) => {
     order.assignedStaff = req.user._id;
   }
 
+  // PROTECTION: 'delivered' status requires delivery OTP verification
+  if (status === 'delivered') {
+    const Order = require('../models/Order');
+    const orderWithOtp = await Order.findById(order._id).select('+deliveryOtp');
+    if (!orderWithOtp.deliveryOtpVerified) {
+      return next(new AppError('Delivery OTP must be verified before marking order as delivered. Please use the Send OTP → Verify OTP flow.', 400));
+    }
+  }
+
   order.orderStatus = status;
   await order.save();
 

@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { memo } from 'react';
 import { motion } from 'framer-motion';
 import {
   Heart, Star, ShoppingBag, Plus, Minus, Ticket, MapPin,
-  Flame, Sparkles, Percent, Zap, AlertCircle, Scale, Trash2, CheckCircle2, Settings2
+  Flame, Sparkles, Percent, Zap, AlertCircle, Scale, Trash2, CheckCircle2, Settings2,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -241,6 +242,7 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg', o
   };
 
   const [addingToCart, setAddingToCart] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   const isCake = Array.isArray(product?.category) ? product.category.some(c => typeof c === 'string' && c.toLowerCase().includes('cake')) : (product?.category || '').toLowerCase().includes('cake');
   const isBento = (Array.isArray(product?.category) ? product.category.some(c => typeof c === 'string' && c.toLowerCase().includes('bento')) : (product?.category || '').toLowerCase().includes('bento')) || product?.cakeType?.toLowerCase().includes('bento');
@@ -309,7 +311,17 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg', o
   const rating = Number(product?.ratingsAverage) || 0;
   const reviewCount = Number(product?.ratingsCount) || 0;
   const isCakeCategory = (Array.isArray(product?.category) ? product.category.some(c => typeof c === 'string' && c.toLowerCase().includes('cake')) : String(product?.category || '').toLowerCase().includes('cake')) || !!product?.cakeType;
-  const hasValidImage = typeof product?.image === 'string' && product.image.trim() !== '' && product.image !== 'none';
+  const hasValidImage = (typeof product?.image === 'string' && product.image.trim() !== '' && product.image !== 'none') || (Array.isArray(product?.images) && product.images.some(img => typeof img === 'string' && img.trim() !== '' && img !== 'none'));
+
+  const galleryImages = Array.isArray(product?.images)
+    ? product.images.filter(img => typeof img === 'string' && img.trim() !== '' && img !== 'none')
+    : [];
+  const effectiveImages = galleryImages.length > 0 ? galleryImages : hasValidImage && typeof product?.image === 'string' ? [product.image] : [];
+  const displayImage = effectiveImages[activeImageIndex] || effectiveImages[0] || '';
+
+  useEffect(() => {
+    setActiveImageIndex(0);
+  }, [product?._id, product?.image, product?.images]);
 
   const locationDisplay = (product?.location === 'pan-india' || product?.location === 'pan india' || product?.location === 'both')
     ? 'Coimbatore & Pan India'
@@ -497,18 +509,41 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg', o
         </div>
 
         <div className="relative shrink-0 w-[104px] sm:w-28 md:w-36 aspect-square rounded-xl self-center" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-          <div className="w-full h-full overflow-hidden rounded-xl">
+          <div className="w-full h-full overflow-hidden rounded-xl relative">
             {hasValidImage ? (
-              <ImageWithSkeleton
-                src={product.image}
-                alt={product.name}
-                className="w-full h-full object-cover"
-                loading={priority ? 'eager' : 'lazy'}
-                fetchPriority={priority ? 'high' : 'auto'}
-                sizes="(max-width: 639px) 35vw, 140px"
-                imageWidth={400}
-                fallback={<ImagePlaceholder />}
-              />
+              <>
+                <ImageWithSkeleton
+                  src={displayImage}
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                  loading={priority ? 'eager' : 'lazy'}
+                  fetchPriority={priority ? 'high' : 'auto'}
+                  sizes="(max-width: 639px) 35vw, 140px"
+                  imageWidth={400}
+                  fallback={<ImagePlaceholder />}
+                />
+                {effectiveImages.length > 1 && (
+                  <>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setActiveImageIndex((prev) => (prev - 1 + effectiveImages.length) % effectiveImages.length); }}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-9 h-9 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors pointer-events-auto"
+                      aria-label="Previous image"
+                    >
+                      <ChevronLeft size={18} strokeWidth={3} />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setActiveImageIndex((prev) => (prev + 1) % effectiveImages.length); }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-9 h-9 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors pointer-events-auto"
+                      aria-label="Next image"
+                    >
+                      <ChevronRight size={18} strokeWidth={3} />
+                    </button>
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/35 text-[10px] text-white backdrop-blur-sm">
+                      {activeImageIndex + 1}/{effectiveImages.length}
+                    </div>
+                  </>
+                )}
+              </>
             ) : <ImagePlaceholder />}
           </div>
 
@@ -552,18 +587,41 @@ const ProductCard = ({ product, layout = 'vertical', cardStyle = 'rounded-lg', o
     >
       <div>
         <div className="relative aspect-square overflow-visible shrink-0 w-full mb-8" style={{ background: 'var(--surface)', borderRadius: '12px' }}>
-          <div className="w-full h-full overflow-hidden rounded-xl">
+          <div className="w-full h-full overflow-hidden rounded-xl relative">
             {hasValidImage ? (
-              <ImageWithSkeleton
-                src={product.image}
-                alt={product.name}
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                loading={priority ? 'eager' : 'lazy'}
-                fetchPriority={priority ? 'high' : 'auto'}
-                sizes="(max-width: 639px) 50vw, (max-width: 1023px) 33vw, 25vw"
-                imageWidth={400}
-                fallback={<ImagePlaceholder />}
-              />
+              <>
+                <ImageWithSkeleton
+                  src={displayImage}
+                  alt={product.name}
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  loading={priority ? 'eager' : 'lazy'}
+                  fetchPriority={priority ? 'high' : 'auto'}
+                  sizes="(max-width: 639px) 50vw, (max-width: 1023px) 33vw, 25vw"
+                  imageWidth={400}
+                  fallback={<ImagePlaceholder />}
+                />
+                {effectiveImages.length > 1 && (
+                  <>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setActiveImageIndex((prev) => (prev - 1 + effectiveImages.length) % effectiveImages.length); }}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-9 h-9 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors pointer-events-auto"
+                      aria-label="Previous image"
+                    >
+                      <ChevronLeft size={18} strokeWidth={3} />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setActiveImageIndex((prev) => (prev + 1) % effectiveImages.length); }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-9 h-9 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors pointer-events-auto"
+                      aria-label="Next image"
+                    >
+                      <ChevronRight size={18} strokeWidth={3} />
+                    </button>
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/35 text-[10px] text-white backdrop-blur-sm">
+                      {activeImageIndex + 1}/{effectiveImages.length}
+                    </div>
+                  </>
+                )}
+              </>
             ) : <ImagePlaceholder />}
           </div>
 

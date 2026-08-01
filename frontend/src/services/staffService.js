@@ -43,6 +43,12 @@ const staffService = {
   ---------------------------------------- */
   createInShopOrder: (data) => api.post('/staff/orders/in-shop', data),
   getInShopOrders: () => api.get('/staff/orders/in-shop'),
+
+  /* ----------------------------------------
+     Delivery OTP Verification
+  ---------------------------------------- */
+  sendDeliveryOtp: (orderId) => api.post(`/orders/${orderId}/delivery-otp/send`),
+  verifyDeliveryOtp: (orderId, otp) => api.post(`/orders/${orderId}/delivery-otp/verify`, { otp }),
 };
 
 export default staffService;

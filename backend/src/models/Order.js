@@ -207,7 +207,15 @@ const orderSchema = new mongoose.Schema(
     razorpayPaymentId: { type: String },
     razorpaySignature: { type: String },
     paymentAttemptAt: { type: Date },
-    paymentFailureReason: { type: String }
+    paymentFailureReason: { type: String },
+
+    // Delivery OTP Verification
+    deliveryOtp: { type: String, select: false },         // bcrypt hashed OTP
+    deliveryOtpExpiresAt: { type: Date },
+    deliveryOtpVerified: { type: Boolean, default: false },
+    deliveryOtpVerifiedAt: { type: Date },
+    deliveryOtpAttempts: { type: Number, default: 0 },
+    deliveryOtpLastSentAt: { type: Date }
   },
   {
     timestamps: true
