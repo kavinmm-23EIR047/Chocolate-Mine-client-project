@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Star, ArrowRight } from 'lucide-react';
+import { Star, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useGetProductsQuery } from '../../product/productApi';
 import ProductCard from '../../product/ProductCard';
 import { CardSkeleton } from '../ui/Skeleton';
@@ -15,13 +15,134 @@ const fadeUp = {
 };
 
 const Bestseller = ({ location }) => {
+  const sliderRef = useRef(null);
+  const progressTrackRef = useRef(null);
+  const [scrollRatio, setScrollRatio] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [isDraggingTrack, setIsDraggingTrack] = useState(false);
+
+  // Mouse Drag on Container State
+  const [isMouseDown, setIsMouseDown] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeftPos, setScrollLeftPos] = useState(0);
+
   const { data: productRes, isLoading } = useGetProductsQuery({
     bestseller: 'true',
     location,
-    limit: 10,
+    limit: 12,
   });
 
   const products = (productRes?.data || []).filter(p => p.bestseller === true);
+
+  const handleScroll = useCallback(() => {
+    if (sliderRef.current && !isDraggingTrack) {
+      const { scrollLeft, scrollWidth, clientWidth } = sliderRef.current;
+      const maxScroll = scrollWidth - clientWidth;
+      if (maxScroll > 0) {
+        setScrollRatio(Math.min(1, Math.max(0, scrollLeft / maxScroll)));
+      }
+    }
+  }, [isDraggingTrack]);
+
+  const scroll = useCallback((direction) => {
+    if (sliderRef.current) {
+      const scrollAmount = direction === 'left' ? -300 : 300;
+      sliderRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  }, []);
+
+  // Mouse Drag Handlers for Container
+  const handleMouseDown = (e) => {
+    if (!sliderRef.current) return;
+    setIsMouseDown(true);
+    setIsPaused(true);
+    setStartX(e.pageX - sliderRef.current.offsetLeft);
+    setScrollLeftPos(sliderRef.current.scrollLeft);
+  };
+
+  const handleMouseLeave = () => {
+    setIsMouseDown(false);
+    setIsPaused(false);
+  };
+
+  const handleMouseUp = () => {
+    setIsMouseDown(false);
+    setIsPaused(false);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isMouseDown || !sliderRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - sliderRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    sliderRef.current.scrollLeft = scrollLeftPos - walk;
+  };
+
+  // Automatic slide one by one (2.4s speed)
+  useEffect(() => {
+    if (isLoading || products.length <= 1 || isPaused || isDraggingTrack || isMouseDown) return;
+
+    const interval = setInterval(() => {
+      if (sliderRef.current) {
+        const { scrollLeft, scrollWidth, clientWidth } = sliderRef.current;
+        const maxScroll = scrollWidth - clientWidth;
+        const cardStep = 280;
+
+        if (scrollLeft + 20 >= maxScroll) {
+          sliderRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          sliderRef.current.scrollBy({ left: cardStep, behavior: 'smooth' });
+        }
+      }
+    }, 2400);
+
+    return () => clearInterval(interval);
+  }, [isLoading, products.length, isPaused, isDraggingTrack, isMouseDown]);
+
+  const updateScrollByX = useCallback((clientX) => {
+    if (!progressTrackRef.current || !sliderRef.current) return;
+    const rect = progressTrackRef.current.getBoundingClientRect();
+    const clickX = clientX - rect.left;
+    const ratio = Math.max(0, Math.min(1, clickX / (rect.width > 0 ? rect.width : 1)));
+    setScrollRatio(ratio);
+    const { scrollWidth, clientWidth } = sliderRef.current;
+    sliderRef.current.scrollLeft = ratio * (scrollWidth - clientWidth);
+  }, []);
+
+  const handlePointerDown = (e) => {
+    setIsDraggingTrack(true);
+    setIsPaused(true);
+    const clientX = e.clientX || (e.touches && e.touches[0]?.clientX) || 0;
+    updateScrollByX(clientX);
+  };
+
+  useEffect(() => {
+    if (!isDraggingTrack) return;
+
+    const handlePointerMove = (e) => {
+      const clientX = e.clientX || (e.touches && e.touches[0]?.clientX);
+      if (clientX !== undefined) {
+        updateScrollByX(clientX);
+      }
+    };
+
+    const handlePointerUp = () => {
+      setIsDraggingTrack(false);
+      setIsPaused(false);
+    };
+
+    window.addEventListener('mousemove', handlePointerMove);
+    window.addEventListener('mouseup', handlePointerUp);
+    window.addEventListener('touchmove', handlePointerMove);
+    window.addEventListener('touchend', handlePointerUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handlePointerMove);
+      window.removeEventListener('mouseup', handlePointerUp);
+      window.removeEventListener('touchmove', handlePointerMove);
+      window.removeEventListener('touchend', handlePointerUp);
+    };
+  }, [isDraggingTrack, updateScrollByX]);
 
   if (!isLoading && products.length === 0) {
     return null;
@@ -30,7 +151,7 @@ const Bestseller = ({ location }) => {
   return (
     <section className="responsive-section !py-6 lg:!py-10 border-b border-border/20 overflow-hidden">
       <div className="flex flex-col gap-5 lg:gap-8">
-        <div className="flex flex-row items-center justify-between gap-4 w-full px-4 sm:px-0 mb-6 lg:mb-8">
+        <div className="flex flex-row items-center justify-between gap-4 w-full px-4 sm:px-0 mb-4 lg:mb-6">
           
           <div className="flex items-center gap-3 sm:gap-4">
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
@@ -41,23 +162,55 @@ const Bestseller = ({ location }) => {
             </h2>
           </div>
 
-          {!isLoading && products.length > 0 && (
-            <Link
-              to="/shop?bestseller=true"
-              className="inline-flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs lg:text-sm font-black text-primary hover:text-primary-hover uppercase tracking-widest border-b-2 border-primary/20 pb-0.5 transition-all hover:gap-2 whitespace-nowrap mb-1"
-            >
-              View All <ArrowRight size={14} className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 inline ml-1" />
-            </Link>
-          )}
+          <div className="flex items-center gap-2">
+            {!isLoading && products.length > 3 && (
+              <div className="flex items-center gap-1.5 mr-2">
+                <button
+                  onClick={() => scroll('left')}
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border border-border/80 bg-card hover:bg-primary/10 hover:border-primary/40 text-heading flex items-center justify-center transition-all active:scale-95 shadow-xs cursor-pointer"
+                  aria-label="Previous bestsellers"
+                  title="Previous"
+                >
+                  <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={2.5} />
+                </button>
+                <button
+                  onClick={() => scroll('right')}
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border border-border/80 bg-card hover:bg-primary/10 hover:border-primary/40 text-heading flex items-center justify-center transition-all active:scale-95 shadow-xs cursor-pointer"
+                  aria-label="Next bestsellers"
+                  title="Next"
+                >
+                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={2.5} />
+                </button>
+              </div>
+            )}
+
+            {!isLoading && products.length > 0 && (
+              <Link
+                to="/shop?bestseller=true"
+                className="inline-flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs lg:text-sm font-black text-primary hover:text-primary-hover uppercase tracking-widest border-b-2 border-primary/20 pb-0.5 transition-all hover:gap-2 whitespace-nowrap"
+              >
+                View All <ArrowRight size={14} className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 inline ml-1" />
+              </Link>
+            )}
+          </div>
         </div>
 
+        {/* Carousel Container with Mouse Drag & Touch Swipe */}
         <div
-          className="flex overflow-x-auto snap-x snap-mandatory gap-3 sm:gap-4 lg:gap-6 tv:gap-8 pb-4 lg:pb-6 scroll-smooth [&::-webkit-scrollbar]:hidden"
+          ref={sliderRef}
+          onScroll={handleScroll}
+          onMouseDown={handleMouseDown}
+          onMouseLeave={handleMouseLeave}
+          onMouseUp={handleMouseUp}
+          onMouseMove={handleMouseMove}
+          onTouchStart={() => setIsPaused(true)}
+          onTouchEnd={() => setIsPaused(false)}
+          className="flex overflow-x-auto snap-x snap-mandatory gap-3 sm:gap-4 lg:gap-6 tv:gap-8 pb-4 lg:pb-6 scroll-smooth select-none cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {isLoading ? (
             Array(4).fill(0).map((_, i) => (
-              <div key={`best-skel-${i}`} className="snap-start shrink-0 w-[180px] sm:w-[220px] md:w-[260px] lg:w-[300px] tv:w-[360px]">
+              <div key={`best-skel-${i}`} className="snap-start shrink-0 w-[200px] sm:w-[240px] md:w-[270px] lg:w-[310px] tv:w-[360px]">
                 <CardSkeleton />
               </div>
             ))
@@ -70,13 +223,34 @@ const Bestseller = ({ location }) => {
                 whileInView="show"
                 viewport={{ once: true }}
                 custom={i}
-                className="snap-start shrink-0 w-[180px] sm:w-[220px] md:w-[260px] lg:w-[300px] tv:w-[360px] h-auto flex flex-col"
+                className="snap-start shrink-0 w-[200px] sm:w-[240px] md:w-[270px] lg:w-[310px] tv:w-[360px] h-auto flex flex-col pointer-events-auto"
               >
                 <ProductCard product={p} />
               </motion.div>
             ))
           )}
         </div>
+
+        {/* Medium-Sized Clickable & Draggable Slider Bar (No End Arrows) */}
+        {!isLoading && products.length > 3 && (
+          <div className="flex justify-center items-center mt-2 py-1">
+            <div 
+              ref={progressTrackRef}
+              onMouseDown={handlePointerDown}
+              onTouchStart={handlePointerDown}
+              className="w-48 sm:w-64 h-2.5 bg-neutral-300/80 dark:bg-neutral-800/80 rounded-full relative cursor-pointer touch-none flex items-center overflow-hidden border border-border/30 shadow-xs"
+              title="Click or drag slider left & right"
+            >
+              <div 
+                className="h-full bg-neutral-700 dark:bg-neutral-300 hover:bg-neutral-800 dark:hover:bg-white rounded-full cursor-grab active:cursor-grabbing transition-all duration-75 shadow-xs"
+                style={{ 
+                  width: '30%',
+                  marginLeft: `${scrollRatio * 70}%`
+                }}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

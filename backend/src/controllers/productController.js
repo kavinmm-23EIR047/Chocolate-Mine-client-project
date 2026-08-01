@@ -144,7 +144,20 @@ exports.getProducts = asyncHandler(async (req, res) => {
     });
   }
   if (cakeType) query.cakeType = cakeType;
-  if (location) query.location = location.toLowerCase();
+  if (location) {
+    const locLower = location.toLowerCase().trim();
+    if (locLower !== 'all' && locLower !== 'pan india' && locLower !== 'pan-india') {
+      query.$and = query.$and || [];
+      query.$and.push({
+        $or: [
+          { location: { $regex: getBaseFilterPattern(locLower), $options: 'i' } },
+          { location: 'all' },
+          { location: 'pan india' },
+          { location: 'pan-india' }
+        ]
+      });
+    }
+  }
   
   if (occasion) {
     const regexPattern = getBaseFilterPattern(occasion);

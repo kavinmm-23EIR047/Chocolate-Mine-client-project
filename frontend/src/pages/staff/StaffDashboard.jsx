@@ -73,19 +73,13 @@ const handleCallCustomer = (phone, e) => {
   }, 100);
 };
 
-// Order Status Dropdown – fully theme-aware with solid high-contrast green completed button
+// Order Status Dropdown & Delivery OTP Control – fully theme-aware
 const OrderStatusDropdown = ({ order, onUpdate }) => {
-  const [isOpen, setIsOpen] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(null);
-  const dropdownRef = useRef(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) setIsOpen(false);
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const [showOtpInput, setShowOtpInput] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
 
   if (order.paymentMethod === 'ONLINE' && order.paymentStatus !== 'paid') {
     return (
@@ -95,14 +89,7 @@ const OrderStatusDropdown = ({ order, onUpdate }) => {
     );
   }
 
-  const actions = [];
-  if (order.orderStatus === 'confirmed') {
-    actions.push({ id: 'out_for_delivery', label: 'Out For Delivery', icon: Truck, color: 'text-primary', hover: 'hover:bg-primary/10' });
-  } else if (order.orderStatus === 'out_for_delivery') {
-    actions.push({ id: 'delivered', label: 'Deliver Order', icon: CheckCircle, color: 'text-success', hover: 'hover:bg-success/10' });
-  }
-
-  if (actions.length === 0) {
+  if (order.orderStatus === 'delivered') {
     return (
       <div className="flex-1 inline-flex items-center justify-center gap-1.5 py-3 px-4 rounded-2xl bg-emerald-700 text-white border border-emerald-700 text-xs font-black uppercase tracking-wider shadow-sm">
         <CheckCircle size={14} /> COMPLETED
@@ -110,53 +97,120 @@ const OrderStatusDropdown = ({ order, onUpdate }) => {
     );
   }
 
-  return (
-    <div className="flex-1 relative" ref={dropdownRef}>
-      <Button
-        className="w-full rounded-2xl py-3 text-xs flex justify-center items-center gap-2 !border !border-amber-700/50 dark:!border-amber-300/50 bg-amber-50/70 dark:bg-amber-400/10 hover:bg-amber-100 dark:hover:bg-amber-400/20 text-amber-900 dark:text-amber-200 shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
-        onClick={() => setIsOpen(prev => !prev)}
-        variant="outline"
-        disabled={Boolean(updatingStatus)}
-      >
-        <span>{updatingStatus ? 'UPDATING STATUS…' : 'UPDATE STATUS'}</span>
-        <ChevronDown size={16} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-      </Button>
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            className="absolute bottom-full left-0 right-0 mb-2 bg-card border border-border shadow-xl rounded-xl overflow-hidden z-20"
+  const handleSendOtp = async () => {
+    try {
+      setSendingOtp(true);
+      const res = await staffService.sendDeliveryOtp(order._id);
+      toast.success(res.data?.message || 'Delivery OTP sent to customer phone and email!');
+      setShowOtpInput(true);
+    } catch (err) {
+      const errMsg = err.response?.data?.message || 'Failed to send delivery OTP';
+      toast.error(errMsg);
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otp || otp.trim().length !== 6) {
+      return toast.error('Please enter valid 6-digit OTP');
+    }
+    try {
+      setVerifyingOtp(true);
+      const res = await staffService.verifyDeliveryOtp(order._id, otp.trim());
+      toast.success(res.data?.message || 'Delivery verified successfully! Order marked as Delivered.');
+      setOtp('');
+      setShowOtpInput(false);
+      if (onUpdate) await onUpdate(order._id, 'delivered');
+    } catch (err) {
+      const errMsg = err.response?.data?.message || 'Invalid delivery OTP';
+      toast.error(errMsg);
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
+
+  if (order.orderStatus === 'confirmed') {
+    return (
+      <div className="flex-1">
+        <Button
+          className="w-full rounded-2xl py-3 text-xs flex justify-center items-center gap-2 !border !border-amber-700/50 dark:!border-amber-300/50 bg-amber-50/70 dark:bg-amber-400/10 hover:bg-amber-100 dark:hover:bg-amber-400/20 text-amber-900 dark:text-amber-200 shadow-sm hover:shadow-md focus-visible:outline-none cursor-pointer"
+          onClick={async () => {
+            setUpdatingStatus('out_for_delivery');
+            try {
+              await onUpdate(order._id, 'out_for_delivery');
+            } catch (err) {
+              toast.error(err.response?.data?.message || 'Failed to update status');
+            } finally {
+              setUpdatingStatus(null);
+            }
+          }}
+          disabled={Boolean(updatingStatus)}
+        >
+          {updatingStatus === 'out_for_delivery' ? <Loader2 size={16} className="animate-spin" /> : <Truck size={16} />}
+          <span>{updatingStatus === 'out_for_delivery' ? 'UPDATING…' : 'OUT FOR DELIVERY'}</span>
+        </Button>
+      </div>
+    );
+  }
+
+  if (order.orderStatus === 'out_for_delivery') {
+    return (
+      <div className="flex-1 min-w-[200px]">
+        {!showOtpInput ? (
+          <Button
+            className="w-full rounded-2xl py-3 text-xs flex justify-center items-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white font-black shadow-md cursor-pointer"
+            onClick={handleSendOtp}
+            disabled={sendingOtp}
           >
-            {actions.map(action => (
-              <button
-                key={action.id}
-                type="button"
-                disabled={Boolean(updatingStatus)}
-                onClick={async () => {
-                  setUpdatingStatus(action.id);
-                  try {
-                    await onUpdate(order._id, action.id);
-                    setIsOpen(false);
-                  } catch {
-                    // The parent displays the API error; keep the menu available for retry.
-                  } finally {
-                    setUpdatingStatus(null);
-                  }
-                }}
-                className={`w-full text-left px-4 py-3 text-xs font-bold flex items-center gap-3 transition-colors disabled:opacity-60 disabled:cursor-wait ${action.color} ${action.hover}`}
+            {sendingOtp ? <Loader2 size={16} className="animate-spin" /> : <KeyRound size={16} />}
+            <span>{sendingOtp ? 'SENDING OTP…' : 'SEND DELIVERY OTP'}</span>
+          </Button>
+        ) : (
+          <div className="p-3 bg-card border-2 border-emerald-600/60 rounded-2xl space-y-2 shadow-md">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Delivery OTP Verification</span>
+              <button 
+                type="button" 
+                onClick={handleSendOtp} 
+                disabled={sendingOtp}
+                className="text-[10px] font-bold text-amber-700 dark:text-amber-400 hover:underline cursor-pointer"
               >
-                {updatingStatus === action.id ? <Loader2 size={16} className="animate-spin" /> : <action.icon size={16} />}
-                {action.label}
-                {updatingStatus === action.id && <span className="ml-auto text-[10px] uppercase tracking-wider">Saving…</span>}
+                {sendingOtp ? 'Sending...' : 'Resend OTP'}
               </button>
-            ))}
-          </motion.div>
+            </div>
+            <input
+              type="text"
+              maxLength={6}
+              value={otp}
+              onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              placeholder="6-digit OTP"
+              className="w-full px-3 py-2 text-center text-lg font-mono font-black tracking-widest bg-input border border-input-border rounded-xl text-heading focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+            />
+            <div className="flex gap-2">
+              <Button
+                className="flex-1 rounded-xl py-2 text-xs bg-emerald-700 hover:bg-emerald-800 text-white font-black shadow-sm cursor-pointer"
+                onClick={handleVerifyOtp}
+                disabled={verifyingOtp || otp.length !== 6}
+              >
+                {verifyingOtp ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+                <span>{verifyingOtp ? 'VERIFYING…' : 'VERIFY & DELIVER'}</span>
+              </Button>
+              <button
+                type="button"
+                onClick={() => setShowOtpInput(false)}
+                className="px-2.5 py-2 text-xs font-bold text-muted hover:text-heading border border-border rounded-xl cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         )}
-      </AnimatePresence>
-    </div>
-  );
+      </div>
+    );
+  }
+
+  return null;
 };
 
 const getDisplayFlavor = (item) => {

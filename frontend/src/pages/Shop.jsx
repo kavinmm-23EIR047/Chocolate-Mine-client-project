@@ -402,10 +402,14 @@ const Shop = () => {
     let products = productRes?.data ? [...productRes.data] : [];
 
     // Location Filtering
-    if (location === 'pan india') {
+    if (location && location.toLowerCase() !== 'all' && location.toLowerCase() !== 'pan india' && location.toLowerCase() !== 'pan-india') {
+      const locLower = location.toLowerCase().trim();
       products = products.filter(p => 
-        p.location?.toLowerCase() === 'pan-india' || 
-        p.location?.toLowerCase() === 'pan india'
+        !p.location || 
+        p.location.toLowerCase() === locLower || 
+        p.location.toLowerCase() === 'all' || 
+        p.location.toLowerCase() === 'pan india' || 
+        p.location.toLowerCase() === 'pan-india'
       );
     }
 

@@ -784,6 +784,47 @@ const emailService = {
         </html>
       `,
     });
+  },
+
+  // ==========================================
+  // DELIVERY OTP VERIFICATION EMAIL
+  // ==========================================
+  sendDeliveryOtpEmail: async (email, otp, orderNumber) => {
+    try {
+      await sendMail({
+        to: email,
+        subject: `Chocolate Mine - Delivery Verification OTP`,
+        html: `
+          <html>
+            <head>
+              <link href="https://fonts.googleapis.com/css2?family=Helvetica+Neue:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+              ${getThemeStyles()}
+            </head>
+            <body style="background-color: #F5F2EF; color: #2C1A16; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 0; padding: 24px 12px;">
+              <div class="receipt-container" style="background-color: #FFFFFF; color: #2C1A16; border: 1px solid #D8CFC8; max-width: 540px; margin: 0 auto; padding: 36px 32px; border-radius: 0px; text-align: center;">
+                ${getLogoMarkup()}
+                <h2 class="title-text" style="color: #3C1B13; font-size: 20px; font-weight: 900; text-transform: uppercase; margin-top: 0;">Delivery Verification OTP</h2>
+                ${orderNumber ? `<p style="font-size: 13px; font-weight: 700; color: #52443F; margin: 0 0 16px 0;">Order: #${orderNumber}</p>` : ''}
+                <p style="font-size: 13px; color: #52443F; line-height: 1.6; margin: 0 0 24px 0;">Your delivery verification OTP is:</p>
+                
+                <div class="otp-display" style="color: #3C1B13; background-color: #F8F5F2; border: 2px solid #3C1B13; letter-spacing: 8px; font-size: 32px; font-weight: 900; padding: 14px 28px; display: inline-block; text-align: center;">
+                  ${otp}
+                </div>
+                
+                <p style="font-size: 13px; color: #52443F; line-height: 1.6; margin: 24px 0 0 0;">Please share this OTP with the delivery agent <strong>only after receiving your order</strong>.</p>
+                <p style="font-size: 12px; color: #7A6B65; margin-top: 16px; font-weight: 600;">This OTP is valid for 5 minutes.</p>
+                <p style="font-size: 12px; color: #7A6B65; margin-top: 8px; font-weight: 600;">If you didn't expect this, please ignore this email.</p>
+                ${getReceiptBarcodeMarkup()}
+              </div>
+            </body>
+          </html>
+        `,
+      });
+      return { success: true };
+    } catch (err) {
+      logger.error(`[Email] Failed to send delivery OTP email to ${email}: ${err.message}`);
+      return { success: false, error: err.message };
+    }
   }
 };
 

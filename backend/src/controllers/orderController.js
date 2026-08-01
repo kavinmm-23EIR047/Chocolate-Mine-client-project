@@ -1,10 +1,14 @@
 const Order = require('../models/Order');
 const User = require('../models/User');
 const Product = require('../models/Product');
+const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const cacheService = require('../services/cacheService');
 const telegramService = require('../services/telegramService');
 const invoiceService = require('../services/invoiceService');
 const notificationManager = require('../services/notificationManager');
+const smsService = require('../services/smsService');
+const emailService = require('../services/emailService');
 const AppError = require('../utils/AppError');
 const asyncHandler = require('../utils/asyncHandler');
 
@@ -212,6 +216,14 @@ exports.updateStatus = asyncHandler(async (req, res, next) => {
     ));
   }
 
+  // PROTECTION: 'delivered' status requires delivery OTP verification
+  if (status === 'delivered') {
+    const orderWithOtp = await Order.findById(order._id).select('+deliveryOtp');
+    if (!orderWithOtp.deliveryOtpVerified) {
+      return next(new AppError('Delivery OTP must be verified before marking order as delivered. Please use the Send OTP → Verify OTP flow.', 400));
+    }
+  }
+
   order.orderStatus = status;
   await order.save();
 
@@ -280,6 +292,164 @@ exports.downloadInvoice = asyncHandler(async (req, res, next) => {
   });
 
   res.send(pdfBuffer);
+});
+
+// ==========================================
+// DELIVERY OTP - SEND
+// ==========================================
+exports.sendDeliveryOtp = asyncHandler(async (req, res, next) => {
+  const order = await Order.findById(req.params.id).populate('userId', 'name email phone');
+
+  if (!order) return next(new AppError('Order not found', 404));
+
+  // Only out_for_delivery orders can have delivery OTP sent
+  if (order.orderStatus !== 'out_for_delivery') {
+    return next(new AppError(`Delivery OTP can only be sent for orders that are out for delivery. Current status: ${order.orderStatus}`, 400));
+  }
+
+  // Already delivered
+  if (order.orderStatus === 'delivered') {
+    return next(new AppError('Order is already delivered', 400));
+  }
+
+  // Resend cooldown (60 seconds)
+  if (order.deliveryOtpLastSentAt) {
+    const timeSinceLastSent = Date.now() - new Date(order.deliveryOtpLastSentAt).getTime();
+    if (timeSinceLastSent < 60000) {
+      const waitSeconds = Math.ceil((60000 - timeSinceLastSent) / 1000);
+      return next(new AppError(`Please wait ${waitSeconds} seconds before requesting a new OTP`, 429));
+    }
+  }
+
+  // Get customer phone and email
+  const customerPhone = order.address?.phone || order.userId?.phone;
+  const customerEmail = order.userId?.email;
+
+  if (!customerPhone) {
+    return next(new AppError('Customer phone number not available for this order', 400));
+  }
+
+  // Generate 6-digit OTP
+  const otp = crypto.randomInt(100000, 999999).toString();
+
+  // Hash OTP before storing
+  const salt = await bcrypt.genSalt(10);
+  const hashedOtp = await bcrypt.hash(otp, salt);
+
+  // Store hashed OTP with 5-minute expiry, reset attempts
+  order.deliveryOtp = hashedOtp;
+  order.deliveryOtpExpiresAt = new Date(Date.now() + 5 * 60 * 1000);
+  order.deliveryOtpVerified = false;
+  order.deliveryOtpVerifiedAt = undefined;
+  order.deliveryOtpAttempts = 0;
+  order.deliveryOtpLastSentAt = new Date();
+  await order.save();
+
+  // Send SMS and Email in parallel (don't crash if one fails)
+  const [smsResult, emailResult] = await Promise.allSettled([
+    smsService.sendDeliveryOtpSMS(customerPhone, otp),
+    customerEmail
+      ? emailService.sendDeliveryOtpEmail(customerEmail, otp, order.orderNumber)
+      : Promise.resolve({ success: false, error: 'No email address' })
+  ]);
+
+  const smsSuccess = smsResult.status === 'fulfilled' && smsResult.value?.success;
+  const emailSuccess = emailResult.status === 'fulfilled' && emailResult.value?.success;
+
+  if (!smsSuccess && !emailSuccess) {
+    return res.status(207).json({
+      status: 'warning',
+      message: 'OTP generated but delivery failed via both SMS and Email. Please try again.',
+      smsFailed: true,
+      emailFailed: true,
+    });
+  }
+
+  const channels = [];
+  if (smsSuccess) channels.push('SMS');
+  if (emailSuccess) channels.push('Email');
+
+  res.status(200).json({
+    status: 'success',
+    message: `Delivery OTP sent to customer via ${channels.join(' and ')}`,
+    smsSent: smsSuccess,
+    emailSent: emailSuccess,
+  });
+});
+
+// ==========================================
+// DELIVERY OTP - VERIFY
+// ==========================================
+exports.verifyDeliveryOtp = asyncHandler(async (req, res, next) => {
+  const { otp } = req.body;
+
+  if (!otp || otp.length !== 6) {
+    return next(new AppError('Please provide a valid 6-digit OTP', 400));
+  }
+
+  const order = await Order.findById(req.params.id).select('+deliveryOtp').populate('userId', 'name email phone');
+
+  if (!order) return next(new AppError('Order not found', 404));
+
+  if (order.orderStatus === 'delivered') {
+    return next(new AppError('Order is already delivered', 400));
+  }
+
+  if (order.orderStatus !== 'out_for_delivery') {
+    return next(new AppError('Order is not out for delivery', 400));
+  }
+
+  if (order.deliveryOtpVerified) {
+    return next(new AppError('Delivery OTP already verified', 400));
+  }
+
+  if (!order.deliveryOtp) {
+    return next(new AppError('No delivery OTP has been sent. Please send OTP first.', 400));
+  }
+
+  // Check expiry
+  if (!order.deliveryOtpExpiresAt || new Date() > new Date(order.deliveryOtpExpiresAt)) {
+    return next(new AppError('Delivery OTP has expired. Please send a new OTP.', 400));
+  }
+
+  // Check max attempts (5 attempts allowed)
+  if (order.deliveryOtpAttempts >= 5) {
+    return next(new AppError('Too many incorrect attempts. Please send a new OTP.', 400));
+  }
+
+  // Compare OTP with hash
+  const isMatch = await bcrypt.compare(otp, order.deliveryOtp);
+
+  if (!isMatch) {
+    order.deliveryOtpAttempts = (order.deliveryOtpAttempts || 0) + 1;
+    await order.save();
+    const remaining = 5 - order.deliveryOtpAttempts;
+    return next(new AppError(`Invalid delivery OTP. ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining.`, 400));
+  }
+
+  // OTP verified — mark order as delivered
+  order.deliveryOtpVerified = true;
+  order.deliveryOtpVerifiedAt = new Date();
+  order.deliveryOtp = undefined; // Clear the hash after successful verification
+  order.orderStatus = 'delivered';
+  await order.save();
+
+  // Emit socket update
+  emitOrderUpdate(order);
+
+  // Trigger notifications asynchronously
+  notificationManager.handleStatusChange(order, 'delivered').catch(console.error);
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Delivery verified successfully. Order marked as delivered.',
+    data: {
+      orderId: order._id,
+      orderNumber: order.orderNumber,
+      orderStatus: order.orderStatus,
+      deliveryOtpVerifiedAt: order.deliveryOtpVerifiedAt,
+    },
+  });
 });
 
 // Export setIo function for server.js

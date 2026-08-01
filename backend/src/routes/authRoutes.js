@@ -49,7 +49,12 @@ const resendSignupOtpSchema = Joi.object({
 ================================== */
 
 // Auth Rate Limiter
-const authLimiter = rateLimiter({ windowMs: 15 * 60 * 1000, max: 20, message: 'Too many authentication attempts. Please try again later.' });
+const authLimiter = rateLimiter({ 
+  windowMs: 15 * 60 * 1000, 
+  max: 100, 
+  message: 'Too many authentication attempts. Please try again later.' 
+});
+
 
 // POST /api/v1/auth/signup
 router.post('/signup', authLimiter, validate(signupSchema), authController.signup);
