@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import api from '../../utils/api';
@@ -15,7 +15,49 @@ export const CategoryCircles = ({ activeCategory, setActiveCategory }) => {
   const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [scrollRatio, setScrollRatio] = useState(0);
+  const [isDraggingTrack, setIsDraggingTrack] = useState(false);
   const scrollRef = useRef(null);
+  const progressTrackRef = useRef(null);
+
+  // Mouse Drag on Container State
+  const [isMouseDown, setIsMouseDown] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeftPos, setScrollLeftPos] = useState(0);
+
+  const handleScroll = useCallback(() => {
+    if (scrollRef.current && !isDraggingTrack) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      const maxScroll = scrollWidth - clientWidth;
+      if (maxScroll > 0) {
+        setScrollRatio(Math.min(1, Math.max(0, scrollLeft / maxScroll)));
+      }
+    }
+  }, [isDraggingTrack]);
+
+  // Mouse Drag Handlers for Container
+  const handleMouseDown = (e) => {
+    if (!scrollRef.current) return;
+    setIsMouseDown(true);
+    setStartX(e.pageX - scrollRef.current.offsetLeft);
+    setScrollLeftPos(scrollRef.current.scrollLeft);
+  };
+
+  const handleMouseLeave = () => {
+    setIsMouseDown(false);
+  };
+
+  const handleMouseUp = () => {
+    setIsMouseDown(false);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isMouseDown || !scrollRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    scrollRef.current.scrollLeft = scrollLeftPos - walk;
+  };
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -54,9 +96,9 @@ export const CategoryCircles = ({ activeCategory, setActiveCategory }) => {
     fetchCategories();
   }, []);
 
-  // Auto-scroll effect
+  // Auto-scroll effect (2.4s speed)
   useEffect(() => {
-    if (categories.length <= 1 || !scrollRef.current) return;
+    if (categories.length <= 1 || !scrollRef.current || isDraggingTrack || isMouseDown) return;
     const container = scrollRef.current;
 
     let isHovered = false;
@@ -69,17 +111,17 @@ export const CategoryCircles = ({ activeCategory, setActiveCategory }) => {
     container.addEventListener('touchend', handleResume, { passive: true });
 
     const interval = setInterval(() => {
-      if (isHovered) return;
+      if (isHovered || isMouseDown) return;
       const maxScroll = Math.max(0, container.scrollWidth - container.clientWidth);
 
       if (container.scrollLeft >= maxScroll - 20) {
         container.scrollTo({ left: 0, behavior: 'smooth' });
       } else {
-        const itemWidth = container.firstElementChild?.offsetWidth || 160;
-        const gap = 20;
+        const itemWidth = container.firstElementChild?.offsetWidth || 140;
+        const gap = 16;
         container.scrollBy({ left: itemWidth + gap, behavior: 'smooth' });
       }
-    }, 4000);
+    }, 2400);
 
     return () => {
       clearInterval(interval);
@@ -88,7 +130,50 @@ export const CategoryCircles = ({ activeCategory, setActiveCategory }) => {
       container.removeEventListener('touchstart', handlePause);
       container.removeEventListener('touchend', handleResume);
     };
-  }, [categories.length]);
+  }, [categories.length, isDraggingTrack, isMouseDown]);
+
+  const updateScrollByX = useCallback((clientX) => {
+    if (!progressTrackRef.current || !scrollRef.current) return;
+    const rect = progressTrackRef.current.getBoundingClientRect();
+    const clickX = clientX - rect.left;
+    const ratio = Math.max(0, Math.min(1, clickX / (rect.width > 0 ? rect.width : 1)));
+    setScrollRatio(ratio);
+    const { scrollWidth, clientWidth } = scrollRef.current;
+    scrollRef.current.scrollLeft = ratio * (scrollWidth - clientWidth);
+  }, []);
+
+  const handlePointerDown = (e) => {
+    setIsDraggingTrack(true);
+    const clientX = e.clientX || (e.touches && e.touches[0]?.clientX) || 0;
+    updateScrollByX(clientX);
+  };
+
+  useEffect(() => {
+    if (!isDraggingTrack) return;
+
+    const handlePointerMove = (e) => {
+      const clientX = e.clientX || (e.touches && e.touches[0]?.clientX);
+      if (clientX !== undefined) {
+        updateScrollByX(clientX);
+      }
+    };
+
+    const handlePointerUp = () => {
+      setIsDraggingTrack(false);
+    };
+
+    window.addEventListener('mousemove', handlePointerMove);
+    window.addEventListener('mouseup', handlePointerUp);
+    window.addEventListener('touchmove', handlePointerMove);
+    window.addEventListener('touchend', handlePointerUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handlePointerMove);
+      window.removeEventListener('mouseup', handlePointerUp);
+      window.removeEventListener('touchmove', handlePointerMove);
+      window.removeEventListener('touchend', handlePointerUp);
+    };
+  }, [isDraggingTrack, updateScrollByX]);
 
   const getImageUrl = (src) => {
     if (!src) return FALLBACK_IMAGE;
@@ -153,10 +238,15 @@ export const CategoryCircles = ({ activeCategory, setActiveCategory }) => {
           </div>
         </div>
 
-        {/* ── CATEGORY CIRCLES CAROUSEL ── */}
+        {/* ── CATEGORY CIRCLES CAROUSEL WITH MOUSE DRAG & TOUCH SWIPE ── */}
         <div
           ref={scrollRef}
-          className="relative left-1/2 -translate-x-1/2 w-screen flex overflow-x-auto gap-4 sm:gap-6 lg:gap-8 pb-4 pt-2 px-4 sm:px-8 pr-20 scroll-smooth [&::-webkit-scrollbar]:hidden snap-x snap-mandatory items-start"
+          onScroll={handleScroll}
+          onMouseDown={handleMouseDown}
+          onMouseLeave={handleMouseLeave}
+          onMouseUp={handleMouseUp}
+          onMouseMove={handleMouseMove}
+          className="relative left-1/2 -translate-x-1/2 w-screen flex overflow-x-auto gap-4 sm:gap-6 lg:gap-8 pb-4 pt-2 px-4 sm:px-8 pr-20 scroll-smooth select-none cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden snap-x snap-mandatory items-start"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', scrollPaddingInline: '1rem' }}
         >
           {categories.map((cat, index) => {
@@ -176,7 +266,7 @@ export const CategoryCircles = ({ activeCategory, setActiveCategory }) => {
                     navigate(`/shop?category=${encodeURIComponent(cat.name)}`);
                   }
                 }}
-                className="snap-center shrink-0 flex flex-col items-center cursor-pointer select-none w-[110px] sm:w-[130px] md:w-[150px]"
+                className="snap-center shrink-0 flex flex-col items-center cursor-pointer select-none w-[110px] sm:w-[130px] md:w-[150px] pointer-events-auto"
               >
                 <div className={`w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full border border-[var(--border)] bg-transparent shadow-sm overflow-hidden transition-transform duration-300 ${isActive ? 'scale-105 border-[var(--primary)] shadow-md' : 'hover:scale-[1.03]'}`}>
                   <img
@@ -201,11 +291,26 @@ export const CategoryCircles = ({ activeCategory, setActiveCategory }) => {
           })}
         </div>
 
-        {/* ── MOBILE SCROLL HINT ── */}
-        <div className="flex sm:hidden items-center justify-center gap-1.5 mt-4 text-[var(--muted)]">
-          <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary)]/60 animate-ping" />
-          <span className="text-[10px] font-medium tracking-wider uppercase">Swipe to explore</span>
-        </div>
+        {/* Medium-Sized Clickable & Draggable Slider Bar (No End Arrows) */}
+        {categories.length > 3 && (
+          <div className="flex justify-center items-center mt-3 py-1">
+            <div 
+              ref={progressTrackRef}
+              onMouseDown={handlePointerDown}
+              onTouchStart={handlePointerDown}
+              className="w-48 sm:w-64 h-2.5 bg-neutral-300/80 dark:bg-neutral-800/80 rounded-full relative cursor-pointer touch-none flex items-center overflow-hidden border border-border/30 shadow-xs"
+              title="Click or drag slider left & right"
+            >
+              <div 
+                className="h-full bg-neutral-700 dark:bg-neutral-300 hover:bg-neutral-800 dark:hover:bg-white rounded-full cursor-grab active:cursor-grabbing transition-all duration-75 shadow-xs"
+                style={{ 
+                  width: '30%',
+                  marginLeft: `${scrollRatio * 70}%`
+                }}
+              />
+            </div>
+          </div>
+        )}
 
       </div>
     </section>
