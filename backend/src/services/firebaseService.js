@@ -106,7 +106,11 @@ const sendPushNotification = async (tokens, title, body, data = {}) => {
       response.responses.forEach((resp, idx) => {
         if (!resp.success) {
           const errorCode = resp.error?.code;
-          if (errorCode === 'messaging/invalid-registration-token' || errorCode === 'messaging/registration-token-not-registered') {
+          if (
+            errorCode === 'messaging/invalid-registration-token' || 
+            errorCode === 'messaging/registration-token-not-registered' ||
+            errorCode === 'messaging/mismatched-credential'
+          ) {
             failedTokens.push(validTokens[idx]);
           } else {
             logger.warn(`FCM send failure token ${validTokens[idx].slice(0, 15)}...: ${resp.error?.message} (Code: ${errorCode})`);

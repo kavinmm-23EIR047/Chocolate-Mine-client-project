@@ -75,6 +75,8 @@ const getReceiptBarcodeMarkup = () => `
 // HTTP Email Sending Providers (For Render Free Tier compatibility - Port 443)
 // =============================================================================
 
+const https = require('https');
+
 const sendViaBrevo = async (options) => {
   const apiKey = process.env.BREVO_API_KEY;
   const senderEmail = process.env.SMTP_EMAIL || process.env.SENDER_EMAIL || 'akwebflairtechnologies@gmail.com';
@@ -101,12 +103,16 @@ const sendViaBrevo = async (options) => {
     }));
   }
 
+  const httpsAgent = new https.Agent({ keepAlive: true, timeout: 60000 });
+
   const res = await axios.post('https://api.brevo.com/v3/smtp/email', payload, {
     headers: {
       'api-key': apiKey,
       'Content-Type': 'application/json',
       'Accept': 'application/json'
-    }
+    },
+    httpsAgent,
+    timeout: 30000
   });
 
   logger.info(`Email sent via Brevo HTTP API to ${options.to}`);
