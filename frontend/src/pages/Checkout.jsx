@@ -31,6 +31,12 @@ import {
   Send,
   Trash2,
   Plus,
+  Sunrise,
+  Sun,
+  CloudSun,
+  Sunset,
+  Moon,
+  MoonStar
 } from 'lucide-react';
 
 import { useDispatch, useSelector } from 'react-redux';
@@ -131,12 +137,12 @@ const PAYMENT_METHODS = [
    SLOT CONFIG
 ───────────────────────────────────────────── */
 const slots = [
-  { value: '10:00 AM – 12:00 PM', label: '10:00 AM – 12:00 PM', emoji: '🌅', startHour: 10, startMinute: 0, endHour: 12, endMinute: 0 },
-  { value: '12:00 PM – 2:00 PM', label: '12:00 PM – 2:00 PM', emoji: '☀️', startHour: 12, startMinute: 0, endHour: 14, endMinute: 0 },
-  { value: '2:00 PM – 4:00 PM', label: '2:00 PM – 4:00 PM', emoji: '🌤️', startHour: 14, startMinute: 0, endHour: 16, endMinute: 0 },
-  { value: '4:00 PM – 6:00 PM', label: '4:00 PM – 6:00 PM', emoji: '🌇', startHour: 16, startMinute: 0, endHour: 18, endMinute: 0 },
-  { value: '6:00 PM – 8:00 PM', label: '6:00 PM – 8:00 PM', emoji: '🌆', startHour: 18, startMinute: 0, endHour: 20, endMinute: 0 },
-  { value: '8:00 PM – 10:00 PM', label: '8:00 PM – 10:00 PM', emoji: '🌙', startHour: 20, startMinute: 0, endHour: 22, endMinute: 0 },
+  { value: '10:00 AM – 12:00 PM', label: '10:00 AM – 12:00 PM', Icon: Sunrise, startHour: 10, startMinute: 0, endHour: 12, endMinute: 0 },
+  { value: '12:00 PM – 2:00 PM', label: '12:00 PM – 2:00 PM', Icon: Sun, startHour: 12, startMinute: 0, endHour: 14, endMinute: 0 },
+  { value: '2:00 PM – 4:00 PM', label: '2:00 PM – 4:00 PM', Icon: CloudSun, startHour: 14, startMinute: 0, endHour: 16, endMinute: 0 },
+  { value: '4:00 PM – 6:00 PM', label: '4:00 PM – 6:00 PM', Icon: Sunset, startHour: 16, startMinute: 0, endHour: 18, endMinute: 0 },
+  { value: '6:00 PM – 8:00 PM', label: '6:00 PM – 8:00 PM', Icon: Moon, startHour: 18, startMinute: 0, endHour: 20, endMinute: 0 },
+  { value: '8:00 PM – 10:00 PM', label: '8:00 PM – 10:00 PM', Icon: MoonStar, startHour: 20, startMinute: 0, endHour: 22, endMinute: 0 },
 ];
 
 /* ─────────────────────────────────────────────
@@ -1623,33 +1629,35 @@ const Checkout = () => {
                         </button>
                       </div>
 
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
-                        {availableSlots.map((slot) => (
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+                        {availableSlots.map((slot) => {
+                          const Icon = slot.Icon;
+                          return (
                           <button
                             key={slot.value}
                             onClick={() => slot.available && setDeliverySlot(slot.value)}
                             disabled={!slot.available}
-                            className={`relative p-3 sm:p-4 rounded-2xl border-2 transition-all text-center ${!slot.available
-                              ? 'opacity-40 cursor-not-allowed border-border-muted bg-muted/5'
+                            className={`relative p-5 sm:p-6 rounded-2xl sm:rounded-3xl border-2 transition-all duration-300 text-center flex flex-col items-center justify-center gap-3 ${!slot.available
+                              ? 'opacity-50 cursor-not-allowed border-border-muted bg-muted/5'
                               : deliverySlot === slot.value
-                                ? 'border-primary bg-primary/5 shadow-md'
-                                : 'border-border-muted hover:border-primary/40 bg-surface/30'
+                                ? 'border-primary bg-primary/10 shadow-lg shadow-primary/10 scale-[1.02]'
+                                : 'border-border-muted hover:border-primary/50 bg-surface/40 hover:bg-surface hover:shadow-md'
                               }`}
                           >
-                            <span className="text-lg sm:text-xl block mb-1">{slot.emoji}</span>
-                            <p className="text-[9px] sm:text-[10px] font-black text-heading uppercase tracking-wide leading-tight">
+                            <Icon size={28} strokeWidth={1.5} className={`${deliverySlot === slot.value ? 'text-primary' : 'text-muted-foreground'}`} />
+                            <p className={`text-[10px] sm:text-xs font-black uppercase tracking-widest leading-tight ${deliverySlot === slot.value ? 'text-primary' : 'text-heading'}`}>
                               {slot.label}
                             </p>
                             {!slot.available && (
-                              <span className="text-[8px] text-muted font-bold uppercase tracking-widest mt-1 block">Unavailable</span>
+                              <span className="text-[9px] text-red-500/80 font-bold uppercase tracking-widest mt-1 block bg-red-500/10 px-2 py-0.5 rounded-full">Unavailable</span>
                             )}
                             {deliverySlot === slot.value && (
-                              <div className="absolute top-2 right-2 w-4 h-4 bg-primary rounded-full flex items-center justify-center border border-primary/20">
-                                <CheckCircle2 size={10} className="text-button-text" />
+                              <div className="absolute top-3 right-3 w-5 h-5 bg-primary rounded-full flex items-center justify-center border-2 border-card shadow-sm">
+                                <CheckCircle2 size={12} className="text-button-text" />
                               </div>
                             )}
                           </button>
-                        ))}
+                        )})}
                       </div>
                       {noSlotsAvailable && (
                         <p className="text-sm text-red-500 font-bold mt-3">
@@ -1761,7 +1769,14 @@ const Checkout = () => {
                           </p>
                           <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
                             <Button onClick={() => setActiveStep(2)} className="btn-secondary flex-1 sm:flex-none px-4 sm:px-6 whitespace-nowrap">Back</Button>
-                            <Button onClick={() => setActiveStep(4)} disabled={cartItems.length === 0} className="btn-primary flex-[2] sm:flex-none px-4 sm:px-8 whitespace-nowrap text-sm">Confirm Order</Button>
+                            <Button 
+                              onClick={() => document.getElementById('order-summary-section')?.scrollIntoView({ behavior: 'smooth' })} 
+                              disabled={cartItems.length === 0} 
+                              className="btn-primary flex-[2] sm:flex-none px-4 sm:px-8 whitespace-nowrap text-sm"
+                            >
+                              <span className="sm:hidden">Next</span>
+                              <span className="hidden sm:inline">Proceed to Pay</span>
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -1771,121 +1786,7 @@ const Checkout = () => {
               </AnimatePresence>
             </div>
 
-            {/* STEP 4: PAYMENT METHOD */}
-            <div data-step="4" className="bg-card rounded-2xl sm:rounded-3xl shadow-card border-2 border-border-card overflow-hidden">
-              <StepBadge
-                n="4"
-                label="Payment Method"
-                isActive={activeStep === 4}
-                isCompleted={subtotal < 300 ? true : !!selectedPayMethod}
-                onEdit={() => setActiveStep(4)}
-                summary={subtotal < 300 ? "WhatsApp Shop Pickup" : (selectedPayMethod ? PAYMENT_METHODS.find(m => m.id === selectedPayMethod)?.label : null)}
-              />
-              <AnimatePresence>
-                {activeStep === 4 && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <div className="p-4 sm:p-5 space-y-4">
-                      {subtotal < 300 ? (
-                        <div className="p-4 sm:p-5 rounded-2xl bg-success/5 border-2 border-success/20 space-y-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-success/20 flex items-center justify-center text-success shrink-0">
-                              <Smartphone size={20} />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-xs font-black text-heading uppercase tracking-widest leading-none mb-1.5">WhatsApp Pickup Order</p>
-                              <p className="text-[10px] text-success-text font-black uppercase tracking-widest leading-none">Self-Pickup from Shop</p>
-                            </div>
-                          </div>
-                          <p className="text-xs text-muted leading-relaxed font-bold">
-                            No online payment required now. Your order details will be sent directly to our shop WhatsApp chat. You can pick up the order and pay directly at the shop.
-                          </p>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-card-soft/80 border-2 border-border-muted backdrop-blur-sm">
-                            <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center shrink-0 border border-white/10 overflow-hidden">
-                              <img src={paymentLogos.razorpay} alt="Razorpay" className="w-6 h-6 object-contain" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-black text-heading uppercase tracking-widest leading-none mb-1">Secure Payment via Razorpay</p>
-                              <p className="text-[10px] text-muted font-bold uppercase tracking-widest opacity-60 leading-none">PCI DSS Compliant · 256-bit SSL Encryption</p>
-                            </div>
-                            <Lock size={13} className="text-muted/40 shrink-0" />
-                          </div>
 
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full min-w-0">
-                            {PAYMENT_METHODS.map((method) => {
-                              const Icon = method.icon;
-                              const selected = selectedPayMethod === method.id;
-                              return (
-                                <button
-                                  key={method.id}
-                                  onClick={() => setSelectedPayMethod(selected ? null : method.id)}
-                                  className={`w-full min-w-0 text-left p-3 sm:p-4 rounded-2xl border-2 transition-all relative overflow-hidden ${selected
-                                    ? `border-transparent ring-2 ${method.ring} ${method.bg} shadow-md`
-                                    : `border-border-muted bg-surface/20 hover:bg-surface/40 hover:border-primary/30`
-                                    }`}
-                                >
-                                  <div className="flex items-start justify-between mb-2 sm:mb-3">
-                                    <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br ${method.gradient} flex items-center justify-center shadow-sm`}>
-                                      <Icon size={17} className="text-white" />
-                                    </div>
-                                    {selected && (
-                                      <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center shrink-0 shadow-sm border border-primary/20">
-                                        <CheckCircle2 size={12} className="text-button-text" />
-                                      </div>
-                                    )}
-                                  </div>
-                                  <p className="font-black text-heading text-xs sm:text-sm uppercase tracking-wide truncate">{method.label}</p>
-                                  <p className="text-[10px] text-muted font-bold mt-0.5 uppercase tracking-widest truncate">{method.sub}</p>
-                                  <div className="flex items-center gap-2 mt-3 sm:mt-4 flex-wrap">
-                                    {method.logos.map((logo) => (
-                                      <div
-                                        key={logo.name}
-                                        className="flex items-center justify-center rounded-lg shadow-sm overflow-hidden h-8 sm:h-9 px-1.5 bg-white/10 dark:bg-white backdrop-blur-sm border border-white/5 dark:border-transparent"
-                                      >
-                                        <img
-                                          src={logo.url}
-                                          alt={logo.name}
-                                          className="h-4 sm:h-5 w-auto max-w-[40px] object-contain"
-                                          onError={(e) => (e.target.style.display = 'none')}
-                                        />
-                                      </div>
-                                    ))}
-                                  </div>
-                                </button>
-                              );
-                            })}
-                          </div>
-
-                          <p className="text-[9px] text-muted/50 text-center font-bold uppercase tracking-widest italic pt-2">
-                            Selecting a method pre-fills its tab in Razorpay checkout
-                          </p>
-                        </>
-                      )}
-
-                      <div className="pt-4 flex justify-between gap-2 sm:gap-3">
-                        <Button onClick={() => setActiveStep(3)} className="btn-secondary flex-1 sm:flex-none px-4 sm:px-6 whitespace-nowrap">Back</Button>
-                        <Button
-                          onClick={() => {
-                            document.getElementById('order-summary-section')?.scrollIntoView({ behavior: 'smooth' });
-                          }}
-                          className="btn-primary flex-[2] sm:flex-none px-4 sm:px-8 whitespace-nowrap text-sm"
-                          disabled={subtotal < 300 ? false : !selectedPayMethod}
-                        >
-                          Order Summary
-                        </Button>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
           </div>
 
           {/* RIGHT COLUMN — ORDER SUMMARY */}
@@ -2003,7 +1904,7 @@ const Checkout = () => {
                     disabled={
                       !addressDetails.fullName.trim() ||
                       !validatePhoneNumber(addressDetails.phone) ||
-                      (subtotal >= 300 && (!deliveryInfo.position || !selectedPayMethod))
+                      (subtotal >= 300 && !deliveryInfo.position)
                     }
                   >
                     {subtotal < 300 ? (
