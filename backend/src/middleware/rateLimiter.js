@@ -1,6 +1,6 @@
-const rateLimitCache = new Map();
-
 const rateLimiter = (options = { windowMs: 15 * 60 * 1000, max: 100, message: 'Too many requests, please try again later.' }) => {
+  const rateLimitCache = new Map();
+
   return (req, res, next) => {
     const ip = req.ip || req.connection.remoteAddress;
     const now = Date.now();
