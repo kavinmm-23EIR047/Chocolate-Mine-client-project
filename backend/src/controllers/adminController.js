@@ -596,3 +596,49 @@ exports.broadcastNotification = asyncHandler(async (req, res, next) => {
     message: 'Broadcast notification sent to all active users successfully'
   });
 });
+
+// @desc    Export Users to Excel (On-demand)
+// @route   GET /api/admin/export-users
+// @access  Admin Only
+exports.exportUsers = asyncHandler(async (req, res, next) => {
+  const xlsx = require('xlsx');
+  const excelService = require('../services/excelService');
+  const User = require('../models/User');
+
+  const users = await User.find({}).lean();
+  
+  if (!users || users.length === 0) {
+    return next(new AppError('No users found to export', 404));
+  }
+
+  // Flatten the user objects slightly for Excel readability
+  const data = users.map(user => {
+    const obj = { ...user };
+    if (obj._id) obj._id = String(obj._id);
+    if (obj.password) delete obj.password; // Omit password hash
+    if (obj.__v !== undefined) delete obj.__v;
+    
+    // Convert arrays/objects to strings if needed for simple Excel viewing
+    if (obj.fcmTokens) obj.fcmTokens = JSON.stringify(obj.fcmTokens);
+    if (obj.addresses) obj.addresses = JSON.stringify(obj.addresses);
+    if (obj.wishlist) obj.wishlist = JSON.stringify(obj.wishlist);
+    
+    return obj;
+  });
+
+  const wb = xlsx.utils.book_new();
+  const ws = xlsx.utils.json_to_sheet(data);
+  xlsx.utils.book_append_sheet(wb, ws, "Users");
+
+  const MASTER_FILE = excelService.getMasterFile();
+  
+  // Write to the file
+  xlsx.writeFile(wb, MASTER_FILE);
+
+  // Return the file as a download
+  res.download(MASTER_FILE, 'users_export.xlsx', (err) => {
+    if (err) {
+      console.error('Error downloading Excel file:', err);
+    }
+  });
+});

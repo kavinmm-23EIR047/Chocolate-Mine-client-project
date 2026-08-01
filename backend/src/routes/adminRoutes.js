@@ -18,6 +18,10 @@ router.patch('/staff/:id', adminController.updateStaff);
 // @route   DELETE /api/admin/staff/:id
 router.delete('/staff/:id', adminController.deleteStaff);
 
+// --- User Management / Exports ---
+// @route   GET /api/admin/export-users
+router.get('/export-users', adminController.exportUsers);
+
 // --- Dashboard ---
 router.get('/dashboard', adminController.getDashboard);
 

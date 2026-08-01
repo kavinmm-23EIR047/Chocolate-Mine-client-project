@@ -300,52 +300,6 @@ orderSchema.index({ paymentStatus: 1 });
 orderSchema.index({ createdAt: -1 });
 
 
-// ==========================================
-// Excel Synchronization Hooks (Fire-and-Forget)
-// ==========================================
-const excelService = require('../services/excelService');
-
-orderSchema.post('save', function(doc) {
-  if (doc) {
-    const modelName = this.constructor.modelName || this.modelName;
-    excelService.appendToExcel(modelName, doc)
-      .catch(err => console.error("Excel sync error for save:", err.message));
-  }
-});
-
-orderSchema.post(['findOneAndUpdate', 'updateOne', 'findByIdAndUpdate'], function(doc) {
-  const modelName = this.model.modelName;
-  const query = this.getQuery();
-  
-  (async () => {
-    try {
-      if (doc && doc._id) {
-        await excelService.updateInExcel(modelName, doc._id, doc);
-      } else if (query && query._id) {
-        const updatedDoc = await this.model.findOne(query).lean();
-        if (updatedDoc) await excelService.updateInExcel(modelName, query._id, updatedDoc);
-      }
-    } catch (err) {
-      console.error("Excel sync error for update:", err.message);
-    }
-  })();
-});
-
-orderSchema.post(['findOneAndDelete', 'deleteOne', 'findByIdAndDelete'], function(doc) {
-  const modelName = this.model.modelName;
-  const query = this.getQuery();
-  
-  (async () => {
-    try {
-      if (doc && doc._id) {
-        await excelService.deleteFromExcel(modelName, doc._id);
-      } else if (query && query._id) {
-        await excelService.deleteFromExcel(modelName, query._id);
-      }
-    } catch (err) {
-      console.error("Excel sync error for delete:", err.message);
-    }
-  })();
-});
+// Removed Excel Synchronization Hooks for performance reasons.
 
 module.exports = mongoose.model('Order', orderSchema);
