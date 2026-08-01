@@ -85,10 +85,9 @@ const sendPushNotification = async (tokens, title, body, data = {}) => {
   stringifiedData.message = String(body);
 
   const message = {
-    notification: {
-      title: title,
-      body: body
-    },
+    // 🔥 Removed 'notification' key to send a "Data-Only" message.
+    // This forces the frontend Service Worker (firebase-messaging-sw.js) to trigger 'onBackgroundMessage'
+    // allowing 100% custom handling (action buttons, custom icons, custom routing).
     data: stringifiedData,
     webpush: {
       fcmOptions: {
