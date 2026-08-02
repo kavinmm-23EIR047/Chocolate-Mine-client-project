@@ -90,7 +90,7 @@ const Features = ({ location }) => {
     sliderRef.current.scrollLeft = scrollLeftPos - walk;
   };
 
-  // Automatic slide one by one (2.4s speed)
+  // Automatic slide one by one (3.0s speed - slow & smooth)
   useEffect(() => {
     if (isLoading || products.length <= 1 || isPaused || isDraggingTrack || isMouseDown) return;
 
@@ -106,7 +106,7 @@ const Features = ({ location }) => {
           sliderRef.current.scrollBy({ left: cardStep, behavior: 'smooth' });
         }
       }
-    }, 2400);
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [isLoading, products.length, isPaused, isDraggingTrack, isMouseDown]);
