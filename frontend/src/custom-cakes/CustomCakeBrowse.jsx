@@ -350,11 +350,11 @@ export default function CustomCakeBrowse({
           <span className="text-xs font-black text-[var(--muted)] uppercase tracking-wider">Active Filters:</span>
           
           {selectedTier !== null && (
-            <span className="h-8 px-3.5 bg-[#2A1813] border border-[#3A211B] text-white rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all hover:border-[#EBD1C6]/30">
+            <span className="h-8 px-3.5 bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all hover:border-[var(--primary)]/50 shadow-sm">
               Tier: {TIERS.find(t => t.id === selectedTier)?.shortName || `Tier ${selectedTier}`}
               <button 
                 onClick={() => setSelectedTier(null)}
-                className="text-white/40 hover:text-[#ff8f8f] transition-colors font-bold ml-1 text-sm leading-none flex items-center justify-center"
+                className="text-[var(--muted)] hover:text-red-500 transition-colors font-bold ml-1 text-sm leading-none flex items-center justify-center"
               >
                 ×
               </button>
@@ -362,11 +362,11 @@ export default function CustomCakeBrowse({
           )}
           
           {themeSearchFilter !== '' && (
-            <span className="h-8 px-3.5 bg-[#2A1813] border border-[#3A211B] text-white rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all hover:border-[#EBD1C6]/30">
+            <span className="h-8 px-3.5 bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all hover:border-[var(--primary)]/50 shadow-sm">
               Search: "{themeSearchFilter}"
               <button 
                 onClick={() => setThemeSearchFilter('')}
-                className="text-white/40 hover:text-[#ff8f8f] transition-colors font-bold ml-1 text-sm leading-none flex items-center justify-center"
+                className="text-[var(--muted)] hover:text-red-500 transition-colors font-bold ml-1 text-sm leading-none flex items-center justify-center"
               >
                 ×
               </button>
@@ -374,11 +374,11 @@ export default function CustomCakeBrowse({
           )}
           
           {priceSortFilter !== '' && (
-            <span className="h-8 px-3.5 bg-[#2A1813] border border-[#3A211B] text-white rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all hover:border-[#EBD1C6]/30">
+            <span className="h-8 px-3.5 bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all hover:border-[var(--primary)]/50 shadow-sm">
               Sort: {priceSortFilter === 'asc' ? 'Price Low to High' : 'Price High to Low'}
               <button 
                 onClick={() => setPriceSortFilter('')}
-                className="text-white/40 hover:text-[#ff8f8f] transition-colors font-bold ml-1 text-sm leading-none flex items-center justify-center"
+                className="text-[var(--muted)] hover:text-red-500 transition-colors font-bold ml-1 text-sm leading-none flex items-center justify-center"
               >
                 ×
               </button>
@@ -391,7 +391,7 @@ export default function CustomCakeBrowse({
               setThemeSearchFilter('');
               setPriceSortFilter('');
             }}
-            className="h-8 px-3.5 text-xs font-bold text-[#E6B25A] hover:text-[#F0C46E] hover:underline transition-colors ml-2 select-none flex items-center"
+            className="h-8 px-3.5 text-xs font-bold text-[var(--primary)] hover:text-[var(--primary)] hover:underline transition-colors ml-2 select-none flex items-center"
           >
             Clear All
           </button>
