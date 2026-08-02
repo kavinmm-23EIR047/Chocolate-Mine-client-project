@@ -41,6 +41,7 @@ import Stores from './pages/Stores';
 import PrivacyInfo from './pages/PrivacyInfo';
 import TermsConditions from './pages/TermsConditions';
 import RefundPolicy from './pages/RefundPolicy';
+import DeliveryPolicy from './pages/DeliveryPolicy';
 import Shop from './pages/Shop';
 import CustomCake from './custom-cakes/CustomCake';
 import BrandIntroLoader from './components/BrandIntroLoader.jsx';
@@ -231,6 +232,7 @@ function App() {
                   <Route path="/privacy" element={<ErrorBoundary><PrivacyInfo /></ErrorBoundary>} />
                   <Route path="/terms" element={<ErrorBoundary><TermsConditions /></ErrorBoundary>} />
                   <Route path="/refund" element={<ErrorBoundary><RefundPolicy /></ErrorBoundary>} />
+                  <Route path="/delivery" element={<ErrorBoundary><DeliveryPolicy /></ErrorBoundary>} />
 
                   {/* Guest Routes */}
                   <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
