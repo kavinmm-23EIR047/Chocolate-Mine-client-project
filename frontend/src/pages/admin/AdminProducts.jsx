@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Plus, Edit3, Trash2, Star, Award, EyeOff, Cake, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -47,8 +47,11 @@ const AdminProducts = () => {
       } else {
         res = await productService.getAll({ ...params, admin: true });
       }
-      setProducts(res.data.data || []);
-      setTotalPages(Math.ceil((res.data.total || 0) / 12));
+      const rawList = Array.isArray(res.data?.data) 
+        ? res.data.data 
+        : (Array.isArray(res.data) ? res.data : []);
+      setProducts(rawList);
+      setTotalPages(Math.ceil((res.data?.total || rawList.length || 0) / 12));
     } catch (err) {
       toast.error('Failed to load products');
     } finally {
@@ -65,8 +68,24 @@ const AdminProducts = () => {
           adminService.getCategories(),
           productService.getAll({ limit: 2000, admin: true })
         ]);
-        setDbCategories(catRes.data?.data || []);
-        setAllProducts(allProdRes.data?.data || []);
+        const fetchedCats = Array.isArray(catRes.data?.data) 
+          ? catRes.data.data 
+          : (Array.isArray(catRes.data) ? catRes.data : []);
+        setDbCategories(fetchedCats);
+
+        const rawProds = Array.isArray(allProdRes.data?.data) 
+          ? allProdRes.data.data 
+          : (Array.isArray(allProdRes.data) ? allProdRes.data : []);
+
+        const filteredProds = rawProds.filter(p => {
+          if (!p) return false;
+          if (p.isCustomCake || p.type === 'custom') return false;
+          let cats = [];
+          if (Array.isArray(p.category)) cats = p.category;
+          else if (typeof p.category === 'string') cats = [p.category];
+          return !cats.some(c => typeof c === 'string' && (c.toLowerCase().includes('custom birthday') || c.toLowerCase().includes('wedding')));
+        });
+        setAllProducts(filteredProds);
       } catch (err) {
         // ignore
       }
@@ -75,9 +94,11 @@ const AdminProducts = () => {
   }, []);
 
   const getCategoryCount = useCallback((catName) => {
+    if (!Array.isArray(allProducts)) return 0;
     if (!catName) return allProducts.length;
     const cleanCat = catName.toLowerCase().replace(/[\s_-]/g, '');
     return allProducts.filter(p => {
+      if (!p) return false;
       let cats = [];
       if (Array.isArray(p.category)) cats = p.category;
       else if (typeof p.category === 'string') cats = [p.category];
@@ -113,7 +134,7 @@ const AdminProducts = () => {
 
   // Get flavour summary for display
   const getFlavourSummary = (product) => {
-    if (product.category !== 'cakes' || !product.flavours || product.flavours.length === 0) {
+    if (!product || product.category !== 'cakes' || !product.flavours || product.flavours.length === 0) {
       return null;
     }
     const flavourNames = product.flavours.map(f => f.name).join(', ');
@@ -147,6 +168,17 @@ const AdminProducts = () => {
     return formatted.length > 0 ? formatted.join(', ') : '—';
   };
 
+  const standardCategories = useMemo(() => {
+    if (!Array.isArray(dbCategories)) return [];
+    const isCustomCat = (c) => {
+      if (!c) return false;
+      if (c.type === 'custom') return true;
+      const clean = (c.name || '').toLowerCase().replace(/[\s_-]/g, '');
+      return clean.includes('custombirthday') || clean.includes('wedding');
+    };
+    return dbCategories.filter(c => !isCustomCat(c));
+  }, [dbCategories]);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -164,7 +196,7 @@ const AdminProducts = () => {
           <SearchInput onSearch={handleSearch} placeholder="Search products..." className="flex-1 max-w-sm" />
           <select value={category} onChange={(e) => { setCategory(e.target.value); setPage(1); }} className="bg-input border border-input-border text-body px-4 py-2.5 rounded-xl focus:outline-none capitalize font-bold">
             <option value="">All Categories ({allProducts.length})</option>
-            {dbCategories.map((c) => {
+            {standardCategories.map((c) => {
               const catVal = (c.name || '').toLowerCase();
               const count = getCategoryCount(catVal);
               return (
@@ -197,7 +229,7 @@ const AdminProducts = () => {
             </span>
           </button>
 
-          {dbCategories.map(c => {
+          {standardCategories.map(c => {
             const catVal = (c.name || '').toLowerCase();
             const count = getCategoryCount(catVal);
             const isActive = category === catVal;

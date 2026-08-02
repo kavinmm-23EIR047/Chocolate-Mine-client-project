@@ -91,36 +91,43 @@ const AdminCustomCakes = () => {
   };
 
   const availableCategories = useMemo(() => {
+    const defaultCustomCategories = [
+      { name: 'custom birthday cakes', label: 'Custom Birthday Cakes' },
+      { name: 'wedding & anniversary', label: 'Wedding & Anniversary' }
+    ];
+
+    const isCustomCategory = (name) => {
+      if (!name) return false;
+      const clean = name.toLowerCase().replace(/[\s_-]/g, '');
+      return clean.includes('custombirthday') || clean.includes('wedding') || clean.includes('anniversary');
+    };
+
     const map = new Map();
-    // Add categories from DB
+    defaultCustomCategories.forEach(item => map.set(item.name, item));
+
     dbCategories.forEach(c => {
       const val = (c.name || '').toLowerCase();
-      if (val && !map.has(val)) {
+      if (val && isCustomCategory(val) && !map.has(val)) {
         map.set(val, {
           name: val,
-          label: c.label || c.name.replace(/-/g, ' '),
+          label: c.label || c.name.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
         });
       }
     });
 
-    // Add categories present in themes
-    themes.forEach(t => {
-      const cats = Array.isArray(t.category) ? t.category : (t.category ? [t.category] : []);
-      cats.forEach(c => {
-        if (typeof c === 'string' && c.trim()) {
-          const val = c.toLowerCase().trim();
-          if (!map.has(val)) {
-            map.set(val, {
-              name: val,
-              label: c.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-            });
-          }
-        }
-      });
-    });
-
     return Array.from(map.values());
-  }, [dbCategories, themes]);
+  }, [dbCategories]);
+
+  const handleToggleStock = async (theme) => {
+    try {
+      const newStatus = !theme.isActive;
+      await adminService.updateCustomCakeTheme(theme._id, { isActive: newStatus });
+      toast.success(`Stock status for "${theme.name}" turned ${newStatus ? 'ON (In Stock)' : 'OFF (Out of Stock)'}`);
+      setThemes(prev => prev.map(t => t._id === theme._id ? { ...t, isActive: newStatus } : t));
+    } catch (err) {
+      toast.error('Failed to update theme stock status');
+    }
+  };
 
   const getCategoryCount = useCallback((catName) => {
     if (!catName) return themes.length;
@@ -352,9 +359,19 @@ const AdminCustomCakes = () => {
                     </div>
                   </td>
                   <td className="px-6 py-5">
-                    <span className={`text-[10px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider ${theme.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
-                      {theme.isActive ? 'Active' : 'Inactive'}
-                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleStock(theme)}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-xs active:scale-95 ${
+                        theme.isActive
+                          ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/25'
+                          : 'bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/40 hover:bg-rose-500/25'
+                      }`}
+                      title={`Click to turn stock ${theme.isActive ? 'OFF' : 'ON'}`}
+                    >
+                      <span className={`w-2 h-2 rounded-full ${theme.isActive ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+                      <span>{theme.isActive ? 'STOCK ON' : 'STOCK OFF'}</span>
+                    </button>
                   </td>
                   <td className="px-6 py-5">
                     <div className="flex gap-1">
@@ -399,9 +416,22 @@ const AdminCustomCakes = () => {
                   <summary className="p-4 flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden bg-border/5">
                     <div>
                       <p className="font-black text-heading text-sm">{theme.name}</p>
-                      <span className={`text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider mt-1 inline-block ${theme.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
-                        {theme.isActive ? 'Active' : 'Inactive'}
-                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleToggleStock(theme);
+                        }}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer shadow-xs mt-1 ${
+                          theme.isActive
+                            ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/40'
+                            : 'bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/40'
+                        }`}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full ${theme.isActive ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+                        <span>{theme.isActive ? 'STOCK ON' : 'STOCK OFF'}</span>
+                      </button>
                     </div>
                     <ChevronDown size={20} className="text-muted group-open:rotate-180 transition-transform shrink-0" />
                   </summary>

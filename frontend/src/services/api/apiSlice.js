@@ -1,12 +1,17 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { getApiBaseUrl } from '../../utils/api';
 
 const baseQuery = fetchBaseQuery({
-  baseUrl: import.meta.env.VITE_API_URL || (import.meta.env.PROD ? window.location.origin + '/api/v1' : 'http://localhost:5000/api/v1'),
+  baseUrl: getApiBaseUrl(),
   credentials: 'include',
   prepareHeaders: (headers) => {
-    const token = sessionStorage.getItem('token');
-    if (token) {
-      headers.set('authorization', `Bearer ${token}`);
+    try {
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+      if (token) {
+        headers.set('authorization', `Bearer ${token}`);
+      }
+    } catch (e) {
+      // Safari Private Mode protection
     }
     return headers;
   },

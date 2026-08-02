@@ -36,6 +36,7 @@ import '../../styles/admin-neobrutalist.css';
 const menuItems = [
   { path: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/admin/products', label: 'Products', icon: Package },
+  { path: '/admin/custom-cakes', label: 'Custom Cakes', icon: Cake },
   { path: '/admin/orders', label: 'Orders', icon: ShoppingBag },
   { path: '/admin/staff', label: 'Staff', icon: Users },
   { path: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
@@ -43,7 +44,6 @@ const menuItems = [
   { path: '/admin/occasions', label: 'Occasions', icon: Gift },
   { path: '/admin/addons', label: 'Add-ons', icon: PlusSquare },
   { path: '/admin/banners', label: 'Banners', icon: ImageIcon },
-  { path: '/admin/custom-cakes', label: 'Custom Cakes', icon: Cake },
   { path: '/admin/google-reviews', label: 'Google Reviews', icon: Star },
   { path: '/admin/settings', label: 'Settings', icon: Settings },
 ];

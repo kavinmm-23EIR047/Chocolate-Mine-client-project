@@ -589,39 +589,112 @@ const CreateInShopOrderView = () => {
     const fetchInitialData = async () => {
       try {
         setSearchLoading(true);
-        const [prodRes, catRes] = await Promise.allSettled([
+        const [prodRes, catRes, customCakeRes] = await Promise.allSettled([
           productService.getAll({ limit: 1000 }),
-          api.get('/categories')
+          api.get('/categories'),
+          api.get('/custom-cakes/themes')
         ]);
 
         let prods = [];
         if (prodRes.status === 'fulfilled') {
           prods = prodRes.value.data?.data?.products || prodRes.value.data?.data || prodRes.value.data?.products || [];
         }
-        setAllProducts(Array.isArray(prods) ? prods : []);
+
+        let customThemes = [];
+        if (customCakeRes.status === 'fulfilled') {
+          customThemes = customCakeRes.value.data?.data || customCakeRes.value.data || [];
+        }
+
+        const isCustomCat = (catName, catObj) => {
+          if (!catName || typeof catName !== 'string') return true;
+          const clean = catName.toLowerCase().trim().replace(/[\s_-]/g, '');
+          if (!clean || clean.length < 2) return true;
+          return false;
+        };
+
+        const isCustomProduct = (p) => {
+          if (!p) return false;
+          if (p.isCustomCake || p.type === 'custom') return true;
+          let pCats = [];
+          if (Array.isArray(p.category)) pCats = p.category;
+          else if (typeof p.category === 'string') pCats = [p.category];
+          return pCats.some(c => typeof c === 'string' && (c.toLowerCase().includes('custom birthday') || c.toLowerCase().includes('wedding')));
+        };
+
+        const standardProducts = Array.isArray(prods) ? prods.filter(p => !isCustomProduct(p)) : [];
+
+        const mappedCustomCakes = Array.isArray(customThemes) ? customThemes.map(t => {
+          const primaryCat = Array.isArray(t.category) && t.category.length > 0 ? t.category[0] : 'custom birthday cakes';
+          const cleanCat = primaryCat.toLowerCase().includes('wedding') ? 'Wedding & Anniversary' : 'Custom Birthday Cakes';
+          const firstImage = t.colors?.[0]?.images?.tier1 || t.colors?.[0]?.images?.tier2 || t.image || '';
+          return {
+            _id: `custom_${t._id}`,
+            name: t.name,
+            price: t.basePrice || 1120,
+            category: [cleanCat],
+            image: firstImage,
+            isCustomCakeTheme: true,
+            originalTheme: t,
+            flavors: (t.flavors || []).map(f => ({ name: f.name, price: f.price || 0 }))
+          };
+        }) : [];
+
+        const combinedProducts = [...standardProducts, ...mappedCustomCakes];
+        setAllProducts(combinedProducts);
 
         let cats = [];
         if (catRes.status === 'fulfilled') {
           cats = catRes.value.data?.data?.categories || catRes.value.data?.data || catRes.value.data?.categories || catRes.value.data || [];
         }
 
-        const catNamesSet = new Set();
+        const normalizeCatKey = (raw) => {
+          if (!raw || typeof raw !== 'string') return '';
+          const clean = raw.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+          if (clean.includes('wedding') || clean.includes('anniversary')) return 'weddinganniversary';
+          if (clean.includes('custom') && clean.includes('birthday')) return 'custombirthdaycakes';
+          return clean;
+        };
+
+        const catNamesMap = new Map();
         if (Array.isArray(cats)) {
           cats.forEach(c => {
-            const name = c.name || c.title;
-            if (name) catNamesSet.add(name);
+            const rawName = (c.name || c.title || '').trim();
+            const label = (c.label || rawName.replace(/-/g, ' ')).trim();
+            if (rawName && label && !isCustomCat(rawName, c)) {
+              const key = normalizeCatKey(rawName);
+              if (key && !catNamesMap.has(key)) {
+                let formatted = label.split(/[\s_-]+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+                if (key === 'weddinganniversary') formatted = 'Wedding & Anniversary';
+                if (key === 'custombirthdaycakes') formatted = 'Custom Birthday Cakes';
+                catNamesMap.set(key, formatted);
+              }
+            }
           });
         }
 
-        prods.forEach(p => {
-          if (Array.isArray(p.category)) {
-            p.category.forEach(c => typeof c === 'string' && catNamesSet.add(c));
-          } else if (typeof p.category === 'string' && p.category) {
-            catNamesSet.add(p.category);
-          }
+        // Always ensure Custom Birthday Cakes and Wedding & Anniversary are present for Staff selection
+        catNamesMap.set('custombirthdaycakes', 'Custom Birthday Cakes');
+        catNamesMap.set('weddinganniversary', 'Wedding & Anniversary');
+
+        combinedProducts.forEach(p => {
+          let pCats = [];
+          if (Array.isArray(p.category)) pCats = p.category;
+          else if (typeof p.category === 'string' && p.category) pCats = [p.category];
+
+          pCats.forEach(c => {
+            if (typeof c === 'string' && c.trim() && !isCustomCat(c)) {
+              const key = normalizeCatKey(c);
+              if (key && !catNamesMap.has(key)) {
+                let formatted = c.trim().split(/[\s_-]+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+                if (key === 'weddinganniversary') formatted = 'Wedding & Anniversary';
+                if (key === 'custombirthdaycakes') formatted = 'Custom Birthday Cakes';
+                catNamesMap.set(key, formatted);
+              }
+            }
+          });
         });
 
-        setCategoriesList(Array.from(catNamesSet));
+        setCategoriesList(Array.from(catNamesMap.values()));
       } catch (err) {
         console.error('Failed to load products/categories:', err);
         toast.error('Failed to load products');
@@ -807,10 +880,12 @@ const CreateInShopOrderView = () => {
                 >
                   <option value="ALL">All Categories ({allProducts.length})</option>
                   {categoriesList.map((cat, idx) => {
+                    const cleanTarget = cat.toLowerCase().trim().replace(/[\s_-]/g, '');
                     const count = allProducts.filter(p => {
-                      if (Array.isArray(p.category)) return p.category.some(c => typeof c === 'string' && c.toLowerCase().trim() === cat.toLowerCase().trim());
-                      if (typeof p.category === 'string') return p.category.toLowerCase().trim() === cat.toLowerCase().trim();
-                      return false;
+                      let pCats = [];
+                      if (Array.isArray(p.category)) pCats = p.category;
+                      else if (typeof p.category === 'string') pCats = [p.category];
+                      return pCats.some(c => typeof c === 'string' && (c.toLowerCase().trim().replace(/[\s_-]/g, '') === cleanTarget || c.toLowerCase().trim().replace(/[\s_-]/g, '').includes(cleanTarget)));
                     }).length;
                     return (
                       <option key={idx} value={cat}>
@@ -856,10 +931,12 @@ const CreateInShopOrderView = () => {
 
                 {categoriesList.map((cat, idx) => {
                   const isSelected = selectedCategory.toLowerCase().trim() === cat.toLowerCase().trim();
+                  const cleanTarget = cat.toLowerCase().trim().replace(/[\s_-]/g, '');
                   const count = allProducts.filter(p => {
-                    if (Array.isArray(p.category)) return p.category.some(c => typeof c === 'string' && c.toLowerCase().trim() === cat.toLowerCase().trim());
-                    if (typeof p.category === 'string') return p.category.toLowerCase().trim() === cat.toLowerCase().trim();
-                    return false;
+                    let pCats = [];
+                    if (Array.isArray(p.category)) pCats = p.category;
+                    else if (typeof p.category === 'string') pCats = [p.category];
+                    return pCats.some(c => typeof c === 'string' && (c.toLowerCase().trim().replace(/[\s_-]/g, '') === cleanTarget || c.toLowerCase().trim().replace(/[\s_-]/g, '').includes(cleanTarget)));
                   }).length;
 
                   return (

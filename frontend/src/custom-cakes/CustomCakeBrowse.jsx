@@ -152,12 +152,15 @@ export default function CustomCakeBrowse({
                   >
                     All
                   </button>
-                  {(categories || []).map(c => {
-                    const slug = (c.name || '').toLowerCase();
-                    const isActive = categoryFilter.toLowerCase() === slug;
+                  {[
+                    { id: 'custom-birthday', name: 'custom birthday cakes', label: 'Custom Birthday Cakes' },
+                    { id: 'wedding-anniversary', name: 'wedding & anniversary', label: 'Wedding & Anniversary' }
+                  ].map(c => {
+                    const slug = c.name.toLowerCase();
+                    const isActive = categoryFilter.toLowerCase() === slug || categoryFilter.toLowerCase().includes(slug.split(' ')[0]);
                     return (
                       <button
-                        key={c._id}
+                        key={c.id}
                         onClick={() => setCategoryFilter(isActive ? '' : slug)}
                         className={`px-4 py-2 rounded-full text-xs font-bold transition-all border ${
                           isActive
@@ -165,7 +168,7 @@ export default function CustomCakeBrowse({
                             : 'bg-[#2A1813] border-[#3A211B] text-white/70 hover:border-[#A18881]/50 hover:text-white'
                         }`}
                       >
-                        {c.label || c.name}
+                        {c.label}
                       </button>
                     );
                   })}
@@ -461,12 +464,13 @@ export default function CustomCakeBrowse({
                               <div>
                                 <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
                                   <VegIcon />
-                                  {t.enabled && (
-                                    <div
-                                      className="text-[8px] md:text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider border shadow-sm"
-                                      style={{ background: 'var(--badge-discount-bg)', color: 'var(--badge-discount-text)', borderColor: 'var(--badge-discount-border)' }}
-                                    >
-                                      Available
+                                  {t.enabled ? (
+                                    <div className="text-[8px] md:text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider border shadow-xs bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40">
+                                      Stock ON
+                                    </div>
+                                  ) : (
+                                    <div className="text-[8px] md:text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider border shadow-xs bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-500/40">
+                                      Stock OFF
                                     </div>
                                   )}
                                 </div>
@@ -597,12 +601,13 @@ export default function CustomCakeBrowse({
                               <div className="flex flex-col text-left mt-1">
                                 <div className="flex items-center gap-1.5 flex-wrap mb-2">
                                   <VegIcon />
-                                  {t.enabled && (
-                                    <div
-                                      className="text-[8px] md:text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider border shadow-sm"
-                                      style={{ background: 'var(--badge-discount-bg)', color: 'var(--badge-discount-text)', borderColor: 'var(--badge-discount-border)' }}
-                                    >
-                                      Available
+                                  {t.enabled ? (
+                                    <div className="text-[8px] md:text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider border shadow-xs bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40">
+                                      Stock ON
+                                    </div>
+                                  ) : (
+                                    <div className="text-[8px] md:text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider border shadow-xs bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-500/40">
+                                      Stock OFF
                                     </div>
                                   )}
                                 </div>
