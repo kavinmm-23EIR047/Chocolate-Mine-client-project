@@ -1,7 +1,15 @@
-import axios from 'axios';
+export const getApiBaseUrl = () => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+    if (!envUrl || envUrl.includes('localhost') || envUrl.startsWith('http://')) {
+      return window.location.origin + '/api/v1';
+    }
+  }
+  return envUrl || (import.meta.env.PROD ? window.location.origin + '/api/v1' : 'http://localhost:5000/api/v1');
+};
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || (import.meta.env.PROD ? window.location.origin + '/api/v1' : 'http://localhost:5000/api/v1'),
+  baseURL: getApiBaseUrl(),
   withCredentials: true,
 });
 
