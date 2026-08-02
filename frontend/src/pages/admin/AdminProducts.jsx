@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, Edit3, Trash2, Star, Award, EyeOff, Cake, ChevronDown } from 'lucide-react';
+import { Plus, Edit3, Trash2, Star, Award, EyeOff, Cake, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import productService from '../../services/productService';
 import adminService from '../../services/adminService';
 import { formatCurrency } from '../../utils/helpers';
@@ -27,6 +27,14 @@ const AdminProducts = () => {
   const [deleteId, setDeleteId] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [allProducts, setAllProducts] = useState([]);
+  const tableScrollRef = useRef(null);
+
+  const scrollTable = (direction) => {
+    if (tableScrollRef.current) {
+      const scrollAmount = direction === 'left' ? -250 : 250;
+      tableScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -217,10 +225,36 @@ const AdminProducts = () => {
         <EmptyState title="No products found" message="Start by adding your first product." action={<Link to="/admin/products/create"><Button icon={Plus}>Add Product</Button></Link>} />
       ) : (
         <>
-        {/* Desktop Table with Horizontal Scroll */}
+        {/* Desktop Table with Horizontal Scroll & Sticky Actions Column */}
         <div className="hidden md:block bg-card border border-border rounded-2xl overflow-hidden shadow-soft">
-          <div className="overflow-x-auto w-full custom-scrollbar">
-            <table className="w-full min-w-[1000px] whitespace-nowrap">
+          {/* Scroll Controls Bar */}
+          <div className="flex items-center justify-between px-4 py-2.5 bg-border/10 border-b border-border/50 text-xs">
+            <span className="font-bold text-muted text-[11px] uppercase tracking-wider flex items-center gap-1.5">
+              <span>Scroll Table</span>
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-muted font-medium hidden sm:inline">Use scrollbar or buttons:</span>
+              <button
+                type="button"
+                onClick={() => scrollTable('left')}
+                className="p-1.5 rounded-lg bg-card hover:bg-primary hover:text-button-text border border-border text-heading transition-all shadow-xs active:scale-95 flex items-center justify-center cursor-pointer"
+                title="Scroll Left"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollTable('right')}
+                className="p-1.5 rounded-lg bg-card hover:bg-primary hover:text-button-text border border-border text-heading transition-all shadow-xs active:scale-95 flex items-center justify-center cursor-pointer"
+                title="Scroll Right"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+
+          <div ref={tableScrollRef} className="overflow-x-auto w-full custom-scrollbar">
+            <table className="w-full min-w-[950px] whitespace-nowrap">
               <thead>
                 <tr className="border-b border-border bg-border/20">
                   <th className="text-left px-4 py-3.5 text-xs font-black text-muted uppercase tracking-wider">Product</th>
@@ -238,7 +272,7 @@ const AdminProducts = () => {
                 {products.map((p, i) => {
                   const flavourSummary = getFlavourSummary(p);
                   return (
-                    <motion.tr key={p._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }} className="hover:bg-border/20 transition-colors">
+                    <motion.tr key={p._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }} className="hover:bg-card-soft transition-colors group">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <img src={getOptimizedCloudinaryUrl(p.image, 200)} alt={p.name} className="w-12 h-12 rounded-xl object-cover bg-border shadow-xs" onError={(e) => { e.target.src = 'https://placehold.co/100x100/3B1A0F/FAF0EC?text=🍫'; }} />

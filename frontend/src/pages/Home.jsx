@@ -19,7 +19,6 @@ import TrustBar from '../components/home/TrustBar';
 import { CategoryCircles } from '../components/home/Category';
 import ReviewsHome from '../components/home/ReviewsHome';
 import HappyFaces from '../components/home/HappyFaces';
-import BottomBanner from '../components/home/BottomBanner';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { FreeMode } from 'swiper/modules';
 import 'swiper/css';
@@ -112,7 +111,7 @@ const Home = () => {
         <CategoryCircles activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
       )}
 
-      <main className="responsive-container py-6 pb-32">
+      <main className="responsive-container py-6 pb-4">
         <div className="mx-auto space-y-10 sm:space-y-12 tv:space-y-16">
           {!query ? (
             <>
@@ -216,9 +215,6 @@ const Home = () => {
 
           {/* Happy Faces Section (Under ReviewsHome) */}
           {!query && <HappyFaces />}
-
-          {/* Bottom Banner */}
-          {!query && <BottomBanner />}
         </div>
       </main>
 
