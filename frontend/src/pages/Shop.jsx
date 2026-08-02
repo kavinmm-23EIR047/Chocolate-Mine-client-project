@@ -378,22 +378,11 @@ const Shop = () => {
     location,
   });
 
-  const [isFiltering, setIsFiltering] = useState(false);
   const categoryString = searchParams.get('category') || '';
   const priceMin = priceRange[0];
   const priceMax = priceRange[1];
 
-  useEffect(() => {
-    if (!isLoading) {
-      setIsFiltering(true);
-      const timer = setTimeout(() => {
-        setIsFiltering(false);
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [categoryString, activeSubCategory, activeOccasion, activeRating, priceMin, priceMax, sortBy, searchQuery, isBestseller, isFeatured, isOffers]);
-
-  const loading = isLoading || isFetching || isFiltering;
+  const loading = isLoading;
 
   const products = productRes?.data || [];
 
@@ -826,7 +815,7 @@ const Shop = () => {
           <div className="flex items-center gap-2 overflow-x-auto pb-2 pt-1 px-1 scrollbar-hide">
             <button 
               type="button"
-              onClick={() => handleCategoryClick('all')}
+              onClick={() => handleCategoryChange('all')}
               className={`shrink-0 touch-manipulation px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all border cursor-pointer ${
                 isCategoryActive('all')
                   ? 'bg-[var(--primary)] text-[var(--button-text)] border-[var(--primary)] shadow-sm'
@@ -841,7 +830,7 @@ const Shop = () => {
                 <button 
                   key={cat.name} 
                   type="button"
-                  onClick={() => handleCategoryClick(cat.name)}
+                  onClick={() => handleCategoryChange(cat.name)}
                   className={`shrink-0 touch-manipulation px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all border cursor-pointer ${
                     isActive
                       ? 'bg-[var(--primary)] text-[var(--button-text)] border-[var(--primary)] shadow-sm'
