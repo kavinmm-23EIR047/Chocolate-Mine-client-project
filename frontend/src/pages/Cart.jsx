@@ -556,7 +556,7 @@ const Cart = () => {
                         ⚠️ Online delivery requires a minimum order of ₹300. For smaller orders, you can enquire & order directly via WhatsApp:
                       </p>
                       <a
-                        href={`https://wa.me/919363265477?text=${encodeURIComponent(
+                        href={`https://wa.me/919150670077?text=${encodeURIComponent(
                           `Hi The Chocolate Mine! I would like to order items from my bag (Total: ₹${subtotal}):\n` +
                           cartItems.map(i => `• ${i.name} (x${i.qty})`).join('\n')
                         )}`}

@@ -1096,7 +1096,7 @@ const Checkout = () => {
         setLoading(false);
         isProcessingPayment.current = false;
 
-        const adminPhone = import.meta.env.VITE_ADMIN_PHONE || '9363265477';
+        const adminPhone = import.meta.env.VITE_ADMIN_PHONE || '9150670077';
         const orderNum = orderNumber || `ORD-${orderId.slice(-6).toUpperCase()}`;
 
         const itemsList = cartItems.map(item => {

@@ -7,7 +7,7 @@ const WhatsAppButton = () => {
   const [showQuickReplies, setShowQuickReplies] = useState(true);
   const inputRef = useRef(null);
 
-  const whatsappNumber = "919363265477";
+  const whatsappNumber = "919150670077";
 
   const quickReplies = [
     { text: "🍰 Custom cake order", msg: "I'd like to order a custom cake. Can you help?" },
