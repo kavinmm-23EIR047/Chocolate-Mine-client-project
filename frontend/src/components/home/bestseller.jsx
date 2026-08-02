@@ -29,18 +29,33 @@ const Bestseller = ({ location }) => {
   const { data: productRes, isLoading } = useGetProductsQuery({
     bestseller: 'true',
     location,
-    limit: 12,
+    limit: 100,
   });
 
+  const CHOCO_KEYWORDS = ['choco', 'chocolate', 'truffle', 'fudge', 'oreo', 'brownie', 'nutella', 'ferrero', 'cocoa', 'mud', 'dark', 'black forest'];
+
+  const isChocoProduct = (p) => {
+    if (!p) return false;
+    const name = (p.name || '').toLowerCase();
+    const desc = (p.description || '').toLowerCase();
+    const sub = (p.subCategory || '').toLowerCase();
+    let cats = [];
+    if (Array.isArray(p.category)) cats = p.category;
+    else if (typeof p.category === 'string') cats = [p.category];
+    const catStr = cats.join(' ').toLowerCase();
+    
+    let flavoursStr = '';
+    if (Array.isArray(p.flavours)) {
+      flavoursStr = p.flavours.map(f => f.name || '').join(' ').toLowerCase();
+    }
+
+    const combinedText = `${name} ${sub} ${catStr} ${desc} ${flavoursStr}`;
+    return CHOCO_KEYWORDS.some(keyword => combinedText.includes(keyword));
+  };
+
   const products = [...((productRes?.data || []).filter(p => p.bestseller === true))].sort((a, b) => {
-    const isChoco = (p) => {
-      if (p.name?.toLowerCase().includes('choco')) return true;
-      if (p.category && p.category.some(c => c.toLowerCase().includes('choco'))) return true;
-      if (p.subCategory?.toLowerCase().includes('choco')) return true;
-      return false;
-    };
-    const aIsChoco = isChoco(a);
-    const bIsChoco = isChoco(b);
+    const aIsChoco = isChocoProduct(a);
+    const bIsChoco = isChocoProduct(b);
     if (aIsChoco && !bIsChoco) return -1;
     if (!aIsChoco && bIsChoco) return 1;
     return 0;

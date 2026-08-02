@@ -1,5 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 
 const PrivacyInfo = () => {
   return (
@@ -7,186 +6,130 @@ const PrivacyInfo = () => {
       <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-widest mb-8 text-[var(--heading)] border-b border-[var(--border)] pb-4">
         Privacy Policy
       </h1>
-      
-      <div className="space-y-10 text-[var(--muted)] leading-relaxed">
-        
-        {/* Cake Refund Policy Section */}
-        <section className="space-y-6 bg-[var(--card)] border border-[var(--border)] p-6 sm:p-8 rounded-2xl shadow-sm">
-          <h2 className="text-2xl font-black text-[var(--heading)] tracking-tight border-b border-[var(--border)] pb-3">
-            Cake Refund Policy
-          </h2>
-          <p className="font-medium text-sm sm:text-base">
-            At our TCM, every cake and dessert is freshly prepared to order using high-quality ingredients. Because our products are custom-made and perishable, we have the following refund policy:
-          </p>
 
-          <div className="space-y-4 text-sm sm:text-base">
-            <div>
-              <h3 className="font-bold text-[var(--heading)] text-base sm:text-lg mb-2">Order Cancellation</h3>
-              <ul className="list-disc pl-5 space-y-1.5">
-                <li>Orders may be cancelled up to 48 hours before the scheduled delivery or pickup time for a full refund.</li>
-                <li>Cancellations made within 24 hours of delivery may be eligible for a partial refund of up to 50%, depending on the preparation already completed.</li>
-                <li>Orders cancelled less than 12 hours before delivery or pickup are non-refundable.</li>
-              </ul>
-            </div>
+      <div className="space-y-6 text-[var(--muted)] leading-relaxed bg-[var(--card)] border border-[var(--border)] p-6 sm:p-8 rounded-2xl shadow-sm">
+        <p className="font-medium text-sm sm:text-base">
+          At TCM, we respect the privacy of our customers and are committed to handling the information provided while placing and delivering orders responsibly.
+        </p>
 
-            <div>
-              <h3 className="font-bold text-[var(--heading)] text-base sm:text-lg mb-2">Custom Cake</h3>
-              <ul className="list-disc pl-5 space-y-1.5">
-                <li>Custom-designed cakes, including personalized decorations, themes, names, or photos, are non-refundable once production has begun.</li>
-                <li>If work has not yet started, cancellation may be considered at our discretion.</li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-bold text-[var(--heading)] text-base sm:text-lg mb-2">Delivery Issues</h3>
-              <p className="mb-2 font-medium">If your cake is damaged during delivery due to our handling, please:</p>
-              <ul className="list-disc pl-5 space-y-1.5 mb-3">
-                <li>Inspect the cake upon delivery.</li>
-                <li>Notify us within 20mins of receiving the order.</li>
-                <li>Provide clear photos of the damaged cake.</li>
-              </ul>
-              <p className="mb-2 font-medium">After verification, we may offer one of the following:</p>
-              <ul className="list-disc pl-5 space-y-1.5">
-                <li>A replacement cake (subject to availability).</li>
-                <li>A partial refund.</li>
-                <li>Store credit for a future purchase.</li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-bold text-[var(--heading)] text-base sm:text-lg mb-2">Quality Concerns</h3>
-              <p>
-                If you believe your cake has a quality issue, please contact us within 12 hours of delivery with photos and a description of the concern. Each case will be reviewed individually. Refunds or replacements are provided only when the issue is determined to be our responsibility.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="font-bold text-[var(--heading)] text-base sm:text-lg mb-2">Customer Errors</h3>
-              <p className="mb-2 font-medium">Refunds or replacements will not be provided for:</p>
-              <ul className="list-disc pl-5 space-y-1.5">
-                <li>Incorrect information provided by the customer (delivery address, contact number, message on the cake, etc.).</li>
-                <li>Failure to receive the order at the agreed delivery time.</li>
-                <li>Damage caused after the cake has been delivered or collected.</li>
-                <li>Personal taste preferences regarding flavor, sweetness, or design when the cake matches the approved order.</li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-bold text-[var(--heading)] text-base sm:text-lg mb-2">Refund Processing</h3>
-              <p>
-                Approved refunds will be processed using the original payment method within 4-5 business days, depending on your bank or payment provider.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="font-bold text-[var(--heading)] text-base sm:text-lg mb-2">Contact Us</h3>
-              <p>
-                For refund requests or any assistance, please contact our support with your order number and relevant details. We are committed to resolving genuine issues quickly and fairly.
-              </p>
-            </div>
+        <div className="space-y-6 text-sm sm:text-base">
+          <div>
+            <h2 className="font-bold text-[var(--heading)] text-lg mb-2">1. Information We Collect</h2>
+            <p className="mb-2">When you place an order, we may collect information required to prepare, process, and deliver your order, including:</p>
+            <ul className="list-disc pl-5 space-y-1.5">
+              <li>Customer name.</li>
+              <li>Contact number.</li>
+              <li>Delivery address.</li>
+              <li>Order details.</li>
+              <li>Delivery date and preferred delivery time slot.</li>
+              <li>Cake customization details, including messages, names, themes, or photos provided for custom cakes.</li>
+              <li>Payment-related information required to process your order.</li>
+              <li>Photos or descriptions provided when reporting delivery damage or quality concerns.</li>
+            </ul>
           </div>
-        </section>
 
-        {/* Delivery Policy Section */}
-        <section className="space-y-6 bg-[var(--card)] border border-[var(--border)] p-6 sm:p-8 rounded-2xl shadow-sm">
-          <h2 className="text-2xl font-black text-[var(--heading)] tracking-tight border-b border-[var(--border)] pb-3">
-            Delivery Policy
-          </h2>
-          <p className="font-medium text-sm sm:text-base">
-            We are committed to delivering your cakes fresh, beautiful, and on time. Please review our delivery policy below.
-          </p>
-
-          <div className="space-y-4 text-sm sm:text-base">
-            <div>
-              <h3 className="font-bold text-[var(--heading)] text-base sm:text-lg mb-2">Delivery Areas</h3>
-              <p>
-                We currently deliver within our designated service areas. Delivery availability may vary based on your location and order value.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="font-bold text-[var(--heading)] text-base sm:text-lg mb-2">Delivery Schedule</h3>
-              <ul className="list-disc pl-5 space-y-1.5">
-                <li>Deliveries are available during our regular operating hours.</li>
-                <li>Customers may choose a preferred delivery date and time slot during checkout, subject to availability.</li>
-                <li>While we strive to deliver within the selected time slot, unforeseen circumstances such as traffic, weather, or other factors may occasionally cause minor delays.</li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-bold text-[var(--heading)] text-base sm:text-lg mb-2">Delivery Charges</h3>
-              <ul className="list-disc pl-5 space-y-1.5">
-                <li>Delivery charges are calculated based on the delivery location and will be displayed during checkout.</li>
-                <li>Free delivery may be available for selected locations or promotional offers.</li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-bold text-[var(--heading)] text-base sm:text-lg mb-2">Order Preparation</h3>
-              <p className="mb-2 font-medium">To ensure availability, we recommend placing your order:</p>
-              <ul className="list-disc pl-5 space-y-1.5">
-                <li>At least 24 hours in advance for standard cakes.</li>
-                <li>24-48 hours in advance for custom or designer cakes.</li>
-                <li>Larger celebration or wedding cakes may require additional preparation time.</li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-bold text-[var(--heading)] text-base sm:text-lg mb-2">Delivery Confirmation</h3>
-              <ul className="list-disc pl-5 space-y-1.5">
-                <li>Please ensure that someone is available at the delivery address to receive the order.</li>
-                <li>If the recipient is unavailable, our delivery team will attempt to contact the customer or recipient.</li>
-                <li>If delivery cannot be completed due to an incorrect address or the recipient being unavailable, additional delivery charges may apply for a second delivery attempt.</li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-bold text-[var(--heading)] text-base sm:text-lg mb-2">Delivery Inspection</h3>
-              <p>
-                Customers are encouraged to inspect the cake upon delivery. Any damage or issues should be reported immediately, along with clear photographs, so we can resolve the matter promptly.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="font-bold text-[var(--heading)] text-base sm:text-lg mb-2">Delivery Delays</h3>
-              <p className="mb-2 font-medium">We are not responsible for delays caused by:</p>
-              <ul className="list-disc pl-5 space-y-1.5">
-                <li>Severe weather conditions</li>
-                <li>Traffic disruptions</li>
-                <li>Road closures</li>
-                <li>Natural disasters</li>
-                <li>Government restrictions</li>
-                <li>Incorrect delivery information provided by the customer</li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-bold text-[var(--heading)] text-base sm:text-lg mb-2">Cake Care After Delivery</h3>
-              <p className="mb-2 font-medium">Once the cake has been delivered:</p>
-              <ul className="list-disc pl-5 space-y-1.5">
-                <li>Store it according to the care instructions provided.</li>
-                <li>Keep it away from direct sunlight and excessive heat.</li>
-                <li>Refrigerate cakes that require chilling until serving time.</li>
-                <li>We are not responsible for damage caused by improper handling or storage after delivery.</li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-bold text-[var(--heading)] text-base sm:text-lg mb-2">Failed Deliveries</h3>
-              <p>
-                If a delivery cannot be completed due to incorrect address details, inaccessible locations, or the recipient's unavailability, the order may be returned to our shop. Redelivery may be arranged at an additional charge, subject to product condition.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="font-bold text-[var(--heading)] text-base sm:text-lg mb-2">Contact Us</h3>
-              <p>
-                If you have any questions regarding your delivery or need assistance with your order, please contact our team. We are committed to ensuring your product arrives safely and in perfect condition.
-              </p>
-            </div>
+          <div>
+            <h2 className="font-bold text-[var(--heading)] text-lg mb-2">2. How We Use Your Information</h2>
+            <p className="mb-2">The information provided by customers may be used to:</p>
+            <ul className="list-disc pl-5 space-y-1.5">
+              <li>Process and prepare orders.</li>
+              <li>Customize cakes according to the approved order details.</li>
+              <li>Contact customers or recipients regarding an order or delivery.</li>
+              <li>Deliver orders to the provided delivery address.</li>
+              <li>Process payments and approved refunds.</li>
+              <li>Handle cancellation requests.</li>
+              <li>Review delivery damage or quality concerns.</li>
+              <li>Arrange replacements, partial refunds, store credit, or redelivery where applicable.</li>
+              <li>Provide customer support and assistance.</li>
+            </ul>
           </div>
-        </section>
 
+          <div>
+            <h2 className="font-bold text-[var(--heading)] text-lg mb-2">3. Delivery Information</h2>
+            <p className="mb-2">Customers are responsible for providing correct delivery information, including the delivery address and contact number.</p>
+            <p className="mb-2 font-medium">The provided information may be used by our delivery team to:</p>
+            <ul className="list-disc pl-5 space-y-1.5 mb-2">
+              <li>Locate the delivery address.</li>
+              <li>Contact the customer or recipient when required.</li>
+              <li>Complete the delivery.</li>
+              <li>Arrange a second delivery attempt when applicable.</li>
+            </ul>
+            <p className="text-xs sm:text-sm italic">Incorrect delivery information provided by the customer may result in failed delivery or additional delivery charges.</p>
+          </div>
+
+          <div>
+            <h2 className="font-bold text-[var(--heading)] text-lg mb-2">4. Custom Cake Information</h2>
+            <p className="mb-2">For custom-designed cakes, customers may provide personalized information such as:</p>
+            <ul className="list-disc pl-5 space-y-1.5 mb-2">
+              <li>Names.</li>
+              <li>Messages.</li>
+              <li>Themes.</li>
+              <li>Photos.</li>
+              <li>Decoration requirements.</li>
+            </ul>
+            <p>This information is used to prepare the custom cake according to the approved order.</p>
+          </div>
+
+          <div>
+            <h2 className="font-bold text-[var(--heading)] text-lg mb-2">5. Damage and Quality Concerns</h2>
+            <p className="mb-2">When reporting delivery damage or quality concerns, customers may be required to provide:</p>
+            <ul className="list-disc pl-5 space-y-1.5 mb-2">
+              <li>Order number.</li>
+              <li>Clear photographs of the cake.</li>
+              <li>A description of the concern.</li>
+              <li>Relevant order and delivery details.</li>
+            </ul>
+            <p>This information will be used to review and verify the issue and determine whether a replacement, partial refund, store credit, or other resolution is applicable.</p>
+          </div>
+
+          <div>
+            <h2 className="font-bold text-[var(--heading)] text-lg mb-2">6. Payment and Refund Information</h2>
+            <ul className="list-disc pl-5 space-y-1.5">
+              <li>Payment information is used to process customer orders.</li>
+              <li>When a refund is approved, it will be processed using the original payment method within 4–5 business days, depending on the customer's bank or payment provider.</li>
+            </ul>
+          </div>
+
+          <div>
+            <h2 className="font-bold text-[var(--heading)] text-lg mb-2">7. Customer Responsibility</h2>
+            <p className="mb-2">Customers are responsible for ensuring that the information provided while placing an order is accurate.</p>
+            <p className="mb-2 font-medium">This includes:</p>
+            <ul className="list-disc pl-5 space-y-1.5 mb-2">
+              <li>Delivery address.</li>
+              <li>Contact number.</li>
+              <li>Cake message.</li>
+              <li>Customization details.</li>
+              <li>Delivery date and time information.</li>
+            </ul>
+            <p className="text-xs sm:text-sm italic">We are not responsible for issues resulting from incorrect information provided by the customer.</p>
+          </div>
+
+          <div>
+            <h2 className="font-bold text-[var(--heading)] text-lg mb-2">8. Contact and Order Communication</h2>
+            <p className="mb-2">We may use the contact information provided with an order to communicate regarding:</p>
+            <ul className="list-disc pl-5 space-y-1.5">
+              <li>Order confirmation.</li>
+              <li>Cake preparation.</li>
+              <li>Customization requirements.</li>
+              <li>Delivery.</li>
+              <li>Recipient availability.</li>
+              <li>Delivery issues.</li>
+              <li>Cancellation or refund requests.</li>
+              <li>Quality concerns.</li>
+              <li>Customer support.</li>
+            </ul>
+          </div>
+
+          <div>
+            <h2 className="font-bold text-[var(--heading)] text-lg mb-2">9. Contact Us</h2>
+            <p className="mb-2">
+              If you have any questions regarding your order information, delivery information, refund request, or any assistance related to your order, please contact our support team with your order number and relevant details.
+            </p>
+            <p>
+              We are committed to handling customer information responsibly while providing our ordering, delivery, refund, and customer support services.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

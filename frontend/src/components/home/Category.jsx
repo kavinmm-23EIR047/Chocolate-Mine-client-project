@@ -80,6 +80,14 @@ export const CategoryCircles = ({ activeCategory, setActiveCategory }) => {
           c => c.name.toLowerCase() === 'custom cakes' || c.name.toLowerCase() === 'custom cake'
         );
 
+        backend.sort((a, b) => {
+          const aIsChoco = (a.name || a.label || '').toLowerCase().includes('choco');
+          const bIsChoco = (b.name || b.label || '').toLowerCase().includes('choco');
+          if (aIsChoco && !bIsChoco) return -1;
+          if (!aIsChoco && bIsChoco) return 1;
+          return 0;
+        });
+
         if (customCakeIndex !== -1) {
           backend[customCakeIndex].isCustom = true;
           setCategories([allCategory, ...backend]);

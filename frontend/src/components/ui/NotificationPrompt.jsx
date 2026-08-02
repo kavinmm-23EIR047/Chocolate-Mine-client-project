@@ -15,9 +15,20 @@ const NotificationPrompt = () => {
   const hasFcmToken = user?.fcmTokens && user.fcmTokens.length > 0;
 
   useEffect(() => {
-    // Auto-prompt on each session for logged-in users who haven't enabled notifications yet
-    if (user && !hasFcmToken && typeof window !== 'undefined' && 'Notification' in window && window.Notification && window.Notification.permission !== 'denied') {
-      // Use sessionStorage so the prompt re-appears each new browser session
+    // Check if user chose "Don't ask again"
+    const doNotAskAgain = typeof window !== 'undefined' && localStorage.getItem('notificationPromptDoNotAsk') === 'true';
+
+    // Auto-prompt on each session for logged-in users who haven't enabled notifications yet and haven't selected "Don't ask again"
+    if (
+      user && 
+      !hasFcmToken && 
+      !doNotAskAgain && 
+      typeof window !== 'undefined' && 
+      'Notification' in window && 
+      window.Notification && 
+      window.Notification.permission !== 'denied'
+    ) {
+      // Use sessionStorage so the prompt re-appears each new browser session if not permanently disabled
       const hasSeenPromptThisSession = sessionStorage.getItem('notificationPromptSeen');
       if (!hasSeenPromptThisSession) {
         // Slight delay so it doesn't interrupt immediate page load
@@ -35,8 +46,13 @@ const NotificationPrompt = () => {
   }, []);
 
   const handleClose = () => {
-    // Only store in sessionStorage (resets on browser close) so it re-prompts next session
+    // Only store in sessionStorage (resets on browser close) so it re-prompts next session unless "Don't ask again" was selected
     sessionStorage.setItem('notificationPromptSeen', '1');
+    setIsOpen(false);
+  };
+
+  const handleDoNotAskAgain = () => {
+    localStorage.setItem('notificationPromptDoNotAsk', 'true');
     setIsOpen(false);
   };
 
@@ -51,6 +67,7 @@ const NotificationPrompt = () => {
         // Enable notifications (Explicit request)
         const success = await enableNotifications();
         if (success) {
+          localStorage.setItem('notificationPromptDoNotAsk', 'true');
           toast.success("🎉 Push notifications enabled! You'll get order updates and offers.");
         } else if (Notification.permission === 'denied') {
           toast.error(
@@ -87,19 +104,45 @@ const NotificationPrompt = () => {
             : "Get real-time push notifications about your order status, delivery tracking, and payment updates so you never miss a thing."}
         </p>
 
-        <div className="w-full pt-4 flex gap-3">
-          <Button variant="ghost" className="w-full" onClick={handleClose} disabled={isLoading}>
-            {hasFcmToken ? 'Close' : 'Not Now'}
-          </Button>
-          <Button 
-            variant={hasFcmToken ? "danger" : "primary"} 
-            className="w-full" 
-            onClick={handleToggleNotifications}
-            loading={isLoading}
-          >
-            {hasFcmToken ? 'Disable' : 'Enable'}
-          </Button>
-        </div>
+        {!hasFcmToken ? (
+          <div className="w-full pt-4 flex flex-col items-center gap-2.5">
+            <div className="flex gap-3 w-full">
+              <Button variant="ghost" className="w-1/2" onClick={handleClose} disabled={isLoading}>
+                Not Now
+              </Button>
+              <Button 
+                variant="primary" 
+                className="w-1/2" 
+                onClick={handleToggleNotifications}
+                loading={isLoading}
+              >
+                Enable
+              </Button>
+            </div>
+            <button 
+              type="button"
+              onClick={handleDoNotAskAgain}
+              disabled={isLoading}
+              className="text-xs text-body-muted hover:text-primary transition-colors py-1 font-medium underline underline-offset-4"
+            >
+              Don't Ask Again
+            </button>
+          </div>
+        ) : (
+          <div className="w-full pt-4 flex gap-3">
+            <Button variant="ghost" className="w-full" onClick={handleClose} disabled={isLoading}>
+              Close
+            </Button>
+            <Button 
+              variant="danger" 
+              className="w-full" 
+              onClick={handleToggleNotifications}
+              loading={isLoading}
+            >
+              Disable
+            </Button>
+          </div>
+        )}
       </div>
     </Modal>
   );
