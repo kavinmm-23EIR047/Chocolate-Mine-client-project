@@ -305,6 +305,7 @@ const AdminStaff = () => {
                <input 
                   type="password"
                   required={!isEditing}
+                  minLength={isEditing ? undefined : 6}
                   value={formData.password}
                   onChange={(e) => setFormData({...formData, password: e.target.value})}
                   className="w-full bg-input border border-border rounded-xl pl-12 pr-4 py-3 outline-none focus:border-secondary transition-all font-bold"
