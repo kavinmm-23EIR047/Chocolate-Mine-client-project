@@ -108,7 +108,9 @@ const formatOrderItems = (items) => {
       knifeIncluded: item.customDetails.knifeIncluded,
       eggless: item.customDetails.eggless,
       lessSugar: item.customDetails.lessSugar,
-      notes: item.customDetails.notes
+      notes: item.customDetails.notes,
+      photoReferenceUrl: item.customDetails.photoReferenceUrl || item.customDetails.photoUrl || item.customDetails.photo || null,
+      photoUrl: item.customDetails.photoUrl || item.customDetails.photoReferenceUrl || item.customDetails.photo || null
     } : null
   }));
 };

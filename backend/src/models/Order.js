@@ -137,6 +137,8 @@ const orderSchema = new mongoose.Schema(
           candleRequired: { type: Boolean },
           knifeIncluded: { type: Boolean },
           photoReferenceUrl: { type: String },
+          photoUrl: { type: String },
+          photo: { type: String },
           lessSugar: { type: Boolean, default: false },
           eggless: { type: Boolean, default: false },
           notes: { type: String },

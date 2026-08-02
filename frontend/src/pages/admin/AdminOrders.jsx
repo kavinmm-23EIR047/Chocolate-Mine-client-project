@@ -139,12 +139,32 @@ const OrderDetailsModal = ({ order, onClose }) => {
                     </div>
                   </div>
                   {expandedItems[idx] && item.customDetails && (
-                    <div className="mt-3 p-3 bg-card-soft border border-border/40 rounded-lg text-xs space-y-1">
-                      {item.customDetails.flavour && <p><span className="font-bold text-heading">Color:</span> {item.customDetails.flavour}</p>}
-                      {item.customDetails.tiers && <p><span className="font-bold text-heading">Tiers:</span> {item.customDetails.tiers}</p>}
-                      {item.customDetails.weight && <p><span className="font-bold text-heading">Weight:</span> {item.customDetails.weight}</p>}
-                      {item.customDetails.eggless && <p><span className="font-bold text-heading">Eggless:</span> Yes</p>}
-                      {item.customDetails.lessSugar && <p><span className="font-bold text-heading">Less Sugar:</span> Yes</p>}
+                    <div className="mt-3 p-3 bg-card-soft border border-border/40 rounded-lg text-xs space-y-2">
+                      <div className="grid grid-cols-2 gap-1">
+                        {item.customDetails.flavour && <p><span className="font-bold text-heading">Color:</span> {item.customDetails.flavour}</p>}
+                        {item.customDetails.tiers && <p><span className="font-bold text-heading">Tiers:</span> {item.customDetails.tiers}</p>}
+                        {item.customDetails.weight && <p><span className="font-bold text-heading">Weight:</span> {item.customDetails.weight}</p>}
+                        {item.customDetails.eggless && <p><span className="font-bold text-heading">Eggless:</span> Yes</p>}
+                        {item.customDetails.lessSugar && <p><span className="font-bold text-heading">Less Sugar:</span> Yes</p>}
+                      </div>
+                      {(item.customDetails.photoReferenceUrl || item.customDetails.photoUrl || item.customDetails.photo || item.options?.photoUrl) && (
+                        <div className="pt-2 border-t border-border/30 flex items-center gap-2">
+                          <span className="font-bold text-heading">🖼️ Photo to Print:</span>
+                          <a 
+                            href={item.customDetails.photoReferenceUrl || item.customDetails.photoUrl || item.customDetails.photo || item.options?.photoUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="inline-flex items-center gap-2 font-bold text-primary hover:underline bg-card px-2 py-1 rounded border border-border"
+                          >
+                            <img 
+                              src={item.customDetails.photoReferenceUrl || item.customDetails.photoUrl || item.customDetails.photo || item.options?.photoUrl} 
+                              alt="Cake Photo" 
+                              className="w-10 h-10 rounded object-cover border border-border" 
+                            />
+                            <span>View Full Photo ↗</span>
+                          </a>
+                        </div>
+                      )}
                       {item.customDetails.messageOnCake && <p><span className="font-bold text-heading">Message:</span> {item.customDetails.messageOnCake}</p>}
                       {item.customDetails.notes && <p><span className="font-bold text-heading">Notes:</span> {item.customDetails.notes}</p>}
                     </div>
