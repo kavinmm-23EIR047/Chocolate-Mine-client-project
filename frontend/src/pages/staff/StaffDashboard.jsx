@@ -676,25 +676,8 @@ const CreateInShopOrderView = () => {
         catNamesMap.set('custombirthdaycakes', 'Custom Birthday Cakes');
         catNamesMap.set('weddinganniversary', 'Wedding & Anniversary');
 
-        combinedProducts.forEach(p => {
-          let pCats = [];
-          if (Array.isArray(p.category)) pCats = p.category;
-          else if (typeof p.category === 'string' && p.category) pCats = [p.category];
-
-          pCats.forEach(c => {
-            if (typeof c === 'string' && c.trim() && !isCustomCat(c)) {
-              const key = normalizeCatKey(c);
-              if (key && !catNamesMap.has(key)) {
-                let formatted = c.trim().split(/[\s_-]+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
-                if (key === 'weddinganniversary') formatted = 'Wedding & Anniversary';
-                if (key === 'custombirthdaycakes') formatted = 'Custom Birthday Cakes';
-                catNamesMap.set(key, formatted);
-              }
-            }
-          });
-        });
-
-        setCategoriesList(Array.from(catNamesMap.values()));
+        const sortedCategories = Array.from(catNamesMap.values()).sort((a, b) => a.localeCompare(b));
+        setCategoriesList(sortedCategories);
       } catch (err) {
         console.error('Failed to load products/categories:', err);
         toast.error('Failed to load products');

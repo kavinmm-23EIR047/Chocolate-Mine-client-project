@@ -77,12 +77,42 @@ const Home = () => {
       });
     }
 
+    const CHOCO_KEYWORDS = ['choco', 'chocolate', 'truffle', 'fudge', 'oreo', 'brownie', 'nutella', 'ferrero', 'cocoa', 'mud', 'dark', 'black forest'];
+
+    const isChoco = (p) => {
+      if (!p) return false;
+      const name = (p.name || '').toLowerCase();
+      const desc = (p.description || '').toLowerCase();
+      const sub = (p.subCategory || '').toLowerCase();
+      let cats = [];
+      if (Array.isArray(p.category)) cats = p.category;
+      else if (typeof p.category === 'string') cats = [p.category];
+      const catStr = cats.join(' ').toLowerCase();
+
+      let flavoursStr = '';
+      if (Array.isArray(p.flavours)) {
+        flavoursStr = p.flavours.map(f => f.name || '').join(' ').toLowerCase();
+      }
+
+      const combinedText = `${name} ${sub} ${catStr} ${desc} ${flavoursStr}`;
+      return CHOCO_KEYWORDS.some(keyword => combinedText.includes(keyword));
+    };
+
     if (sortBy === 'price-low') {
       result.sort((a, b) => (a.finalPrice ?? a.price) - (b.finalPrice ?? b.price));
     } else if (sortBy === 'price-high') {
       result.sort((a, b) => (b.finalPrice ?? b.price) - (a.finalPrice ?? a.price));
     } else if (sortBy === 'rating') {
       result.sort((a, b) => (b.ratingsAverage || 0) - (a.ratingsAverage || 0));
+    } else {
+      // Always give preference to Choco / Chocolate cakes so they appear first!
+      result.sort((a, b) => {
+        const aIsChoco = isChoco(a);
+        const bIsChoco = isChoco(b);
+        if (aIsChoco && !bIsChoco) return -1;
+        if (!aIsChoco && bIsChoco) return 1;
+        return 0;
+      });
     }
 
     return result;

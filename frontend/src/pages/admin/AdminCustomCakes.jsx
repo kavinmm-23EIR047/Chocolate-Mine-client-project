@@ -11,6 +11,7 @@ import { formatCurrency } from '../../utils/helpers';
 import { getOptimizedCloudinaryUrl } from '../../utils/cloudinary';
 import EmptyState from '../../components/ui/EmptyState';
 import { TableSkeleton } from '../../components/ui/Skeleton';
+import Pagination from '../../components/ui/Pagination';
 
 const AdminCustomCakes = () => {
   const [themes, setThemes] = useState([]);
@@ -20,6 +21,8 @@ const AdminCustomCakes = () => {
   const [category, setCategory] = useState('');
   const [status, setStatus] = useState('');
   const [sort, setSort] = useState('-createdAt');
+  const [page, setPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
   const [editingThemeId, setEditingThemeId] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return params.get('edit') || null;
@@ -218,6 +221,57 @@ const AdminCustomCakes = () => {
     return result;
   }, [themes, search, category, status, sort]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [search, category, status, sort]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredThemes.length / ITEMS_PER_PAGE));
+  const paginatedThemes = useMemo(() => {
+    const start = (page - 1) * ITEMS_PER_PAGE;
+    return filteredThemes.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredThemes, page]);
+
+  const getThemeFirstImage = (theme) => {
+    if (!theme) return 'https://placehold.co/100x100/3B1A0F/FAF0EC?text=🎂';
+    if (Array.isArray(theme.colors) && theme.colors.length > 0) {
+      for (const col of theme.colors) {
+        if (col) {
+          if (col.images?.tier1) return col.images.tier1;
+          if (col.images?.tier2) return col.images.tier2;
+          if (col.images?.tier3) return col.images.tier3;
+          if (col.image) return col.image;
+          if (col.imageUrl) return col.imageUrl;
+          if (col.tier1Image) return col.tier1Image;
+        }
+      }
+    }
+    if (theme.image) return theme.image;
+    if (Array.isArray(theme.sampleImages) && theme.sampleImages.length > 0) return theme.sampleImages[0];
+    return 'https://placehold.co/100x100/3B1A0F/FAF0EC?text=🎂';
+  };
+
+  const getThemeMappedPrice = (theme) => {
+    if (!theme) return 0;
+    if (Array.isArray(theme.colors) && theme.colors.length > 0) {
+      for (const col of theme.colors) {
+        if (col) {
+          if (col.price && Number(col.price) > 0) return Number(col.price);
+          if (col.tier1Price && Number(col.tier1Price) > 0) return Number(col.tier1Price);
+        }
+      }
+    }
+    if (Array.isArray(theme.customWeightPrices) && theme.customWeightPrices.length > 0) {
+      for (const cwp of theme.customWeightPrices) {
+        if (cwp?.price && Number(cwp.price) > 0) return Number(cwp.price);
+      }
+    }
+    if (theme.tiers?.tier1?.price && Number(theme.tiers.tier1.price) > 0) return Number(theme.tiers.tier1.price);
+    if (theme.tiers?.tier1?.basePrice && Number(theme.tiers.tier1.basePrice) > 0) return Number(theme.tiers.tier1.basePrice);
+    if (theme.tiers?.tier2?.price && Number(theme.tiers.tier2.price) > 0) return Number(theme.tiers.tier2.price);
+    if (theme.tiers?.tier3?.price && Number(theme.tiers.tier3.price) > 0) return Number(theme.tiers.tier3.price);
+    return Number(theme.basePrice || theme.price || 0);
+  };
+
   if (editingThemeId) {
     return (
       <div className="space-y-6">
@@ -385,7 +439,7 @@ const AdminCustomCakes = () => {
                   <tr className="border-b border-border bg-border/20">
                     <th className="text-left px-4 py-3.5 text-xs font-black text-muted uppercase tracking-wider">Theme</th>
                     <th className="text-left px-4 py-3.5 text-xs font-black text-muted uppercase tracking-wider">Category</th>
-                    <th className="text-left px-4 py-3.5 text-xs font-black text-muted uppercase tracking-wider">Base Price</th>
+                    <th className="text-left px-4 py-3.5 text-xs font-black text-muted uppercase tracking-wider">Price</th>
                     <th className="text-left px-4 py-3.5 text-xs font-black text-muted uppercase tracking-wider">Tiers</th>
                     <th className="text-left px-4 py-3.5 text-xs font-black text-muted uppercase tracking-wider">Stock</th>
                     <th className="text-left px-4 py-3.5 text-xs font-black text-muted uppercase tracking-wider">Status</th>
@@ -393,9 +447,9 @@ const AdminCustomCakes = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {filteredThemes.map((theme) => {
-                    const imgUrl = theme.image || theme.sampleImages?.[0] || 'https://placehold.co/100x100/3B1A0F/FAF0EC?text=🎂';
-                    const basePrice = theme.tiers?.tier1?.basePrice || theme.price || 0;
+                  {paginatedThemes.map((theme) => {
+                    const imgUrl = getThemeFirstImage(theme);
+                    const mappedPrice = getThemeMappedPrice(theme);
                     return (
                       <tr key={theme._id} className="hover:bg-card-soft transition-colors group">
                         <td className="px-4 py-3">
@@ -422,7 +476,7 @@ const AdminCustomCakes = () => {
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <span className="font-bold text-heading">{formatCurrency(basePrice)}</span>
+                          <span className="font-bold text-heading">{formatCurrency(mappedPrice)}</span>
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex gap-1">
@@ -485,9 +539,9 @@ const AdminCustomCakes = () => {
 
           {/* Mobile Accordion View matching Products Page mobile view */}
           <div className="md:hidden flex flex-col gap-3">
-            {filteredThemes.map((theme) => {
-              const imgUrl = theme.image || theme.sampleImages?.[0] || 'https://placehold.co/100x100/3B1A0F/FAF0EC?text=🎂';
-              const basePrice = theme.tiers?.tier1?.basePrice || theme.price || 0;
+            {paginatedThemes.map((theme) => {
+              const imgUrl = getThemeFirstImage(theme);
+              const mappedPrice = getThemeMappedPrice(theme);
               return (
                 <details key={`mobile-${theme._id}`} className="bg-card border border-border rounded-2xl overflow-hidden group">
                   <summary className="p-4 flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden">
@@ -496,7 +550,7 @@ const AdminCustomCakes = () => {
                       <div>
                         <p className="font-bold text-heading text-sm">{theme.name}</p>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="font-bold text-heading text-xs">{formatCurrency(basePrice)}</span>
+                          <span className="font-bold text-heading text-xs">{formatCurrency(mappedPrice)}</span>
                           <button
                             type="button"
                             onClick={(e) => {
@@ -557,6 +611,8 @@ const AdminCustomCakes = () => {
               );
             })}
           </div>
+
+          <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
         </>
       )}
 
