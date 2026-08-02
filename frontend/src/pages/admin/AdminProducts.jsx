@@ -93,21 +93,24 @@ const AdminProducts = () => {
     fetchMeta();
   }, []);
 
+  const isMatchingCat = (prodCat, filterCat) => {
+    if (typeof prodCat !== 'string' || typeof filterCat !== 'string') return false;
+    const c1 = prodCat.toLowerCase().trim().replace(/[\s_-]/g, '');
+    const c2 = filterCat.toLowerCase().trim().replace(/[\s_-]/g, '');
+    if (!c1 || !c2) return false;
+    return c1 === c2;
+  };
+
   const getCategoryCount = useCallback((catName) => {
     if (!Array.isArray(allProducts)) return 0;
     if (!catName) return allProducts.length;
-    const cleanCat = catName.toLowerCase().replace(/[\s_-]/g, '');
     return allProducts.filter(p => {
       if (!p) return false;
       let cats = [];
       if (Array.isArray(p.category)) cats = p.category;
       else if (typeof p.category === 'string') cats = [p.category];
 
-      return cats.some(c => {
-        if (typeof c !== 'string') return false;
-        const baseC = c.toLowerCase().replace(/[\s_-]/g, '');
-        return baseC.includes(cleanCat) || cleanCat.includes(baseC);
-      });
+      return cats.some(c => isMatchingCat(c, catName));
     }).length;
   }, [allProducts]);
 
