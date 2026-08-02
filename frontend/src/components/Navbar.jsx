@@ -14,6 +14,7 @@ import NotificationDropdown from './ui/NotificationDropdown';
 import MegaMenu from './ui/MegaMenu';
 import CustomCakeMenu from './ui/CustomCakeMenu';
 import Logo from './Logo';
+import { useGetProductsQuery } from '../product/productApi';
 
 const Navbar = () => {
   const cartItems = useSelector((state) => state.cart.items);
@@ -23,6 +24,15 @@ const Navbar = () => {
   const [isSearchOverlayOpen, setIsSearchOverlayOpen] = useState(false);
   const [isLocationOpen, setIsLocationOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  
+  const { location: deliveryCity, setLocation: setDeliveryCity } = useDeliveryLocation();
+  
+  const { data: offerProductsRes } = useGetProductsQuery({ 
+    offers: 'true', 
+    limit: 1, 
+    location: deliveryCity 
+  });
+  const hasOffers = offerProductsRes?.data?.length > 0;
 
   const handleNavbarLogout = async () => {
     try {
@@ -34,7 +44,6 @@ const Navbar = () => {
     }
   };
 
-  const { location: deliveryCity, setLocation: setDeliveryCity } = useDeliveryLocation();
   const location = useLocation();
   const locationDropdownRef = useRef(null);
   const mobileLocationDropdownRef = useRef(null);
@@ -279,9 +288,11 @@ const Navbar = () => {
         <div className="hidden lg:flex items-center justify-start gap-5 xl:gap-7 tv:gap-10 py-0.5 bg-navbar responsive-container relative">
           <MegaMenu />
           <CustomCakeMenu />
-          <Link to="/shop?offers=true" className="text-sm font-black uppercase tracking-widest text-heading hover:text-primary transition-colors py-1.5 flex items-center gap-1">
-            Offer Cakes <span className="text-xs">🔥</span>
-          </Link>
+          {hasOffers && (
+            <Link to="/shop?offers=true" className="text-sm font-black uppercase tracking-widest text-heading hover:text-primary transition-colors py-1.5 flex items-center gap-1">
+              Offer Cakes <span className="text-xs">🔥</span>
+            </Link>
+          )}
           <Link to="/shop?bestseller=true" className="text-sm font-black uppercase tracking-widest text-heading hover:text-primary transition-colors py-1.5">Bestseller</Link>
           <Link to="/shop?category=special cakes" className="text-sm font-black uppercase tracking-widest text-heading hover:text-primary transition-colors py-1.5">Special Cakes</Link>
         </div>
@@ -346,15 +357,17 @@ const Navbar = () => {
                       </div>
                     </div>
 
-                    <Link to="/shop?offers=true" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-amber-500/10 transition-colors group">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500 shrink-0">
-                          <Flame size={16} />
+                    {hasOffers && (
+                      <Link to="/shop?offers=true" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-amber-500/10 transition-colors group">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500 shrink-0">
+                            <Flame size={16} />
+                          </div>
+                          <span className="font-extrabold text-sm text-heading group-hover:text-amber-500 transition-colors">Offer Cakes</span>
                         </div>
-                        <span className="font-extrabold text-sm text-heading group-hover:text-amber-500 transition-colors">Offer Cakes</span>
-                      </div>
-                      <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-500 border border-amber-500/30">🔥 HOT</span>
-                    </Link>
+                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-500 border border-amber-500/30">🔥 HOT</span>
+                      </Link>
+                    )}
 
                     <Link to="/shop?bestseller=true" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-primary/10 transition-colors group">
                       <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">

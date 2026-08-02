@@ -20,12 +20,28 @@ const normalizeStockValue = (value) => {
 // @route   POST /api/admin/staff/create
 // @access  Admin Only
 exports.createStaff = asyncHandler(async (req, res, next) => {
-  const { name, email, password, phone, role } = req.body;
+  const name = typeof req.body.name === 'string' ? req.body.name.trim() : '';
+  const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  const password = typeof req.body.password === 'string' ? req.body.password : '';
+  const phone = typeof req.body.phone === 'string' ? req.body.phone.trim() : '';
+  const role = req.body.role || 'staff';
 
-  // Check if user already exists
-  const existingUser = await User.findOne({ $or: [{ email }, { phone }] });
+  if (!name || !email || !password) {
+    return next(new AppError('Name, email, and password are required', 400));
+  }
+  if (password.length < 6) {
+    return next(new AppError('Password must be at least 6 characters', 400));
+  }
+  if (!['staff', 'admin'].includes(role)) {
+    return next(new AppError('Role must be staff or admin', 400));
+  }
+
+  // Email is the unique account identifier. Phone numbers may be shared by
+  // multiple users, so do not reject a staff member just because the phone
+  // number already exists on another account.
+  const existingUser = await User.findOne({ email });
   if (existingUser) {
-    return next(new AppError('Account with this email or phone already exists', 400));
+    return next(new AppError('An account with this email already exists', 400));
   }
 
   // Create staff user
@@ -641,4 +657,4 @@ exports.exportUsers = asyncHandler(async (req, res, next) => {
       console.error('Error downloading Excel file:', err);
     }
   });
-});
+});
