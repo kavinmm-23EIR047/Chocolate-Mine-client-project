@@ -32,7 +32,19 @@ const Features = ({ location }) => {
     limit: 12,
   });
 
-  const products = productRes?.data || [];
+  const products = [...(productRes?.data || [])].sort((a, b) => {
+    const isChoco = (p) => {
+      if (p.name?.toLowerCase().includes('choco')) return true;
+      if (p.category && p.category.some(c => c.toLowerCase().includes('choco'))) return true;
+      if (p.subCategory?.toLowerCase().includes('choco')) return true;
+      return false;
+    };
+    const aIsChoco = isChoco(a);
+    const bIsChoco = isChoco(b);
+    if (aIsChoco && !bIsChoco) return -1;
+    if (!aIsChoco && bIsChoco) return 1;
+    return 0;
+  });
 
   const handleScroll = useCallback(() => {
     if (sliderRef.current && !isDraggingTrack) {
