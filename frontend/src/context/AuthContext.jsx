@@ -144,6 +144,9 @@ export const AuthProvider = ({ children }) => {
           setUser(parsed);
         } catch (err) {
           console.error('🔐 Failed to parse stored user', err);
+          setUser(null);
+          safeRemove(sessionStorage, 'user');
+          safeRemove(localStorage, 'user');
         }
       }
 
@@ -233,6 +236,23 @@ export const AuthProvider = ({ children }) => {
       });
       return () => unsubscribe();
     }
+  }, []);
+
+  // Listen for auth-expired events from the API interceptor
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      console.warn('🔐 Auth expired event received, logging out locally');
+      setUser(null);
+      try {
+        safeClear(sessionStorage);
+        safeRemove(localStorage, 'user');
+        safeRemove(localStorage, 'token');
+        safeRemove(localStorage, 'auth_user');
+      } catch (e) {}
+    };
+
+    window.addEventListener('auth-expired', handleAuthExpired);
+    return () => window.removeEventListener('auth-expired', handleAuthExpired);
   }, []);
 
   const login = async ({ email, password }) => {
