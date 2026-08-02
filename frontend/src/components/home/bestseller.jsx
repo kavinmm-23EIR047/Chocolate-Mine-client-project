@@ -105,7 +105,7 @@ const Bestseller = ({ location }) => {
     sliderRef.current.scrollLeft = scrollLeftPos - walk;
   };
 
-  // Automatic slide one by one (3.0s speed - slow & smooth)
+  // Automatic slide one by one (5.5s speed - very slow & comfortable)
   useEffect(() => {
     if (isLoading || products.length <= 1 || isPaused || isDraggingTrack || isMouseDown) return;
 
@@ -121,7 +121,7 @@ const Bestseller = ({ location }) => {
           sliderRef.current.scrollBy({ left: cardStep, behavior: 'smooth' });
         }
       }
-    }, 3000);
+    }, 5500);
 
     return () => clearInterval(interval);
   }, [isLoading, products.length, isPaused, isDraggingTrack, isMouseDown]);

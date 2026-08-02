@@ -297,7 +297,7 @@ const ReviewsHome = () => {
         <div className="relative group w-full">
           <Swiper
             modules={[Autoplay, Pagination, Navigation]}
-            autoplay={{ delay: 4000, disableOnInteraction: false, pauseOnMouseEnter: true }}
+            autoplay={{ delay: 6000, disableOnInteraction: false, pauseOnMouseEnter: true }}
             spaceBetween={24}
             slidesPerView={1}
             navigation={{

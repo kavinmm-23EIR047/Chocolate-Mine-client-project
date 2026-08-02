@@ -151,7 +151,7 @@ export default function HappyFaces() {
         <Swiper
           modules={[Pagination, Autoplay]}
           pagination={{ clickable: true }}
-          autoplay={{ delay: 3000, disableOnInteraction: false }}
+          autoplay={{ delay: 5500, disableOnInteraction: false, pauseOnMouseEnter: true }}
           spaceBetween={12}
           slidesPerView={1}
           className="happy-faces-swiper !pb-9"

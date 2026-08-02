@@ -42,8 +42,9 @@ const BannerCarousel = () => {
         effect="fade"
         loop={true}
         autoplay={{
-          delay: 5000,
+          delay: 6000,
           disableOnInteraction: false,
+          pauseOnMouseEnter: true,
         }}
         pagination={{
           clickable: true,
