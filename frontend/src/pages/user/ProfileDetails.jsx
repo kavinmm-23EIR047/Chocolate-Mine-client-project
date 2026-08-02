@@ -60,7 +60,7 @@ const ProfileDetails = () => {
           toast.success("Push notifications enabled");
         } else {
           // If success is false, it means permission was denied or token generation failed
-          const permission = Notification.permission;
+          const permission = typeof window !== 'undefined' && 'Notification' in window && window.Notification ? window.Notification.permission : 'denied';
           if (permission === 'denied') {
             toast.error("Notifications are blocked. Please enable them in your browser settings.");
           } else {

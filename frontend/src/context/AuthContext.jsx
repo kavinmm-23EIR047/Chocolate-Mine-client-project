@@ -303,8 +303,10 @@ export const AuthProvider = ({ children }) => {
       // ignore
     }
 
-    if (window.location.pathname !== '/login') {
-      window.location.href = '/login';
+    if (window.location.pathname !== '/') {
+      window.location.href = '/';
+    } else {
+      window.location.reload();
     }
   };
 
