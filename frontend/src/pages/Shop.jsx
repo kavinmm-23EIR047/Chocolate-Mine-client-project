@@ -378,22 +378,11 @@ const Shop = () => {
     location,
   });
 
-  const [isFiltering, setIsFiltering] = useState(false);
   const categoryString = searchParams.get('category') || '';
   const priceMin = priceRange[0];
   const priceMax = priceRange[1];
 
-  useEffect(() => {
-    if (!isLoading) {
-      setIsFiltering(true);
-      const timer = setTimeout(() => {
-        setIsFiltering(false);
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [categoryString, activeSubCategory, activeOccasion, activeRating, priceMin, priceMax, sortBy, searchQuery, isBestseller, isFeatured, isOffers]);
-
-  const loading = isLoading || isFetching || isFiltering;
+  const loading = isLoading;
 
   const products = productRes?.data || [];
 
@@ -826,7 +815,7 @@ const Shop = () => {
           <div className="flex items-center gap-2 overflow-x-auto pb-2 pt-1 px-1 scrollbar-hide">
             <button 
               type="button"
-              onClick={() => handleCategoryClick('all')}
+              onClick={() => handleCategoryChange('all')}
               className={`shrink-0 touch-manipulation px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all border cursor-pointer ${
                 isCategoryActive('all')
                   ? 'bg-[var(--primary)] text-[var(--button-text)] border-[var(--primary)] shadow-sm'
@@ -841,7 +830,7 @@ const Shop = () => {
                 <button 
                   key={cat.name} 
                   type="button"
-                  onClick={() => handleCategoryClick(cat.name)}
+                  onClick={() => handleCategoryChange(cat.name)}
                   className={`shrink-0 touch-manipulation px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all border cursor-pointer ${
                     isActive
                       ? 'bg-[var(--primary)] text-[var(--button-text)] border-[var(--primary)] shadow-sm'
@@ -865,7 +854,7 @@ const Shop = () => {
             <span className="text-xs font-black text-[var(--muted)] uppercase tracking-wider">Active Filters:</span>
             
             {activeCategories.map(ac => (
-              <span key={ac} className="h-8 px-3.5 bg-[#2A1813] border border-[#3A211B] text-white rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all hover:border-[#EBD1C6]/30">
+              <span key={ac} className="h-8 px-3.5 bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all hover:border-[var(--primary)]/50 shadow-sm">
                 Category: {categories.find(c => c.name === ac)?.label || formatLabel(ac)}
                 <button 
                   onClick={(e) => {
@@ -873,7 +862,7 @@ const Shop = () => {
                     const newCats = activeCategories.filter(c => c !== ac);
                     updateSearchParam('category', newCats.length > 0 ? newCats.join(',') : 'all');
                   }}
-                  className="text-white/40 hover:text-[#ff8f8f] transition-colors font-bold ml-1 text-sm leading-none flex items-center justify-center"
+                  className="text-[var(--muted)] hover:text-red-500 transition-colors font-bold ml-1 text-sm leading-none flex items-center justify-center"
                 >
                   ×
                 </button>
@@ -881,11 +870,11 @@ const Shop = () => {
             ))}
             
             {activeSubCategory && (
-              <span className="h-8 px-3.5 bg-[#2A1813] border border-[#3A211B] text-white rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all hover:border-[#EBD1C6]/30">
+              <span className="h-8 px-3.5 bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all hover:border-[var(--primary)]/50 shadow-sm">
                 {formatLabel(activeSubCategory)}
                 <button 
                   onClick={() => updateSearchParam('subCategory', '')}
-                  className="text-white/40 hover:text-[#ff8f8f] transition-colors font-bold ml-1 text-sm leading-none flex items-center justify-center"
+                  className="text-[var(--muted)] hover:text-red-500 transition-colors font-bold ml-1 text-sm leading-none flex items-center justify-center"
                 >
                   ×
                 </button>
@@ -893,11 +882,11 @@ const Shop = () => {
             )}
             
             {activeOccasion !== 'all' && (
-              <span className="h-8 px-3.5 bg-[#2A1813] border border-[#3A211B] text-white rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all hover:border-[#EBD1C6]/30">
+              <span className="h-8 px-3.5 bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all hover:border-[var(--primary)]/50 shadow-sm">
                 Occasion: {occasions.find(o => o.name === activeOccasion)?.label || formatLabel(activeOccasion)}
                 <button 
                   onClick={(e) => handleOccasionClick(e, 'all')}
-                  className="text-white/40 hover:text-[#ff8f8f] transition-colors font-bold ml-1 text-sm leading-none flex items-center justify-center"
+                  className="text-[var(--muted)] hover:text-red-500 transition-colors font-bold ml-1 text-sm leading-none flex items-center justify-center"
                 >
                   ×
                 </button>
@@ -905,7 +894,7 @@ const Shop = () => {
             )}
             
             {(priceRange[0] > 0 || priceRange[1] < 10000) && (
-              <span className="h-8 px-3.5 bg-[#2A1813] border border-[#3A211B] text-white rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all hover:border-[#EBD1C6]/30">
+              <span className="h-8 px-3.5 bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all hover:border-[var(--primary)]/50 shadow-sm">
                 Price: ₹{priceRange[0]} - ₹{priceRange[1]}
                 <button 
                   onClick={() => {
@@ -913,7 +902,7 @@ const Shop = () => {
                     updateSearchParam('minPrice', 0);
                     updateSearchParam('maxPrice', 10000);
                   }}
-                  className="text-white/40 hover:text-[#ff8f8f] transition-colors font-bold ml-1 text-sm leading-none flex items-center justify-center"
+                  className="text-[var(--muted)] hover:text-red-500 transition-colors font-bold ml-1 text-sm leading-none flex items-center justify-center"
                 >
                   ×
                 </button>
@@ -921,11 +910,11 @@ const Shop = () => {
             )}
             
             {sortBy !== 'newest' && (
-              <span className="h-8 px-3.5 bg-[#2A1813] border border-[#3A211B] text-white rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all hover:border-[#EBD1C6]/30">
+              <span className="h-8 px-3.5 bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all hover:border-[var(--primary)]/50 shadow-sm">
                 Sort: {formatLabel(sortBy)}
                 <button 
                   onClick={() => updateSearchParam('sort', 'newest')}
-                  className="text-white/40 hover:text-[#ff8f8f] transition-colors font-bold ml-1 text-sm leading-none flex items-center justify-center"
+                  className="text-[var(--muted)] hover:text-red-500 transition-colors font-bold ml-1 text-sm leading-none flex items-center justify-center"
                 >
                   ×
                 </button>
@@ -934,7 +923,7 @@ const Shop = () => {
             
             <button
               onClick={clearFilters}
-              className="h-8 px-3.5 text-xs font-bold text-[#E6B25A] hover:text-[#F0C46E] hover:underline transition-colors ml-2 select-none flex items-center"
+              className="h-8 px-3.5 text-xs font-bold text-[var(--primary)] hover:text-[var(--primary)] hover:underline transition-colors ml-2 select-none flex items-center"
             >
               Clear All
             </button>
@@ -952,11 +941,11 @@ const Shop = () => {
           };
 
           return (
-            <div className="flex items-center gap-2 overflow-x-auto pb-4 pt-1 scrollbar-hide select-none mb-4">
+            <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-4 pt-1 scrollbar-hide select-none mb-4 w-full">
               <button
                 type="button"
                 onClick={() => updateSearchParam('subCategory', '')}
-                className={`px-4 py-2.5 rounded-full text-xs font-black whitespace-nowrap transition-all border cursor-pointer ${
+                className={`shrink-0 px-4 py-2.5 rounded-full text-xs font-black whitespace-nowrap transition-all border cursor-pointer ${
                   !activeSubCategory
                     ? 'bg-[var(--primary)] text-[var(--button-text)] border-[var(--primary)] shadow-sm'
                     : 'bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] hover:border-[var(--primary)]/50'
@@ -977,7 +966,7 @@ const Shop = () => {
                     key={sub.id}
                     type="button"
                     onClick={() => updateSearchParam('subCategory', isSubActive ? '' : sub.id)}
-                    className={`px-4 py-2.5 rounded-full text-xs font-black whitespace-nowrap transition-all border cursor-pointer ${
+                    className={`shrink-0 px-4 py-2.5 rounded-full text-xs font-black whitespace-nowrap transition-all border cursor-pointer ${
                       isSubActive
                         ? 'bg-[var(--primary)] text-[var(--button-text)] border-[var(--primary)] shadow-sm'
                         : 'bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] hover:border-[var(--primary)]/50'
