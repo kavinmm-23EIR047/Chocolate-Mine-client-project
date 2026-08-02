@@ -230,7 +230,8 @@ const Footer = () => {
                 { name: 'Contact Us', path: '/contact' },
                 { name: 'Privacy Policy', path: '/privacy' },
                 { name: 'Terms & Conditions', path: '/terms' },
-                { name: 'Refund Policy', path: '/refund' }
+                { name: 'Refund Policy', path: '/refund' },
+                { name: 'Delivery Policy', path: '/delivery' }
               ].map((item, i) => (
                 <li key={i}>
                   <Link to={item.path} className="text-muted hover:text-primary transition-all text-xs uppercase tracking-wider block font-medium hover:translate-x-1 duration-200">
