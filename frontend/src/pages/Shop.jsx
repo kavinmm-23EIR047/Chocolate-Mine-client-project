@@ -598,6 +598,48 @@ const Shop = () => {
     location
   ]);
 
+  const dessertsGroups = useMemo(() => {
+    const isDessertsPage = activeCategories.some(c => c.toLowerCase().includes('dessert'));
+    if (!isDessertsPage || activeSubCategory) return null;
+
+    const GROUPS_CONFIG = [
+      { id: 'cookies', title: 'Cookies', check: (p) => (p.subCategory || '').toLowerCase().includes('cookie') || (p.name || '').toLowerCase().includes('cookie') },
+      { id: 'mini-cakes', title: 'Mini Cakes', check: (p) => (p.subCategory || '').toLowerCase().includes('mini') || (p.name || '').toLowerCase().includes('mini') },
+      { id: 'tres-leches', title: 'Tres Leches', check: (p) => (p.subCategory || '').toLowerCase().includes('tres') || (p.name || '').toLowerCase().includes('tres') || (p.name || '').toLowerCase().includes('leche') },
+      { id: 'brownie', title: 'Brownie', check: (p) => (p.subCategory || '').toLowerCase().includes('brownie') || (p.name || '').toLowerCase().includes('brownie') || (p.name || '').toLowerCase().includes('slab') || (p.name || '').toLowerCase().includes('tart') },
+    ];
+
+    const grouped = {};
+    GROUPS_CONFIG.forEach(g => { grouped[g.id] = { title: g.title, items: [] }; });
+    const otherItems = [];
+
+    filteredProducts.forEach(p => {
+      let matched = false;
+      for (const g of GROUPS_CONFIG) {
+        if (g.check(p)) {
+          grouped[g.id].items.push(p);
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) {
+        otherItems.push(p);
+      }
+    });
+
+    const result = [];
+    GROUPS_CONFIG.forEach(g => {
+      if (grouped[g.id].items.length > 0) {
+        result.push(grouped[g.id]);
+      }
+    });
+    if (otherItems.length > 0) {
+      result.push({ title: 'Other Desserts', items: otherItems });
+    }
+
+    return result;
+  }, [filteredProducts, activeCategories, activeSubCategory]);
+
   useEffect(() => {
     setCurrentPage(1);
   }, [categoryString, activeSubCategory, activeOccasion, activeRating, priceMin, priceMax, sortBy, searchQuery]);
@@ -817,10 +859,9 @@ const Shop = () => {
             </Link>
           </div>
         </div>
-
         {/* Active Filters Display */}
         {getActiveFilterCount() > 0 && (
-          <div className="flex flex-wrap items-center gap-2 mb-6 sm:mb-8 select-none">
+          <div className="flex flex-wrap items-center gap-2 mb-4 select-none">
             <span className="text-xs font-black text-[var(--muted)] uppercase tracking-wider">Active Filters:</span>
             
             {activeCategories.map(ac => (
@@ -863,8 +904,6 @@ const Shop = () => {
               </span>
             )}
             
-
-            
             {(priceRange[0] > 0 || priceRange[1] < 10000) && (
               <span className="h-8 px-3.5 bg-[#2A1813] border border-[#3A211B] text-white rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all hover:border-[#EBD1C6]/30">
                 Price: ₹{priceRange[0]} - ₹{priceRange[1]}
@@ -902,6 +941,56 @@ const Shop = () => {
           </div>
         )}
 
+        {/* Subcategories Filter Pills Bar for Desserts Page */}
+        {activeCategories.some(c => c.toLowerCase().includes('dessert')) && (() => {
+          const getSubCount = (subId) => {
+            if (subId === 'cookies') return filteredProducts.filter(p => (p.subCategory || '').toLowerCase().includes('cookie') || (p.name || '').toLowerCase().includes('cookie')).length;
+            if (subId === 'mini-cakes') return filteredProducts.filter(p => (p.subCategory || '').toLowerCase().includes('mini') || (p.name || '').toLowerCase().includes('mini')).length;
+            if (subId === 'tres-leches') return filteredProducts.filter(p => (p.subCategory || '').toLowerCase().includes('tres') || (p.name || '').toLowerCase().includes('tres') || (p.name || '').toLowerCase().includes('leche')).length;
+            if (subId === 'brownie') return filteredProducts.filter(p => (p.subCategory || '').toLowerCase().includes('brownie') || (p.name || '').toLowerCase().includes('brownie') || (p.name || '').toLowerCase().includes('slab') || (p.name || '').toLowerCase().includes('tart')).length;
+            return 0;
+          };
+
+          return (
+            <div className="flex items-center gap-2 overflow-x-auto pb-4 pt-1 scrollbar-hide select-none mb-4">
+              <button
+                type="button"
+                onClick={() => updateSearchParam('subCategory', '')}
+                className={`px-4 py-2.5 rounded-full text-xs font-black whitespace-nowrap transition-all border cursor-pointer ${
+                  !activeSubCategory
+                    ? 'bg-[var(--primary)] text-[var(--button-text)] border-[var(--primary)] shadow-sm'
+                    : 'bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] hover:border-[var(--primary)]/50'
+                }`}
+              >
+                All Desserts ({filteredProducts.length})
+              </button>
+              {[
+                { id: 'cookies', label: 'Cookies' },
+                { id: 'mini-cakes', label: 'Mini Cakes' },
+                { id: 'tres-leches', label: 'Tres Leches' },
+                { id: 'brownie', label: 'Brownie' },
+              ].map((sub) => {
+                const isSubActive = activeSubCategory.toLowerCase().replace(/[\s-]/g, '') === sub.id.replace(/[\s-]/g, '');
+                const count = getSubCount(sub.id);
+                return (
+                  <button
+                    key={sub.id}
+                    type="button"
+                    onClick={() => updateSearchParam('subCategory', isSubActive ? '' : sub.id)}
+                    className={`px-4 py-2.5 rounded-full text-xs font-black whitespace-nowrap transition-all border cursor-pointer ${
+                      isSubActive
+                        ? 'bg-[var(--primary)] text-[var(--button-text)] border-[var(--primary)] shadow-sm'
+                        : 'bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] hover:border-[var(--primary)]/50'
+                    }`}
+                  >
+                    {sub.label} ({count})
+                  </button>
+                );
+              })}
+            </div>
+          );
+        })()}
+
         {/* Main Content with Sidebar */}
         <div className="flex gap-6">
           {/* Desktop Filter Sidebar */}
@@ -919,6 +1008,29 @@ const Shop = () => {
             {loading ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 lg:gap-6">
                 {[...Array(8)].map((_, i) => <CardSkeleton key={i} />)}
+              </div>
+            ) : dessertsGroups && dessertsGroups.length > 0 ? (
+              <div className="space-y-10">
+                {dessertsGroups.map((group, gIdx) => (
+                  <div key={gIdx} className="space-y-4">
+                    <div className="flex items-center justify-between pb-2 border-b border-[var(--border)]">
+                      <h3 className="text-lg font-bold text-[var(--heading)] tracking-tight">{group.title}</h3>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 lg:gap-6">
+                      {group.items.map((product, i) => (
+                        <motion.div
+                          key={product._id?.$oid || product._id}
+                          initial={{ opacity: 0, y: 15 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: i * 0.03 }}
+                        >
+                          <ProductCard product={product} layout="vertical" priority={i < 4} />
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : paginatedProducts.length > 0 ? (
               <>

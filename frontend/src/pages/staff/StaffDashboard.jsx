@@ -885,7 +885,11 @@ const CreateInShopOrderView = () => {
                       let pCats = [];
                       if (Array.isArray(p.category)) pCats = p.category;
                       else if (typeof p.category === 'string') pCats = [p.category];
-                      return pCats.some(c => typeof c === 'string' && (c.toLowerCase().trim().replace(/[\s_-]/g, '') === cleanTarget || c.toLowerCase().trim().replace(/[\s_-]/g, '').includes(cleanTarget)));
+                      return pCats.some(c => {
+                        if (typeof c !== 'string') return false;
+                        const cleanC = c.toLowerCase().trim().replace(/[\s_-]/g, '');
+                        return cleanC === cleanTarget;
+                      });
                     }).length;
                     return (
                       <option key={idx} value={cat}>
@@ -936,7 +940,11 @@ const CreateInShopOrderView = () => {
                     let pCats = [];
                     if (Array.isArray(p.category)) pCats = p.category;
                     else if (typeof p.category === 'string') pCats = [p.category];
-                    return pCats.some(c => typeof c === 'string' && (c.toLowerCase().trim().replace(/[\s_-]/g, '') === cleanTarget || c.toLowerCase().trim().replace(/[\s_-]/g, '').includes(cleanTarget)));
+                    return pCats.some(c => {
+                      if (typeof c !== 'string') return false;
+                      const cleanC = c.toLowerCase().trim().replace(/[\s_-]/g, '');
+                      return cleanC === cleanTarget;
+                    });
                   }).length;
 
                   return (
