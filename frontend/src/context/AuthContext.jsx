@@ -161,8 +161,10 @@ export const AuthProvider = ({ children }) => {
         // Sync FCM token in background
         syncFcmToken();
       } catch (err) {
-        // Quietly clear stale session data if token expired/invalid
-        if (!auth?.currentUser) {
+        // Only a confirmed auth failure should destroy a stored session. A
+        // mobile network/CORS/server failure must not log the customer out.
+        const status = err.response?.status ?? err.status;
+        if (status === 401 && !auth?.currentUser) {
           setUser(null);
           safeRemove(sessionStorage, 'user');
           safeRemove(sessionStorage, 'token');

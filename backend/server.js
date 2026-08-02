@@ -77,7 +77,14 @@ app.use(
 /* ==================================
    BODY PARSER
 ================================== */
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json({
+  limit: '50mb',
+  verify: (req, res, buffer) => {
+    if (req.originalUrl.startsWith('/api/v1/payment/webhook')) {
+      req.rawBody = Buffer.from(buffer);
+    }
+  },
+}));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 /* ==================================

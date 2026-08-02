@@ -55,6 +55,7 @@ import {
   clearCustomCakeRequest,
 } from '../utils/customCake';
 import api from '../utils/api';
+import paymentService from '../services/paymentService';
 import toast from 'react-hot-toast';
 
 /* ─────────────────────────────────────────────
@@ -1202,14 +1203,65 @@ const Checkout = () => {
               state: { orderId },
             });
           } catch (e) {
+            const paymentData = {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              orderId,
+            };
+            const statusCode = e?.response?.status;
+            const isTransient = !statusCode || statusCode === 408 || statusCode === 429 || statusCode >= 500;
+
+            if (isTransient || statusCode === 401) {
+              setLoaderText('Payment received. Confirming your order...');
+              let confirmed = false;
+              for (let attempt = 0; attempt < 2 && !confirmed; attempt += 1) {
+                try {
+                  await new Promise((resolve) => setTimeout(resolve, 1200));
+                  await api.post('/payment/verify', paymentData);
+                  confirmed = true;
+                } catch (retryError) {
+                  if (retryError?.response?.status && retryError.response.status < 500 && retryError.response.status !== 408) break;
+                }
+              }
+
+              try {
+                const status = await paymentService.getStatus(orderId);
+                if (confirmed || status.paymentStatus === 'paid') {
+                  if (!directItem) dispatch(clearCart());
+                  clearCustomCakeRequest();
+                  setCustomCakeRequest(null);
+                  clearSavedCheckoutData();
+                  setLoading(false);
+                  isProcessingPayment.current = false;
+                  toast.success('Payment received!');
+                  navigate('/order-success', { state: { orderId } });
+                  return;
+                }
+                if (status.paymentStatus === 'failed') {
+                  const failMessage = 'Payment was not completed. Please try again.';
+                  setLoading(false);
+                  isProcessingPayment.current = false;
+                  toast.error(failMessage);
+                  navigate('/?payment=failed', { replace: true, state: { paymentFailed: true, reason: failMessage, orderId } });
+                  return;
+                }
+              } catch (statusError) {
+                console.error('Payment recovery status unavailable:', statusError);
+              }
+
+              toast('Payment received. We are confirming your order.', { icon: 'ℹ️' });
+              navigate('/order-success', { state: { orderId, paymentPending: true } });
+            } else {
+              const failMessage = e?.response?.data?.message || "Verification failed. Contact support.";
+              toast.error(failMessage);
+              navigate('/?payment=failed', {
+                replace: true,
+                state: { paymentFailed: true, reason: failMessage, orderId }
+              });
+            }
             setLoading(false);
             isProcessingPayment.current = false;
-            const failMessage = e?.response?.data?.message || "Verification failed. Contact support.";
-            toast.error(failMessage);
-            navigate('/?payment=failed', {
-              replace: true,
-              state: { paymentFailed: true, reason: failMessage, orderId }
-            });
           }
         },
         modal: {

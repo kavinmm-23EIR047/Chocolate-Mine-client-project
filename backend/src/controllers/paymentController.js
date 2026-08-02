@@ -698,8 +698,52 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
   });
 });
 
-// The remaining functions (verifyPayment, handlePaymentFailure, etc.) are unchanged.
-// They are included below for completeness, but you can keep your existing versions.
+const reconcilePaidOrder = async ({ order, razorpayPaymentId, razorpaySignature = null }) => {
+  const updatedOrder = await Order.findOneAndUpdate(
+    { _id: order._id, paymentStatus: { $ne: 'paid' } },
+    { $set: { paymentStatus: 'paid', razorpayPaymentId, ...(razorpaySignature ? { razorpaySignature } : {}) } },
+    { new: true }
+  );
+  const finalOrder = updatedOrder || await Order.findById(order._id);
+  await Payment.findOneAndUpdate(
+    { orderId: order._id },
+    { $set: { razorpayPaymentId, ...(razorpaySignature ? { razorpaySignature } : {}), status: 'paid' } }
+  );
+
+  if (updatedOrder) {
+    await cacheService.del(`cart:${order.userId?._id || order.userId}`);
+    try {
+      const notificationManager = require('../services/notificationManager');
+      for (const item of order.items || []) {
+        if (item.isCustomCake) continue;
+        const product = await Product.findById(item.productId);
+        if (ioInstance) {
+          const socketData = { productId: item.productId, newStock: product ? product.stock : 0 };
+          if (product?.hasVariants && item.selectedFlavor && item.selectedWeight) {
+            const variant = product.variants.find(
+              (candidate) => candidate.flavor === item.selectedFlavor && candidate.weight === item.selectedWeight
+            );
+            if (variant) {
+              socketData.variantUpdate = {
+                flavor: item.selectedFlavor,
+                weight: item.selectedWeight,
+                newVariantStock: variant.stock,
+              };
+            }
+          }
+          ioInstance.emit('stock_updated', socketData);
+        }
+        if (product?.stock === false && notificationManager?.notifyOutOfStockAlert) {
+          notificationManager.notifyOutOfStockAlert(product.name).catch((err) => console.error(err));
+        }
+      }
+      notificationManager.notifyOrderSuccess(await finalOrder.populate('userId')).catch(err => console.error(err));
+    } catch (err) {
+      console.error('Failed to load notification manager:', err);
+    }
+  }
+  return finalOrder;
+};
 
 exports.verifyPayment = asyncHandler(async (req, res) => {
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderId } = req.body;
@@ -730,46 +774,21 @@ exports.verifyPayment = asyncHandler(async (req, res) => {
   const order = await Order.findById(orderId).populate('userId');
   if (!order) throw new AppError('Order not found', 404);
 
-  order.paymentStatus = 'paid';
-  order.razorpayPaymentId = razorpay_payment_id;
-  order.razorpaySignature = razorpay_signature;
-  await order.save();
+  const reconciledOrder = await reconcilePaidOrder({
+    order,
+    razorpayPaymentId: razorpay_payment_id,
+    razorpaySignature: razorpay_signature
+  });
 
-  await Payment.findOneAndUpdate({ orderId }, { razorpayPaymentId: razorpay_payment_id, razorpaySignature: razorpay_signature, status: 'paid' });
-  await cacheService.del(`cart:${order.userId._id}`);
-
-  for (const item of order.items) {
-    if (item.isCustomCake) continue;
-    const product = await Product.findById(item.productId);
-    if (ioInstance) {
-      const socketData = { productId: item.productId, newStock: product ? product.stock : 0 };
-      if (product?.hasVariants && item.selectedFlavor && item.selectedWeight) {
-        const variant = product.variants.find(v => v.flavor === item.selectedFlavor && v.weight === item.selectedWeight);
-        if (variant) socketData.variantUpdate = { flavor: item.selectedFlavor, weight: item.selectedWeight, newVariantStock: variant.stock };
-      }
-      ioInstance.emit('stock_updated', socketData);
-    }
-    if (product) {
-      try {
-        const notificationManager = require('../services/notificationManager');
-        if (product.stock === false) notificationManager.notifyOutOfStockAlert(product.name).catch(e => console.error(e));
-      } catch (err) { console.error('Notification error:', err); }
-    }
-  }
-  try {
-    const notificationManager = require('../services/notificationManager');
-    if (notificationManager?.notifyOrderSuccess) notificationManager.notifyOrderSuccess(order).catch(err => console.error(err));
-  } catch (err) { console.error('Failed to load notification manager:', err); }
-
-  res.status(200).json({ status: 'success', data: order });
+  res.status(200).json({ status: 'success', data: reconciledOrder });
 });
 
 exports.handlePaymentFailure = asyncHandler(async (req, res) => {
   const { orderId, reason } = req.body;
   if (orderId) {
     const order = await Order.findOneAndUpdate(
-      { _id: orderId, userId: req.user._id },
-      { paymentStatus: 'failed', paymentFailureReason: reason || 'Payment failed' },
+      { _id: orderId, userId: req.user._id, paymentStatus: { $ne: 'paid' } },
+      { $set: { paymentStatus: 'failed', paymentFailureReason: reason || 'Payment failed' } },
       { new: true }
     );
     if (order) {
@@ -784,22 +803,51 @@ exports.handlePaymentFailure = asyncHandler(async (req, res) => {
 });
 
 exports.getPaymentStatus = asyncHandler(async (req, res) => {
-  const order = await Order.findById(req.params.orderId);
+  const query = req.user.role === 'admin'
+    ? { _id: req.params.orderId }
+    : { _id: req.params.orderId, userId: req.user._id };
+  const order = await Order.findOne(query);
   if (!order) throw new AppError('Order not found', 404);
-  res.status(200).json({ status: 'success', paymentStatus: order.paymentStatus });
+  res.status(200).json({ status: 'success', paymentStatus: order.paymentStatus, orderId: order._id });
 });
 
 exports.handleWebhook = asyncHandler(async (req, res) => {
   const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
-  if (secret && req.headers['x-razorpay-signature']) {
-    const crypto = require('crypto');
-    const signature = req.headers['x-razorpay-signature'];
-    const expectedSignature = crypto.createHmac('sha256', secret).update(JSON.stringify(req.body)).digest('hex');
-    if (expectedSignature !== signature) {
-      console.error('❌ Invalid Razorpay Webhook Signature');
-      return res.status(400).send('Invalid signature');
+  const signature = req.headers['x-razorpay-signature'];
+  if (!secret || !signature || !req.rawBody) {
+    return res.status(400).send('Webhook signature is required');
+  }
+
+  const expectedSignature = crypto.createHmac('sha256', secret).update(req.rawBody).digest('hex');
+  const isValidSignature = expectedSignature.length === signature.length
+    && crypto.timingSafeEqual(Buffer.from(expectedSignature), Buffer.from(signature));
+  if (!isValidSignature) return res.status(400).send('Invalid signature');
+
+  const event = req.body?.event;
+  const paymentEntity = req.body?.payload?.payment?.entity;
+  const orderEntity = req.body?.payload?.order?.entity;
+  const razorpayOrderId = paymentEntity?.order_id || orderEntity?.id;
+  const razorpayPaymentId = paymentEntity?.id;
+
+  if (['payment.captured', 'order.paid'].includes(event) && razorpayOrderId) {
+    const order = await Order.findOne({ razorpayOrderId });
+    if (order) await reconcilePaidOrder({ order, razorpayPaymentId });
+  }
+
+  if (event === 'payment.failed' && razorpayOrderId) {
+    const order = await Order.findOneAndUpdate(
+      { razorpayOrderId, paymentStatus: { $ne: 'paid' } },
+      { $set: { paymentStatus: 'failed', paymentFailureReason: paymentEntity?.error_description || 'Payment failed' } },
+      { new: true }
+    );
+    if (order) {
+      await Payment.findOneAndUpdate(
+        { orderId: order._id },
+        { $set: { status: 'failed', failureReason: paymentEntity?.error_description || 'Payment failed' } }
+      );
     }
   }
+
   console.log('Webhook received:', req.body?.event || 'Unknown event');
   res.status(200).send('OK');
 });

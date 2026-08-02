@@ -6,6 +6,8 @@ const emailService = require('../services/emailService');
 const AppError = require('../utils/AppError');
 const asyncHandler = require('../utils/asyncHandler');
 
+const REFRESH_TOKEN_MAX_AGE = 30 * 24 * 60 * 60 * 1000;
+
 const generateAccessToken = (userId) => {
   return jwt.sign(
     { userId: userId.toString() },
@@ -41,7 +43,9 @@ const sendTokenResponse = (user, statusCode, res) => {
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    maxAge: REFRESH_TOKEN_MAX_AGE,
+    path: '/'
   });
 
   res.status(statusCode).json({
@@ -313,7 +317,9 @@ exports.googleSuccess = asyncHandler(async (req, res) => {
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: REFRESH_TOKEN_MAX_AGE,
+      path: '/'
     });
 
     res.redirect(

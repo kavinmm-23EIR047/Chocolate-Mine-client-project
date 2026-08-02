@@ -2,6 +2,13 @@ import axios from 'axios';
 
 export const getApiBaseUrl = () => {
   const envUrl = import.meta.env.VITE_API_URL;
+  const isLocalUrl = typeof envUrl === 'string' && /(^|\/\/)(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/i.test(envUrl);
+
+  if (import.meta.env.PROD && isLocalUrl) {
+    console.error('Production VITE_API_URL points to a local address; using the same-origin API fallback.');
+    return window.location.origin + '/api/v1';
+  }
+
   if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
     if (!envUrl || envUrl.includes('localhost') || envUrl.startsWith('http://')) {
       return window.location.origin + '/api/v1';
@@ -73,8 +80,16 @@ const SKIP_401_REDIRECT_ROUTES = [
   '/auth/signup'
 ];
 
+const AUTH_EXPIRY_ROUTES = ['/auth/me'];
+let authExpiryEventSent = false;
+
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (AUTH_EXPIRY_ROUTES.some((route) => (response.config?.url || '').includes(route))) {
+      authExpiryEventSent = false;
+    }
+    return response;
+  },
   (error) => {
     const status = error.response?.status;
     const requestUrl = error.config?.url || '';
@@ -84,13 +99,11 @@ api.interceptors.response.use(
         requestUrl.includes(route)
       );
 
-      // Don't redirect for auth-check routes or payment routes
-      if (!shouldSkip) {
-        try {
-          sessionStorage.removeItem('token');
-          sessionStorage.removeItem('user');
-        } catch (e) {}
-
+      // Only auth verification is definitive. Endpoint-specific 401s must
+      // remain local errors and must not log the whole customer out.
+      const isAuthVerification = AUTH_EXPIRY_ROUTES.some((route) => requestUrl.includes(route));
+      if (!shouldSkip && isAuthVerification && !authExpiryEventSent) {
+        authExpiryEventSent = true;
         window.dispatchEvent(new Event('auth-expired'));
       }
     }

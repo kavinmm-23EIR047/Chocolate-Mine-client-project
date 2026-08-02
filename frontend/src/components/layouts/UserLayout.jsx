@@ -118,16 +118,17 @@ const UserLayout = () => {
           </div>
         </div>
 
-        <main className="flex-grow min-w-0">
+        <main className="flex-grow min-w-0 pb-24 lg:pb-0">
           <Outlet />
         </main>
         
         <div className={`${isProductPage ? "hidden lg:block" : "block"} ${isAuthPage ? 'hidden md:block' : ''}`}>
           <Footer />
         </div>
+
+        {!isAuthPage && <MobileBottomNav />}
       </div>
-      
-      {!isAuthPage && <MobileBottomNav />}
+
       <NotificationPrompt />
       <PaymentFailedModal
         isOpen={paymentFailedModalOpen}
