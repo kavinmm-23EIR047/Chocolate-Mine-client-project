@@ -129,7 +129,7 @@ export const CategoryCircles = ({ activeCategory, setActiveCategory }) => {
         const gap = 16;
         container.scrollBy({ left: itemWidth + gap, behavior: 'smooth' });
       }
-    }, 2400);
+    }, 5500);
 
     return () => {
       clearInterval(interval);

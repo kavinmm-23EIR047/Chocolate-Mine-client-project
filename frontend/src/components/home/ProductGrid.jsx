@@ -71,7 +71,7 @@ const ProductGrid = ({ query, activeCategory, deliveryCity }) => {
               freeMode={true}
               slidesPerView={'auto'}
               spaceBetween={16}
-              autoplay={{ delay: 3500, disableOnInteraction: false }}
+              autoplay={{ delay: 5500, disableOnInteraction: false, pauseOnMouseEnter: true }}
               pagination={{ clickable: true, dynamicBullets: true }}
               className="!pb-12 !overflow-visible"
               breakpoints={{

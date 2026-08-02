@@ -198,7 +198,7 @@ const Home = () => {
                   <Swiper
                     modules={[FreeMode, Autoplay]}
                     autoplay={{
-                      delay: 3200,
+                      delay: 5500,
                       disableOnInteraction: false,
                       pauseOnMouseEnter: true,
                     }}

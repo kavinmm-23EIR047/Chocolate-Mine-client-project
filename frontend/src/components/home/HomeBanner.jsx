@@ -83,7 +83,7 @@ const HomeBanner = () => {
     if (banners.length <= 1) return;
     const timer = setInterval(() => {
       setCurrent((prev) => (prev + 1) % banners.length);
-    }, 3500);
+    }, 6000);
     return () => clearInterval(timer);
   }, [banners.length, current]);
 

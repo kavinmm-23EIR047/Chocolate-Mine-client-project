@@ -15,6 +15,13 @@ const NotificationPrompt = () => {
   const isPermissionGranted = typeof window !== 'undefined' && 'Notification' in window && window.Notification && window.Notification.permission === 'granted';
   const hasFcmToken = (user?.fcmTokens && user.fcmTokens.length > 0) || isPermissionGranted;
 
+  // Whenever notifications are enabled for the user, permanently remember not to prompt again
+  useEffect(() => {
+    if (hasFcmToken && typeof window !== 'undefined') {
+      localStorage.setItem('notificationPromptDoNotAsk', 'true');
+    }
+  }, [hasFcmToken]);
+
   useEffect(() => {
     if (typeof window === 'undefined' || !('Notification' in window)) return;
 
@@ -37,7 +44,10 @@ const NotificationPrompt = () => {
         const timer = setTimeout(() => {
           const recheckGranted = window.Notification?.permission === 'granted';
           const recheckDoNotAsk = localStorage.getItem('notificationPromptDoNotAsk') === 'true';
-          if (!recheckGranted && !recheckDoNotAsk) {
+          const recheckSeen = sessionStorage.getItem('notificationPromptSeen') === '1';
+          const recheckHasToken = user?.fcmTokens && user.fcmTokens.length > 0;
+
+          if (!recheckGranted && !recheckDoNotAsk && !recheckSeen && !recheckHasToken) {
             setIsOpen(true);
           }
         }, 2500);

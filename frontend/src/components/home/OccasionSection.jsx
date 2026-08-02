@@ -116,7 +116,7 @@ const OccasionSection = () => {
               swiperRef.current = swiper;
             }}
             autoplay={{
-              delay: 2800,
+              delay: 5500,
               disableOnInteraction: false,
               pauseOnMouseEnter: true,
             }}
