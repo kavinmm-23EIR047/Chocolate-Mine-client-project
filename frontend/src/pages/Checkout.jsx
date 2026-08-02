@@ -1767,6 +1767,16 @@ const Checkout = () => {
                                   {(item.options?.color || item.selectedFlavor) && <span className="text-[10px] sm:text-[11px] bg-card text-muted font-bold px-2 py-1 rounded-md uppercase tracking-tighter shadow-sm border border-border/30">Color: {item.options?.color || item.selectedFlavor}</span>}
                                   {(item.options?.flavor || item.selectedFlavor) && <span className="text-[10px] sm:text-[11px] bg-card text-muted font-bold px-2 py-1 rounded-md uppercase tracking-tighter shadow-sm border border-border/30">Flavor: {item.options?.flavor || item.selectedFlavor}</span>}
                                   {(item.options?.weight || item.selectedWeight) && <span className="text-[10px] sm:text-[11px] bg-card text-muted font-bold px-2 py-1 rounded-md uppercase tracking-tighter shadow-sm border border-border/30">Weight: {item.options?.weight || item.selectedWeight}</span>}
+                                  {item.options?.photoUrl && (
+                                    <div className="flex items-center gap-1.5 w-full mt-1">
+                                      <span className="text-[10px] sm:text-[11px] bg-primary/10 text-primary font-bold px-2 py-1 rounded-md uppercase tracking-tighter border border-primary/30">
+                                        📸 Photo Attached
+                                      </span>
+                                      <a href={item.options.photoUrl} target="_blank" rel="noopener noreferrer">
+                                        <img src={item.options.photoUrl} alt="Cake Photo" className="w-8 h-8 rounded border border-border object-cover" />
+                                      </a>
+                                    </div>
+                                  )}
                                 </>
                               ) : (
                                 <>

@@ -152,6 +152,7 @@ app.use('/api/v1/occasions', require('./src/routes/occasionRoutes'));
 app.use('/api/v1/banners', require('./src/routes/bannerRoutes'));
 app.use('/api/v1/custom-cakes/flavours', require('./src/routes/customCakeFlavorRoutes'));
 app.use('/api/v1/custom-cakes', require('./src/routes/customCakeRoutes'));
+app.use('/api/custom-cakes', require('./src/routes/customCakeRoutes'));
 
 // Protected routes
 app.use('/api/v1/cart', require('./src/routes/cartRoutes'));
