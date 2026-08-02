@@ -1,6 +1,6 @@
 const express = require('express');
 const paymentController = require('../controllers/paymentController');
-const { protect, restrictTo } = require('../middleware/auth');
+const { protect } = require('../middleware/auth');
 const rateLimiter = require('../middleware/rateLimiter');
 
 const router = express.Router();
@@ -17,11 +17,7 @@ router.post('/create-order', paymentLimiter, paymentController.createRazorpayOrd
 router.post('/verify', paymentController.verifyPayment);
 router.post('/log-failure', paymentController.handlePaymentFailure);
 
-// Admin Only
-router.get(
-  '/status/:orderId',
-  restrictTo('admin'),
-  paymentController.getPaymentStatus
-);
+// Customer-owned status lookup (admins may also query orders)
+router.get('/status/:orderId', paymentController.getPaymentStatus);
 
 module.exports = router;

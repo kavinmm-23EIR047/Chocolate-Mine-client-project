@@ -16,6 +16,7 @@ import toast from 'react-hot-toast';
 import LottieImport from 'lottie-react';
 import brandAnimation from '../assets/brand-loader.json';
 import orderService from '../services/orderService';
+import paymentService from '../services/paymentService';
 
 // Safely resolve the Lottie component function in both ESM and CJS bundling environments
 const Lottie = LottieImport.default || LottieImport;
@@ -99,6 +100,7 @@ const OrderSuccess = () => {
 
   const orderId = searchParams.get('id') || location.state?.orderId || null;
   const [fetchedOrderNumber, setFetchedOrderNumber] = useState(null);
+  const [paymentStatus, setPaymentStatus] = useState(location.state?.paymentPending ? 'pending' : 'paid');
 
   const orderNumber = fetchedOrderNumber || location.state?.orderNumber;
   const displayRef = useMemo(() => formatOrderRef(orderNumber), [orderNumber]);
@@ -126,6 +128,27 @@ const OrderSuccess = () => {
         });
     }
   }, [orderId]);
+
+  useEffect(() => {
+    if (!orderId || !['pending', 'created'].includes(paymentStatus)) return undefined;
+    let attempts = 0;
+    let timer;
+    const checkStatus = async () => {
+      try {
+        const status = await paymentService.getStatus(orderId);
+        setPaymentStatus(status.paymentStatus);
+      } catch (err) {
+        console.error('Payment status check failed:', err);
+      }
+      attempts += 1;
+      if (attempts >= 10) window.clearInterval(timer);
+    };
+    timer = window.setInterval(checkStatus, 4000);
+    checkStatus();
+    return () => window.clearInterval(timer);
+  }, [orderId, paymentStatus]);
+
+  const isPaymentPending = paymentStatus === 'pending' || paymentStatus === 'created';
 
   const handleViewDetails = () => {
     if (orderId) navigate(`/account/orders/${orderId}`);
@@ -211,10 +234,12 @@ const OrderSuccess = () => {
               Thank you
             </p>
             <h1 className="text-2xl sm:text-[1.75rem] font-bold text-heading tracking-tight leading-tight">
-              Order confirmed
+              {isPaymentPending ? 'Payment being confirmed' : 'Order confirmed'}
             </h1>
             <p className="mt-3 text-sm text-muted leading-relaxed max-w-lg mx-auto">
-              Payment went through. We're preparing your order with care — you'll get updates on the way.
+              {isPaymentPending
+                ? 'Your payment was received. We are waiting for confirmation and will update this page automatically.'
+                : "Payment went through. We're preparing your order with care — you'll get updates on the way."}
             </p>
 
             <motion.div
@@ -257,7 +282,7 @@ const OrderSuccess = () => {
               <div className="mt-4 flex items-center gap-2 pt-4 border-t border-border/30">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-success-light px-2.5 py-1 text-[11px] font-semibold text-success-text border border-success/15">
                   <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
-                  Confirmed
+                  {isPaymentPending ? 'Verification pending' : 'Confirmed'}
                 </span>
               </div>
             </div>

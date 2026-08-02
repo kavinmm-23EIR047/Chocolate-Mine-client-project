@@ -15,6 +15,11 @@ const paymentService = {
     const res = await api.post('/payment/log-failure', data);
     return res.data;
   },
+
+  getStatus: async (orderId) => {
+    const res = await api.get(`/payment/status/${orderId}`);
+    return res.data;
+  },
 };
 
 export default paymentService;
