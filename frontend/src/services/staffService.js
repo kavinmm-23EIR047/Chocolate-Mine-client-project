@@ -47,7 +47,7 @@ const staffService = {
   /* ----------------------------------------
      Delivery OTP Verification
   ---------------------------------------- */
-  sendDeliveryOtp: (orderId) => api.post(`/orders/${orderId}/delivery-otp/send`),
+  sendDeliveryOtp: (orderId, channel = 'both') => api.post(`/orders/${orderId}/delivery-otp/send`, { channel }),
   verifyDeliveryOtp: (orderId, otp) => api.post(`/orders/${orderId}/delivery-otp/verify`, { otp }),
 };
 

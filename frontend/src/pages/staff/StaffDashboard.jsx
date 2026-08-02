@@ -80,6 +80,7 @@ const OrderStatusDropdown = ({ order, onUpdate, onRefresh }) => {
   const [otp, setOtp] = useState('');
   const [sendingOtp, setSendingOtp] = useState(false);
   const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [otpChannel, setOtpChannel] = useState('sms'); // 'sms' | 'email'
 
   if (order.paymentMethod === 'ONLINE' && order.paymentStatus !== 'paid') {
     return (
@@ -97,11 +98,12 @@ const OrderStatusDropdown = ({ order, onUpdate, onRefresh }) => {
     );
   }
 
-  const handleSendOtp = async () => {
+  const handleSendOtp = async (channelOverride) => {
+    const targetChannel = channelOverride || otpChannel;
     try {
       setSendingOtp(true);
-      const res = await staffService.sendDeliveryOtp(order._id);
-      toast.success(res.data?.message || 'Delivery OTP sent to customer phone and email!');
+      const res = await staffService.sendDeliveryOtp(order._id, targetChannel);
+      toast.success(res.data?.message || `Delivery OTP sent via ${targetChannel.toUpperCase()}!`);
       setShowOtpInput(true);
     } catch (err) {
       const errMsg = err.response?.data?.message || 'Failed to send delivery OTP';
@@ -156,28 +158,74 @@ const OrderStatusDropdown = ({ order, onUpdate, onRefresh }) => {
 
   if (order.orderStatus === 'out_for_delivery') {
     return (
-      <div className="flex-1 min-w-[200px]">
+      <div className="flex-1 min-w-0">
         {!showOtpInput ? (
-          <Button
-            className="w-full rounded-2xl py-3 text-xs flex justify-center items-center gap-2 !bg-emerald-700 hover:!bg-emerald-800 !text-white font-black shadow-md cursor-pointer"
-            onClick={handleSendOtp}
-            disabled={sendingOtp}
-          >
-            {sendingOtp ? <Loader2 size={16} className="animate-spin" /> : <KeyRound size={16} />}
-            <span>{sendingOtp ? 'SENDING OTP…' : 'SEND DELIVERY OTP'}</span>
-          </Button>
-        ) : (
-          <div className="p-3 bg-card border-2 border-emerald-600/60 rounded-2xl space-y-2 shadow-md">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Delivery OTP Verification</span>
-              <button 
-                type="button" 
-                onClick={handleSendOtp} 
-                disabled={sendingOtp}
-                className="text-[10px] font-bold text-amber-700 dark:text-amber-400 hover:underline cursor-pointer"
+          <div className="flex items-center gap-1.5 p-1 bg-card border border-border/80 rounded-xl overflow-hidden shadow-xs">
+            {/* Inline Channel Selector (SMS / Email) */}
+            <div className="flex items-center p-0.5 bg-input border border-input-border rounded-lg shrink-0">
+              <button
+                type="button"
+                onClick={() => setOtpChannel('sms')}
+                className={`px-2 py-1 rounded-md text-[10px] font-black transition-all cursor-pointer ${
+                  otpChannel === 'sms'
+                    ? 'bg-emerald-700 text-white shadow-xs'
+                    : 'text-muted hover:text-heading'
+                }`}
+                title="Send via SMS"
               >
-                {sendingOtp ? 'Sending...' : 'Resend OTP'}
+                SMS
               </button>
+              <button
+                type="button"
+                onClick={() => setOtpChannel('email')}
+                className={`px-2 py-1 rounded-md text-[10px] font-black transition-all cursor-pointer ${
+                  otpChannel === 'email'
+                    ? 'bg-emerald-700 text-white shadow-xs'
+                    : 'text-muted hover:text-heading'
+                }`}
+                title="Send via Email"
+              >
+                Email
+              </button>
+            </div>
+
+            {/* Send Delivery OTP Button */}
+            <Button
+              className="flex-1 rounded-lg py-1.5 px-2 text-xs flex justify-center items-center gap-1 !bg-emerald-700 hover:!bg-emerald-800 !text-white font-black shadow-xs cursor-pointer whitespace-nowrap min-w-0"
+              onClick={() => handleSendOtp()}
+              disabled={sendingOtp}
+            >
+              {sendingOtp ? <Loader2 size={13} className="animate-spin shrink-0" /> : <KeyRound size={13} className="shrink-0" />}
+              <span className="truncate">{sendingOtp ? 'SENDING…' : 'SEND OTP'}</span>
+            </Button>
+          </div>
+        ) : (
+          <div className="p-2.5 bg-card border-2 border-emerald-600/60 rounded-2xl space-y-2 shadow-md">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+                <KeyRound size={12} /> Delivery OTP Verification
+              </span>
+              <div className="flex items-center gap-1">
+                <span className="text-[9px] text-muted font-bold">Resend:</span>
+                <button 
+                  type="button" 
+                  onClick={() => handleSendOtp('sms')} 
+                  disabled={sendingOtp}
+                  className="px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-400 hover:underline cursor-pointer bg-amber-500/10 rounded"
+                  title="Resend OTP via SMS"
+                >
+                  SMS
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => handleSendOtp('email')} 
+                  disabled={sendingOtp}
+                  className="px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-400 hover:underline cursor-pointer bg-amber-500/10 rounded"
+                  title="Resend OTP via Email"
+                >
+                  Email
+                </button>
+              </div>
             </div>
             <input
               type="text"
@@ -185,21 +233,21 @@ const OrderStatusDropdown = ({ order, onUpdate, onRefresh }) => {
               value={otp}
               onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
               placeholder="6-digit OTP"
-              className="w-full px-3 py-2 text-center text-lg font-mono font-black tracking-widest bg-input border border-input-border rounded-xl text-heading focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+              className="w-full px-2.5 py-1.5 text-center text-base font-mono font-black tracking-widest bg-input border border-input-border rounded-xl text-heading focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
             />
             <div className="flex gap-2">
               <Button
-                className="flex-1 rounded-xl py-2 text-xs !bg-emerald-700 hover:!bg-emerald-800 !text-white font-black shadow-sm cursor-pointer"
+                className="flex-1 rounded-xl py-1.5 text-xs !bg-emerald-700 hover:!bg-emerald-800 !text-white font-black shadow-sm cursor-pointer"
                 onClick={handleVerifyOtp}
                 disabled={verifyingOtp || otp.length !== 6}
               >
-                {verifyingOtp ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+                {verifyingOtp ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle size={13} />}
                 <span>{verifyingOtp ? 'VERIFYING…' : 'VERIFY & DELIVER'}</span>
               </Button>
               <button
                 type="button"
                 onClick={() => setShowOtpInput(false)}
-                className="px-2.5 py-2 text-xs font-bold text-muted hover:text-heading border border-border rounded-xl cursor-pointer"
+                className="px-2.5 py-1.5 text-xs font-bold text-muted hover:text-heading border border-border rounded-xl cursor-pointer"
               >
                 Cancel
               </button>
@@ -1076,7 +1124,7 @@ const StaffDashboard = () => {
   const { playSound, toggleMute, isMuted, testSounds } = useNotificationSound();
 
   const [orders, setOrders] = useState([]);
-  const [stats, setStats] = useState({ confirmedOrders: 0, outForDeliveryOrders: 0, deliveredOrders: 0, inShopOrdersCount: 0 });
+  const [stats, setStats] = useState({ confirmedOrders: 0, outForDeliveryOrders: 0, deliveredOrders: 0, inShopOrdersCount: 0, failedOrdersCount: 0, paidNewOrdersCount: 0 });
   const [loading, setLoading] = useState(true);
   const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
@@ -1084,6 +1132,7 @@ const StaffDashboard = () => {
   const [serviceHoursInfo, setServiceHoursInfo] = useState(null);
   const [viewMode, setViewMode] = useState('grid');
   const [orderSearch, setOrderSearch] = useState('');
+  const [newOrdersTab, setNewOrdersTab] = useState('all');
 
   const getPageType = (path) => {
     if (path.includes('orders/create-inshop')) return 'create-inshop';
@@ -1217,16 +1266,18 @@ const StaffDashboard = () => {
 
   if (pageType === 'dashboard') {
     const summaryItems = [
-      { id: 'confirmed', label: 'Confirmed Orders', icon: ClipboardList, count: stats.confirmedOrders, accentColor: 'text-amber-700 dark:text-amber-400', badgeBg: 'bg-amber-500/20 border-amber-600/40 text-amber-700 dark:text-amber-400', hoverBorder: 'hover:border-amber-500/50', path: '/staff/orders/new' },
+      { id: 'confirmed', label: 'New Orders', icon: ClipboardList, count: stats.confirmedOrders, accentColor: 'text-amber-700 dark:text-amber-400', badgeBg: 'bg-amber-500/20 border-amber-600/40 text-amber-700 dark:text-amber-400', hoverBorder: 'hover:border-amber-500/50', path: '/staff/orders/new' },
+      { id: 'paid', label: 'Paid & Ready', icon: CheckCircle, count: stats.paidNewOrdersCount, accentColor: 'text-emerald-700 dark:text-emerald-400', badgeBg: 'bg-emerald-500/20 border-emerald-600/40 text-emerald-700 dark:text-emerald-400', hoverBorder: 'hover:border-emerald-500/50', path: '/staff/orders/new' },
+      { id: 'failed', label: 'Failed Payments', icon: X, count: stats.failedOrdersCount, accentColor: 'text-rose-700 dark:text-rose-400', badgeBg: 'bg-rose-500/20 border-rose-600/40 text-rose-700 dark:text-rose-400', hoverBorder: 'hover:border-rose-500/50', path: '/staff/orders/new' },
       { id: 'active', label: 'Out For Delivery', icon: Flame, count: stats.outForDeliveryOrders, accentColor: 'text-orange-700 dark:text-orange-400', badgeBg: 'bg-orange-500/20 border-orange-600/40 text-orange-700 dark:text-orange-400', hoverBorder: 'hover:border-orange-500/50', path: '/staff/orders/active' },
-      { id: 'delivered', label: 'Delivered Orders', icon: CheckCircle, count: stats.deliveredOrders, accentColor: 'text-emerald-700 dark:text-emerald-400', badgeBg: 'bg-emerald-500/20 border-emerald-600/40 text-emerald-700 dark:text-emerald-400', hoverBorder: 'hover:border-emerald-500/50', path: '/staff/orders/history' },
+      { id: 'delivered', label: 'Delivered Orders', icon: History, count: stats.deliveredOrders, accentColor: 'text-emerald-700 dark:text-emerald-400', badgeBg: 'bg-emerald-500/20 border-emerald-600/40 text-emerald-700 dark:text-emerald-400', hoverBorder: 'hover:border-emerald-500/50', path: '/staff/orders/history' },
       { id: 'inshop', label: 'In-Shop Orders', icon: Store, count: stats.inShopOrdersCount, accentColor: 'text-purple-700 dark:text-purple-400', badgeBg: 'bg-purple-500/20 border-purple-600/40 text-purple-700 dark:text-purple-400', hoverBorder: 'hover:border-purple-500/50', path: '/staff/orders/in-shop-history' },
     ];
 
     return (
       <div className="space-y-8">
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 sm:gap-5">
           {summaryItems.map((item) => (
             <Link key={item.id} to={item.path} className="group block">
               <motion.div 
@@ -1428,6 +1479,15 @@ const StaffDashboard = () => {
     return numMatch || trackMatch || nameMatch || phoneMatch || emailMatch || itemMatch;
   });
 
+  const paidNewOrders = filteredOrdersList.filter(o => o.paymentStatus === 'paid' || o.paymentMethod === 'COD');
+  const failedNewOrders = filteredOrdersList.filter(o => o.paymentMethod === 'ONLINE' && o.paymentStatus !== 'paid');
+
+  let finalOrdersToDisplay = filteredOrdersList;
+  if (pageType === 'new') {
+    if (newOrdersTab === 'paid') finalOrdersToDisplay = paidNewOrders;
+    else if (newOrdersTab === 'failed') finalOrdersToDisplay = failedNewOrders;
+  }
+
   return (
     <div className="space-y-6">
       <OrderDetailsModal order={selectedOrderDetails} onClose={() => { setDetailsModalOpen(false); setSelectedOrderDetails(null); }} />
@@ -1439,7 +1499,7 @@ const StaffDashboard = () => {
               {pageType === 'new' ? 'New Confirmed Orders' : pageType === 'active' ? 'Active Delivery Orders' : pageType === 'history' ? 'Order History' : pageType === 'in-shop-history' ? 'In-Shop Order History' : 'Kitchen Dashboard'}
             </h2>
             <span className="px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 text-xs font-black">
-              {filteredOrdersList.length} {filteredOrdersList.length === 1 ? 'Order' : 'Orders'}
+              {finalOrdersToDisplay.length} {finalOrdersToDisplay.length === 1 ? 'Order' : 'Orders'}
             </span>
           </div>
           <p className="text-xs font-semibold text-heading/80 mt-1">
@@ -1497,14 +1557,69 @@ const StaffDashboard = () => {
         </div>
       </div>
 
+      {pageType === 'new' && (
+        <div className="flex flex-wrap items-center gap-2 pt-1 pb-1">
+          <button
+            type="button"
+            onClick={() => setNewOrdersTab('all')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 border cursor-pointer ${
+              newOrdersTab === 'all'
+                ? 'bg-amber-900 text-white dark:bg-amber-500 dark:text-slate-950 border-amber-800 dark:border-amber-400 shadow-sm'
+                : 'bg-card border-border text-muted hover:text-heading'
+            }`}
+          >
+            <span>All New Orders</span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${newOrdersTab === 'all' ? 'bg-white/20 text-white dark:bg-black/20 dark:text-slate-950' : 'bg-border/60 text-heading'}`}>
+              {filteredOrdersList.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setNewOrdersTab('paid')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 border cursor-pointer ${
+              newOrdersTab === 'paid'
+                ? 'bg-emerald-700 text-white border-emerald-600 shadow-sm'
+                : 'bg-card border-border text-muted hover:text-heading'
+            }`}
+          >
+            <span className="flex items-center gap-1">
+              <CheckCircle size={14} className={newOrdersTab === 'paid' ? 'text-white' : 'text-emerald-500'} />
+              <span>Paid & Confirmed</span>
+            </span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${newOrdersTab === 'paid' ? 'bg-white/20 text-white' : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400'}`}>
+              {paidNewOrders.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setNewOrdersTab('failed')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 border cursor-pointer ${
+              newOrdersTab === 'failed'
+                ? 'bg-rose-700 text-white border-rose-600 shadow-sm'
+                : 'bg-card border-border text-muted hover:text-heading'
+            }`}
+          >
+            <span className="flex items-center gap-1">
+              <X size={14} className={newOrdersTab === 'failed' ? 'text-white' : 'text-rose-500'} />
+              <span>Failed / Pending Payment</span>
+            </span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${newOrdersTab === 'failed' ? 'bg-white/20 text-white' : 'bg-rose-500/15 text-rose-700 dark:text-rose-400'}`}>
+              {failedNewOrders.length}
+            </span>
+          </button>
+        </div>
+      )}
+
       {loading ? (
         <TableSkeleton rows={4} cols={1} />
-      ) : filteredOrdersList.length === 0 ? (
-        <EmptyState icon={ShoppingBag} title="No orders found" message={orderSearch ? `No orders matched "${orderSearch}". Try a different keyword.` : "Relax! There's nothing to process in this section right now."} />
+      ) : finalOrdersToDisplay.length === 0 ? (
+        <EmptyState icon={ShoppingBag} title="No orders found" message={orderSearch ? `No orders matched "${orderSearch}". Try a different keyword.` : newOrdersTab === 'failed' ? "Great! There are no failed payment orders." : "Relax! There's nothing to process in this section right now."} />
       ) : viewMode === 'list' ? (
         <div className="space-y-4">
           <AnimatePresence mode="popLayout">
-            {filteredOrdersList.map((order) => (
+            {finalOrdersToDisplay.map((order) => (
               <motion.div
                 key={order._id}
                 layout
@@ -1620,15 +1735,19 @@ const StaffDashboard = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 sm:gap-6">
           <AnimatePresence mode="popLayout">
-            {filteredOrdersList.map((order) => (
-              <motion.div
-                key={order._id}
-                layout
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                className="bg-card border-t-4 border-t-primary rounded-2xl sm:rounded-3xl shadow-md border border-border/80 p-5 sm:p-6 relative group flex flex-col justify-between hover:shadow-xl transition-all duration-300"
-              >
+            {finalOrdersToDisplay.map((order) => {
+              const isFailedPayment = order.paymentMethod === 'ONLINE' && order.paymentStatus !== 'paid';
+              return (
+                <motion.div
+                  key={order._id}
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className={`bg-card rounded-2xl sm:rounded-3xl shadow-md border border-border/80 p-5 sm:p-6 relative group flex flex-col justify-between hover:shadow-xl transition-all duration-300 ${
+                    isFailedPayment ? 'border-t-4 border-t-rose-600 shadow-rose-900/10' : 'border-t-4 border-t-primary'
+                  }`}
+                >
                 <div className="space-y-4">
                   <div className="flex justify-between items-start gap-2 pb-3 border-b border-border/40">
                     <div>
@@ -1735,13 +1854,13 @@ const StaffDashboard = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 pt-1">
+                  <div className="flex items-center gap-1.5 pt-1">
                     <button 
                       onClick={() => handleViewOrderDetails(order._id)} 
-                      className="p-3 bg-heading text-background rounded-2xl hover:opacity-90 transition-all shrink-0 active:scale-95 cursor-pointer" 
+                      className="p-2 bg-heading text-background rounded-xl hover:opacity-90 transition-all shrink-0 active:scale-95 cursor-pointer" 
                       title="View Full Order Details"
                     >
-                      <Eye size={18} />
+                      <Eye size={16} />
                     </button>
 
                     <OrderStatusDropdown order={order} onUpdate={handleDeliveryStatusUpdate} />
@@ -1750,15 +1869,16 @@ const StaffDashboard = () => {
                       href={`${import.meta.env.VITE_API_URL || (import.meta.env.PROD ? window.location.origin : 'http://localhost:5000')}/staff/orders/${order._id}/kot/print`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-3 bg-heading text-background rounded-2xl hover:opacity-90 transition-all shrink-0 flex items-center justify-center active:scale-95 cursor-pointer" 
+                      className="p-2 bg-heading text-background rounded-xl hover:opacity-90 transition-all shrink-0 flex items-center justify-center active:scale-95 cursor-pointer" 
                       title="Print KOT"
                     >
-                      <ChefHat size={18} />
+                      <ChefHat size={16} />
                     </a>
                   </div>
                 </div>
               </motion.div>
-            ))}
+            );
+          })}
           </AnimatePresence>
         </div>
       )}

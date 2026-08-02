@@ -25,6 +25,7 @@ import io from 'socket.io-client';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { getInitials } from '../../utils/helpers';
+import staffService from '../../services/staffService';
 import Logo from '../Logo';
 import NotificationDropdown from '../ui/NotificationDropdown';
 import NotificationBanner from '../ui/NotificationBanner';
@@ -35,21 +36,37 @@ import '../../styles/admin-neobrutalist.css';
 
 const menuItems = [
   { path: '/staff/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/staff/orders/new', label: 'New Orders', icon: ClipboardList },
-  { path: '/staff/orders/active', label: 'Active Orders', icon: Flame },
-  { path: '/staff/orders/history', label: 'Order History', icon: History },
+  { path: '/staff/orders/new', label: 'New Orders', icon: ClipboardList, key: 'confirmedOrders' },
+  { path: '/staff/orders/active', label: 'Active Orders', icon: Flame, key: 'outForDeliveryOrders' },
+  { path: '/staff/orders/history', label: 'Order History', icon: History, key: 'deliveredOrders' },
   { path: '/staff/orders/create-inshop', label: 'New In-Shop Order', icon: ShoppingCart },
-  { path: '/staff/orders/in-shop-history', label: 'In-Shop History', icon: Store },
+  { path: '/staff/orders/in-shop-history', label: 'In-Shop History', icon: Store, key: 'inShopOrdersCount' },
 ];
 
 const StaffLayout = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [orderCounts, setOrderCounts] = useState({});
   const { isDark, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const location = useLocation();
   const socketRef = useRef(null);
+
+  const fetchCounts = async () => {
+    try {
+      const res = await staffService.getDashboard();
+      if (res.data?.data) {
+        setOrderCounts(res.data.data);
+      }
+    } catch (err) {
+      // ignore
+    }
+  };
+
+  useEffect(() => {
+    fetchCounts();
+  }, [location.pathname]);
 
   const handleStaffLogout = async () => {
     try {
@@ -98,15 +115,19 @@ const StaffLayout = () => {
           icon: '🎂'
         }
       );
+
+      fetchCounts();
     };
 
     socketRef.current.on('new_order_confirmed', handleNewOrder);
     socketRef.current.on('new_order_alert', handleNewOrder);
+    socketRef.current.on('dashboard_needs_refresh', () => fetchCounts());
 
     const globalSocket = getSocket();
     if (globalSocket) {
       globalSocket.on('new_order_confirmed', handleNewOrder);
       globalSocket.on('new_order_alert', handleNewOrder);
+      globalSocket.on('dashboard_needs_refresh', () => fetchCounts());
     }
 
     return () => {
@@ -114,6 +135,7 @@ const StaffLayout = () => {
       if (globalSocket) {
         globalSocket.off('new_order_confirmed', handleNewOrder);
         globalSocket.off('new_order_alert', handleNewOrder);
+        globalSocket.off('dashboard_needs_refresh');
       }
     };
   }, [user, isMuted, playSound]);
@@ -134,22 +156,34 @@ const StaffLayout = () => {
           <nav className="flex-1 p-3 space-y-1.5 overflow-y-auto custom-scrollbar">
             {menuItems.map((item) => {
               const isActive = location.pathname === item.path;
+              const count = item.key ? orderCounts[item.key] : null;
               return (
                 <Link
                   key={item.path}
                   to={item.path}
-                    className={`staff-nav-link ${isActive ? 'is-active' : ''} flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-extrabold text-sm transition-all duration-200 group ${
+                  className={`staff-nav-link ${isActive ? 'is-active' : ''} flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-xl font-extrabold text-sm transition-all duration-200 group ${
                     isActive
                       ? 'bg-amber-900 text-white dark:bg-amber-500 dark:text-slate-950 shadow-md translate-x-1.5 font-black'
                       : 'text-heading/80 hover:bg-border/30 hover:text-heading border border-transparent'
                   }`}
                 >
-                  <item.icon
-                    size={18}
-                    className={isActive ? 'text-white dark:text-slate-950' : 'text-heading/70 group-hover:text-heading transition-transform group-hover:scale-110'}
-                  />
-                  <span>{item.label}</span>
-                  {isActive && <ChevronRight size={16} className="ml-auto text-white dark:text-slate-950" />}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <item.icon
+                      size={18}
+                      className={isActive ? 'text-white dark:text-slate-950' : 'text-heading/70 group-hover:text-heading transition-transform group-hover:scale-110'}
+                    />
+                    <span className="truncate">{item.label}</span>
+                  </div>
+
+                  {count !== null && count !== undefined && (
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-black shrink-0 ${
+                      isActive
+                        ? 'bg-amber-400 text-slate-950 font-black shadow-xs'
+                        : 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/40'
+                    }`}>
+                      {count}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -226,19 +260,31 @@ const StaffLayout = () => {
                 <nav className="flex-1 p-3 space-y-1.5 overflow-y-auto custom-scrollbar">
                   {menuItems.map((item) => {
                     const isActive = location.pathname === item.path;
+                    const count = item.key ? orderCounts[item.key] : null;
                     return (
                       <Link
                         key={item.path}
                         to={item.path}
                         onClick={() => setMobileOpen(false)}
-                        className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl font-extrabold text-xs uppercase tracking-wider transition-all ${
+                        className={`flex items-center justify-between gap-3 px-4 py-3.5 rounded-2xl font-extrabold text-xs uppercase tracking-wider transition-all ${
                           isActive
                             ? 'bg-amber-900 text-white dark:bg-amber-500 dark:text-slate-950 shadow-md font-black'
                             : 'text-stone-800 dark:text-stone-200 hover:bg-amber-500/10 dark:hover:bg-amber-500/20'
                         }`}
                       >
-                        <item.icon size={18} className={isActive ? 'text-white dark:text-slate-950' : 'text-amber-700 dark:text-amber-400'} />
-                        <span>{item.label}</span>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <item.icon size={18} className={isActive ? 'text-white dark:text-slate-950' : 'text-amber-700 dark:text-amber-400'} />
+                          <span className="truncate">{item.label}</span>
+                        </div>
+                        {count !== null && count !== undefined && (
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-black shrink-0 ${
+                            isActive
+                              ? 'bg-amber-400 text-slate-950 font-black shadow-xs'
+                              : 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/40'
+                          }`}>
+                            {count}
+                          </span>
+                        )}
                       </Link>
                     );
                   })}
