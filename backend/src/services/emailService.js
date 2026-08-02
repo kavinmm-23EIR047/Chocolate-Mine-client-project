@@ -79,7 +79,7 @@ const https = require('https');
 
 const sendViaBrevo = async (options) => {
   const apiKey = process.env.BREVO_API_KEY;
-  const senderEmail = process.env.SMTP_EMAIL || process.env.SENDER_EMAIL || 'akwebflairtechnologies@gmail.com';
+  const senderEmail = process.env.SMTP_EMAIL || process.env.SENDER_EMAIL || 'chocolatemine.care@gmail.com';
   
   const payload = {
     sender: { name: 'The Chocolate Mine', email: senderEmail },
