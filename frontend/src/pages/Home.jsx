@@ -19,6 +19,7 @@ import TrustBar from '../components/home/TrustBar';
 import { CategoryCircles } from '../components/home/Category';
 import ReviewsHome from '../components/home/ReviewsHome';
 import HappyFaces from '../components/home/HappyFaces';
+import HomeFAQ from '../components/home/HomeFAQ';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { FreeMode, Autoplay } from 'swiper/modules';
 import 'swiper/css';
@@ -252,6 +253,9 @@ const Home = () => {
 
           {/* Happy Faces Section (Under ReviewsHome) */}
           {!query && <HappyFaces />}
+
+          {/* FAQ Section */}
+          {!query && <HomeFAQ />}
         </div>
       </main>
 
