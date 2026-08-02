@@ -119,6 +119,7 @@ const inShopOrderSchema = new mongoose.Schema(
 
         selectedFlavor: { type: String },
         selectedWeight: { type: String },
+        selectedColor: { type: String },
         customFlavor: { type: String },
         customWeight: { type: String },
         category: { type: String },

@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const PDFDocument = require('pdfkit');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
@@ -573,11 +574,16 @@ exports.createInShopOrder = asyncHandler(async (req, res, next) => {
       return next(new AppError(`Validation failed for item: ${item.name || 'Unknown'}. Missing required fields.`, 400));
     }
 
+    let cleanProductId = String(item.productId).replace(/^custom_/, '');
+    if (!mongoose.Types.ObjectId.isValid(cleanProductId)) {
+      cleanProductId = new mongoose.Types.ObjectId().toString();
+    }
+
     const itemTotal = Number(item.price) * Number(item.qty);
     subtotal += itemTotal;
 
     orderItems.push({
-      productId: item.productId,
+      productId: cleanProductId,
       name: item.name,
       qty: Number(item.qty),
       price: Number(item.price),
@@ -585,6 +591,8 @@ exports.createInShopOrder = asyncHandler(async (req, res, next) => {
       image: item.image || '',
       selectedFlavor: item.selectedFlavor || null,
       selectedWeight: item.selectedWeight || null,
+      selectedColor: item.selectedColor || null,
+      isCustomCake: item.isCustomCake || false,
       category: item.category || 'General'
     });
   }
