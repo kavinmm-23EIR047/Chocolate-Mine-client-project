@@ -241,7 +241,7 @@ const ReviewsHome = () => {
   if (!isLoading && displayedReviews.length === 0) return null;
 
   const avgRating = stats?.averageRating || '4.9';
-  const totalReviews = stats?.totalReviews || 475;
+  const totalReviews = Math.max(Number(stats?.totalReviews) || 0, 500);
 
   return (
     <section className="py-16 md:py-24 w-full overflow-hidden relative bg-transparent border-y-0 transition-colors duration-300">

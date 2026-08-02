@@ -289,6 +289,19 @@ const Footer = () => {
                   </div>
                 </div>
               </li>
+              <li className="flex items-start gap-3.5">
+                <div className="w-9 h-9 bg-card rounded-lg flex items-center justify-center shrink-0 border border-border shadow-sm">
+                  <Mail size={15} className="text-primary" />
+                </div>
+                <div className="text-xs font-semibold text-muted leading-normal pt-0.5 space-y-1">
+                  <a href="mailto:chocolatemine.care@gmail.com" className="hover:text-primary transition-colors block text-xs font-bold break-all">
+                    chocolatemine.care@gmail.com
+                  </a>
+                  <a href="mailto:thechocolateminetcm@gmail.com" className="hover:text-primary transition-colors block text-xs font-bold break-all">
+                    thechocolateminetcm@gmail.com
+                  </a>
+                </div>
+              </li>
             </ul>
           </div>
         </div>
