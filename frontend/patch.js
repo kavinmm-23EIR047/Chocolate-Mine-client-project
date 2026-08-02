@@ -1,29 +1,54 @@
 const fs = require('fs');
-const path = 'src/context/AuthContext.jsx';
-let content = fs.readFileSync(path, 'utf8');
+const path = require('path');
 
-const helpers = `
-// Safe storage helpers
-const safeGet = (storage, key) => { try { return storage.getItem(key); } catch(e) { return null; } };
-const safeSet = (storage, key, val) => { try { storage.setItem(key, val); } catch(e) {} };
-const safeRemove = (storage, key) => { try { storage.removeItem(key); } catch(e) {} };
-const safeClear = (storage) => { try { storage.clear(); } catch(e) {} };
-`;
+const srcDir = path.join(__dirname, 'src');
 
-// Insert helpers after imports
-content = content.replace(/(import .*;\n)+/, (match) => match + '\n' + helpers);
+// 1. Update date parsing across codebase
+function replaceDatesInDir(dir) {
+  const files = fs.readdirSync(dir);
+  for (const file of files) {
+    const fullPath = path.join(dir, file);
+    if (fs.statSync(fullPath).isDirectory()) {
+      replaceDatesInDir(fullPath);
+    } else if (fullPath.endsWith('.jsx') || fullPath.endsWith('.js')) {
+      let content = fs.readFileSync(fullPath, 'utf8');
+      let changed = false;
 
-// Replace sessionStorage.getItem('key')
-content = content.replace(/sessionStorage\.getItem\((['"][^'"]+['"])\)/g, 'safeGet(sessionStorage, $1)');
-content = content.replace(/localStorage\.getItem\((['"][^'"]+['"])\)/g, 'safeGet(localStorage, $1)');
+      // Ensure import exists if we need to modify
+      const hasDateMatches = content.includes('new Date(') && (content.includes('.toLocaleString()') || content.includes('.toLocaleDateString()') || content.includes('.toLocaleTimeString('));
+      
+      if (hasDateMatches && !content.includes('safeFormatDate')) {
+        const origContent = content;
 
-content = content.replace(/sessionStorage\.setItem\((['"][^'"]+['"]),\s*(.+?)\)/g, 'safeSet(sessionStorage, $1, $2)');
-content = content.replace(/localStorage\.setItem\((['"][^'"]+['"]),\s*(.+?)\)/g, 'safeSet(localStorage, $1, $2)');
+        content = content.replace(/new Date\(([^)]+)\)\.toLocaleString\(\)/g, 'safeFormatDate($1)');
+        content = content.replace(/new Date\(([^)]+)\)\.toLocaleDateString\(\)/g, 'safeFormatDateString($1)');
+        content = content.replace(/new Date\(([^)]+)\)\.toLocaleTimeString\(\)/g, 'safeFormatTimeString($1)');
 
-content = content.replace(/sessionStorage\.removeItem\((['"][^'"]+['"])\)/g, 'safeRemove(sessionStorage, $1)');
-content = content.replace(/localStorage\.removeItem\((['"][^'"]+['"])\)/g, 'safeRemove(localStorage, $1)');
+        content = content.replace(/new Date\(([^)]+)\)\.toLocaleDateString\([^,)]+,\s*({[^}]+})\)/g, 'safeFormatDateString($1, $2)');
+        content = content.replace(/new Date\(([^)]+)\)\.toLocaleString\([^,)]+,\s*({[^}]+})\)/g, 'safeFormatDateString($1, $2)'); 
+        content = content.replace(/new Date\(([^)]+)\)\.toLocaleTimeString\([^,)]+,\s*({[^}]+})\)/g, 'safeFormatTimeString($1, $2)');
 
-content = content.replace(/sessionStorage\.clear\(\)/g, 'safeClear(sessionStorage)');
+        // Custom Regex for specific variants in StaffDashboard and Checkout
+        content = content.replace(/new Date\(([^)]+)\)\.toLocaleTimeString\(\[\]\s*,\s*({[^}]+})\)/g, 'safeFormatTimeString($1, $2)');
+        content = content.replace(/new Date\(([^)]+)\)\.toLocaleString\('en-IN'\s*,\s*({[^}]+})\)/g, 'safeFormatDateString($1, $2)');
+        content = content.replace(/new Date\(([^)]+)\)\.toLocaleDateString\('en-IN'\s*,\s*({[^}]+})\)/g, 'safeFormatDateString($1, $2)');
 
-fs.writeFileSync(path, content, 'utf8');
-console.log('Fixed AuthContext.jsx storage accesses');
+        if (content !== origContent) {
+           changed = true;
+           const relativeDepth = path.relative(path.dirname(fullPath), srcDir).split(path.sep).length;
+           const importPath = relativeDepth === 1 && path.dirname(fullPath) === srcDir ? './utils/dateUtils' : '../'.repeat(relativeDepth - 1) + 'utils/dateUtils';
+           const importStmt = `import { safeFormatDate, safeFormatDateString, safeFormatTimeString } from '${importPath.replace(/\\/g, '/')}';\n`;
+           content = importStmt + content;
+        }
+      }
+
+      if (changed) {
+        fs.writeFileSync(fullPath, content);
+      }
+    }
+  }
+}
+
+replaceDatesInDir(srcDir);
+
+console.log('Date utility patches successfully applied across 15+ files!');

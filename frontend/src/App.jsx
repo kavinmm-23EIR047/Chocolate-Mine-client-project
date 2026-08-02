@@ -185,17 +185,18 @@ function App() {
   }, []);
 
   return (
-    <AuthProvider>
-      <LocationProvider>
-        <WishlistProvider>
-          <ThemeProvider>
-            <BrandIntroGate />
-            <Router>
-              <OfflineStateBanner />
-              <ScrollToTop />
-              <SocketInitializer />
-              <GlobalNotificationHandler />
-              <Toaster
+    <ErrorBoundary>
+      <AuthProvider>
+        <LocationProvider>
+          <WishlistProvider>
+            <ThemeProvider>
+              <BrandIntroGate />
+              <Router>
+                <OfflineStateBanner />
+                <ScrollToTop />
+                <SocketInitializer />
+                <GlobalNotificationHandler />
+                <Toaster
                 position="bottom-center"
                 toastOptions={{
                   className: 'toast-premium',
@@ -297,6 +298,7 @@ function App() {
         </WishlistProvider>
       </LocationProvider>
     </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 export const getApiBaseUrl = () => {
   const envUrl = import.meta.env.VITE_API_URL;
   if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
@@ -89,12 +91,7 @@ api.interceptors.response.use(
           sessionStorage.removeItem('user');
         } catch (e) {}
 
-        if (
-          window.location.pathname !== '/login' &&
-          window.location.pathname !== '/register'
-        ) {
-          window.location.href = '/login';
-        }
+        window.dispatchEvent(new Event('auth-expired'));
       }
     }
 
