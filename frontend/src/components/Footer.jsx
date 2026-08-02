@@ -177,10 +177,8 @@ const Footer = () => {
                   e.preventDefault();
                   // Action 1: Open WhatsApp group invite in new tab
                   window.open('https://chat.whatsapp.com/CvU1DhuAhIuJo8Xzbh9Mz4', '_blank');
-                  // Action 2: Send "Hi" to admin via WhatsApp (navigates current tab)
-                  setTimeout(() => {
-                    window.location.href = 'https://wa.me/919150670077?text=Hi';
-                  }, 500);
+                  // Action 2: Send "Hi" to admin in another new tab
+                  window.open('https://wa.me/919150670077?text=Hi', '_blank');
                 }}
               >
                 <div className="relative flex-1 flex items-center px-6 py-2 bg-transparent">
