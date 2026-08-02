@@ -30,7 +30,7 @@ const Contact = () => {
             <MapPin size={24} />
           </div>
           <h3 className="font-bold">Head Office</h3>
-          <p className="text-sm text-center text-muted">123 Bakery Street, Coimbatore, Tamil Nadu</p>
+          <p className="text-sm text-center text-muted">No.7, 3, Race Course Rd, Gopalapuram, Coimbatore 641018</p>
         </div>
       </div>
     </div>

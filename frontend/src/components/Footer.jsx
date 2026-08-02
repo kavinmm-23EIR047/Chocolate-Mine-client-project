@@ -270,7 +270,7 @@ const Footer = () => {
                 <div className="w-9 h-9 bg-card rounded-lg flex items-center justify-center shrink-0 border border-border shadow-sm">
                   <MapPin size={15} className="text-primary" />
                 </div>
-                <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-muted hover:text-primary leading-normal pt-0.5 transition-colors">
+                <a href="https://maps.app.goo.gl/1aPW7FVjAmLBnwxc7" target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-muted hover:text-primary leading-normal pt-0.5 transition-colors">
                   No.7, 3, Race Course Rd, <br />
                   <span className="font-bold text-foreground">Gopalapuram, Coimbatore 641018</span>
                 </a>
