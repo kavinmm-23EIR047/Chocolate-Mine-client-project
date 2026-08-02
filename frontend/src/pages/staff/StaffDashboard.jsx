@@ -1103,8 +1103,8 @@ const CreateInShopOrderView = () => {
   };
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const gst = Math.round(subtotal * 0.18);
-  const total = subtotal + gst;
+  const convenienceFee = subtotal > 0 ? Math.round(subtotal * 0.025) : 0;
+  const total = subtotal + convenienceFee;
 
   const handlePlaceOrder = async () => {
     if (!customerName.trim()) return toast.error('Please enter customer name');
@@ -1414,19 +1414,23 @@ const CreateInShopOrderView = () => {
               <h3 className="font-black text-sm text-heading uppercase tracking-widest mb-4">Order Summary</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted">Subtotal</span>
-                  <span className="font-semibold text-heading">{formatCurrency(subtotal)}</span>
+                  <span className="text-muted">PRODUCT PRICE</span>
+                  <span className="font-extrabold text-heading">{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted">GST (18%)</span>
-                  <span className="font-semibold text-heading">{formatCurrency(gst)}</span>
+                  <span className="text-muted">SUBTOTAL</span>
+                  <span className="font-extrabold text-heading">{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted">Delivery</span>
-                  <span className="font-semibold text-success">FREE</span>
+                  <span className="text-muted">Delivery Fee</span>
+                  <span className="font-semibold text-muted">—</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted">Convenience Fee (2.5%)</span>
+                  <span className="font-extrabold text-heading">{formatCurrency(convenienceFee)}</span>
                 </div>
                 <div className="flex justify-between font-black pt-3 border-t border-border text-lg">
-                  <span className="text-heading">Total</span>
+                  <span className="text-heading">TOTAL</span>
                   <span className="text-primary">{formatCurrency(total)}</span>
                 </div>
               </div>
@@ -2064,17 +2068,34 @@ const StaffDashboard = () => {
                     </div>
                   </div>
 
-                  <div className="pt-3 mt-4 border-t border-border/40 flex justify-between items-center text-xs">
+                  <div className="pt-3 mt-4 border-t border-border/40 flex flex-wrap items-center justify-between gap-2 text-xs">
                     <div>
                       <span className="text-[10px] font-black text-muted uppercase tracking-widest block">Payment</span>
                       <span className="font-extrabold text-heading">Counter · <span className="bg-emerald-700 text-white font-black px-2 py-0.5 rounded-md text-[11px]">Paid</span></span>
                     </div>
-                    {order.createdByStaff && (
-                      <div className="text-right">
-                        <span className="text-[10px] font-black text-muted uppercase tracking-widest block">Staff</span>
-                        <span className="font-extrabold text-heading">{order.createdByStaff?.name || 'Staff'}</span>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => staffService.printKOT(order._id)}
+                        className="px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 font-extrabold text-xs flex items-center gap-1.5 transition-colors cursor-pointer border border-amber-500/30"
+                        title="Print Kitchen Order Ticket"
+                      >
+                        <Printer size={13} />
+                        <span>KOT</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const apiUrl = import.meta.env.VITE_API_URL || '/api/v1';
+                          window.open(`${apiUrl}/orders/${order._id}/invoice`, '_blank');
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-secondary/10 hover:bg-secondary/20 text-secondary font-extrabold text-xs flex items-center gap-1.5 transition-colors cursor-pointer border border-secondary/30"
+                        title="Download & Print Invoice PDF"
+                      >
+                        <Printer size={13} />
+                        <span>Invoice</span>
+                      </button>
+                    </div>
                   </div>
                 </motion.div>
               ))}
