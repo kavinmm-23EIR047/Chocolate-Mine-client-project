@@ -561,9 +561,25 @@ const ProductForm = () => {
               </div>
 
               {(() => {
-                const selectedCatsWithSub = categories.filter(c => formData.category.includes((c.name || '').toLowerCase()) && c.subCategories?.length > 0);
-                if (selectedCatsWithSub.length > 0) {
-                  const allSubCategories = selectedCatsWithSub.flatMap(c => c.subCategories);
+                const DEFAULT_SUBCATEGORIES_MAP = {
+                  desserts: ['mini-cakes', 'cookies', 'tres-leches', 'brownie'],
+                  'birthday cakes': ['vanilla-cakes', 'chocolate-cakes', 'red-velvet-cakes']
+                };
+
+                const selectedCats = categories.filter(c => formData.category.includes((c.name || '').toLowerCase()));
+                let allSubCategories = [];
+
+                selectedCats.forEach(c => {
+                  const normName = (c.name || '').toLowerCase().trim();
+                  const dbSubs = c.subCategories || [];
+                  const defaultSubs = DEFAULT_SUBCATEGORIES_MAP[normName] || [];
+                  const merged = Array.from(new Set([...dbSubs, ...defaultSubs]));
+                  allSubCategories.push(...merged);
+                });
+
+                allSubCategories = Array.from(new Set(allSubCategories));
+
+                if (allSubCategories.length > 0) {
                   return (
                     <div className="space-y-2">
                       <label className="text-xs font-black text-muted uppercase tracking-widest">Subcategory</label>
@@ -574,9 +590,14 @@ const ProductForm = () => {
                         className="w-full bg-input border border-input-border px-4 py-3 rounded-xl focus:ring-2 focus:ring-secondary outline-none font-bold capitalize"
                       >
                         <option value="">Select Subcategory</option>
-                        {allSubCategories.map(sub => (
-                          <option key={sub} value={sub}>{sub.replace(/-/g, ' ')}</option>
-                        ))}
+                        {allSubCategories.map(sub => {
+                          const formattedLabel = sub.split(/[\s_-]+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+                          return (
+                            <option key={sub} value={sub.toLowerCase()}>
+                              {formattedLabel}
+                            </option>
+                          );
+                        })}
                       </select>
                     </div>
                   );

@@ -12,7 +12,7 @@ const CategoryManager = () => {
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState(null);
-  const [form, setForm] = useState({ name: '', label: '', categoryType: 'both', imageFile: null });
+  const [form, setForm] = useState({ name: '', label: '', categoryType: 'both', subCategories: '', imageFile: null });
 
   const fetchCategories = async () => {
     try {
@@ -29,14 +29,15 @@ const CategoryManager = () => {
   useEffect(() => { fetchCategories(); }, []);
 
   const resetForm = () => {
-    setForm({ name: '', label: '', categoryType: 'both', imageFile: null });
+    setForm({ name: '', label: '', categoryType: 'both', subCategories: '', imageFile: null });
     setEditId(null);
     setShowForm(false);
   };
 
   const handleEdit = (cat) => {
     setEditId(cat._id);
-    setForm({ name: cat.name, label: cat.label || cat.name, categoryType: cat.categoryType || 'both', imageFile: null });
+    const subStr = Array.isArray(cat.subCategories) ? cat.subCategories.join(', ') : (cat.subCategories || '');
+    setForm({ name: cat.name, label: cat.label || cat.name, categoryType: cat.categoryType || 'both', subCategories: subStr, imageFile: null });
     setShowForm(true);
   };
 
@@ -51,6 +52,10 @@ const CategoryManager = () => {
       fd.append('name', form.name.trim());
       fd.append('label', form.label.trim() || form.name.trim());
       fd.append('categoryType', form.categoryType || 'both');
+      
+      const subList = form.subCategories.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+      fd.append('subCategories', JSON.stringify(subList));
+      
       if (form.imageFile) fd.append('image', form.imageFile);
 
       if (editId) {
@@ -151,6 +156,16 @@ const CategoryManager = () => {
                   </select>
                 </div>
               </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-black text-muted uppercase tracking-widest">Subcategories (Comma Separated)</label>
+                <input
+                  type="text"
+                  value={form.subCategories}
+                  onChange={e => setForm(p => ({ ...p, subCategories: e.target.value }))}
+                  placeholder="e.g. mini-cakes, cookies, tres-leches, brownie"
+                  className="w-full bg-input border border-input-border px-4 py-3 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold"
+                />
+              </div>
               <ImageUpload
                 label="Category Image"
                 onChange={(file) => setForm(p => ({ ...p, imageFile: file }))}
@@ -206,7 +221,16 @@ const CategoryManager = () => {
                   <p className="text-white text-sm font-black uppercase tracking-widest truncate">{cat.label || cat.name}</p>
                 </div>
               </div>
-              <div className="p-3 flex items-center justify-between gap-2">
+              {Array.isArray(cat.subCategories) && cat.subCategories.length > 0 && (
+                <div className="px-3 pb-1.5 flex flex-wrap gap-1">
+                  {cat.subCategories.map((sub, sIdx) => (
+                    <span key={sIdx} className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20 uppercase tracking-wider">
+                      {sub.replace(/-/g, ' ')}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div className="p-3 pt-1 flex items-center justify-between gap-2">
                 <span className="text-[10px] font-black text-muted uppercase tracking-widest truncate">{cat.name}</span>
                 <div className="flex items-center gap-1.5 shrink-0">
                   <button
