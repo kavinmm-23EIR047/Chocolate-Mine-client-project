@@ -112,7 +112,7 @@ function FaceCard({ face, index = 0 }) {
 
 export default function HappyFaces() {
   return (
-    <section className="py-10 lg:py-12 bg-transparent border-t border-border/20">
+    <section className="pt-6 pb-2 lg:pt-8 lg:pb-2 bg-transparent border-t border-border/20">
       {/* ── HEADER ── */}
       <div className="flex flex-col items-center text-center max-w-xl mx-auto mb-8 lg:mb-10 px-4">
         <motion.div

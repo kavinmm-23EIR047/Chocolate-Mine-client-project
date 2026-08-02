@@ -576,8 +576,8 @@ h6 {
 
 /* Custom Scrollbar Utility */
 .custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(232, 211, 203, 0.35) rgba(42, 24, 19, 0.15);
+  scrollbar-width: auto;
+  scrollbar-color: var(--primary, #d97706) rgba(0, 0, 0, 0.15);
 }
 
 /* Solid Red High-Contrast Logout Button Utility */
@@ -595,23 +595,24 @@ h6 {
 }
 
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: rgba(42, 24, 19, 0.2);
+  background: rgba(0, 0, 0, 0.12);
   border-radius: 999px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(232, 211, 203, 0.25);
+  background: var(--primary, #d97706);
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1.5px solid transparent;
+  background-clip: padding-box;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(232, 211, 203, 0.55);
+  background: var(--button-hover, #b45309);
 }
 
 /* Swiper */

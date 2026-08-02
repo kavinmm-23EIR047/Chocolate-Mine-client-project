@@ -298,6 +298,7 @@ exports.downloadInvoice = asyncHandler(async (req, res, next) => {
 // DELIVERY OTP - SEND
 // ==========================================
 exports.sendDeliveryOtp = asyncHandler(async (req, res, next) => {
+  const { channel = 'both' } = req.body || {};
   const order = await Order.findById(req.params.id).populate('userId', 'name email phone');
 
   if (!order) return next(new AppError('Order not found', 404));
@@ -325,8 +326,15 @@ exports.sendDeliveryOtp = asyncHandler(async (req, res, next) => {
   const customerPhone = order.address?.phone || order.userId?.phone;
   const customerEmail = order.userId?.email;
 
-  if (!customerPhone) {
-    return next(new AppError('Customer phone number not available for this order', 400));
+  const sendSms = (channel === 'both' || channel === 'sms');
+  const sendEmail = (channel === 'both' || channel === 'email');
+
+  if (sendSms && !customerPhone) {
+    return next(new AppError('Customer phone number not available for SMS OTP', 400));
+  }
+
+  if (sendEmail && !customerEmail) {
+    return next(new AppError('Customer email address not available for Email OTP', 400));
   }
 
   // Generate 6-digit OTP
@@ -345,18 +353,21 @@ exports.sendDeliveryOtp = asyncHandler(async (req, res, next) => {
   order.deliveryOtpLastSentAt = new Date();
   await order.save();
 
-  // Send SMS and Email in parallel (don't crash if one fails)
-  const [smsResult, emailResult] = await Promise.allSettled([
-    smsService.sendDeliveryOtpSMS(customerPhone, otp),
-    customerEmail
-      ? emailService.sendDeliveryOtpEmail(customerEmail, otp, order.orderNumber)
-      : Promise.resolve({ success: false, error: 'No email address' })
-  ]);
+  // Send SMS and/or Email depending on selected channel
+  const smsPromise = sendSms
+    ? smsService.sendDeliveryOtpSMS(customerPhone, otp)
+    : Promise.resolve({ success: false, skipped: true });
 
-  const smsSuccess = smsResult.status === 'fulfilled' && smsResult.value?.success;
-  const emailSuccess = emailResult.status === 'fulfilled' && emailResult.value?.success;
+  const emailPromise = (sendEmail && customerEmail)
+    ? emailService.sendDeliveryOtpEmail(customerEmail, otp, order.orderNumber)
+    : Promise.resolve({ success: false, skipped: true });
 
-  if (!smsSuccess && !emailSuccess) {
+  const [smsResult, emailResult] = await Promise.allSettled([smsPromise, emailPromise]);
+
+  const smsSuccess = sendSms && smsResult.status === 'fulfilled' && smsResult.value?.success;
+  const emailSuccess = sendEmail && emailResult.status === 'fulfilled' && emailResult.value?.success;
+
+  if (sendSms && !smsSuccess && sendEmail && !emailSuccess) {
     return res.status(207).json({
       status: 'warning',
       message: 'OTP generated but delivery failed via both SMS and Email. Please try again.',
@@ -371,9 +382,10 @@ exports.sendDeliveryOtp = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    message: `Delivery OTP sent to customer via ${channels.join(' and ')}`,
+    message: `Delivery OTP sent to customer via ${channels.length > 0 ? channels.join(' & ') : (channel.toUpperCase())}`,
     smsSent: smsSuccess,
     emailSent: emailSuccess,
+    channel,
   });
 });
 
