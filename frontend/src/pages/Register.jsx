@@ -99,7 +99,7 @@ const Register = () => {
       }
 
       toast.success('Account verified and created successfully!');
-      window.location.href = '/'; 
+      navigate('/', { replace: true }); 
     } catch (err) {
       toast.error(err.response?.data?.message || 'Verification failed');
     } finally {

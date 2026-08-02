@@ -2,6 +2,12 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../utils/api';
 import { requestFirebaseNotificationPermission, getExistingFcmToken, auth, onAuthStateChanged, logoutGoogle } from '../firebase';
 
+// Safe storage helpers
+const safeGet = (storage, key) => { try { return storage.getItem(key); } catch(e) { return null; } };
+const safeSet = (storage, key, val) => { try { storage.setItem(key, val); } catch(e) {} };
+const safeRemove = (storage, key) => { try { storage.removeItem(key); } catch(e) {} };
+const safeClear = (storage) => { try { storage.clear(); } catch(e) {} };
+
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -43,7 +49,7 @@ export const AuthProvider = ({ children }) => {
             updatedTokens.push({ token, deviceName, createdAt: new Date() });
           }
           const updatedUser = { ...prev, fcmTokens: updatedTokens };
-          sessionStorage.setItem('user', JSON.stringify(updatedUser));
+          safeSet(sessionStorage, 'user', JSON.stringify(updatedUser));
           return updatedUser;
         });
       }
@@ -76,7 +82,7 @@ export const AuthProvider = ({ children }) => {
             updatedTokens.push({ token, deviceName, createdAt: new Date() });
           }
           const updatedUser = { ...prev, fcmTokens: updatedTokens };
-          sessionStorage.setItem('user', JSON.stringify(updatedUser));
+          safeSet(sessionStorage, 'user', JSON.stringify(updatedUser));
           return updatedUser;
         });
         return true;
@@ -102,7 +108,7 @@ export const AuthProvider = ({ children }) => {
           if (!prev) return prev;
           const updatedTokens = (prev.fcmTokens || []).filter(t => t.token !== token);
           const updatedUser = { ...prev, fcmTokens: updatedTokens };
-          sessionStorage.setItem('user', JSON.stringify(updatedUser));
+          safeSet(sessionStorage, 'user', JSON.stringify(updatedUser));
           return updatedUser;
         });
       } else {
@@ -111,7 +117,7 @@ export const AuthProvider = ({ children }) => {
         setUser(prev => {
           if (!prev) return prev;
           const updatedUser = { ...prev, fcmTokens: [] };
-          sessionStorage.setItem('user', JSON.stringify(updatedUser));
+          safeSet(sessionStorage, 'user', JSON.stringify(updatedUser));
           return updatedUser;
         });
       }
@@ -125,15 +131,12 @@ export const AuthProvider = ({ children }) => {
   // Initialize auth state - auto-login via Firebase & Bearer token / HttpOnly cookie
   useEffect(() => {
     const initializeAuth = async () => {
-      const storedUser = sessionStorage.getItem('user') || localStorage.getItem('user');
-      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+      const storedUser = safeGet(sessionStorage, 'user') || safeGet(localStorage, 'user');
+      const token = safeGet(sessionStorage, 'token') || safeGet(localStorage, 'token');
 
-      // Fast-path: If user is a guest (no token/stored session), skip network auth check
-      if (!storedUser && !token) {
-        setUser(null);
-        setLoading(false);
-        return;
-      }
+      // We used to have a fast-path here to skip network auth check if storage was empty, 
+      // but this breaks session restoration on browsers where storage is blocked (Safari Private Mode).
+      // We must ALWAYS verify with the server to check for HttpOnly cookies.
 
       if (storedUser) {
         try {
@@ -149,8 +152,8 @@ export const AuthProvider = ({ children }) => {
         const response = await api.get('/auth/me');
         const userData = response.data.user;
         setUser(userData);
-        sessionStorage.setItem('user', JSON.stringify(userData));
-        localStorage.setItem('user', JSON.stringify(userData));
+        safeSet(sessionStorage, 'user', JSON.stringify(userData));
+        safeSet(localStorage, 'user', JSON.stringify(userData));
 
         // Sync FCM token in background
         syncFcmToken();
@@ -158,10 +161,10 @@ export const AuthProvider = ({ children }) => {
         // Quietly clear stale session data if token expired/invalid
         if (!auth?.currentUser) {
           setUser(null);
-          sessionStorage.removeItem('user');
-          sessionStorage.removeItem('token');
-          localStorage.removeItem('user');
-          localStorage.removeItem('token');
+          safeRemove(sessionStorage, 'user');
+          safeRemove(sessionStorage, 'token');
+          safeRemove(localStorage, 'user');
+          safeRemove(localStorage, 'token');
         }
       } finally {
         setLoading(false);
@@ -174,7 +177,7 @@ export const AuthProvider = ({ children }) => {
     if (auth) {
       const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         // If a standard email/password user is already logged in, ignore Firebase's cached session
-        const storedUser = sessionStorage.getItem('user') || localStorage.getItem('user');
+        const storedUser = safeGet(sessionStorage, 'user') || safeGet(localStorage, 'user');
         if (storedUser) {
            try {
               const parsed = JSON.parse(storedUser);
@@ -196,12 +199,12 @@ export const AuthProvider = ({ children }) => {
             if (userData) {
               userData.isFirebase = true;
               setUser(userData);
-              sessionStorage.setItem('user', JSON.stringify(userData));
-              localStorage.setItem('user', JSON.stringify(userData));
+              safeSet(sessionStorage, 'user', JSON.stringify(userData));
+              safeSet(localStorage, 'user', JSON.stringify(userData));
             }
             if (token) {
-              sessionStorage.setItem('token', token);
-              localStorage.setItem('token', token);
+              safeSet(sessionStorage, 'token', token);
+              safeSet(localStorage, 'token', token);
             }
             
             // Sync FCM token in background
@@ -213,16 +216,16 @@ export const AuthProvider = ({ children }) => {
           }
         } else {
           // Only clear if standard user is also not present
-          const storedUser = sessionStorage.getItem('user') || localStorage.getItem('user');
+          const storedUser = safeGet(sessionStorage, 'user') || safeGet(localStorage, 'user');
           if (storedUser) {
              try {
                 const parsed = JSON.parse(storedUser);
                 if (parsed.isFirebase) {
                     setUser(null);
-                    sessionStorage.removeItem('user');
-                    sessionStorage.removeItem('token');
-                    localStorage.removeItem('user');
-                    localStorage.removeItem('token');
+                    safeRemove(sessionStorage, 'user');
+                    safeRemove(sessionStorage, 'token');
+                    safeRemove(localStorage, 'user');
+                    safeRemove(localStorage, 'token');
                 }
              } catch(e) {}
           }
@@ -239,12 +242,12 @@ export const AuthProvider = ({ children }) => {
       const { user: userData, token } = response.data;
       
       setUser(userData);
-      sessionStorage.setItem('user', JSON.stringify(userData));
-      localStorage.setItem('user', JSON.stringify(userData));
+      safeSet(sessionStorage, 'user', JSON.stringify(userData));
+      safeSet(localStorage, 'user', JSON.stringify(userData));
       
       if (token) {
-        sessionStorage.setItem('token', token);
-        localStorage.setItem('token', token);
+        safeSet(sessionStorage, 'token', token);
+        safeSet(localStorage, 'token', token);
       }
       
       // Sync FCM token after login
@@ -261,10 +264,10 @@ export const AuthProvider = ({ children }) => {
     // 1. Instant local state wipe for ultra-fast response
     setUser(null);
     try {
-      sessionStorage.clear();
-      localStorage.removeItem('user');
-      localStorage.removeItem('token');
-      localStorage.removeItem('auth_user');
+      safeClear(sessionStorage);
+      safeRemove(localStorage, 'user');
+      safeRemove(localStorage, 'token');
+      safeRemove(localStorage, 'auth_user');
     } catch (e) {}
 
     // 2. Perform network cleanups concurrently with safety fallback timeout
@@ -287,7 +290,7 @@ export const AuthProvider = ({ children }) => {
 
   const updateUser = (userData) => {
     setUser(userData);
-    sessionStorage.setItem('user', JSON.stringify(userData));
+    safeSet(sessionStorage, 'user', JSON.stringify(userData));
   };
 
   const isAuthenticated = !!user;

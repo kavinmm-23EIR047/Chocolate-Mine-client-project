@@ -1,8 +1,29 @@
 import { createSlice } from '@reduxjs/toolkit';
 
+const safeGetItem = (key, defaultValue) => {
+  try {
+    const item = localStorage.getItem(key);
+    return item ? JSON.parse(item) : defaultValue;
+  } catch (e) {
+    return defaultValue;
+  }
+};
+
+const safeSetItem = (key, value) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (e) {}
+};
+
+const safeRemoveItem = (key) => {
+  try {
+    localStorage.removeItem(key);
+  } catch (e) {}
+};
+
 const initialState = {
-  items: JSON.parse(localStorage.getItem('cartItems')) || [],
-  appliedCoupon: JSON.parse(localStorage.getItem('appliedCoupon')) || null,
+  items: safeGetItem('cartItems', []),
+  appliedCoupon: safeGetItem('appliedCoupon', null),
 };
 
 const cartSlice = createSlice({
@@ -44,11 +65,11 @@ const cartSlice = createSlice({
       if (product.coupon && product.coupon.code) {
         if (!state.appliedCoupon) {
           state.appliedCoupon = String(product.coupon.code).trim().toUpperCase();
-          localStorage.setItem('appliedCoupon', JSON.stringify(state.appliedCoupon));
+          safeSetItem('appliedCoupon', state.appliedCoupon);
         }
       }
 
-      localStorage.setItem('cartItems', JSON.stringify(state.items));
+      safeSetItem('cartItems', state.items);
     },
     removeFromCart: (state, action) => {
       state.items = state.items.filter((item) => item.productId !== action.payload);
@@ -70,11 +91,11 @@ const cartSlice = createSlice({
 
         if (!isCouponStillValid) {
           state.appliedCoupon = null;
-          localStorage.removeItem('appliedCoupon');
+          safeRemoveItem('appliedCoupon');
         }
       }
 
-      localStorage.setItem('cartItems', JSON.stringify(state.items));
+      safeSetItem('cartItems', state.items);
     },
     updateCartQty: (state, action) => {
       const { productId, qty } = action.payload;
@@ -101,24 +122,24 @@ const cartSlice = createSlice({
 
             if (!isCouponStillValid) {
               state.appliedCoupon = null;
-              localStorage.removeItem('appliedCoupon');
+              safeRemoveItem('appliedCoupon');
             }
           }
         } else {
           item.qty = qty;
         }
       }
-      localStorage.setItem('cartItems', JSON.stringify(state.items));
+      safeSetItem('cartItems', state.items);
     },
     clearCart: (state) => {
       state.items = [];
       state.appliedCoupon = null;
-      localStorage.removeItem('cartItems');
-      localStorage.removeItem('appliedCoupon');
+      safeRemoveItem('cartItems');
+      safeRemoveItem('appliedCoupon');
     },
     setCoupon: (state, action) => {
       state.appliedCoupon = action.payload;
-      localStorage.setItem('appliedCoupon', JSON.stringify(action.payload));
+      safeSetItem('appliedCoupon', action.payload);
     },
     updateCartItemAddons: (state, action) => {
       const { productId, addons, options } = action.payload;
@@ -130,7 +151,7 @@ const cartSlice = createSlice({
       if (item) {
         item.addons = addons || [];
       }
-      localStorage.setItem('cartItems', JSON.stringify(state.items));
+      safeSetItem('cartItems', state.items);
     },
     // Realtime stock sync for cart
     syncCartStock: (state, action) => {
@@ -145,7 +166,7 @@ const cartSlice = createSlice({
         }
         return item;
       });
-      localStorage.setItem('cartItems', JSON.stringify(state.items));
+      safeSetItem('cartItems', state.items);
     }
   },
 });
