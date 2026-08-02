@@ -20,9 +20,10 @@ import { CategoryCircles } from '../components/home/Category';
 import ReviewsHome from '../components/home/ReviewsHome';
 import HappyFaces from '../components/home/HappyFaces';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { FreeMode } from 'swiper/modules';
+import { FreeMode, Autoplay } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/free-mode';
+import 'swiper/css/autoplay';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
@@ -194,8 +195,14 @@ const Home = () => {
               ) : products.length > 0 ? (
                 <div className="px-4 sm:px-0 pb-2">
                   <Swiper
-                    modules={[FreeMode]}
+                    modules={[FreeMode, Autoplay]}
+                    autoplay={{
+                      delay: 3200,
+                      disableOnInteraction: false,
+                      pauseOnMouseEnter: true,
+                    }}
                     freeMode={true}
+                    loop={products.length > 4}
                     slidesPerView={'auto'}
                     spaceBetween={16}
                     className="!pb-2 !overflow-visible"

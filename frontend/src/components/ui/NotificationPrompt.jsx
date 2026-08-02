@@ -12,27 +12,35 @@ const NotificationPrompt = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const hasFcmToken = user?.fcmTokens && user.fcmTokens.length > 0;
+  const isPermissionGranted = typeof window !== 'undefined' && 'Notification' in window && window.Notification && window.Notification.permission === 'granted';
+  const hasFcmToken = (user?.fcmTokens && user.fcmTokens.length > 0) || isPermissionGranted;
 
   useEffect(() => {
-    // Check if user chose "Don't ask again"
-    const doNotAskAgain = typeof window !== 'undefined' && localStorage.getItem('notificationPromptDoNotAsk') === 'true';
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
 
-    // Auto-prompt on each session for logged-in users who haven't enabled notifications yet and haven't selected "Don't ask again"
+    const isGranted = window.Notification.permission === 'granted';
+    const isDenied = window.Notification.permission === 'denied';
+    const doNotAskAgain = localStorage.getItem('notificationPromptDoNotAsk') === 'true';
+
+    // Auto-prompt on each session ONLY for logged-in users who haven't enabled notifications yet and haven't selected "Don't ask again"
     if (
       user && 
       !hasFcmToken && 
-      !doNotAskAgain && 
-      typeof window !== 'undefined' && 
-      'Notification' in window && 
-      window.Notification && 
-      window.Notification.permission !== 'denied'
+      !isGranted && 
+      !isDenied && 
+      !doNotAskAgain
     ) {
       // Use sessionStorage so the prompt re-appears each new browser session if not permanently disabled
       const hasSeenPromptThisSession = sessionStorage.getItem('notificationPromptSeen');
       if (!hasSeenPromptThisSession) {
         // Slight delay so it doesn't interrupt immediate page load
-        const timer = setTimeout(() => setIsOpen(true), 2500);
+        const timer = setTimeout(() => {
+          const recheckGranted = window.Notification?.permission === 'granted';
+          const recheckDoNotAsk = localStorage.getItem('notificationPromptDoNotAsk') === 'true';
+          if (!recheckGranted && !recheckDoNotAsk) {
+            setIsOpen(true);
+          }
+        }, 2500);
         return () => clearTimeout(timer);
       }
     }
