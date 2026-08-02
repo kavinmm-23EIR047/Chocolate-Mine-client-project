@@ -36,12 +36,12 @@ exports.createStaff = asyncHandler(async (req, res, next) => {
     return next(new AppError('Role must be staff or admin', 400));
   }
 
-  // Check if user already exists
-  const duplicateChecks = [{ email }];
-  if (phone) duplicateChecks.push({ phone });
-  const existingUser = await User.findOne({ $or: duplicateChecks });
+  // Email is the unique account identifier. Phone numbers may be shared by
+  // multiple users, so do not reject a staff member just because the phone
+  // number already exists on another account.
+  const existingUser = await User.findOne({ email });
   if (existingUser) {
-    return next(new AppError('Account with this email or phone already exists', 400));
+    return next(new AppError('An account with this email already exists', 400));
   }
 
   // Create staff user
