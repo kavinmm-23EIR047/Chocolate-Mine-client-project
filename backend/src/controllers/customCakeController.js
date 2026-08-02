@@ -561,4 +561,21 @@ exports.searchThemesAtlas = asyncHandler(async (req, res) => {
   }
 });
 
+exports.uploadCakePhoto = asyncHandler(async (req, res, next) => {
+  if (!req.file) {
+    return next(new AppError('Please provide an image file to upload.', 400));
+  }
+  const result = await cloudinaryService.uploadBuffer(req.file.buffer, 'custom-cake-photos', req.file.mimetype);
+  if (!result || !result.secure_url) {
+    return next(new AppError('Image upload failed. Please try again.', 500));
+  }
+  res.status(200).json({
+    status: 'success',
+    data: {
+      url: result.secure_url,
+      public_id: result.public_id
+    }
+  });
+});
+
 

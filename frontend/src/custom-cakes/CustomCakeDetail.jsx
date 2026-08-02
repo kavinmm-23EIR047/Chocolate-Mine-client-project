@@ -5,7 +5,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, FreeMode, Pagination } from 'swiper/modules';
 import {
   ArrowLeft, ArrowRight, Check, ShoppingCart, ChevronLeft, ChevronRight,
-  Heart, ChevronDown, Settings2, RotateCcw, ShieldCheck, X
+  Heart, ChevronDown, Settings2, RotateCcw, ShieldCheck, X, Upload
 } from 'lucide-react';
 import PureVegIcon from '../assets/pure veg.webp';
 import { getOptimizedCloudinaryUrl } from '../utils/cloudinary';
@@ -37,6 +37,14 @@ export default function CustomCakeDetail({
   setAge,
   message,
   setMessage,
+  photoUrl,
+  setPhotoUrl,
+  photoPreview,
+  setPhotoPreview,
+  isUploadingPhoto,
+  handlePhotoChange,
+  handleRemovePhoto,
+  isPhotoPrint,
   isAdding,
   flavorDropdownOpen,
   setFlavorDropdownOpen,
@@ -119,6 +127,66 @@ export default function CustomCakeDetail({
           100% Pure Veg & Eggless
         </span>
       </div>
+
+      {/* ── PHOTO PRINT UPLOAD (ONLY FOR PHOTO PRINT CAKES) ── */}
+      {isPhotoPrint && (
+        <div className="space-y-2">
+          <label className="block text-xs sm:text-sm font-bold text-[var(--muted)] uppercase tracking-wider">
+            Upload Photo for Cake <span className="text-red-500">*</span>
+          </label>
+          <div className="relative border-2 border-dashed border-[var(--primary)]/40 hover:border-[var(--primary)] bg-[var(--input)]/50 rounded-2xl p-4 text-center transition-all">
+            {photoPreview ? (
+              <div className="relative flex flex-col items-center gap-3">
+                <div className="relative w-32 h-32 sm:w-40 sm:h-40 rounded-xl overflow-hidden border-2 border-[var(--primary)] shadow-md">
+                  <img src={photoPreview} alt="Uploaded Cake Photo" className="w-full h-full object-cover" />
+                  {isUploadingPhoto && (
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center text-white text-xs font-bold">
+                      Uploading...
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="cursor-pointer px-3.5 py-1.5 bg-[var(--primary)] text-[var(--background)] text-xs font-black rounded-lg hover:opacity-90 transition-opacity">
+                    Change Photo
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handlePhotoChange} 
+                      className="hidden" 
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleRemovePhoto}
+                    className="px-3.5 py-1.5 bg-red-500/10 text-red-500 hover:bg-red-500/20 text-xs font-black rounded-lg transition-colors"
+                  >
+                    Remove
+                  </button>
+                </div>
+                <p className="text-xs text-emerald-500 font-bold flex items-center gap-1">
+                  <Check size={14} /> Photo ready for cake printing!
+                </p>
+              </div>
+            ) : (
+              <label className="cursor-pointer flex flex-col items-center justify-center py-4 px-2 space-y-2">
+                <div className="w-12 h-12 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] flex items-center justify-center">
+                  <Upload size={24} />
+                </div>
+                <div>
+                  <p className="text-sm font-black text-[var(--heading)]">Click to upload photo for cake</p>
+                  <p className="text-xs text-[var(--muted)] mt-0.5">PNG, JPG, WEBP (High quality photo for printing)</p>
+                </div>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handlePhotoChange} 
+                  className="hidden" 
+                />
+              </label>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── DROPDOWN FLAVOUR SELECTION ── */}
       <div className="space-y-2">

@@ -12,6 +12,7 @@ router.get('/themes/:id', customCakeController.getThemeById);
 router.get('/themes', customCakeController.getThemes);
 router.get('/colors', customCakeController.getColors);
 router.get('/theme-colors', customCakeController.getThemeColors);
+router.post('/upload-photo', upload.single('photo'), customCakeController.uploadCakePhoto);
 
 // Protected admin routes
 router.use(protect, restrictTo('admin'));

@@ -16,6 +16,10 @@ const customCakeThemeSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  allowPhotoUpload: {
+    type: Boolean,
+    default: false
+  },
   basePrice: {
     type: Number,
     default: 0,

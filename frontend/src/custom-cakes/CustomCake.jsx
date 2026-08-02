@@ -100,6 +100,9 @@ export default function CustomCake() {
   const [customerName, setCustomerName] = useState(() => getSessionData('customCake_name', ''));
   const [age, setAge] = useState(() => getSessionData('customCake_age', '1'));
   const [message, setMessage] = useState(() => getSessionData('customCake_message', ''));
+  const [photoUrl, setPhotoUrl] = useState(() => getSessionData('customCake_photoUrl', null));
+  const [photoPreview, setPhotoPreview] = useState(() => getSessionData('customCake_photoPreview', null));
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
 
   useEffect(() => {
@@ -107,7 +110,11 @@ export default function CustomCake() {
     sessionStorage.setItem('customCake_name', JSON.stringify(customerName));
     sessionStorage.setItem('customCake_age', JSON.stringify(age));
     sessionStorage.setItem('customCake_message', JSON.stringify(message));
-  }, [weightIdx, customerName, age, message]);
+    if (photoUrl) sessionStorage.setItem('customCake_photoUrl', JSON.stringify(photoUrl));
+    else sessionStorage.removeItem('customCake_photoUrl');
+    if (photoPreview) sessionStorage.setItem('customCake_photoPreview', JSON.stringify(photoPreview));
+    else sessionStorage.removeItem('customCake_photoPreview');
+  }, [weightIdx, customerName, age, message, photoUrl, photoPreview]);
 
   useEffect(() => {
     if (selectedFlavor) sessionStorage.setItem('customCake_visualFlavor', JSON.stringify(selectedFlavor.name));
@@ -411,15 +418,78 @@ export default function CustomCake() {
   const grandTotal = basePrice + themePrice + tierPrice;
   const chipTotal = (w) => getFlavorWeightPrice(w) + themePrice + tierPrice;
 
+  const isPhotoPrint = useMemo(() => {
+    if (!theme) return false;
+    return Boolean(
+      theme.allowPhotoUpload ||
+      (theme.name || '').toLowerCase().includes('photo') ||
+      theme.id === '6a63a29ea800f3907b950b14' ||
+      theme.id === '6a6f1c184afda60d0ee54826'
+    );
+  }, [theme]);
+
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file (JPG, PNG, WEBP)');
+      return;
+    }
+
+    const localUrl = URL.createObjectURL(file);
+    setPhotoPreview(localUrl);
+    setIsUploadingPhoto(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('photo', file);
+
+      const res = await api.post('/custom-cakes/upload-photo', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      if (res.data?.data?.url) {
+        setPhotoUrl(res.data.data.url);
+        toast.success('Photo attached for cake printing!');
+      } else {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPhotoUrl(reader.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch (err) {
+      console.warn('Upload endpoint failed, using local preview data:', err);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoUrl(reader.result);
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setPhotoUrl(null);
+    setPhotoPreview(null);
+  };
+
   // ── OPERATIONS ─────────────────────────────────────────────
   const handleAddToCart = async () => {
     if (!theme) { toast.error('Please select a theme first'); return; }
     if (!theme.enabled) { toast.error('This theme is coming soon!'); return; }
     if (!customerName.trim()) { toast.error('Please enter the name for the cake'); return; }
+    if (isPhotoPrint && !photoUrl && !photoPreview) {
+      toast.error('Please upload a photo to print on the cake');
+      return;
+    }
     try {
       setIsAdding(true);
       const tierLabel = currentTier ? currentTier.shortName : 'Tier 1';
       const baseCakeId = `custom-${theme.id}-${selectedFlavor.id}-${selectedTier || 1}-${selectedDbFlavor?._id || 'noflav'}-${weight.label.replace(/\s+/g, '')}`;
+      const attachedPhoto = photoUrl || photoPreview || null;
 
       dispatch(addToCart({
         product: {
@@ -438,7 +508,8 @@ export default function CustomCake() {
           weight: weight.label,
           name: customerName,
           age,
-          message: message || 'None'
+          message: message || 'None',
+          photoUrl: attachedPhoto
         },
         variantPrice: grandTotal,
       }));
@@ -450,6 +521,7 @@ export default function CustomCake() {
         themeColor: selectedFlavor.name,
         flavour: selectedDbFlavor?.name || 'Classic Vanilla',
         messageOnCake: `Name: ${customerName}, Age: ${age}, Message: ${message || 'None'}`,
+        photoUrl: attachedPhoto,
         estimatedPrice: grandTotal,
       });
 
@@ -463,10 +535,15 @@ export default function CustomCake() {
     if (!theme) { toast.error('Please select a theme first'); return; }
     if (!theme.enabled) { toast.error('This theme is coming soon!'); return; }
     if (!customerName.trim()) { toast.error('Please enter the name for the cake'); return; }
+    if (isPhotoPrint && !photoUrl && !photoPreview) {
+      toast.error('Please upload a photo to print on the cake');
+      return;
+    }
     try {
       setIsAdding(true);
       const tierLabel = currentTier ? currentTier.shortName : 'Tier 1';
       const baseCakeId = `custom-${theme.id}-${selectedFlavor.id}-${selectedTier || 1}-${selectedDbFlavor?._id || 'noflav'}-${weight.label.replace(/\s+/g, '')}`;
+      const attachedPhoto = photoUrl || photoPreview || null;
 
       const directItem = {
         product: {
@@ -489,7 +566,8 @@ export default function CustomCake() {
           weight: weight.label,
           name: customerName,
           age,
-          message: message || 'None'
+          message: message || 'None',
+          photoUrl: attachedPhoto
         },
       };
 
@@ -500,6 +578,7 @@ export default function CustomCake() {
         themeColor: selectedFlavor.name,
         flavour: selectedDbFlavor?.name || 'Classic Vanilla',
         messageOnCake: `Name: ${customerName}, Age: ${age}, Message: ${message || 'None'}`,
+        photoUrl: attachedPhoto,
         estimatedPrice: grandTotal,
       });
 
@@ -848,6 +927,14 @@ export default function CustomCake() {
             setAge={setAge}
             message={message}
             setMessage={setMessage}
+            photoUrl={photoUrl}
+            setPhotoUrl={setPhotoUrl}
+            photoPreview={photoPreview}
+            setPhotoPreview={setPhotoPreview}
+            isUploadingPhoto={isUploadingPhoto}
+            handlePhotoChange={handlePhotoChange}
+            handleRemovePhoto={handleRemovePhoto}
+            isPhotoPrint={isPhotoPrint}
             isAdding={isAdding}
             flavorDropdownOpen={flavorDropdownOpen}
             setFlavorDropdownOpen={setFlavorDropdownOpen}
