@@ -17,7 +17,9 @@ const ProductActionButtons = ({
   if (isMobile) {
     return (
       // ✨ FLOATING PILL STYLE: Detached from edges, high z-index, rounded corners, backdrop blur
-      <div className="lg:hidden fixed bottom-4 left-4 right-4 z-[9999] bg-card/95 backdrop-blur-md border border-border/50 p-3 sm:p-4 rounded-2xl grid grid-cols-2 gap-3 shadow-[0_10px_40px_rgba(0,0,0,0.2)]">
+      <div 
+        className="lg:hidden fixed left-4 right-4 z-[9999] bg-card/95 backdrop-blur-md border border-border/50 p-3 sm:p-4 rounded-2xl grid grid-cols-2 gap-3 shadow-[0_10px_40px_rgba(0,0,0,0.2)] pb-[env(safe-area-inset-bottom,16px)] bottom-4"
+      >
         {cartQty > 0 ? (
           <div className="flex items-center border-2 border-border/30 rounded-xl h-12 sm:h-14 bg-muted/5">
             <button onClick={() => handleUpdateQuantity(productId, cartQty - 1)} className="w-12 h-full flex items-center justify-center hover:bg-muted/10 transition"><Minus size={18} /></button>

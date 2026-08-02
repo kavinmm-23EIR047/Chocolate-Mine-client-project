@@ -11,7 +11,6 @@
     width: 100%;
     margin: 0;
     padding: 0;
-    overflow-x: hidden;
     position: relative;
     box-sizing: border-box;
   }
@@ -802,10 +801,19 @@ td {
   font-variation-settings: "ELSH" 0;
 }
 
-/* Disable truncate globally as requested */
 .truncate {
   overflow: visible !important;
   text-overflow: clip !important;
   white-space: normal !important;
   word-break: break-word !important;
+}
+
+/* SAFARI / IOS FIXES */
+@supports (-webkit-touch-callout: none) {
+  .min-h-\[100dvh\] {
+    min-height: -webkit-fill-available;
+  }
+  .h-\[100dvh\] {
+    height: -webkit-fill-available;
+  }
 }

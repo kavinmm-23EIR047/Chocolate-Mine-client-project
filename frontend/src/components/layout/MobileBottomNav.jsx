@@ -8,22 +8,8 @@ const MobileBottomNav = () => {
   const cartItems = useSelector((state) => state.cart.items);
   const location = useLocation();
   const cartCount = cartItems?.reduce((acc, item) => acc + item.qty, 0) || 0;
-  const [isFooterVisible, setIsFooterVisible] = useState(false);
-
-  useEffect(() => {
-    const footer = document.querySelector('footer');
-    if (!footer) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsFooterVisible(entry.isIntersecting);
-      },
-      { threshold: 0.1 }
-    );
-
-    observer.observe(footer);
-    return () => observer.disconnect();
-  }, [location.pathname]);
+  // Always show MobileBottomNav (removed IntersectionObserver to prevent it from randomly hiding if footer loads early)
+  const isFooterVisible = false;
 
   const navItems = [
     { label: 'Home', icon: Home, path: '/' },
@@ -38,18 +24,12 @@ const MobileBottomNav = () => {
   if (hideOn.some(path => location.pathname.startsWith(path))) return null;
 
   return (
-    <AnimatePresence>
-      {!isFooterVisible && (
-        <motion.div
-          initial={{ y: 100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 100, opacity: 0 }}
-          transition={{ type: 'spring', stiffness: 260, damping: 25 }}
-          className="lg:hidden fixed left-0 right-0 z-[100] px-4 pointer-events-none"
-          style={{ bottom: 'max(12px, env(safe-area-inset-bottom, 12px))' }}
-        >
-          {/* Fully-Bend Pill Base with Dynamic Inner Element Shaping */}
-          <style>{`
+    <div
+      className="lg:hidden fixed left-0 right-0 z-[9999] px-4 pointer-events-none bottom-3"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 12px)' }}
+    >
+      {/* Fully-Bend Pill Base with Dynamic Inner Element Shaping */}
+      <style>{`
             @keyframes mobileSweep {
               0% { transform: translate(-50%, -50%) rotate(0deg); }
               100% { transform: translate(-50%, -50%) rotate(360deg); }
@@ -172,9 +152,7 @@ const MobileBottomNav = () => {
               ))}
             </nav>
           </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    </div>
   );
 };
 

@@ -16,7 +16,7 @@ const NotificationPrompt = () => {
 
   useEffect(() => {
     // Auto-prompt on each session for logged-in users who haven't enabled notifications yet
-    if (user && !hasFcmToken && Notification.permission !== 'denied') {
+    if (user && !hasFcmToken && typeof window !== 'undefined' && 'Notification' in window && window.Notification && window.Notification.permission !== 'denied') {
       // Use sessionStorage so the prompt re-appears each new browser session
       const hasSeenPromptThisSession = sessionStorage.getItem('notificationPromptSeen');
       if (!hasSeenPromptThisSession) {
