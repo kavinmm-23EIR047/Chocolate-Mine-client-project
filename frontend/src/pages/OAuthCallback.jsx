@@ -14,7 +14,7 @@ const OAuthCallback = () => {
       console.log('🍭 OAuthCallback: Google login successful, storing token...');
       sessionStorage.setItem('token', token);
       localStorage.setItem('token', token);
-      window.location.href = '/'; 
+      navigate('/', { replace: true }); 
     } else {
       const error = searchParams.get('error');
       console.error('🍭 OAuthCallback: No token found. Error:', error);

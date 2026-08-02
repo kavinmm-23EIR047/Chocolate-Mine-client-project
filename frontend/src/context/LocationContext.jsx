@@ -4,11 +4,17 @@ const LocationContext = createContext();
 
 export const LocationProvider = ({ children }) => {
   const [location, setLocation] = useState(() => {
-    return localStorage.getItem('deliveryLocation') || 'coimbatore';
+    try {
+      return localStorage.getItem('deliveryLocation') || 'coimbatore';
+    } catch (e) {
+      return 'coimbatore';
+    }
   });
 
   useEffect(() => {
-    localStorage.setItem('deliveryLocation', location);
+    try {
+      localStorage.setItem('deliveryLocation', location);
+    } catch (e) {}
   }, [location]);
 
   return (

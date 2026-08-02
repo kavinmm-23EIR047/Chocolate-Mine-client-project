@@ -76,8 +76,10 @@ api.interceptors.response.use(
 
       // Don't redirect for auth-check routes or payment routes
       if (!shouldSkip) {
-        sessionStorage.removeItem('token');
-        sessionStorage.removeItem('user');
+        try {
+          sessionStorage.removeItem('token');
+          sessionStorage.removeItem('user');
+        } catch (e) {}
 
         if (
           window.location.pathname !== '/login' &&

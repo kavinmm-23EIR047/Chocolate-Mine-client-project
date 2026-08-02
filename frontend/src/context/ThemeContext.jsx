@@ -5,8 +5,12 @@ const ThemeContext = createContext();
 export const ThemeProvider = ({ children }) => {
   // Mode can be 'light', 'dark', or 'system'
   const [themeMode, setThemeMode] = useState(() => {
-    const saved = localStorage.getItem('theme-mode');
-    return saved || 'system';
+    try {
+      const saved = localStorage.getItem('theme-mode');
+      return saved || 'system';
+    } catch (e) {
+      return 'system';
+    }
   });
 
   const getSystemTheme = () =>
@@ -49,7 +53,9 @@ export const ThemeProvider = ({ children }) => {
         }, 350);
       }
 
-      localStorage.setItem('theme-mode', mode);
+      try {
+        localStorage.setItem('theme-mode', mode);
+      } catch (e) {}
     };
 
     applyTheme(themeMode);
