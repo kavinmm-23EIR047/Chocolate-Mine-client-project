@@ -57,6 +57,7 @@ const ProfileDetails = () => {
         // Enable notifications explicitly (prompts user if not already granted)
         const success = await enableNotifications();
         if (success) {
+          localStorage.setItem('notificationPromptDoNotAsk', 'true');
           toast.success("Push notifications enabled");
         } else {
           // If success is false, it means permission was denied or token generation failed
