@@ -259,14 +259,14 @@ const Cart = () => {
                               {item.options?.name && (
                                 <p className="text-xs text-muted font-medium">Name: {item.options.name}</p>
                               )}
-                              {item.options?.photoUrl && (
-                                <div className="flex items-center gap-2 mt-1">
-                                  <span className="text-xs text-muted font-medium">Photo:</span>
-                                  <a href={item.options.photoUrl} target="_blank" rel="noopener noreferrer">
-                                    <img src={item.options.photoUrl} alt="Cake Photo" className="w-9 h-9 rounded-md object-cover border border-border/60 hover:opacity-90 transition-opacity" />
-                                  </a>
-                                </div>
-                              )}
+                               {item.options?.photoUrl && item.options.photoUrl !== item.image && item.options.photoUrl !== item.product?.image && (
+                                 <div className="flex items-center gap-2 mt-1">
+                                   <span className="text-xs text-muted font-medium">Photo:</span>
+                                   <a href={item.options.photoUrl} target="_blank" rel="noopener noreferrer">
+                                     <img src={item.options.photoUrl} alt="Uploaded Cake Photo" className="w-9 h-9 rounded-md object-cover border border-border/60 hover:opacity-90 transition-opacity" />
+                                   </a>
+                                 </div>
+                               )}
                             </>
                           ) : (
                             <>

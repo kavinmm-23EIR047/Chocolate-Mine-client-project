@@ -463,7 +463,7 @@ const OrderDetailsModal = ({ order, onClose }) => {
 
                     {/* Expandable Custom Details Box */}
                     {expandedItems[idx] && item.customDetails && (
-                      <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl text-xs space-y-2 text-heading">
+                      <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl text-xs space-y-3 text-heading">
                         <div className="grid grid-cols-2 gap-2">
                           {item.customDetails.designTheme && <p><span className="font-bold text-muted">Theme:</span> <span className="font-extrabold">{item.customDetails.designTheme}</span></p>}
                           {item.customDetails.flavour && <p><span className="font-bold text-muted">Flavor:</span> <span className="font-extrabold">{item.customDetails.flavour}</span></p>}
@@ -472,6 +472,32 @@ const OrderDetailsModal = ({ order, onClose }) => {
                           {item.customDetails.eggless && <p><span className="font-bold text-muted">Eggless:</span> <span className="font-extrabold text-emerald-700">Yes 🌿</span></p>}
                           {item.customDetails.lessSugar && <p><span className="font-bold text-muted">Less Sugar:</span> <span className="font-extrabold">Yes</span></p>}
                         </div>
+
+                        {/* Uploaded Photo Print / Reference Image */}
+                        {(() => {
+                          const photoUrl = item.customDetails?.photoReferenceUrl || item.customDetails?.photoUrl || item.customDetails?.photo || item.options?.photoUrl;
+                          const mainImage = item.image || item.product?.image;
+                          // Only display "Photo to Print" if a distinct customer photo was uploaded (different from the default cake image)
+                          if (!photoUrl || photoUrl === mainImage) return null;
+                          return (
+                            <div className="pt-2 border-t border-primary/15 flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                              <span className="font-bold text-muted flex items-center gap-1">🖼️ Photo to Print:</span>
+                              <a 
+                                href={photoUrl} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="inline-flex items-center gap-2.5 font-extrabold text-primary hover:underline bg-card px-3 py-1.5 rounded-lg border border-primary/20 shadow-xs"
+                              >
+                                <img 
+                                  src={photoUrl} 
+                                  alt="Uploaded Cake Photo" 
+                                  className="w-12 h-12 rounded-md object-cover border border-primary/30" 
+                                />
+                                <span className="text-xs">Click to View Uploaded Photo ↗</span>
+                              </a>
+                            </div>
+                          );
+                        })()}
 
                         {item.customDetails.messageOnCake && (
                           <div className="pt-2 border-t border-primary/15">
@@ -1756,15 +1782,38 @@ const StaffDashboard = () => {
                 </div>
 
                 <div className="flex-1 min-w-0 max-h-28 overflow-y-auto custom-scrollbar space-y-1.5 pr-1">
-                  {order.items?.map((item, idx) => (
-                    <div key={idx} className="flex justify-between items-center p-2 rounded-lg bg-card border border-border/50 text-xs">
-                      <div className="truncate pr-2">
-                        <span className="font-extrabold text-heading">{item.name}</span>
-                        <span className="text-muted ml-1 font-semibold">({item.qty}x · {getDisplayFlavor(item)}{item.selectedWeight ? ` · ${item.selectedWeight}` : ''})</span>
+                  {order.items?.map((item, idx) => {
+                    const photoUrl = item.customDetails?.photoReferenceUrl || item.customDetails?.photoUrl || item.customDetails?.photo || item.options?.photoUrl;
+                    const mainImage = item.image || item.product?.image;
+                    const isUserPhoto = photoUrl && photoUrl !== mainImage;
+                    return (
+                      <div key={idx} className="flex justify-between items-center p-2 rounded-lg bg-card border border-border/50 text-xs">
+                        <div className="flex items-center gap-2 flex-1 min-w-0 pr-2">
+                          {isUserPhoto && (
+                            <a
+                              href={photoUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="shrink-0 group/photo relative"
+                              title="Click to view uploaded photo to print"
+                            >
+                              <img
+                                src={photoUrl}
+                                alt="Uploaded Cake Photo"
+                                className="w-9 h-9 rounded object-cover border border-primary/40 shadow-xs group-hover/photo:scale-105 transition-transform"
+                              />
+                            </a>
+                          )}
+                          <div className="truncate">
+                            <span className="font-extrabold text-heading">{item.name}</span>
+                            <span className="text-muted ml-1 font-semibold">({item.qty}x · {getDisplayFlavor(item)}{item.selectedWeight ? ` · ${item.selectedWeight}` : ''})</span>
+                          </div>
+                        </div>
+                        <span className="font-black text-xs text-heading shrink-0">{formatCurrency((item.price || item.originalPrice) * item.qty)}</span>
                       </div>
-                      <span className="font-black text-xs text-heading shrink-0">{formatCurrency((item.price || item.originalPrice) * item.qty)}</span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 <div className="lg:w-36 text-left lg:text-right shrink-0">
@@ -1888,13 +1937,38 @@ const StaffDashboard = () => {
                     {order.items?.map((item, idx) => {
                       const itemPrice = item.price || item.originalPrice;
                       const total = itemPrice * item.qty;
+                      const photoUrl = item.customDetails?.photoReferenceUrl || item.customDetails?.photoUrl || item.customDetails?.photo || item.options?.photoUrl;
+                      const mainImage = item.image || item.product?.image;
+                      const isUserPhoto = photoUrl && photoUrl !== mainImage;
+
                       return (
                         <div key={idx} className="flex justify-between items-center p-2.5 bg-card border border-border/50 rounded-xl text-xs hover:border-primary/40 transition-colors">
-                          <div className="flex-1 min-w-0 pr-2">
-                            <p className="font-extrabold truncate text-heading text-xs">{item.name}</p>
-                            <p className="text-[11px] text-muted font-semibold mt-0.5">
-                              {item.qty}x · {getDisplayFlavor(item)}{item.selectedWeight && ` · ${item.selectedWeight}`}
-                            </p>
+                          <div className="flex items-center gap-2.5 flex-1 min-w-0 pr-2">
+                            {isUserPhoto && (
+                              <a
+                                href={photoUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="shrink-0 group/photo relative"
+                                title="Click to view uploaded photo to print"
+                              >
+                                <img
+                                  src={photoUrl}
+                                  alt="Uploaded Cake Photo"
+                                  className="w-10 h-10 rounded-lg object-cover border border-primary/40 shadow-xs group-hover/photo:scale-105 transition-transform"
+                                />
+                                <span className="absolute -bottom-1 -right-1 bg-primary text-button-text text-[9px] font-black px-1 rounded shadow-xs">
+                                  🖼️
+                                </span>
+                              </a>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="font-extrabold truncate text-heading text-xs">{item.name}</p>
+                              <p className="text-[11px] text-muted font-semibold mt-0.5">
+                                {item.qty}x · {getDisplayFlavor(item)}{item.selectedWeight && ` · ${item.selectedWeight}`}
+                              </p>
+                            </div>
                           </div>
                           <p className="font-black text-xs text-heading shrink-0">{formatCurrency(total)}</p>
                         </div>

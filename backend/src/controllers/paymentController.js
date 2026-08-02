@@ -197,13 +197,17 @@ const getCustomCakePrice = async (item) => {
 
 const buildCustomCakeDetails = (options = {}) => {
   const tierNum = options.tier ? parseInt(String(options.tier).replace(/\D/g, ''), 10) || 1 : 1;
+  const photo = options.photoUrl || options.photo || options.photoReferenceUrl || '';
   return {
     tiers: tierNum,
     weight: options.weight || '1 kg',
     flavour: `${options.color || ''} (Flavour: ${options.flavor || ''})`,
     designTheme: options.theme || 'Custom Cake',
     messageOnCake: `Name: ${options.name || ''}, Age: ${options.age || ''}, Message: ${options.message || ''}`,
-    notes: options.notes || ''
+    notes: options.notes || '',
+    photoReferenceUrl: photo,
+    photoUrl: photo,
+    photo: photo
   };
 };
 
@@ -344,12 +348,16 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
       if (categoryStr.includes('custom cakes') || (directItem.options && directItem.options.theme)) {
         isCustomCake = true;
         const tierNum = directItem.options.tier ? parseInt(directItem.options.tier.replace(/\D/g, '')) || 1 : 1;
+        const photoDirect = directItem.options.photoUrl || directItem.options.photo || directItem.options.photoReferenceUrl || '';
         customDetails = {
           shape: 'round', tiers: tierNum, weight: directItem.options.weight || '1 kg',
           flavour: `${directItem.options.color || ''} (Flavour: ${directItem.options.flavor || ''})`,
           designTheme: directItem.options.theme || 'Teddy Theme',
           messageOnCake: `Name: ${directItem.options.name || ''}, Age: ${directItem.options.age || ''}, Message: ${directItem.options.message || ''}`,
-          notes: directItem.options.notes || ''
+          notes: directItem.options.notes || '',
+          photoReferenceUrl: photoDirect,
+          photoUrl: photoDirect,
+          photo: photoDirect
         };
       }
 
@@ -461,12 +469,16 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
         if (categoryStr.includes('custom cakes') || (item.options && item.options.theme)) {
           isCustomCake = true;
           const tierNum = item.options.tier ? parseInt(item.options.tier.replace(/\D/g, '')) || 1 : 1;
+          const photoCart = item.options.photoUrl || item.options.photo || item.options.photoReferenceUrl || '';
           customDetails = {
             shape: 'round', tiers: tierNum, weight: item.options.weight || '1 kg',
             flavour: `${item.options.color || ''} (Flavour: ${item.options.flavor || ''})`,
             designTheme: item.options.theme || 'Teddy Theme',
             messageOnCake: `Name: ${item.options.name || ''}, Age: ${item.options.age || ''}, Message: ${item.options.message || ''}`,
-            notes: item.options.notes || ''
+            notes: item.options.notes || '',
+            photoReferenceUrl: photoCart,
+            photoUrl: photoCart,
+            photo: photoCart
           };
         }
 
