@@ -211,7 +211,7 @@ export const CategoryCircles = ({ activeCategory, setActiveCategory }) => {
                 Curated Range
               </span>
             </div>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[var(--heading)]">
+            <h2 className="text-xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[var(--heading)]">
               Shop By Category
             </h2>
             <p className="text-xs sm:text-sm text-[var(--muted)] font-normal max-w-md">
@@ -219,8 +219,8 @@ export const CategoryCircles = ({ activeCategory, setActiveCategory }) => {
             </p>
           </div>
 
-          {/* Desktop Navigation Controls */}
-          <div className="hidden sm:flex items-center gap-2.5 shrink-0">
+          {/* Navigation Controls */}
+          <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-auto">
             <button
               onClick={() => scroll('left')}
               aria-label="Previous categories"
@@ -291,26 +291,7 @@ export const CategoryCircles = ({ activeCategory, setActiveCategory }) => {
           })}
         </div>
 
-        {/* Medium-Sized Clickable & Draggable Slider Bar (No End Arrows) */}
-        {categories.length > 3 && (
-          <div className="flex justify-center items-center mt-3 py-1">
-            <div 
-              ref={progressTrackRef}
-              onMouseDown={handlePointerDown}
-              onTouchStart={handlePointerDown}
-              className="w-48 sm:w-64 h-2.5 bg-neutral-300/80 dark:bg-neutral-800/80 rounded-full relative cursor-pointer touch-none flex items-center overflow-hidden border border-border/30 shadow-xs"
-              title="Click or drag slider left & right"
-            >
-              <div 
-                className="h-full bg-neutral-700 dark:bg-neutral-300 hover:bg-neutral-800 dark:hover:bg-white rounded-full cursor-grab active:cursor-grabbing transition-all duration-75 shadow-xs"
-                style={{ 
-                  width: '30%',
-                  marginLeft: `${scrollRatio * 70}%`
-                }}
-              />
-            </div>
-          </div>
-        )}
+
 
       </div>
     </section>

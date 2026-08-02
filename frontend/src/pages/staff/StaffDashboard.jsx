@@ -74,7 +74,7 @@ const handleCallCustomer = (phone, e) => {
 };
 
 // Order Status Dropdown & Delivery OTP Control – fully theme-aware
-const OrderStatusDropdown = ({ order, onUpdate }) => {
+const OrderStatusDropdown = ({ order, onUpdate, onRefresh }) => {
   const [updatingStatus, setUpdatingStatus] = useState(null);
   const [showOtpInput, setShowOtpInput] = useState(false);
   const [otp, setOtp] = useState('');
@@ -121,7 +121,7 @@ const OrderStatusDropdown = ({ order, onUpdate }) => {
       toast.success(res.data?.message || 'Delivery verified successfully! Order marked as Delivered.');
       setOtp('');
       setShowOtpInput(false);
-      if (onUpdate) await onUpdate(order._id, 'delivered');
+      if (onRefresh) await onRefresh();
     } catch (err) {
       const errMsg = err.response?.data?.message || 'Invalid delivery OTP';
       toast.error(errMsg);
@@ -134,7 +134,7 @@ const OrderStatusDropdown = ({ order, onUpdate }) => {
     return (
       <div className="flex-1">
         <Button
-          className="w-full rounded-2xl py-3 text-xs flex justify-center items-center gap-2 !border !border-amber-700/50 dark:!border-amber-300/50 bg-amber-50/70 dark:bg-amber-400/10 hover:bg-amber-100 dark:hover:bg-amber-400/20 text-amber-900 dark:text-amber-200 shadow-sm hover:shadow-md focus-visible:outline-none cursor-pointer"
+          className="w-full rounded-2xl py-3 text-xs flex justify-center items-center gap-2 !border !border-amber-700/50 dark:!border-amber-300/50 !bg-amber-50/70 dark:!bg-amber-400/10 hover:!bg-amber-100 dark:hover:!bg-amber-400/20 !text-amber-900 dark:!text-amber-200 shadow-sm hover:shadow-md focus-visible:outline-none cursor-pointer"
           onClick={async () => {
             setUpdatingStatus('out_for_delivery');
             try {
@@ -159,7 +159,7 @@ const OrderStatusDropdown = ({ order, onUpdate }) => {
       <div className="flex-1 min-w-[200px]">
         {!showOtpInput ? (
           <Button
-            className="w-full rounded-2xl py-3 text-xs flex justify-center items-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white font-black shadow-md cursor-pointer"
+            className="w-full rounded-2xl py-3 text-xs flex justify-center items-center gap-2 !bg-emerald-700 hover:!bg-emerald-800 !text-white font-black shadow-md cursor-pointer"
             onClick={handleSendOtp}
             disabled={sendingOtp}
           >
@@ -189,7 +189,7 @@ const OrderStatusDropdown = ({ order, onUpdate }) => {
             />
             <div className="flex gap-2">
               <Button
-                className="flex-1 rounded-xl py-2 text-xs bg-emerald-700 hover:bg-emerald-800 text-white font-black shadow-sm cursor-pointer"
+                className="flex-1 rounded-xl py-2 text-xs !bg-emerald-700 hover:!bg-emerald-800 !text-white font-black shadow-sm cursor-pointer"
                 onClick={handleVerifyOtp}
                 disabled={verifyingOtp || otp.length !== 6}
               >
@@ -1259,7 +1259,7 @@ const StaffDashboard = () => {
         <Link to="/staff/orders/create-inshop" className="block group">
           <motion.div 
             whileHover={{ y: -3 }} 
-            className="bg-card border border-primary/40 hover:border-primary p-6 sm:p-7 rounded-3xl shadow-md hover:shadow-xl transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 relative overflow-hidden"
+            className="bg-card border border-primary/40 hover:border-primary p-6 sm:p-7 rounded-3xl shadow-md hover:shadow-xl transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-5 relative overflow-hidden"
           >
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-secondary to-primary" />
             <div className="flex items-center gap-5">
@@ -1267,17 +1267,17 @@ const StaffDashboard = () => {
                 <ShoppingCart size={28} />
               </div>
               <div>
-                <h4 className="text-lg font-black text-heading uppercase tracking-tight flex items-center gap-2">
+                <h4 className="text-lg font-black text-heading uppercase tracking-tight flex flex-wrap items-center gap-2">
                   Create New In-Shop Order
-                  <span className="px-2.5 py-0.5 rounded-full bg-primary/20 text-primary text-[10px] font-extrabold tracking-wider">COUNTER SALES</span>
+                  <span className="shrink-0 whitespace-nowrap px-2.5 py-0.5 rounded-full bg-primary/20 text-primary text-[10px] font-extrabold tracking-wider">COUNTER SALES</span>
                 </h4>
                 <p className="text-xs sm:text-sm font-semibold text-heading/80 mt-1 max-w-xl leading-relaxed">
                   Record walk-in customer purchases instantly. Select flavors, weights, and items. Payment collected at counter — no online gateway required.
                 </p>
               </div>
             </div>
-            <div className="w-full sm:w-auto text-right">
-              <div className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-amber-900 text-white dark:bg-amber-500 dark:text-slate-950 font-black text-xs uppercase tracking-wider transition-all shadow-md group-hover:scale-105 active:scale-95 cursor-pointer">
+            <div className="w-full md:w-auto text-right shrink-0">
+              <div className="inline-flex items-center justify-center whitespace-nowrap gap-2 px-6 py-3.5 rounded-2xl bg-amber-900 text-white dark:bg-amber-500 dark:text-slate-950 font-black text-xs uppercase tracking-wider transition-all shadow-md group-hover:scale-105 active:scale-95 cursor-pointer">
                 <span>+ Create Order Now</span>
                 <ChevronRight size={16} />
               </div>
@@ -1285,7 +1285,7 @@ const StaffDashboard = () => {
           </motion.div>
         </Link>
 
-        <div className="p-5 rounded-3xl bg-card border border-border/80 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="p-5 rounded-3xl bg-card border border-border/80 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-11 h-11 rounded-2xl bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-xs">
               <RefreshCw size={22} />
@@ -1304,7 +1304,7 @@ const StaffDashboard = () => {
             icon={RefreshCw} 
             onClick={fetchData} 
             loading={loading}
-            className="w-full sm:w-auto rounded-xl py-2.5 text-xs font-extrabold"
+            className="w-full md:w-auto shrink-0 whitespace-nowrap rounded-xl py-2.5 text-xs font-extrabold"
           >
             Refresh Feed
           </Button>
@@ -1421,10 +1421,11 @@ const StaffDashboard = () => {
     const q = orderSearch.toLowerCase().trim();
     const numMatch = order.orderNumber?.toString().toLowerCase().includes(q);
     const trackMatch = order.trackingCode?.toString().toLowerCase().includes(q);
-    const nameMatch = order.address?.fullName?.toLowerCase().includes(q);
-    const phoneMatch = order.address?.phone?.toLowerCase().includes(q);
+    const nameMatch = order.address?.fullName?.toLowerCase().includes(q) || order.user?.name?.toLowerCase().includes(q) || order.userId?.name?.toLowerCase().includes(q);
+    const phoneMatch = order.address?.phone?.toLowerCase().includes(q) || order.user?.phone?.toLowerCase().includes(q) || order.userId?.phone?.toLowerCase().includes(q);
+    const emailMatch = order.user?.email?.toLowerCase().includes(q) || order.userId?.email?.toLowerCase().includes(q);
     const itemMatch = order.items?.some(i => i.name?.toLowerCase().includes(q));
-    return numMatch || trackMatch || nameMatch || phoneMatch || itemMatch;
+    return numMatch || trackMatch || nameMatch || phoneMatch || emailMatch || itemMatch;
   });
 
   return (
@@ -1600,7 +1601,7 @@ const StaffDashboard = () => {
                     <Eye size={16} />
                   </button>
 
-                  <OrderStatusDropdown order={order} onUpdate={handleDeliveryStatusUpdate} />
+                  <OrderStatusDropdown order={order} onUpdate={handleDeliveryStatusUpdate} onRefresh={fetchData} />
 
                   <a 
                     href={`${import.meta.env.VITE_API_URL || (import.meta.env.PROD ? window.location.origin : 'http://localhost:5000')}/staff/orders/${order._id}/kot/print`}

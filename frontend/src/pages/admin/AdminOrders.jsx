@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingBag, Eye, Filter, Download, RefreshCw, Info, Package, ChevronDown, ChevronUp, X, Volume2, VolumeX } from 'lucide-react';
+import { ShoppingBag, Eye, Filter, Download, RefreshCw, Info, Package, ChevronDown, ChevronUp, X, Volume2, VolumeX, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 import io from 'socket.io-client';
 
@@ -217,6 +217,7 @@ const AdminOrders = () => {
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [serviceHoursInfo, setServiceHoursInfo] = useState(null);
   const [notificationsMuted, setNotificationsMuted] = useState(false);
+  const [orderSearch, setOrderSearch] = useState('');
 
   const socketRef = useRef(null);
   const { playSound, toggleMute, testSounds } = useNotificationSound();
@@ -226,9 +227,23 @@ const AdminOrders = () => {
       setLoading(true);
       const res = await adminService.getOrders();
       const rawOrders = res.data?.data?.orders || res.data?.data || (Array.isArray(res.data) ? res.data : []);
-      const filtered = statusFilter
+      
+      let filtered = statusFilter
         ? rawOrders.filter(o => o.orderStatus === statusFilter)
         : rawOrders;
+
+      if (orderSearch.trim()) {
+        const q = orderSearch.toLowerCase().trim();
+        filtered = filtered.filter(o => {
+          const numMatch = o.orderNumber?.toString().toLowerCase().includes(q);
+          const trackMatch = o.trackingCode?.toString().toLowerCase().includes(q);
+          const nameMatch = o.address?.fullName?.toLowerCase().includes(q) || o.user?.name?.toLowerCase().includes(q) || o.userId?.name?.toLowerCase().includes(q);
+          const phoneMatch = o.address?.phone?.toLowerCase().includes(q) || o.user?.phone?.toLowerCase().includes(q) || o.userId?.phone?.toLowerCase().includes(q);
+          const emailMatch = o.user?.email?.toLowerCase().includes(q) || o.userId?.email?.toLowerCase().includes(q);
+          return numMatch || trackMatch || nameMatch || phoneMatch || emailMatch;
+        });
+      }
+
       setOrders(filtered);
       setTotalPages(Math.ceil(filtered.length / 10) || 1);
     } catch (err) {
@@ -237,7 +252,7 @@ const AdminOrders = () => {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter]);
+  }, [statusFilter, orderSearch]);
 
   useEffect(() => {
     fetchOrders();
@@ -345,6 +360,23 @@ const AdminOrders = () => {
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
+        {/* Search Bar */}
+        <div className="relative flex-1 sm:min-w-[250px] max-w-sm">
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
+          <input
+            type="text"
+            placeholder="Search by name, phone, order #..."
+            value={orderSearch}
+            onChange={(e) => { setOrderSearch(e.target.value); setPage(1); }}
+            className="w-full pl-10 pr-9 py-2 bg-card border border-border rounded-xl text-heading text-sm outline-none focus:ring-2 focus:ring-primary/40 transition-all placeholder:text-muted"
+          />
+          {orderSearch && (
+            <button onClick={() => setOrderSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-heading cursor-pointer p-0.5">
+              <X size={14} />
+            </button>
+          )}
+        </div>
+
         <div className="flex items-center gap-2 bg-card border border-border px-4 py-2 rounded-xl">
           <Filter size={16} className="text-muted" />
           <select
@@ -422,7 +454,7 @@ const AdminOrders = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {orders.map((order, i) => (
+                  {orders.slice((page - 1) * 10, page * 10).map((order, i) => (
                     <motion.tr
                       key={order._id}
                       initial={{ opacity: 0, y: 10 }}
@@ -542,7 +574,7 @@ const AdminOrders = () => {
 
           {/* Mobile Accordion */}
           <div className="md:hidden flex flex-col gap-3">
-            {orders.map((order) => (
+            {orders.slice((page - 1) * 10, page * 10).map((order) => (
               <details key={`mobile-${order._id}`} className="bg-card border border-border rounded-2xl overflow-hidden group">
                 <summary className="p-4 flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden bg-border/5">
                   <div className="flex items-center gap-3">

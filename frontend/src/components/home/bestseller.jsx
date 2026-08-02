@@ -151,18 +151,18 @@ const Bestseller = ({ location }) => {
   return (
     <section className="responsive-section !py-6 lg:!py-10 border-b border-border/20 overflow-hidden">
       <div className="flex flex-col gap-5 lg:gap-8">
-        <div className="flex flex-row items-center justify-between gap-4 w-full px-4 sm:px-0 mb-4 lg:mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 w-full px-4 sm:px-0 mb-4 lg:mb-6">
           
           <div className="flex items-center gap-3 sm:gap-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
-              <Star className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2.5} />
+            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+              <Star className="w-4 h-4 sm:w-6 sm:h-6" strokeWidth={2.5} />
             </div>
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight uppercase text-heading">
+            <h2 className="text-lg sm:text-2xl lg:text-3xl font-black tracking-tight uppercase text-heading">
               Our Bestsellers
             </h2>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
             {!isLoading && products.length > 3 && (
               <div className="flex items-center gap-1.5 mr-2">
                 <button
@@ -231,26 +231,7 @@ const Bestseller = ({ location }) => {
           )}
         </div>
 
-        {/* Medium-Sized Clickable & Draggable Slider Bar (No End Arrows) */}
-        {!isLoading && products.length > 3 && (
-          <div className="flex justify-center items-center mt-2 py-1">
-            <div 
-              ref={progressTrackRef}
-              onMouseDown={handlePointerDown}
-              onTouchStart={handlePointerDown}
-              className="w-48 sm:w-64 h-2.5 bg-neutral-300/80 dark:bg-neutral-800/80 rounded-full relative cursor-pointer touch-none flex items-center overflow-hidden border border-border/30 shadow-xs"
-              title="Click or drag slider left & right"
-            >
-              <div 
-                className="h-full bg-neutral-700 dark:bg-neutral-300 hover:bg-neutral-800 dark:hover:bg-white rounded-full cursor-grab active:cursor-grabbing transition-all duration-75 shadow-xs"
-                style={{ 
-                  width: '30%',
-                  marginLeft: `${scrollRatio * 70}%`
-                }}
-              />
-            </div>
-          </div>
-        )}
+
       </div>
     </section>
   );

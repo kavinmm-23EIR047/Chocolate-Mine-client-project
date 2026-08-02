@@ -36,7 +36,7 @@ const OccasionSection = () => {
   };
 
   return (
-    <section className="relative py-12 sm:py-20 overflow-hidden" style={{ background: 'var(--background)' }}>
+    <section className="relative py-12 sm:py-20 overflow-hidden bg-transparent">
       {/* Subtle Background Decoration */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-[400px] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
 
