@@ -1,5 +1,6 @@
 const PDFDocument = require('pdfkit');
 const Order = require('../models/Order');
+const InShopOrder = require('../models/InShopOrder');
 const emailService = require('./emailService');
 const telegramService = require('./telegramService');
 const logger = require('../utils/logger');
@@ -70,12 +71,19 @@ function getDisplayFlavor(item) {
 
 exports.generateInvoiceBuffer = async (orderId) => {
   try {
-    const order = await Order.findById(orderId).populate('userId');
+    let order = await Order.findById(orderId).populate('userId');
+    if (!order) {
+      order = await InShopOrder.findById(orderId).populate('userId');
+    }
     if (!order) throw new Error('Order not found');
 
     if (!order.invoiceNumber) {
       order.invoiceNumber = `INV-${Date.now()}`;
-      await order.save();
+      try {
+        await order.save();
+      } catch (err) {
+        // Ignore save error
+      }
     }
 
     const doc = new PDFDocument({ margin: 0, size: 'A4', bufferPages: true });
@@ -93,26 +101,20 @@ exports.generateInvoiceBuffer = async (orderId) => {
     // ─────────────────────────────────────────────────────────────────────────
     const HEADER_TOP = 42;
 
-    // Render Text-Logo mimicking requested font style & matching exact widths
-    doc.save();
-    // Layer 1: "THE CHOCOLATE"
-    doc.font('Helvetica-Bold')
-       .fontSize(12)
-       .fillColor(COLORS.brandAccent)
-       .text('T H E   C H O C O L A T E', MARGIN, HEADER_TOP, { lineBreak: false });
-    
-    // Layer 2: "MINE" scaled up to match structural text block width bounds
-    doc.font('Helvetica-Bold')
-       .fontSize(38)
-       .fillColor(COLORS.brandPrimary)
-       .text('MINE', MARGIN, HEADER_TOP + 12, { lineBreak: false });
-    
-    // Sub-label tagline description
-    doc.font('Helvetica-Oblique')
-       .fontSize(9)
-       .fillColor(COLORS.brandMuted)
-       .text('Premium Artisan Bakery', MARGIN, HEADER_TOP + 54, { lineBreak: false });
-    doc.restore();
+    // Render Logo Image from assets
+    const logoPath = path.join(__dirname, '../assets/logo.png');
+    const altLogoPath = path.join(__dirname, '../../../frontend/src/assets/dark logo.png');
+    const activeLogo = fs.existsSync(logoPath) ? logoPath : (fs.existsSync(altLogoPath) ? altLogoPath : null);
+
+    if (activeLogo) {
+      doc.image(activeLogo, MARGIN, HEADER_TOP - 8, { width: 145 });
+    } else {
+      doc.save();
+      doc.font('Helvetica-Bold').fontSize(12).fillColor(COLORS.brandAccent).text('T H E   C H O C O L A T E', MARGIN, HEADER_TOP, { lineBreak: false });
+      doc.font('Helvetica-Bold').fontSize(38).fillColor(COLORS.brandPrimary).text('MINE', MARGIN, HEADER_TOP + 12, { lineBreak: false });
+      doc.font('Helvetica-Oblique').fontSize(9).fillColor(COLORS.brandMuted).text('Premium Artisan Bakery', MARGIN, HEADER_TOP + 54, { lineBreak: false });
+      doc.restore();
+    }
 
     // Right Side Metadata Block
     const INV_W = 180;
@@ -155,16 +157,18 @@ exports.generateInvoiceBuffer = async (orderId) => {
 
     const BILL_NAME_Y = BILL_TOP + 14;
     const BILL_TEXT_W = 280;
+    const clientName = (order.address && order.address.fullName) || (order.userId && order.userId.name) || order.customerName || 'Walk-in Customer';
+    const clientPhone = (order.address && order.address.phone) || (order.userId && order.userId.phone) || order.customerPhone || '—';
 
     doc.font('Helvetica-Bold').fontSize(11).fillColor(COLORS.brandText)
-       .text((order.address && order.address.fullName) || '—', MARGIN, BILL_NAME_Y, { width: BILL_TEXT_W });
+       .text(clientName, MARGIN, BILL_NAME_Y, { width: BILL_TEXT_W });
 
-    const nameH = doc.heightOfString((order.address && order.address.fullName) || '—',
+    const nameH = doc.heightOfString(clientName,
                   { font: 'Helvetica-Bold', fontSize: 11, width: BILL_TEXT_W });
 
     doc.font('Helvetica').fontSize(9).fillColor(COLORS.brandMuted)
-       .text('Phone: ' + ((order.address && order.address.phone) || '—'), MARGIN, BILL_NAME_Y + nameH + 3, { width: BILL_TEXT_W })
-       .text(addrLine || '—', MARGIN, BILL_NAME_Y + nameH + 16, { width: BILL_TEXT_W });
+       .text('Phone: ' + clientPhone, MARGIN, BILL_NAME_Y + nameH + 3, { width: BILL_TEXT_W })
+       .text(addrLine || 'Counter Sale', MARGIN, BILL_NAME_Y + nameH + 16, { width: BILL_TEXT_W });
 
     // Status / Payment Badge Content block
     const BADGE_W = 160;
@@ -209,14 +213,11 @@ exports.generateInvoiceBuffer = async (orderId) => {
       const total = (qty * finalUnitPrice) + addonTotal;
       const nameText = item.name || '—';
 
-      // Build subtitle with flavor/weight
-      const resolvedFlavor = getDisplayFlavor(item);
-      const showFlavor = item.selectedFlavor || resolvedFlavor !== 'Standard';
-      const weight = item.selectedWeight || (item.isCustomCake && item.customDetails && item.customDetails.weight) || '';
-      const flavorDisplay = item.isCustomCake
-        ? (item.customDetails && item.customDetails.flavour ? item.customDetails.flavour : resolvedFlavor)
-        : (showFlavor ? resolvedFlavor : '');
-      const subParts = [flavorDisplay, weight].filter(Boolean);
+      // Build subtitle with color/weight/flavor
+      const colorDisp = item.selectedColor ? `Color: ${item.selectedColor}` : '';
+      const weightDisp = item.selectedWeight ? `Weight: ${item.selectedWeight}` : ((item.isCustomCake && item.customDetails && item.customDetails.weight) ? `Weight: ${item.customDetails.weight}` : '');
+      const flavorDisp = item.selectedFlavor ? `Flavor: ${item.selectedFlavor}` : (getDisplayFlavor(item) !== 'Standard' ? `Flavor: ${getDisplayFlavor(item)}` : '');
+      const subParts = [colorDisp, weightDisp, flavorDisp].filter(Boolean);
       if (Number(item.price) > finalUnitPrice) {
         subParts.push(`Original: Rs. ${Number(item.price).toFixed(2)}`);
       }

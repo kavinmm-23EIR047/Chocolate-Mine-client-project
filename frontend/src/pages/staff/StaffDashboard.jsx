@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChefHat, ShoppingBag, Clock, CheckCircle, Printer, RefreshCw, Eye, Flame, Truck, Package, X, KeyRound, Phone, ChevronDown, ChevronUp, ChevronRight, LayoutDashboard, History, ClipboardList, MapPin, CreditCard, Calendar, Hash, Search, Plus, Minus, Trash2, Store, ShoppingCart, User, Cake, Filter, Volume2, VolumeX, LayoutGrid, List, Loader2 } from 'lucide-react';
 import staffService from '../../services/staffService';
@@ -652,16 +652,67 @@ const CreateInShopOrderView = () => {
         const mappedCustomCakes = Array.isArray(customThemes) ? customThemes.map(t => {
           const primaryCat = Array.isArray(t.category) && t.category.length > 0 ? t.category[0] : 'custom birthday cakes';
           const cleanCat = primaryCat.toLowerCase().includes('wedding') ? 'Wedding & Anniversary' : 'Custom Birthday Cakes';
-          const firstImage = t.colors?.[0]?.images?.tier1 || t.colors?.[0]?.images?.tier2 || t.image || '';
+
+          const colorsList = (t.colors || [])
+            .filter(c => c && c.isActive !== false)
+            .map(c => {
+              const colorImg = c.images?.tier1 || c.images?.tier2 || c.images?.tier3 || null;
+              return {
+                id: c._id || c.id,
+                name: c.name,
+                hexCode: c.hexCode || c.hex || '',
+                price: Number(c.price || 0),
+                image: colorImg
+              };
+            })
+            .filter(c => Boolean(c.image));
+
+          const firstImage = colorsList[0]?.image || t.image || '';
+
+          const CUSTOM_FLAVOR_PRICES = {
+            'Nutty Truffle': 1560,
+            'Choco Blueberry': 1780,
+            'Lotus Biscoff': 1680,
+            'Choco Biscoff': 1680,
+            'Choco Ferrero': 1780,
+            'Choco Caramel': 1450,
+            'Choco Bounty': 1450,
+            'Black Forest': 1120,
+            'Vanilla': 1120,
+            'Butterscotch': 1120,
+            'Choco Truffle': 1120,
+            'Choco Fudge': 1120,
+            'Red Velvet': 1120
+          };
+
+          const mappedFlavors = (t.flavors || [])
+            .filter(f => f && f.isActive !== false)
+            .map(f => {
+              let fPrice = Number(f.price || 0);
+              if (!fPrice && Array.isArray(f.weights) && f.weights.length > 0) {
+                const w1 = f.weights.find(w => w.kg === 1 || w.kg === '1') || f.weights[0];
+                fPrice = Number(w1.price || 0);
+              }
+              if (!fPrice) {
+                fPrice = CUSTOM_FLAVOR_PRICES[f.name] || 1120;
+              }
+              return {
+                name: f.name,
+                price: fPrice,
+                weights: f.weights || null
+              };
+            });
+
           return {
-            _id: `custom_${t._id}`,
+            _id: t._id,
             name: t.name,
             price: t.basePrice || 1120,
             category: [cleanCat],
             image: firstImage,
             isCustomCakeTheme: true,
             originalTheme: t,
-            flavors: (t.flavors || []).map(f => ({ name: f.name, price: f.price || 0 }))
+            colors: colorsList,
+            flavors: mappedFlavors
           };
         }) : [];
 
@@ -740,22 +791,273 @@ const CreateInShopOrderView = () => {
   };
 
   const handleProductClick = (product) => {
-    const isCake = Array.isArray(product?.category) ? product.category.some(c => typeof c === 'string' && c.toLowerCase().includes('cake')) : (product?.category || '').toLowerCase().includes('cake');
-    const isBento = (Array.isArray(product?.category) ? product.category.some(c => typeof c === 'string' && c.toLowerCase().includes('bento')) : (product?.category || '').toLowerCase().includes('bento')) || product?.cakeType?.toLowerCase().includes('bento');
+    const isCustomCake = Boolean(
+      product?.isCustomCakeTheme ||
+      product?.isCustomCake ||
+      (Array.isArray(product?.category)
+        ? product.category.some(c => typeof c === 'string' && (c.toLowerCase().includes('custom') || c.toLowerCase().includes('wedding') || c.toLowerCase().includes('anniversary')))
+        : String(product?.category || '').toLowerCase().includes('custom') || String(product?.category || '').toLowerCase().includes('wedding'))
+    );
 
-    if (product.hasVariants && product.variants?.length > 0) {
-      setSelectedProductForVariant({ type: 'variants', product });
-    } else if (isCake && product.flavors?.length > 0) {
-      setSelectedProductForVariant({ type: 'flavors', product, isBento });
+    const isTresLeches = Boolean(
+      (Array.isArray(product?.category)
+        ? product.category.some(c => typeof c === 'string' && (c.toLowerCase().includes('tres') || c.toLowerCase().includes('leche')))
+        : String(product?.category || '').toLowerCase().includes('tres') || String(product?.category || '').toLowerCase().includes('leche')) ||
+      (product?.subCategory || '').toLowerCase().includes('tres') ||
+      (product?.subCategory || '').toLowerCase().includes('leche') ||
+      (product?.name || '').toLowerCase().includes('tres') ||
+      (product?.name || '').toLowerCase().includes('leche')
+    );
+
+    const isDreamCake = Boolean(
+      (Array.isArray(product?.category)
+        ? product.category.some(c => typeof c === 'string' && c.toLowerCase().includes('dream'))
+        : String(product?.category || '').toLowerCase().includes('dream')) ||
+      (product?.subCategory || '').toLowerCase().includes('dream') ||
+      (product?.name || '').toLowerCase().includes('dream')
+    );
+
+    const isBento = Boolean(
+      (Array.isArray(product?.category)
+        ? product.category.some(c => typeof c === 'string' && c.toLowerCase().includes('bento'))
+        : String(product?.category || '').toLowerCase().includes('bento')) ||
+      product?.cakeType?.toLowerCase().includes('bento')
+    );
+
+    const isCake = Boolean(
+      !isBento && !isTresLeches && !isDreamCake && (
+        isCustomCake ||
+        (Array.isArray(product?.category)
+          ? product.category.some(c => typeof c === 'string' && c.toLowerCase().includes('cake'))
+          : String(product?.category || '').toLowerCase().includes('cake'))
+      )
+    );
+
+    // Build colors list (For custom cakes & wedding cakes - strictly show colors with valid images)
+    let colors = [];
+    if (isCustomCake) {
+      const themeColors = product?.colors || product?.originalTheme?.colors || [];
+      if (Array.isArray(themeColors) && themeColors.length > 0) {
+        colors = themeColors
+          .filter(c => c && c.isActive !== false)
+          .map(c => {
+            if (typeof c === 'string') return { name: c, hexCode: '', price: 0, image: null };
+            const imgUrl = c.image || c.images?.tier1 || c.images?.tier2 || c.images?.tier3 || null;
+            return {
+              id: c._id || c.id,
+              name: c.name || c.colorName || 'Color',
+              hexCode: c.hexCode || c.hex || '',
+              price: Number(c.price || 0),
+              image: imgUrl
+            };
+          })
+          .filter(c => Boolean(c.image)); // Strictly filter to colors with images
+      }
+    }
+
+    // Build weights list
+    const basePrice = product.offerPrice && product.offerPrice < product.price ? product.offerPrice : (product.price || 0);
+    let weights = [];
+
+    if (isCustomCake) {
+      const customWeightPrices = product?.originalTheme?.customWeightPrices || product?.customWeightPrices || [];
+      const weightLabels = ['1 Kg', '1.5 Kg', '2 Kg', '2.5 Kg', '3 Kg'];
+      const weightMultipliers = { '1 Kg': 1, '1.5 Kg': 1.5, '2 Kg': 2, '2.5 Kg': 2.5, '3 Kg': 3 };
+      
+      weights = weightLabels.map(label => {
+        const foundCustom = Array.isArray(customWeightPrices) ? customWeightPrices.find(c => c.weight === label || c.weight === label.replace(/\s+/g, '')) : null;
+        const price = foundCustom && foundCustom.price ? foundCustom.price : Math.round((basePrice || 1120) * (weightMultipliers[label] || 1));
+        return { label, price };
+      });
+    } else if (isBento) {
+      // Bento cakes are strictly 250g
+      weights = [{ label: '250g', price: basePrice || 380 }];
+    } else if (isTresLeches) {
+      // Tres Leches cakes strictly have ONLY 2 weights: 200g and 600g
+      const dbWeightPrices = product?.weightPrices || product?.customWeightPrices || [];
+      if (Array.isArray(dbWeightPrices) && dbWeightPrices.length > 0) {
+        weights = dbWeightPrices.map(wp => {
+          const rawW = String(wp.weight || '').trim();
+          const formattedLabel = rawW.toLowerCase().endsWith('g') || rawW.toLowerCase().endsWith('kg')
+            ? rawW.toUpperCase().replace('KG', ' Kg').replace('G', 'g')
+            : `${rawW}g`;
+          return {
+            label: formattedLabel,
+            price: Number(wp.price || basePrice)
+          };
+        });
+      } else {
+        weights = [
+          { label: '200g', price: basePrice || 250 },
+          { label: '600g', price: Math.round((basePrice || 250) * 2.4) }
+        ];
+      }
+    } else if (isDreamCake) {
+      // Dream cakes strictly have ONLY 2 weights: 0.25 Kg and 0.5 Kg
+      const dbWeightPrices = product?.weightPrices || product?.customWeightPrices || [];
+      if (Array.isArray(dbWeightPrices) && dbWeightPrices.length > 0) {
+        weights = dbWeightPrices.map(wp => {
+          const rawW = String(wp.weight || '').trim();
+          const formattedLabel = rawW.toLowerCase().endsWith('g') || rawW.toLowerCase().endsWith('kg')
+            ? rawW.toUpperCase().replace('KG', ' Kg').replace('G', 'g')
+            : `${rawW} Kg`;
+          return {
+            label: formattedLabel,
+            price: Number(wp.price || basePrice)
+          };
+        });
+      } else {
+        weights = [
+          { label: '0.25 Kg', price: basePrice || 450 },
+          { label: '0.5 Kg', price: Math.round((basePrice || 450) * 1.8) }
+        ];
+      }
+    } else {
+      // Check if product has explicit weightPrices in DB (e.g. Tres Leches with 200g and 600g)
+      const dbWeightPrices = product?.weightPrices || product?.customWeightPrices || [];
+      const dbWeights = product?.weights || [];
+
+      if (Array.isArray(dbWeightPrices) && dbWeightPrices.length > 0) {
+        weights = dbWeightPrices.map(wp => {
+          const rawW = String(wp.weight || '').trim();
+          const formattedLabel = rawW.toLowerCase().endsWith('g') || rawW.toLowerCase().endsWith('kg')
+            ? rawW.toUpperCase().replace('KG', ' Kg').replace('G', 'g')
+            : (parseFloat(rawW) < 10 ? `${rawW} Kg` : `${rawW}g`);
+          return {
+            label: formattedLabel,
+            price: Number(wp.price || basePrice)
+          };
+        });
+      } else if (Array.isArray(dbWeights) && dbWeights.length > 0) {
+        weights = dbWeights.map(w => {
+          const rawW = String(typeof w === 'string' ? w : w.value || '').trim();
+          const formattedLabel = rawW.toLowerCase().endsWith('g') || rawW.toLowerCase().endsWith('kg')
+            ? rawW.toUpperCase().replace('KG', ' Kg').replace('G', 'g')
+            : (parseFloat(rawW) < 10 ? `${rawW} Kg` : `${rawW}g`);
+          return {
+            label: formattedLabel,
+            price: basePrice
+          };
+        });
+      } else if (product?.hasVariants && Array.isArray(product.variants) && product.variants.length > 0) {
+        const weightMap = new Map();
+        product.variants.forEach(v => {
+          if (v.weight && !weightMap.has(v.weight)) {
+            weightMap.set(v.weight, Number(v.price || basePrice));
+          }
+        });
+        weights = Array.from(weightMap.entries()).map(([wLabel, wPrice]) => ({
+          label: wLabel,
+          price: wPrice
+        }));
+      } else if (isCake) {
+        // Standard birthday cakes fallback weights
+        const standardWeightLabels = ['500g', '1 Kg', '1.5 Kg', '2 Kg', '2.5 Kg', '3 Kg'];
+        const multipliers = { '500g': 1, '1 Kg': 2, '1.5 Kg': 3, '2 Kg': 4, '2.5 Kg': 5, '3 Kg': 6 };
+        weights = standardWeightLabels.map(label => {
+          let p = Math.round(basePrice * (multipliers[label] || 1));
+          if (label === '500g') p = basePrice;
+          return { label, price: p };
+        });
+      }
+    }
+
+    // Build flavors list
+    let flavors = [];
+    if (isCustomCake) {
+      const prodFlavors = product?.flavors || product?.originalTheme?.flavors || [];
+      const CUSTOM_FLAVOR_PRICES = {
+        'Nutty Truffle': 1560,
+        'Choco Blueberry': 1780,
+        'Lotus Biscoff': 1680,
+        'Choco Biscoff': 1680,
+        'Choco Ferrero': 1780,
+        'Choco Caramel': 1450,
+        'Choco Bounty': 1450,
+        'Black Forest': 1120,
+        'Vanilla': 1120,
+        'Butterscotch': 1120,
+        'Choco Truffle': 1120,
+        'Choco Fudge': 1120,
+        'Red Velvet': 1120
+      };
+
+      if (Array.isArray(prodFlavors) && prodFlavors.length > 0) {
+        flavors = prodFlavors.map(f => {
+          if (typeof f === 'string') {
+            return { name: f, price: CUSTOM_FLAVOR_PRICES[f] || 1120 };
+          }
+          let fPrice = Number(f.price || 0);
+          if (!fPrice && Array.isArray(f.weights) && f.weights.length > 0) {
+            const w1 = f.weights.find(w => w.kg === 1 || w.kg === '1') || f.weights[0];
+            fPrice = Number(w1.price || 0);
+          }
+          if (!fPrice) {
+            fPrice = CUSTOM_FLAVOR_PRICES[f.name] || 1120;
+          }
+          return { name: f.name, price: fPrice, weights: f.weights || null };
+        });
+      } else {
+        flavors = [
+          { name: 'Black Forest', price: 1120 },
+          { name: 'Choco Truffle', price: 1120 },
+          { name: 'Choco Fudge', price: 1120 },
+          { name: 'Butterscotch', price: 1120 },
+          { name: 'Vanilla', price: 1120 },
+          { name: 'Red Velvet', price: 1120 },
+          { name: 'Nutty Truffle', price: 1560 },
+          { name: 'Choco Blueberry', price: 1780 },
+          { name: 'Lotus Biscoff', price: 1680 },
+          { name: 'Choco Biscoff', price: 1680 },
+          { name: 'Choco Ferrero', price: 1780 }
+        ];
+      }
+    } else if (isBento) {
+      const prodFlavors = product?.flavors || [];
+      if (Array.isArray(prodFlavors) && prodFlavors.length > 0) {
+        flavors = prodFlavors.map(f => {
+          const fName = typeof f === 'string' ? f : f.name;
+          const fPrice = (typeof f === 'object' && f.price && Number(f.price) > 0) ? Number(f.price) : (BENTO_FLAVOR_PRICES[fName] || 0);
+          return { name: fName, price: fPrice };
+        });
+      } else {
+        // Standard bento flavors list matching store front
+        flavors = Object.entries(BENTO_FLAVOR_PRICES).map(([name, price]) => ({
+          name,
+          price: price
+        }));
+      }
+    } else if (product?.flavors && Array.isArray(product.flavors) && product.flavors.length > 0) {
+      flavors = product.flavors.map(f => typeof f === 'string' ? { name: f, price: 0 } : { name: f.name, price: f.price || 0 });
+    } else if (product?.hasVariants && Array.isArray(product.variants) && product.variants.length > 0) {
+      const uniqueFlavors = Array.from(new Set(product.variants.map(v => v.flavor).filter(Boolean)));
+      if (uniqueFlavors.length > 1) {
+        flavors = uniqueFlavors.map(f => ({ name: f, price: 0 }));
+      }
+    }
+
+    if (colors.length > 0 || weights.length > 0 || flavors.length > 0) {
+      setSelectedProductForVariant({
+        product,
+        config: {
+          isCustomCake,
+          isCake,
+          isBento,
+          colors,
+          weights,
+          flavors
+        }
+      });
     } else {
       addToCart(product);
     }
   };
 
-  const addToCart = (product, flavor = null, weight = null, exactPrice = null) => {
-    const productId = product._id?.$oid || product._id;
+  const addToCart = (product, flavor = null, weight = null, exactPrice = null, color = null, customImage = null) => {
+    const rawId = product._id?.$oid || product._id;
+    const productId = String(rawId).replace(/^custom_/, '');
     const existingIdx = cart.findIndex(
-      (item) => item.productId === productId && item.selectedFlavor === flavor && item.selectedWeight === weight
+      (item) => item.productId === productId && item.selectedFlavor === flavor && item.selectedWeight === weight && item.selectedColor === color
     );
 
     if (existingIdx !== -1) {
@@ -778,9 +1080,11 @@ const CreateInShopOrderView = () => {
         name: product.name,
         price: price,
         qty: 1,
-        image: product.image || '',
+        image: customImage || product.image || '',
         selectedFlavor: flavor,
         selectedWeight: weight,
+        selectedColor: color,
+        isCustomCake: Boolean(product.isCustomCakeTheme || product.isCustomCake),
         category: Array.isArray(product.category) ? product.category.join(', ') : (product.category || 'General')
       }]);
     }
@@ -800,7 +1104,8 @@ const CreateInShopOrderView = () => {
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
   const gst = Math.round((subtotal * 0.05) / 1.05);
-  const total = subtotal;
+  const convenienceFee = subtotal > 0 ? Math.round(subtotal * 0.025) : 0;
+  const total = subtotal + convenienceFee;
 
   const handlePlaceOrder = async () => {
     if (!customerName.trim()) return toast.error('Please enter customer name');
@@ -1027,7 +1332,7 @@ const CreateInShopOrderView = () => {
               <div className="space-y-3">
                 {cart.map((item, idx) => (
                   <motion.div
-                    key={`${item.productId}-${item.selectedFlavor}-${item.selectedWeight}-${idx}`}
+                    key={`${item.productId}-${item.selectedColor || ''}-${item.selectedFlavor || ''}-${item.selectedWeight || ''}-${idx}`}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     className="flex items-center gap-3 p-3 bg-card-soft border border-border/30 rounded-xl"
@@ -1035,9 +1340,13 @@ const CreateInShopOrderView = () => {
                     {item.image && <img src={getOptimizedCloudinaryUrl(item.image, 200)} alt={item.name} className="w-12 h-12 rounded-lg object-cover border border-border/20" />}
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-sm text-heading truncate">{item.name}</p>
-                      {(item.selectedFlavor || item.selectedWeight) && (
+                      {(item.selectedColor || item.selectedFlavor || item.selectedWeight) && (
                         <p className="text-[10px] text-primary font-bold">
-                          {item.selectedFlavor} {item.selectedFlavor && item.selectedWeight ? '·' : ''} {item.selectedWeight}
+                          {[
+                            item.selectedColor && `Color: ${item.selectedColor}`,
+                            item.selectedWeight && `Weight: ${item.selectedWeight}`,
+                            item.selectedFlavor && `Flavor: ${item.selectedFlavor}`
+                          ].filter(Boolean).join(' · ')}
                         </p>
                       )}
                       <p className="text-xs text-muted">{formatCurrency(item.price)} each</p>
@@ -1106,19 +1415,23 @@ const CreateInShopOrderView = () => {
               <h3 className="font-black text-sm text-heading uppercase tracking-widest mb-4">Order Summary</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted">Subtotal</span>
-                  <span className="font-semibold text-heading">{formatCurrency(subtotal)}</span>
+                  <span className="text-muted">PRODUCT PRICE</span>
+                  <span className="font-extrabold text-heading">{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted">GST (5%, included)</span>
                   <span className="font-semibold text-heading">{formatCurrency(gst)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted">Delivery</span>
-                  <span className="font-semibold text-success">FREE</span>
+                  <span className="text-muted">Delivery Fee</span>
+                  <span className="font-semibold text-muted">—</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted">Convenience Fee (2.5%)</span>
+                  <span className="font-extrabold text-heading">{formatCurrency(convenienceFee)}</span>
                 </div>
                 <div className="flex justify-between font-black pt-3 border-t border-border text-lg">
-                  <span className="text-heading">Total</span>
+                  <span className="text-heading">TOTAL</span>
                   <span className="text-primary">{formatCurrency(total)}</span>
                 </div>
               </div>
@@ -1144,69 +1457,276 @@ const CreateInShopOrderView = () => {
 
         <AnimatePresence>
           {selectedProductForVariant && (
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-              <motion.div 
-                initial={{ scale: 0.95, opacity: 0 }} 
-                animate={{ scale: 1, opacity: 1 }} 
-                exit={{ scale: 0.95, opacity: 0 }} 
-                className="bg-card border border-border rounded-2xl p-5 max-w-sm w-full shadow-2xl"
-              >
-                <h3 className="text-lg font-black text-heading mb-1">{selectedProductForVariant.product.name}</h3>
-                <p className="text-xs text-muted mb-4">Select a flavor {selectedProductForVariant.type === 'variants' ? 'and weight' : ''} variant</p>
-                
-                <div className="space-y-2 max-h-72 overflow-y-auto custom-scrollbar pr-1">
-                  {selectedProductForVariant.type === 'variants' && selectedProductForVariant.product.variants.map((v, idx) => (
-                    <button 
-                      key={idx} 
-                      onClick={() => {
-                        addToCart(selectedProductForVariant.product, v.flavor, v.weight, v.price);
-                        setSelectedProductForVariant(null);
-                      }} 
-                      className="w-full flex items-center justify-between p-3 rounded-xl bg-input/50 border border-input-border hover:bg-secondary/10 hover:border-secondary/40 transition-all text-left group"
-                    >
-                      <div>
-                        <p className="font-bold text-sm text-heading group-hover:text-secondary transition-colors">{v.flavor}</p>
-                        <p className="text-[10px] text-muted font-medium">{v.weight}</p>
-                      </div>
-                      <p className="font-black text-primary bg-primary/10 px-2 py-1 rounded-lg">{formatCurrency(v.price)}</p>
-                    </button>
-                  ))}
-
-                  {selectedProductForVariant.type === 'flavors' && selectedProductForVariant.product.flavors.map((f, idx) => {
-                    const safePrice = selectedProductForVariant.product.price || 0;
-                    const basePrice = selectedProductForVariant.product.offerPrice && selectedProductForVariant.product.offerPrice < safePrice ? selectedProductForVariant.product.offerPrice : safePrice;
-                    const finalPrice = basePrice + getFlavorPrice(f);
-                    const weight = selectedProductForVariant.isBento ? '250g' : '500g';
-                    return (
-                      <button 
-                        key={idx} 
-                        onClick={() => {
-                          addToCart(selectedProductForVariant.product, f.name, weight, finalPrice);
-                          setSelectedProductForVariant(null);
-                        }} 
-                        className="w-full flex items-center justify-between p-3 rounded-xl bg-input/50 border border-input-border hover:bg-secondary/10 hover:border-secondary/40 transition-all text-left group"
-                      >
-                        <div>
-                          <p className="font-bold text-sm text-heading group-hover:text-secondary transition-colors">{f.name}</p>
-                          <p className="text-[10px] text-muted font-medium">{weight}</p>
-                        </div>
-                        <p className="font-black text-primary bg-primary/10 px-2 py-1 rounded-lg">{formatCurrency(finalPrice)}</p>
-                      </button>
-                    );
-                  })}
-                </div>
-                
-                <button 
-                  onClick={() => setSelectedProductForVariant(null)} 
-                  className="w-full mt-4 p-3 rounded-xl bg-error/10 text-error hover:bg-error/20 font-bold text-sm transition-colors"
-                >
-                  Cancel
-                </button>
-              </motion.div>
-            </div>
+            <CakeCustomizationModal
+              selectedData={selectedProductForVariant}
+              onClose={() => setSelectedProductForVariant(null)}
+              onAddToCart={addToCart}
+            />
           )}
         </AnimatePresence>
       </div>
+    </div>
+  );
+};
+
+// ─── CAKE CUSTOMIZATION & VARIANT MODAL FOR IN-SHOP ORDERS ───────────────────
+const CakeCustomizationModal = ({ selectedData, onClose, onAddToCart }) => {
+  if (!selectedData) return null;
+  const { product, config = {} } = selectedData;
+  const { colors = [], weights = [], flavors = [], isCustomCake = false } = config;
+
+  const [selectedColor, setSelectedColor] = useState(colors[0] || null);
+  const [selectedWeight, setSelectedWeight] = useState(weights[0] || null);
+  const [selectedFlavor, setSelectedFlavor] = useState(flavors[0] || null);
+
+  const currentWeights = useMemo(() => {
+    if (isCustomCake && selectedFlavor) {
+      const flavorBasePrice = Number(selectedFlavor.price || 1120);
+      const weightLabels = ['1 Kg', '1.5 Kg', '2 Kg', '2.5 Kg', '3 Kg'];
+      const weightMultipliers = { '1 Kg': 1, '1.5 Kg': 1.5, '2 Kg': 2, '2.5 Kg': 2.5, '3 Kg': 3 };
+      
+      return weightLabels.map(label => {
+        if (selectedFlavor?.weights && Array.isArray(selectedFlavor.weights)) {
+          const numKg = parseFloat(label);
+          const found = selectedFlavor.weights.find(w => w.kg === numKg);
+          if (found && found.price) {
+            return { label, price: found.price };
+          }
+        }
+        const price = Math.round(flavorBasePrice * (weightMultipliers[label] || 1));
+        return { label, price };
+      });
+    }
+    return weights;
+  }, [isCustomCake, selectedFlavor, weights]);
+
+  const effectiveWeight = useMemo(() => {
+    if (!selectedWeight) return currentWeights[0] || null;
+    const match = currentWeights.find(w => w.label === selectedWeight.label);
+    return match || selectedWeight;
+  }, [currentWeights, selectedWeight]);
+
+  const baseWeightPrice = effectiveWeight ? effectiveWeight.price : (product.price || 0);
+  const extraColorPrice = selectedColor ? (selectedColor.price || 0) : 0;
+  const extraFlavorPrice = !isCustomCake && selectedFlavor ? (selectedFlavor.price || 0) : 0;
+  const totalPrice = baseWeightPrice + extraColorPrice + extraFlavorPrice;
+
+  const handleConfirm = () => {
+    const finalImage = selectedColor?.image || product.image;
+    onAddToCart(
+      product,
+      selectedFlavor?.name || null,
+      effectiveWeight?.label || null,
+      totalPrice,
+      selectedColor?.name || null,
+      finalImage
+    );
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+      <motion.div 
+        initial={{ scale: 0.95, opacity: 0 }} 
+        animate={{ scale: 1, opacity: 1 }} 
+        exit={{ scale: 0.95, opacity: 0 }} 
+        className="bg-card border border-border rounded-3xl p-5 sm:p-6 max-w-lg w-full shadow-2xl space-y-4 max-h-[90vh] flex flex-col justify-between overflow-hidden"
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between border-b border-border/50 pb-3">
+          <div className="flex items-center gap-3 pr-3 min-w-0">
+            {(selectedColor?.image || product.image) && (
+              <img
+                src={getOptimizedCloudinaryUrl(selectedColor?.image || product.image, 150)}
+                alt={product.name}
+                className="w-12 h-12 rounded-xl object-cover border border-border/40 shrink-0 shadow-xs"
+              />
+            )}
+            <div className="min-w-0">
+              <span className="px-2.5 py-0.5 rounded-md bg-secondary/10 text-secondary text-[10px] font-black uppercase tracking-wider mb-0.5 inline-block">
+                {isCustomCake ? 'CUSTOM CAKE SELECTION' : 'CAKE VARIANTS'}
+              </span>
+              <h3 className="text-base font-extrabold text-heading tracking-tight leading-snug truncate">{product.name}</h3>
+            </div>
+          </div>
+          <div className="text-right shrink-0">
+            <span className="text-[10px] font-black text-muted uppercase tracking-wider block">Price</span>
+            <span className="text-xl font-black text-primary">{formatCurrency(totalPrice)}</span>
+          </div>
+        </div>
+
+        {/* Options List */}
+        <div className="space-y-4 overflow-y-auto custom-scrollbar pr-1 flex-1 py-1">
+          {/* STEP 1: COLOR SELECTION (Color -> Weight -> Flavor requested for custom cakes) */}
+          {colors.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-black text-heading uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="w-4 h-4 rounded-full bg-secondary text-white text-[10px] font-black flex items-center justify-center">1</span>
+                  Select Color
+                </label>
+                {selectedColor && (
+                  <span className="text-xs font-bold text-secondary">
+                    {selectedColor.name} {selectedColor.price > 0 ? `(+${formatCurrency(selectedColor.price)})` : ''}
+                  </span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {colors.map((c, idx) => {
+                  const isSelected = selectedColor?.name === c.name;
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setSelectedColor(c)}
+                      className={`flex items-center justify-between p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                        isSelected
+                          ? 'border-secondary bg-secondary/10 ring-2 ring-secondary/30 shadow-xs'
+                          : 'border-border/60 bg-card-soft hover:border-secondary/50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        {c.image ? (
+                          <img
+                            src={getOptimizedCloudinaryUrl(c.image, 100)}
+                            alt={c.name}
+                            className="w-7 h-7 rounded-lg object-cover border border-border/40 shrink-0 shadow-xs"
+                          />
+                        ) : c.hexCode ? (
+                          <span
+                            className="w-4 h-4 rounded-full border border-black/20 shrink-0 shadow-xs"
+                            style={{ backgroundColor: c.hexCode }}
+                          />
+                        ) : (
+                          <span className="w-4 h-4 rounded-full bg-gradient-to-br from-amber-400 to-rose-400 border border-black/10 shrink-0" />
+                        )}
+                        <span className="text-xs font-bold text-heading truncate">{c.name}</span>
+                      </div>
+                      {c.price > 0 && (
+                        <span className="text-[10px] font-black text-secondary bg-secondary/10 px-1.5 py-0.5 rounded-md shrink-0 ml-1">
+                          +{formatCurrency(c.price)}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* STEP 2: WEIGHT SELECTION */}
+          {currentWeights.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-black text-heading uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="w-4 h-4 rounded-full bg-secondary text-white text-[10px] font-black flex items-center justify-center">
+                    {colors.length > 0 ? '2' : '1'}
+                  </span>
+                  Select Weight
+                </label>
+                {effectiveWeight && (
+                  <span className="text-xs font-bold text-secondary">{effectiveWeight.label}</span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {currentWeights.map((w, idx) => {
+                  const isSelected = effectiveWeight?.label === w.label;
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setSelectedWeight(w)}
+                      className={`flex flex-col p-2.5 rounded-xl border transition-all text-left cursor-pointer ${
+                        isSelected
+                          ? 'border-secondary bg-secondary/10 ring-2 ring-secondary/30 shadow-xs'
+                          : 'border-border/60 bg-card-soft hover:border-secondary/50'
+                      }`}
+                    >
+                      <span className="text-xs font-black text-heading">{w.label}</span>
+                      <span className="text-[11px] font-extrabold text-primary mt-0.5">{formatCurrency(w.price)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* STEP 3: FLAVOR SELECTION */}
+          {flavors.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-black text-heading uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="w-4 h-4 rounded-full bg-secondary text-white text-[10px] font-black flex items-center justify-center">
+                    {colors.length > 0 ? '3' : '2'}
+                  </span>
+                  Select Flavor
+                </label>
+                {selectedFlavor && (
+                  <span className="text-xs font-bold text-secondary">{selectedFlavor.name}</span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {flavors.map((f, idx) => {
+                  const isSelected = selectedFlavor?.name === f.name;
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setSelectedFlavor(f)}
+                      className={`flex items-center justify-between p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                        isSelected
+                          ? 'border-secondary bg-secondary/10 ring-2 ring-secondary/30 shadow-xs'
+                          : 'border-border/60 bg-card-soft hover:border-secondary/50'
+                      }`}
+                    >
+                      <span className="text-xs font-bold text-heading truncate">{f.name}</span>
+                      {f.price > 0 && (
+                        <span className="text-[10px] font-black text-secondary bg-secondary/10 px-1.5 py-0.5 rounded-md shrink-0 ml-1">
+                          +{formatCurrency(f.price)}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="pt-3 border-t border-border/50 space-y-3 shrink-0">
+          <div className="p-2.5 bg-card-soft border border-border/60 rounded-xl text-xs">
+            <span className="text-[9px] font-black text-muted uppercase tracking-wider block">Selection Summary</span>
+            <p className="font-extrabold text-heading text-xs truncate">
+              {[
+                selectedColor?.name && `Color: ${selectedColor.name}`,
+                effectiveWeight?.label && `Weight: ${effectiveWeight.label}`,
+                selectedFlavor?.name && `Flavor: ${selectedFlavor.name}`
+              ].filter(Boolean).join(' · ')}
+            </p>
+          </div>
+
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              className="flex-1 py-3 text-xs font-bold rounded-xl"
+              onClick={onClose}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              className="flex-[2] py-3 text-xs font-black rounded-xl shadow-md"
+              onClick={handleConfirm}
+            >
+              + Add to Order ({formatCurrency(totalPrice)})
+            </Button>
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 };
@@ -1533,6 +2053,15 @@ const StaffDashboard = () => {
                           <div className="flex-1 min-w-0 pr-2">
                             <p className="font-extrabold truncate text-heading text-xs">{item.name}</p>
                             <p className="text-[11px] text-muted font-semibold mt-0.5">{item.qty}x · {formatCurrency(item.price)} each</p>
+                            {(item.selectedColor || item.selectedFlavor || item.selectedWeight) && (
+                              <p className="text-[10px] text-primary font-bold mt-0.5">
+                                {[
+                                  item.selectedColor && `Color: ${item.selectedColor}`,
+                                  item.selectedWeight && `Weight: ${item.selectedWeight}`,
+                                  item.selectedFlavor && `Flavor: ${item.selectedFlavor}`
+                                ].filter(Boolean).join(' · ')}
+                              </p>
+                            )}
                           </div>
                           <p className="font-black text-xs text-heading shrink-0">{formatCurrency(item.price * item.qty)}</p>
                         </div>
@@ -1540,17 +2069,34 @@ const StaffDashboard = () => {
                     </div>
                   </div>
 
-                  <div className="pt-3 mt-4 border-t border-border/40 flex justify-between items-center text-xs">
+                  <div className="pt-3 mt-4 border-t border-border/40 flex flex-wrap items-center justify-between gap-2 text-xs">
                     <div>
                       <span className="text-[10px] font-black text-muted uppercase tracking-widest block">Payment</span>
                       <span className="font-extrabold text-heading">Counter · <span className="bg-emerald-700 text-white font-black px-2 py-0.5 rounded-md text-[11px]">Paid</span></span>
                     </div>
-                    {order.createdByStaff && (
-                      <div className="text-right">
-                        <span className="text-[10px] font-black text-muted uppercase tracking-widest block">Staff</span>
-                        <span className="font-extrabold text-heading">{order.createdByStaff?.name || 'Staff'}</span>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => staffService.printKOT(order._id)}
+                        className="px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 font-extrabold text-xs flex items-center gap-1.5 transition-colors cursor-pointer border border-amber-500/30"
+                        title="Print Kitchen Order Ticket"
+                      >
+                        <Printer size={13} />
+                        <span>KOT</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const apiUrl = import.meta.env.VITE_API_URL || '/api/v1';
+                          window.open(`${apiUrl}/orders/${order._id}/invoice`, '_blank');
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-secondary/10 hover:bg-secondary/20 text-secondary font-extrabold text-xs flex items-center gap-1.5 transition-colors cursor-pointer border border-secondary/30"
+                        title="Download & Print Invoice PDF"
+                      >
+                        <Printer size={13} />
+                        <span>Invoice</span>
+                      </button>
+                    </div>
                   </div>
                 </motion.div>
               ))}

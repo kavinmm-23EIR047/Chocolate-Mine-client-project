@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const PDFDocument = require('pdfkit');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
@@ -293,7 +294,10 @@ exports.getOrderDetails = asyncHandler(async (req, res, next) => {
 // @desc    Get KOT Data
 // @route   GET /api/v1/staff/orders/:id/kot
 exports.getKOTData = asyncHandler(async (req, res, next) => {
-  const order = await Order.findById(req.params.id);
+  let order = await Order.findById(req.params.id);
+  if (!order) {
+    order = await InShopOrder.findById(req.params.id);
+  }
   
   if (!order) {
     return next(new AppError('Order not found', 404));
@@ -308,7 +312,10 @@ exports.getKOTData = asyncHandler(async (req, res, next) => {
 // @desc    Print KOT
 // @route   GET /api/v1/staff/orders/:id/kot/print
 exports.printKOT = asyncHandler(async (req, res, next) => {
-  const order = await Order.findById(req.params.id).populate('userId', 'name phone');
+  let order = await Order.findById(req.params.id).populate('userId', 'name phone');
+  if (!order) {
+    order = await InShopOrder.findById(req.params.id);
+  }
   
   if (!order) {
     return next(new AppError('Order not found', 404));
@@ -411,11 +418,14 @@ exports.printKOT = asyncHandler(async (req, res, next) => {
   order.items.forEach((item, index) => {
     doc.font('Helvetica-Bold').fontSize(10).fillColor('#000000').text(`${item.name} x ${item.qty}`);
     
-    if (item.selectedFlavor || item.customFlavor) {
-      doc.font('Helvetica-Bold').fontSize(8.5).fillColor('#000000').text(`  Flavour : ${item.selectedFlavor || item.customFlavor}`);
+    if (item.selectedColor) {
+      doc.font('Helvetica-Bold').fontSize(8.5).fillColor('#000000').text(`  Color   : ${item.selectedColor}`);
     }
     if (item.selectedWeight || item.customWeight) {
       doc.font('Helvetica-Bold').fontSize(8.5).fillColor('#000000').text(`  Weight  : ${item.selectedWeight || item.customWeight}`);
+    }
+    if (item.selectedFlavor || item.customFlavor) {
+      doc.font('Helvetica-Bold').fontSize(8.5).fillColor('#000000').text(`  Flavour : ${item.selectedFlavor || item.customFlavor}`);
     }
     
     if (item.isCustomCake && item.customDetails) {
@@ -573,11 +583,16 @@ exports.createInShopOrder = asyncHandler(async (req, res, next) => {
       return next(new AppError(`Validation failed for item: ${item.name || 'Unknown'}. Missing required fields.`, 400));
     }
 
+    let cleanProductId = String(item.productId).replace(/^custom_/, '');
+    if (!mongoose.Types.ObjectId.isValid(cleanProductId)) {
+      cleanProductId = new mongoose.Types.ObjectId().toString();
+    }
+
     const itemTotal = Number(item.price) * Number(item.qty);
     subtotal += itemTotal;
 
     orderItems.push({
-      productId: item.productId,
+      productId: cleanProductId,
       name: item.name,
       qty: Number(item.qty),
       price: Number(item.price),
@@ -585,6 +600,8 @@ exports.createInShopOrder = asyncHandler(async (req, res, next) => {
       image: item.image || '',
       selectedFlavor: item.selectedFlavor || null,
       selectedWeight: item.selectedWeight || null,
+      selectedColor: item.selectedColor || null,
+      isCustomCake: item.isCustomCake || false,
       category: item.category || 'General'
     });
   }
@@ -592,7 +609,8 @@ exports.createInShopOrder = asyncHandler(async (req, res, next) => {
   // In-shop product prices already include 5% GST; record the embedded
   // component for reporting without adding tax a second time.
   const gst = Math.round((subtotal * 0.05) / 1.05);
-  const total = subtotal;
+  const convenienceFee = subtotal > 0 ? Math.round(subtotal * 0.025) : 0;
+  const total = subtotal + convenienceFee;
 
   // Create the order
   const order = await InShopOrder.create({
@@ -603,7 +621,7 @@ exports.createInShopOrder = asyncHandler(async (req, res, next) => {
     subtotal,
     discount: 0,
     deliveryCharge: 0,
-    convenienceFee: 0,
+    convenienceFee,
     gst,
     total,
     paymentMethod: 'IN_SHOP',

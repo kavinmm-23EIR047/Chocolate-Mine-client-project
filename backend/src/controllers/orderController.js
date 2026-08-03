@@ -1,4 +1,5 @@
 const Order = require('../models/Order');
+const InShopOrder = require('../models/InShopOrder');
 const User = require('../models/User');
 const Product = require('../models/Product');
 const bcrypt = require('bcryptjs');
@@ -270,17 +271,22 @@ exports.getTrackingData = asyncHandler(async (req, res, next) => {
 
 // @desc Download invoice
 exports.downloadInvoice = asyncHandler(async (req, res, next) => {
-  const order = await Order.findById(req.params.id);
+  let order = await Order.findById(req.params.id);
+  let isInShop = false;
+  if (!order) {
+    order = await InShopOrder.findById(req.params.id);
+    isInShop = true;
+  }
 
   if (!order) {
     return next(new AppError('Order not found', 404));
   }
 
-  const isOwner = order.userId.toString() === req.user._id.toString();
+  const isOwner = order.userId && order.userId.toString() === req.user._id.toString();
   const isAdminOrStaff =
     req.user.role === 'admin' || req.user.role === 'staff';
 
-  if (!isOwner && !isAdminOrStaff) {
+  if (!isInShop && !isOwner && !isAdminOrStaff) {
     return next(new AppError('Unauthorized invoice access', 403));
   }
 
@@ -288,7 +294,7 @@ exports.downloadInvoice = asyncHandler(async (req, res, next) => {
 
   res.set({
     'Content-Type': 'application/pdf',
-    'Content-Disposition': `attachment; filename=Invoice-${order.orderNumber}.pdf`
+    'Content-Disposition': `attachment; filename=Invoice-${order.orderNumber || 'InShop'}.pdf`
   });
 
   res.send(pdfBuffer);
