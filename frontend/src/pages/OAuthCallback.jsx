@@ -12,8 +12,12 @@ const OAuthCallback = () => {
     
     if (token) {
       console.log('🍭 OAuthCallback: Google login successful, storing token...');
-      sessionStorage.setItem('token', token);
-      localStorage.setItem('token', token);
+      try {
+        sessionStorage.setItem('token', token);
+        localStorage.setItem('token', token);
+      } catch (storageError) {
+        console.warn('OAuth token storage unavailable; continuing with session cookie.', storageError);
+      }
       navigate('/', { replace: true }); 
     } else {
       const error = searchParams.get('error');

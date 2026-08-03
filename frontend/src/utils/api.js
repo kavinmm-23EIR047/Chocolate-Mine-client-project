@@ -20,6 +20,7 @@ export const getApiBaseUrl = () => {
 const api = axios.create({
   baseURL: getApiBaseUrl(),
   withCredentials: true,
+  timeout: 15000,
 });
 
 /* ----------------------------------------

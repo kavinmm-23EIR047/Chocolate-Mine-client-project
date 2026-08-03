@@ -312,9 +312,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const updateUser = (userData) => {
+  const updateUser = (userData, token = null) => {
     setUser(userData);
     safeSet(sessionStorage, 'user', JSON.stringify(userData));
+    safeSet(localStorage, 'user', JSON.stringify(userData));
+    if (token) {
+      safeSet(sessionStorage, 'token', token);
+      safeSet(localStorage, 'token', token);
+    }
   };
 
   const isAuthenticated = !!user;

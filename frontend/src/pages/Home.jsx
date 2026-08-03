@@ -43,7 +43,9 @@ const Home = () => {
     try {
       return !localStorage.getItem('tcm_home_loader_done');
     } catch {
-      return true;
+      // Safari Private Browsing can deny localStorage. Do not show a
+      // fullscreen loader that cannot be persisted in that environment.
+      return false;
     }
   });
 

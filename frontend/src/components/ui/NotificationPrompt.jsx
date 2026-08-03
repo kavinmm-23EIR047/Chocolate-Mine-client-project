@@ -3,6 +3,13 @@ import { useAuth } from '../../context/AuthContext';
 import { requestFirebaseNotificationPermission } from '../../firebase';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
+
+const safeStorageGet = (storage, key) => {
+  try { return storage.getItem(key); } catch { return null; }
+};
+const safeStorageSet = (storage, key, value) => {
+  try { storage.setItem(key, value); } catch { /* Private Browsing may block storage. */ }
+};
 import { Bell, BellOff } from 'lucide-react';
 import Modal from './Modal';
 import Button from './Button';
@@ -18,7 +25,7 @@ const NotificationPrompt = () => {
   // Whenever notifications are enabled for the user, permanently remember not to prompt again
   useEffect(() => {
     if (hasFcmToken && typeof window !== 'undefined') {
-      localStorage.setItem('notificationPromptDoNotAsk', 'true');
+      safeStorageSet(localStorage, 'notificationPromptDoNotAsk', 'true');
     }
   }, [hasFcmToken]);
 
@@ -27,7 +34,7 @@ const NotificationPrompt = () => {
 
     const isGranted = window.Notification.permission === 'granted';
     const isDenied = window.Notification.permission === 'denied';
-    const doNotAskAgain = localStorage.getItem('notificationPromptDoNotAsk') === 'true';
+    const doNotAskAgain = safeStorageGet(localStorage, 'notificationPromptDoNotAsk') === 'true';
 
     // Auto-prompt on each session ONLY for logged-in users who haven't enabled notifications yet and haven't selected "Don't ask again"
     if (
@@ -38,13 +45,13 @@ const NotificationPrompt = () => {
       !doNotAskAgain
     ) {
       // Use sessionStorage so the prompt re-appears each new browser session if not permanently disabled
-      const hasSeenPromptThisSession = sessionStorage.getItem('notificationPromptSeen');
+      const hasSeenPromptThisSession = safeStorageGet(sessionStorage, 'notificationPromptSeen');
       if (!hasSeenPromptThisSession) {
         // Slight delay so it doesn't interrupt immediate page load
         const timer = setTimeout(() => {
           const recheckGranted = window.Notification?.permission === 'granted';
-          const recheckDoNotAsk = localStorage.getItem('notificationPromptDoNotAsk') === 'true';
-          const recheckSeen = sessionStorage.getItem('notificationPromptSeen') === '1';
+          const recheckDoNotAsk = safeStorageGet(localStorage, 'notificationPromptDoNotAsk') === 'true';
+          const recheckSeen = safeStorageGet(sessionStorage, 'notificationPromptSeen') === '1';
           const recheckHasToken = user?.fcmTokens && user.fcmTokens.length > 0;
 
           if (!recheckGranted && !recheckDoNotAsk && !recheckSeen && !recheckHasToken) {
@@ -65,12 +72,12 @@ const NotificationPrompt = () => {
 
   const handleClose = () => {
     // Only store in sessionStorage (resets on browser close) so it re-prompts next session unless "Don't ask again" was selected
-    sessionStorage.setItem('notificationPromptSeen', '1');
+    safeStorageSet(sessionStorage, 'notificationPromptSeen', '1');
     setIsOpen(false);
   };
 
   const handleDoNotAskAgain = () => {
-    localStorage.setItem('notificationPromptDoNotAsk', 'true');
+    safeStorageSet(localStorage, 'notificationPromptDoNotAsk', 'true');
     setIsOpen(false);
   };
 
@@ -85,7 +92,7 @@ const NotificationPrompt = () => {
         // Enable notifications (Explicit request)
         const success = await enableNotifications();
         if (success) {
-          localStorage.setItem('notificationPromptDoNotAsk', 'true');
+          safeStorageSet(localStorage, 'notificationPromptDoNotAsk', 'true');
           toast.success("🎉 Push notifications enabled! You'll get order updates and offers.");
         } else if (Notification.permission === 'denied') {
           toast.error(

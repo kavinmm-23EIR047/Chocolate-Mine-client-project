@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, User, UserPlus, Phone, Eye, EyeOff, ShieldCheck, ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
 import authService from '../services/authService';
@@ -17,6 +18,7 @@ const Register = () => {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [timer, setTimer] = useState(60);
   const navigate = useNavigate();
+  const { updateUser } = useAuth();
   const otpRefs = useRef([]);
 
   useEffect(() => {
@@ -91,12 +93,7 @@ const Register = () => {
       
       const { user: userData, token } = res.data;
       
-      if (token && userData) {
-        localStorage.setItem('token', token);
-        sessionStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(userData));
-        sessionStorage.setItem('user', JSON.stringify(userData));
-      }
+      if (userData) updateUser(userData, token);
 
       toast.success('Account verified and created successfully!');
       navigate('/', { replace: true }); 
