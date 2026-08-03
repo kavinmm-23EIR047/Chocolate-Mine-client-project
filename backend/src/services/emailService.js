@@ -112,11 +112,37 @@ const sendViaBrevo = async (options) => {
       'Accept': 'application/json'
     },
     httpsAgent,
-    timeout: 30000
+    timeout: 15000
   });
 
   logger.info(`Email sent via Brevo HTTP API to ${options.to}`);
   return res.data;
+};
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const isRetryableEmailError = (error) => {
+  const status = error.response?.status;
+  return !status || status === 408 || status === 425 || status === 429 || status >= 500;
+};
+
+const sendViaBrevoWithRetry = async (options) => {
+  let lastError;
+
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      return await sendViaBrevo(options);
+    } catch (error) {
+      lastError = error;
+      if (attempt === 3 || !isRetryableEmailError(error)) throw error;
+
+      const delay = attempt * 1000;
+      logger.warn(`[Email] Brevo attempt ${attempt} failed; retrying in ${delay}ms`);
+      await sleep(delay);
+    }
+  }
+
+  throw lastError;
 };
 
 const sendViaResend = async (options) => {
@@ -157,7 +183,7 @@ const sendViaResend = async (options) => {
 const sendMail = async (options) => {
   try {
     if (process.env.BREVO_API_KEY) {
-      return await sendViaBrevo(options);
+      return await sendViaBrevoWithRetry(options);
     }
     if (process.env.RESEND_API_KEY) {
       return await sendViaResend(options);

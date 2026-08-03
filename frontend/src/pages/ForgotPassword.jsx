@@ -33,7 +33,7 @@ const ForgotPassword = () => {
       toast.success('OTP sent to your email!');
       setStep(2);
     } catch (err) {
-      toast.error(err.message || 'Something went wrong');
+      toast.error(err.response?.data?.message || 'We could not send the OTP. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -48,7 +48,7 @@ const ForgotPassword = () => {
       toast.success('Password reset successfully!');
       setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
-      toast.error(err.message || 'Invalid OTP or session expired');
+      toast.error(err.response?.data?.message || 'Invalid OTP or session expired');
     } finally {
       setLoading(false);
     }

@@ -98,17 +98,20 @@ exports.signup = asyncHandler(async (req, res, next) => {
   const hashedOtp = await bcrypt.hash(otp, 12);
 
   // 2. Wait for the Database record creation
-  await OtpSession.create({
+  const otpSession = await OtpSession.create({
     email: targetEmail,
     hashedOtp,
     type: 'register',
     expiresAt: new Date(Date.now() + 10 * 60 * 1000),
   });
 
-  // 3. Send email in background
-  emailService.sendSignupOTP(targetEmail, otp).catch((err) => {
-    console.error('Background Email Sending Failed:', err.message);
-  });
+  // Confirm delivery before moving the customer to the OTP screen.
+  try {
+    await emailService.sendSignupOTP(targetEmail, otp);
+  } catch (err) {
+    await OtpSession.deleteOne({ _id: otpSession._id });
+    return next(new AppError('We could not send the verification email. Please try again.', 503));
+  }
 
   // 4. Respond to frontend
   res.status(201).json({
@@ -190,16 +193,19 @@ exports.resendSignupOtp = asyncHandler(async (req, res, next) => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const hashedOtp = await bcrypt.hash(otp, 12);
 
-  await OtpSession.create({
+  const otpSession = await OtpSession.create({
     email: targetEmail,
     hashedOtp,
     type: 'register',
     expiresAt: new Date(Date.now() + 10 * 60 * 1000),
   });
 
-  emailService.sendSignupOTP(targetEmail, otp).catch((err) => {
-    console.error('Background Email Sending Failed:', err.message);
-  });
+  try {
+    await emailService.sendSignupOTP(targetEmail, otp);
+  } catch (err) {
+    await OtpSession.deleteOne({ _id: otpSession._id });
+    return next(new AppError('We could not resend the verification email. Please try again.', 503));
+  }
 
   res.status(200).json({
     status: 'success',
@@ -395,7 +401,7 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
   const hashedOtp = await bcrypt.hash(otp, 12);
 
   // 2. Wait for the Database record creation
-  await OtpSession.create({
+  const otpSession = await OtpSession.create({
     email: targetEmail,
     hashedOtp,
     type: 'password_reset',
@@ -404,9 +410,12 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
 
   // 3. 💡 OPTIMIZATION: Remove "await" from the email service!
   // This sends the email in the background. Node.js won't block the API response.
-  emailService.sendPasswordResetOTP(targetEmail, otp).catch((err) => {
-    console.error('Background Email Sending Failed:', err.message);
-  });
+  try {
+    await emailService.sendPasswordResetOTP(targetEmail, otp);
+  } catch (err) {
+    await OtpSession.deleteOne({ _id: otpSession._id });
+    return next(new AppError('We could not send the password reset email. Please try again.', 503));
+  }
 
   // 4. Respond instantly to the frontend!
   res.status(200).json({
