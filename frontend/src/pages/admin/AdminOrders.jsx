@@ -197,7 +197,7 @@ const OrderDetailsModal = ({ order, onClose }) => {
                 <span className="font-semibold text-heading">{formatCurrency(order.convenienceFee)}</span>
               </div>
               <div className="flex justify-between text-xs text-muted/70">
-                <span>GST (18%)</span>
+                <span>GST (5%, included)</span>
                 <span className="font-semibold">{formatCurrency(order.gst)}</span>
               </div>
               <div className="border-t border-border/40 my-2 pt-2 flex justify-between font-black text-base text-heading">

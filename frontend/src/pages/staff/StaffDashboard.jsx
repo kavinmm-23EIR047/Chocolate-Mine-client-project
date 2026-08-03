@@ -547,7 +547,7 @@ const OrderDetailsModal = ({ order, onClose }) => {
               )}
 
               <div className="flex justify-between font-medium text-xs text-muted">
-                <span>GST (18%)</span>
+                <span>GST (5%, included)</span>
                 <span className="font-bold text-emerald-700 font-extrabold">Inclusive</span>
               </div>
 
@@ -799,8 +799,8 @@ const CreateInShopOrderView = () => {
   };
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const gst = Math.round(subtotal * 0.18);
-  const total = subtotal + gst;
+  const gst = Math.round((subtotal * 0.05) / 1.05);
+  const total = subtotal;
 
   const handlePlaceOrder = async () => {
     if (!customerName.trim()) return toast.error('Please enter customer name');
@@ -1110,7 +1110,7 @@ const CreateInShopOrderView = () => {
                   <span className="font-semibold text-heading">{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted">GST (18%)</span>
+                  <span className="text-muted">GST (5%, included)</span>
                   <span className="font-semibold text-heading">{formatCurrency(gst)}</span>
                 </div>
                 <div className="flex justify-between">

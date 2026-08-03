@@ -783,7 +783,7 @@ const Checkout = () => {
   }, 0);
 
   const isAddressSelected = !!deliveryInfo.position;
-  const gst = 0;
+  const gst = Math.round((subtotal * 0.05) / 1.05);
   const convenienceFee = Math.round(subtotal * 0.025);
   const clientTotal = subtotal + (isAddressSelected ? deliveryFee : 0) + convenienceFee - couponDiscount;
   const displayTotal = backendTotal !== null ? backendTotal : clientTotal;
@@ -1146,7 +1146,7 @@ const Checkout = () => {
           (couponDiscount > 0 ? `   Coupon Discount: -₹${couponDiscount}\n` : '') +
           (isDelivery ? `   Delivery Fee: ₹${deliveryFee}\n` : '') +
           `   Convenience Fee (2.5%): ₹${convenienceFee}\n` +
-          `   GST (18%): Inclusive\n` +
+          `   GST (5%): Included in product price\n` +
           `   *Total Amount:* ₹${clientTotal}\n\n` +
           `📅 *${isDelivery ? 'Delivery' : 'Pickup'} Date:* ${new Date(deliveryDate).toLocaleDateString()}\n` +
           `⏰ *${isDelivery ? 'Delivery' : 'Pickup'} Slot:* ${deliverySlot || 'N/A'}\n\n` +
@@ -1947,6 +1947,10 @@ const Checkout = () => {
                   <div className="flex justify-between text-sm sm:text-base">
                     <span className="text-muted font-medium">Convenience Fee (2.5%)</span>
                     <span className="font-black text-heading">{formatCurrency(convenienceFee)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm sm:text-base text-muted">
+                    <span className="font-medium">GST (5%)</span>
+                    <span className="font-black text-success-text">Included in product price</span>
                   </div>
 
                   <div className="border-t border-border/30 pt-4">

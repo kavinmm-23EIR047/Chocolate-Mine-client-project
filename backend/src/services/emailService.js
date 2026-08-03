@@ -438,7 +438,7 @@ const emailService = {
                     <td style="padding: 6px 4px; text-align: right; font-size: 13px; font-weight: 800; color: #2C1A16;">₹${Number(order.convenienceFee || 0).toFixed(2)}</td>
                   </tr>` : ''}
                   <tr>
-                    <td colspan="2" style="padding: 6px 4px; text-align: left; font-size: 12px; font-weight: 700; color: #7A6B65;">GST (18%)</td>
+                    <td colspan="2" style="padding: 6px 4px; text-align: left; font-size: 12px; font-weight: 700; color: #7A6B65;">GST (5%)</td>
                     <td style="padding: 6px 4px; text-align: right; font-size: 12px; font-weight: 800; color: #2E7D32;">Inclusive</td>
                   </tr>
                   <tr>

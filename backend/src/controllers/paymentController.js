@@ -28,6 +28,7 @@ const SHOP_LAT = Number(process.env.SHOP_LAT ?? 11.004540031168712);
 const SHOP_LNG = Number(process.env.SHOP_LNG ?? 76.97510955713153);
 const DELIVERY_MIN_FEE = Number(process.env.DELIVERY_MIN_FEE ?? 30);
 const DELIVERY_PER_KM_RATE = Number(process.env.DELIVERY_PER_KM_RATE ?? 4);
+const GST_RATE = 0.05;
 
 const calculateDistanceKm = (lat1, lon1, lat2, lon2) => {
   const R = 6371;
@@ -111,7 +112,9 @@ const computePricing = ({ cartItems, addressLat, addressLng, discount = 0, payme
   }
   
   const convenienceFee = Math.round(subtotal * 0.025);
-  const gst = 0; // Product prices are inclusive of 18% GST (no extra GST line item added)
+  // Product prices are tax-inclusive. Store the GST component for reporting,
+  // but never add it again to the customer-facing total.
+  const gst = Math.round((subtotal * GST_RATE) / (1 + GST_RATE));
   const total = subtotal + deliveryCharge + convenienceFee - (Number(discount) || 0);
   
   return { subtotal, deliveryCharge, convenienceFee, gst, total };

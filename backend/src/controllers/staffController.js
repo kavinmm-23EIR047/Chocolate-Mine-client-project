@@ -589,8 +589,10 @@ exports.createInShopOrder = asyncHandler(async (req, res, next) => {
     });
   }
 
-  const gst = Math.round(subtotal * 0.18);
-  const total = subtotal + gst;
+  // In-shop product prices already include 5% GST; record the embedded
+  // component for reporting without adding tax a second time.
+  const gst = Math.round((subtotal * 0.05) / 1.05);
+  const total = subtotal;
 
   // Create the order
   const order = await InShopOrder.create({

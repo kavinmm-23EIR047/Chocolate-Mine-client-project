@@ -279,7 +279,7 @@ exports.generateInvoiceBuffer = async (orderId) => {
     }
     summaryLine('Delivery Charge', 'Rs. ' + Number(order.deliveryCharge || 0).toFixed(2));
     summaryLine('Convenience Fee (2.5%)', 'Rs. ' + Number(order.convenienceFee || 0).toFixed(2));
-    summaryLine('GST (18%)',       'Included in Price');
+    summaryLine('GST (5%)',        'Included in Price');
 
     ty += 4;
     hRule(doc, ty, COLORS.brandPrimary, 1);

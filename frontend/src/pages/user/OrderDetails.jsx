@@ -451,7 +451,7 @@ const OrderDetails = () => {
               </div>
 
               <div className="flex justify-between text-xs text-muted/70">
-                <span>GST (18%)</span>
+                <span>GST (5%)</span>
                 <span className="text-success-text font-bold">Included in Product Price</span>
               </div>
 

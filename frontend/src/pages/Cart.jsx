@@ -412,7 +412,7 @@ const Cart = () => {
                     {formatCurrency(subtotal)}
                   </p>
                   <p className="text-xs text-muted mt-2 font-medium leading-relaxed">
-                    Product prices with offers & coupons. Delivery, GST and fees are added at checkout.
+                    Product prices include 5% GST. Delivery and convenience fees are calculated at checkout.
                   </p>
                 </div>
 
