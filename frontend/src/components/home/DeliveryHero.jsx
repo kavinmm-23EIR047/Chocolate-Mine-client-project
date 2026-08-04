@@ -46,6 +46,7 @@ const DeliveryHero = () => {
 
   // Determine which scooter to use based on theme
   const scooterImg = isDark ? ScooterDarkImg : ScooterLightImg;
+  const visibleThemes = themes.slice(0, 5);
 
   // Fetch real themes from backend
   useEffect(() => {
@@ -65,12 +66,12 @@ const DeliveryHero = () => {
 
   // Auto-slider logic (updated to scroll by full container width)
   useEffect(() => {
-    if (isHovered || themes.length === 0) return;
+    if (isHovered || visibleThemes.length === 0) return;
 
     const timer = setInterval(() => {
       if (!sliderRef.current) return;
 
-      const nextIndex = (activeThemeIndex + 1) % themes.length;
+      const nextIndex = (activeThemeIndex + 1) % visibleThemes.length;
       const containerWidth = sliderRef.current.clientWidth;
 
       sliderRef.current.scrollTo({
@@ -82,14 +83,14 @@ const DeliveryHero = () => {
     }, 3000);
 
     return () => clearInterval(timer);
-  }, [activeThemeIndex, isHovered, themes.length]);
+  }, [activeThemeIndex, isHovered, visibleThemes.length]);
 
   // Sync pagination dots with manual scroll/swipe
   const handleScroll = (e) => {
-    if (!sliderRef.current || themes.length === 0) return;
+    if (!sliderRef.current || visibleThemes.length === 0) return;
     const containerWidth = sliderRef.current.clientWidth;
     const newIndex = Math.round(e.target.scrollLeft / containerWidth);
-    if (newIndex !== activeThemeIndex && newIndex < themes.length) {
+    if (newIndex !== activeThemeIndex && newIndex < visibleThemes.length) {
       setActiveThemeIndex(newIndex);
     }
   };
@@ -332,8 +333,8 @@ const DeliveryHero = () => {
             className="flex overflow-x-auto snap-x snap-mandatory w-full [&::-webkit-scrollbar]:hidden"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
-            {themes.length > 0 ? (
-              themes.map((theme) => (
+            {visibleThemes.length > 0 ? (
+              visibleThemes.map((theme) => (
                 <div
                   key={theme._id}
                   className="w-full shrink-0 snap-center px-6" // Padding is inside the 100% width slide now
@@ -381,7 +382,7 @@ const DeliveryHero = () => {
 
           {/* Pagination Dots */}
           <div className="flex items-center justify-center gap-1.5 mt-3">
-            {themes.map((_, index) => (
+            {visibleThemes.map((_, index) => (
               <button
                 key={index}
                 onClick={() => scrollToSlide(index)}

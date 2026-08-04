@@ -34,7 +34,7 @@ export default function BrandIntroLoader({ show = false, onFinish, logoHoldMs = 
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="fixed inset-0 z-[240] flex flex-col items-center justify-center overflow-hidden px-5"
+          className="fixed inset-0 z-[1000000] flex flex-col items-center justify-center overflow-hidden px-5"
           style={{ background: 'var(--background)' }}
         >
           {/* Subtle elegant background radial glow */}
