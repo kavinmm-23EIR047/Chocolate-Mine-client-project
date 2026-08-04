@@ -55,16 +55,22 @@ const authLimiter = rateLimiter({
   message: 'Too many authentication attempts. Please try again later.' 
 });
 
+const otpLimiter = rateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: 'Too many OTP requests. Please try again later.'
+});
+
 
 // POST /api/v1/auth/signup
 router.post('/signup', authLimiter, validate(signupSchema), authController.signup);
 router.post('/register', authLimiter, validate(signupSchema), authController.signup);
 
 // POST /api/v1/auth/verify-signup
-router.post('/verify-signup', validate(verifySignupSchema), authController.verifySignup);
+router.post('/verify-signup', otpLimiter, validate(verifySignupSchema), authController.verifySignup);
 
 // POST /api/v1/auth/resend-signup-otp
-router.post('/resend-signup-otp', validate(resendSignupOtpSchema), authController.resendSignupOtp);
+router.post('/resend-signup-otp', otpLimiter, validate(resendSignupOtpSchema), authController.resendSignupOtp);
 
 // POST /api/v1/auth/login
 router.post('/login', authLimiter, validate(loginSchema), authController.login);

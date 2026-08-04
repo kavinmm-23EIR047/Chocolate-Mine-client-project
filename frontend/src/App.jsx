@@ -31,6 +31,7 @@ import Checkout from './pages/Checkout';
 import OrderSuccess from './pages/OrderSuccess';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import VerifyOtp from './pages/VerifyOtp';
 import Cart from './pages/Cart';
 import ForgotPassword from './pages/ForgotPassword';
 import OAuthCallback from './pages/OAuthCallback';
@@ -237,6 +238,7 @@ function App() {
                   {/* Guest Routes */}
                   <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
                   <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
+                  <Route path="/verify-otp" element={<GuestRoute><VerifyOtp /></GuestRoute>} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
 
                   {/* Protected User Routes */}

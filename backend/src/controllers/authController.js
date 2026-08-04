@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const OtpSession = require('../models/OtpSession');
 const emailService = require('../services/emailService');
@@ -57,10 +58,32 @@ const sendTokenResponse = (user, statusCode, res) => {
       email: user.email,
       role: user.role,
       phone: user.phone,
+      isVerified: user.isVerified === true,
       fcmTokens: user.fcmTokens || [],
       notificationEnabled: user.notificationEnabled
     }
   });
+};
+
+const issueSignupOtp = async (email) => {
+  const targetEmail = email.trim().toLowerCase();
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const hashedOtp = await bcrypt.hash(otp, 12);
+  const otpSession = await OtpSession.create({
+    email: targetEmail,
+    hashedOtp,
+    type: 'register',
+    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+  });
+
+  try {
+    await emailService.sendSignupOTP(targetEmail, otp);
+  } catch (err) {
+    await OtpSession.deleteOne({ _id: otpSession._id });
+    throw new AppError('We could not send the verification email. Please try again.', 503);
+  }
+
+  return targetEmail;
 };
 
 // @desc    Normal Signup
@@ -93,25 +116,7 @@ exports.signup = asyncHandler(async (req, res, next) => {
     });
   }
 
-  // 1. Generate OTP and Hash it
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const hashedOtp = await bcrypt.hash(otp, 12);
-
-  // 2. Wait for the Database record creation
-  const otpSession = await OtpSession.create({
-    email: targetEmail,
-    hashedOtp,
-    type: 'register',
-    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-  });
-
-  // Confirm delivery before moving the customer to the OTP screen.
-  try {
-    await emailService.sendSignupOTP(targetEmail, otp);
-  } catch (err) {
-    await OtpSession.deleteOne({ _id: otpSession._id });
-    return next(new AppError('We could not send the verification email. Please try again.', 503));
-  }
+  await issueSignupOtp(targetEmail);
 
   // 4. Respond to frontend
   res.status(201).json({
@@ -131,34 +136,58 @@ exports.verifySignup = asyncHandler(async (req, res, next) => {
     return next(new AppError('Please provide email and otp', 400));
   }
 
-  const session = await OtpSession.findOne({
-    email: email.trim().toLowerCase(),
-    type: 'register',
-    isUsed: false,
-    expiresAt: { $gt: new Date() }
-  }).sort('-createdAt');
+  const normalizedEmail = email.trim().toLowerCase();
+  console.log(`[Auth] Verifying signup OTP for ${normalizedEmail}`);
+  const mongoSession = await mongoose.startSession();
+  let user;
 
-  if (!session) {
-    return next(new AppError('OTP expired or not found. Please request a new one.', 400));
+  try {
+    await mongoSession.withTransaction(async () => {
+      const otpSession = await OtpSession.findOne({
+        email: normalizedEmail,
+        type: 'register',
+        isUsed: false,
+        expiresAt: { $gt: new Date() }
+      }).sort('-createdAt').session(mongoSession);
+
+      if (!otpSession) {
+        throw new AppError('OTP expired or not found. Please request a new one.', 400);
+      }
+
+      if (!await bcrypt.compare(otp, otpSession.hashedOtp)) {
+        throw new AppError('Invalid OTP. Please try again.', 400);
+      }
+
+      const claimedSession = await OtpSession.findOneAndUpdate(
+        { _id: otpSession._id, isUsed: false },
+        { $set: { isUsed: true, verifiedAt: new Date() } },
+        { new: true, session: mongoSession }
+      );
+
+      if (!claimedSession) {
+        throw new AppError('OTP was already used. Please request a new one.', 400);
+      }
+
+      user = await User.findOneAndUpdate(
+        { email: normalizedEmail, isVerified: { $ne: true } },
+        { $set: { isVerified: true } },
+        { new: true, session: mongoSession }
+      );
+
+      if (!user) {
+        throw new AppError('User not found or already verified', 404);
+      }
+    });
+  } catch (err) {
+    await mongoSession.endSession();
+    if (err.isOperational) return next(err);
+    console.error(`[Auth] Failed to persist verification for ${normalizedEmail}:`, err);
+    return res.status(500).json({
+      status: 'fail',
+      message: 'Failed to update verification status. Please try again.'
+    });
   }
-
-  const isCorrect = await bcrypt.compare(otp, session.hashedOtp);
-
-  if (!isCorrect) {
-    return next(new AppError('Invalid OTP. Please try again.', 400));
-  }
-
-  const user = await User.findOne({ email: email.trim().toLowerCase() });
-
-  if (!user) {
-    return next(new AppError('User not found', 404));
-  }
-
-  user.isVerified = true;
-  await user.save({ validateBeforeSave: false });
-
-  session.isUsed = true;
-  await session.save();
+  await mongoSession.endSession();
 
   try {
     const notificationManager = require('../services/notificationManager');
@@ -190,22 +219,7 @@ exports.resendSignupOtp = asyncHandler(async (req, res, next) => {
     return next(new AppError('Account is already verified. Please login.', 400));
   }
 
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const hashedOtp = await bcrypt.hash(otp, 12);
-
-  const otpSession = await OtpSession.create({
-    email: targetEmail,
-    hashedOtp,
-    type: 'register',
-    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-  });
-
-  try {
-    await emailService.sendSignupOTP(targetEmail, otp);
-  } catch (err) {
-    await OtpSession.deleteOne({ _id: otpSession._id });
-    return next(new AppError('We could not resend the verification email. Please try again.', 503));
-  }
+  await issueSignupOtp(targetEmail);
 
   res.status(200).json({
     status: 'success',
@@ -240,6 +254,11 @@ exports.login = asyncHandler(async (req, res, next) => {
   }
 
   if (!user.isVerified) {
+    try {
+      await issueSignupOtp(trimmedEmail);
+    } catch (err) {
+      return next(err);
+    }
     console.log(`❌ Login failed: User ${trimmedEmail} is not verified`);
     // We send a specific error format or message so frontend can handle it and redirect to OTP screen if needed,
     // or just return 403
@@ -297,6 +316,7 @@ exports.getMe = asyncHandler(async (req, res) => {
       email: req.user.email,
       role: req.user.role,
       phone: req.user.phone,
+      isVerified: req.user.isVerified === true,
       fcmTokens: req.user.fcmTokens || [],
       notificationEnabled: req.user.notificationEnabled
     }
@@ -369,6 +389,8 @@ exports.firebaseLogin = asyncHandler(async (req, res, next) => {
   } else {
     // Update last active
     user.lastActiveAt = Date.now();
+    user.provider = 'google';
+    user.isVerified = true;
     await user.save({ validateBeforeSave: false });
   }
 

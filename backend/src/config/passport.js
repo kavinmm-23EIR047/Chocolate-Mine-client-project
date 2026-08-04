@@ -18,11 +18,10 @@ module.exports = function (passport) {
           let user = await User.findOne({ email });
 
           if (user) {
-            if (!user.googleId) {
-              user.googleId = profile.id;
-              user.provider = 'google';
-              await user.save({ validateBeforeSave: false });
-            }
+            user.googleId = user.googleId || profile.id;
+            user.provider = 'google';
+            user.isVerified = true;
+            await user.save({ validateBeforeSave: false });
 
             return done(null, user);
           }

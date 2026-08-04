@@ -93,7 +93,10 @@ const Register = () => {
       
       const { user: userData, token } = res.data;
       
-      if (userData) updateUser(userData, token);
+      if (!userData?.isVerified || !token) {
+        throw new Error('Verification response was incomplete. Please try again.');
+      }
+      updateUser(userData, token);
 
       toast.success('Account verified and created successfully!');
       navigate('/', { replace: true }); 

@@ -26,7 +26,10 @@ const Login = () => {
     } catch (err) {
       if (err.response?.data?.requiresOtp) {
         toast.error('Please verify your email first.');
-        // User could be redirected to an OTP verify page, or login via OTP if implemented.
+        navigate('/verify-otp', {
+          replace: true,
+          state: { email: err.response.data.email || email.trim().toLowerCase() }
+        });
       } else {
         toast.error(err.response?.data?.message || 'Invalid email or password');
       }
