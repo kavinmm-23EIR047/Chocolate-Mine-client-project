@@ -1300,21 +1300,13 @@ const Checkout = () => {
         },
         config: {
           display: {
+            sequence: ['upi', 'card', 'netbanking'],
             preferences: {
               show_default_blocks: true,
             },
           },
         },
       };
-
-      if (selectedPayMethod) {
-        const method = PAYMENT_METHODS.find(m => m.id === selectedPayMethod);
-        if (method) {
-          options.method = {
-            [method.rzpMethod]: true
-          };
-        }
-      }
 
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', async (r) => {
