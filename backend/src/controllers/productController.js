@@ -53,6 +53,17 @@ const toSentenceCase = (str) => {
   return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
 };
 
+const validateProductFile = (file) => {
+  if (!file) return;
+  const supportedTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
+  if (!supportedTypes.has(file.mimetype)) {
+    throw new AppError('Unsupported image format. Please upload JPG, PNG, or WebP.', 400);
+  }
+  if (!Buffer.isBuffer(file.buffer) || file.size > 2 * 1024 * 1024) {
+    throw new AppError('Image must be smaller than 2 MB.', 400);
+  }
+};
+
 const applyCoupon = (product) => {
   if (!product.coupon || !product.coupon.enabled) return null;
   const now = new Date();
@@ -619,25 +630,25 @@ exports.createProduct = asyncHandler(async (req, res, next) => {
     });
   }
 
+  validateProductFile(req.file);
+  let uploadedImage = null;
   let imageInput = body.image;
-  if (req.file) {
-    const b64 = Buffer.from(req.file.buffer).toString('base64');
-    imageInput = `data:${req.file.mimetype};base64,${b64}`;
-  }
 
   if (!imageInput && isCakes) {
     imageInput = DEFAULT_CAKE_IMAGE_URL;
   }
 
-  if (imageInput) {
-    const uploadCategory = Array.isArray(body.category) && body.category.length > 0 ? body.category[0] : 'general';
-    const uploadResult = await cloudinaryService.uploadImage(imageInput, uploadCategory);
-    if (uploadResult) {
-      body.image = uploadResult.secure_url;
-      body.imagePublicId = uploadResult.public_id;
-    } else if (!body.image) {
-      body.image = DEFAULT_CAKE_IMAGE_URL;
+  if (req.file) {
+    try {
+      uploadedImage = await cloudinaryService.uploadBuffer(req.file.buffer, 'products', req.file.mimetype);
+    } catch (error) {
+      return next(new AppError('Image upload failed. Product was not created.', 502));
     }
+    if (!uploadedImage) return next(new AppError('Image upload failed. Product was not created.', 502));
+    body.image = uploadedImage.secure_url;
+    body.imagePublicId = uploadedImage.public_id;
+  } else if (!body.image && isCakes) {
+    body.image = DEFAULT_CAKE_IMAGE_URL;
   }
 
   let baseSlug = slugify(body.name, { lower: true });
@@ -650,7 +661,13 @@ exports.createProduct = asyncHandler(async (req, res, next) => {
   body.slug = slugStr;
   body.createdBy = req.user._id;
   
-  const product = await Product.create(body);
+  let product;
+  try {
+    product = await Product.create(body);
+  } catch (error) {
+    if (uploadedImage?.public_id) await cloudinaryService.deleteImage(uploadedImage.public_id);
+    throw error;
+  }
   
   // Trigger Push Notification asynchronously
   notificationManager.notifyNewProduct(product).catch(console.error);
@@ -833,24 +850,27 @@ exports.updateProduct = asyncHandler(async (req, res, next) => {
     }
   });
 
-  // Handle image update
-  let imageInput = body.image;
+  // Upload the replacement first. The old asset remains available until the
+  // database update succeeds, so failed replacements never destroy the old image.
+  let uploadedReplacement = null;
+  const oldPublicId = product.imagePublicId;
+  let removedPublicId = null;
   if (req.file) {
-    const b64 = Buffer.from(req.file.buffer).toString('base64');
-    imageInput = `data:${req.file.mimetype};base64,${b64}`;
-  }
-
-  if (imageInput && imageInput !== product.image) {
-    if (product.imagePublicId) {
-      await cloudinaryService.deleteImage(product.imagePublicId);
+    validateProductFile(req.file);
+    try {
+      uploadedReplacement = await cloudinaryService.uploadBuffer(req.file.buffer, 'products', req.file.mimetype);
+    } catch (error) {
+      return next(new AppError('Image upload failed. The existing image was kept.', 502));
     }
-    
-    const uploadCategory = Array.isArray(finalCategory) && finalCategory.length > 0 ? finalCategory[0] : 'general';
-    const uploadResult = await cloudinaryService.uploadImage(imageInput, uploadCategory);
-    if (uploadResult) {
-      product.image = uploadResult.secure_url;
-      product.imagePublicId = uploadResult.public_id;
-    }
+    if (!uploadedReplacement) return next(new AppError('Image upload failed. The existing image was kept.', 502));
+    product.image = uploadedReplacement.secure_url;
+    product.imagePublicId = uploadedReplacement.public_id;
+  } else if ((body.removeImage === 'true' || body.removeImage === true) && product.imagePublicId) {
+    // Product.image is required by the existing schema, so retain the existing
+    // placeholder contract while removing the Cloudinary asset and publicId.
+    removedPublicId = product.imagePublicId;
+    product.image = DEFAULT_CAKE_IMAGE_URL;
+    product.imagePublicId = undefined;
   }
 
   if (body.name && body.name !== product.name) {
@@ -864,7 +884,17 @@ exports.updateProduct = asyncHandler(async (req, res, next) => {
     product.slug = slugStr;
   }
 
-  await product.save();
+  try {
+    await product.save();
+  } catch (error) {
+    if (uploadedReplacement?.public_id) await cloudinaryService.deleteImage(uploadedReplacement.public_id);
+    throw error;
+  }
+
+  if (uploadedReplacement?.public_id && oldPublicId && oldPublicId !== uploadedReplacement.public_id) {
+    await cloudinaryService.deleteImage(oldPublicId);
+  }
+  if (removedPublicId) await cloudinaryService.deleteImage(removedPublicId);
 
   // Trigger real-time notifications for the update (only meaningful changes)
   const notificationManager = require('../services/notificationManager');
@@ -882,8 +912,9 @@ exports.deleteProduct = asyncHandler(async (req, res, next) => {
   const product = await Product.findById(req.params.id);
   if (!product) return next(new AppError('Product not found', 404));
 
-  if (product.imagePublicId) {
-    await cloudinaryService.deleteImage(product.imagePublicId);
+  if (product.imagePublicId) await cloudinaryService.deleteImage(product.imagePublicId);
+  if (Array.isArray(product.galleryPublicIds)) {
+    await cloudinaryService.deleteMultipleImages(product.galleryPublicIds);
   }
 
   await product.deleteOne();

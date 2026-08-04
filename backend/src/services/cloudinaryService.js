@@ -51,17 +51,27 @@ exports.uploadImage = async (input, folder = 'general') => {
  * @returns {Promise<{secure_url: string, public_id: string}|null>}
  */
 exports.uploadBuffer = async (buffer, folder = 'general', mimetype = 'image/png') => {
-  try {
-    if (!buffer) {
-      logger.error('No image buffer provided');
-      return null;
-    }
-    const dataUri = `data:${mimetype};base64,${buffer.toString('base64')}`;
-    return await exports.uploadImage(dataUri, folder);
-  } catch (err) {
-    logger.error('Cloudinary Buffer Upload Error:', err.message);
-    return null;
-  }
+  if (!Buffer.isBuffer(buffer) || buffer.length === 0) throw new Error('No image buffer provided');
+
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream({
+      folder,
+      resource_type: 'image',
+      // The browser has already optimized the master image. Avoid eager variants.
+      use_filename: false,
+      unique_filename: true
+    }, (error, result) => {
+      if (error) {
+        logger.error('Cloudinary Buffer Upload Error:', error.message);
+        return reject(error);
+      }
+      if (!result?.secure_url || !result?.public_id) {
+        return reject(new Error('Cloudinary returned an incomplete upload result'));
+      }
+      resolve({ secure_url: result.secure_url, public_id: result.public_id });
+    });
+    stream.end(buffer);
+  });
 };
 
 /**

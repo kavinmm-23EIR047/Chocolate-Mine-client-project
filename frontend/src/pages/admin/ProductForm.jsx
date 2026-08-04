@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Save, Upload, X, Star, Award, CheckCircle, Plus, Trash2, Image, Settings, Package, Scale } from 'lucide-react';
 import productService from '../../services/productService';
 import adminService from '../../services/adminService';
+import compressImage from '../../utils/compressImage';
 import Button from '../../components/ui/Button';
 import toast from 'react-hot-toast';
 
@@ -75,6 +76,10 @@ const ProductForm = () => {
   
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState('');
+  const [imageStats, setImageStats] = useState(null);
+  const [imageStatus, setImageStatus] = useState('');
+  const [imageError, setImageError] = useState('');
+  const [removeExistingImage, setRemoveExistingImage] = useState(false);
   const [isCustomFlavor, setIsCustomFlavor] = useState(false);
   const [customFlavorName, setCustomFlavorName] = useState('');
   const [selectedDefaultFlavor, setSelectedDefaultFlavor] = useState('');
@@ -85,6 +90,10 @@ const ProductForm = () => {
   const [basePrice, setBasePrice] = useState('');
   
   const blobUrlsRef = useRef([]);
+
+  useEffect(() => () => {
+    blobUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
+  }, []);
 
   useEffect(() => {
     const fetchMeta = async () => {
@@ -208,16 +217,45 @@ const ProductForm = () => {
     }
   };
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+    e.target.value = '';
+    if (!file) return;
+
+    setImage(null);
+    setImageError('');
+    setImageStatus('Optimizing image...');
+    setImageStats({ originalSize: file.size, optimizedSize: null });
+
+    try {
+      const compressed = await compressImage(file);
+      const objectUrl = URL.createObjectURL(compressed);
+      blobUrlsRef.current.push(objectUrl);
+      setImage(compressed);
+      setPreview(objectUrl);
+      setImageStats({ originalSize: file.size, optimizedSize: compressed.size });
+      setImageStatus('Image optimized');
+      setRemoveExistingImage(false);
+    } catch (error) {
+      setImageStatus('');
+      setImageStats(null);
+      setImageError(error.message || 'Image optimization failed. Please choose another image.');
     }
+  };
+
+  const clearImage = () => {
+    const wasExistingImage = isEdit && preview && !preview.startsWith('blob:');
+    setImage(null);
+    setImageStats(null);
+    setImageError('');
+    setImageStatus('');
+    if (wasExistingImage) setRemoveExistingImage(true);
+    setPreview('');
+  };
+
+  const formatFileSize = (bytes) => {
+    if (!bytes) return '0 KB';
+    return bytes >= 1024 * 1024 ? `${(bytes / (1024 * 1024)).toFixed(1)} MB` : `${Math.round(bytes / 1024)} KB`;
   };
 
   const handleCategoryToggle = (value) => {
@@ -286,23 +324,31 @@ const ProductForm = () => {
   };
   
   // Flavor image management
-  const handleFlavorImageUpload = (flavorIndex, e) => {
+  const handleFlavorImageUpload = async (flavorIndex, e) => {
     const files = Array.from(e.target.files);
-    
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFlavors(prevFlavors => {
-          const updated = [...prevFlavors];
-          if (!updated[flavorIndex].images) {
-            updated[flavorIndex].images = [];
-          }
-          updated[flavorIndex].images.push(reader.result);
-          return updated;
+    e.target.value = '';
+    setImageError('');
+    for (const file of files) {
+      try {
+        setImageStatus('Optimizing image...');
+        const compressed = await compressImage(file);
+        const dataUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(new Error('Could not prepare the flavor image.'));
+          reader.readAsDataURL(compressed);
         });
-      };
-      reader.readAsDataURL(file);
-    });
+        setFlavors(prevFlavors => prevFlavors.map((flavor, index) => (
+          index === flavorIndex
+            ? { ...flavor, images: [...(flavor.images || []), dataUrl] }
+            : flavor
+        )));
+        setImageStatus('Image optimized');
+      } catch (error) {
+        setImageStatus('');
+        setImageError(error.message || 'Flavor image optimization failed.');
+      }
+    }
   };
   
   const removeFlavorImage = (flavorIndex, imageIndex) => {
@@ -422,6 +468,7 @@ const ProductForm = () => {
     e.preventDefault();
     try {
       setLoading(true);
+      setImageError('');
       const data = new FormData();
       
       // Add all form data
@@ -486,8 +533,13 @@ const ProductForm = () => {
         data.set('allowCustomWeight', 'false');
       }
       
-      if (image) data.append('image', image);
+      if (image) {
+        data.append('image', image, image.name);
+      } else if (isEdit && removeExistingImage) {
+        data.append('removeImage', 'true');
+      }
 
+      setImageStatus('Uploading...');
       if (isEdit) {
         await productService.update(id, data);
         toast.success('Product updated');
@@ -497,6 +549,7 @@ const ProductForm = () => {
       }
       navigate('/admin/products');
     } catch (err) {
+      setImageStatus('');
       toast.error(err.response?.data?.message || 'Failed to save product');
     } finally {
       setLoading(false);
@@ -1022,7 +1075,7 @@ const ProductForm = () => {
                     <img src={preview} alt="Preview" className="w-full h-full object-cover" />
                     <button 
                       type="button" 
-                      onClick={() => { setPreview(''); setImage(null); }}
+                      onClick={clearImage}
                       className="absolute top-2 right-2 p-1.5 bg-error text-white rounded-lg shadow-xl hover:scale-110 transition-transform"
                     >
                       <X size={16} />
@@ -1041,6 +1094,19 @@ const ProductForm = () => {
                   className="absolute inset-0 opacity-0 cursor-pointer"
                 />
               </div>
+              {imageStatus && <p className="text-xs font-black text-secondary">{imageStatus}</p>}
+              {imageError && <p className="text-xs font-bold text-error">{imageError}</p>}
+              {imageStats && (
+                <div className="rounded-xl bg-input border border-input-border p-3 text-xs font-bold space-y-1">
+                  <p>Original Size: {formatFileSize(imageStats.originalSize)}</p>
+                  {imageStats.optimizedSize && (
+                    <>
+                      <p>Optimized Size: {formatFileSize(imageStats.optimizedSize)}</p>
+                      <p>Reduction: {Math.max(0, ((1 - imageStats.optimizedSize / imageStats.originalSize) * 100)).toFixed(1)}%</p>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="card-premium p-6 space-y-6">
