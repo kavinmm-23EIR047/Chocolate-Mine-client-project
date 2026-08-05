@@ -21,6 +21,12 @@ const adminService = {
   deleteStaff: (id) => api.delete(`/admin/staff/${id}`),
 
   /* ----------------------------------------
+     Registered Users (Admin Only)
+  ---------------------------------------- */
+  getAllUsers: () => api.get('/admin/users'),
+  getUser: (id) => api.get(`/admin/users/${id}`),
+
+  /* ----------------------------------------
      Order Management
   ---------------------------------------- */
   getOrders: () => api.get('/admin/orders'),

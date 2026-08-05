@@ -66,6 +66,7 @@ import AdminProducts from './pages/admin/AdminProducts';
 import ProductForm from './pages/admin/ProductForm';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminStaff from './pages/admin/AdminStaff';
+import AdminUsers from './pages/admin/AdminUsers';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
 import CategoryManager from './pages/admin/CategoryManager';
 import OccasionManager from './pages/admin/OccasionManager';
@@ -273,6 +274,8 @@ function App() {
                   <Route path="orders" element={<AdminOrders />} />
                   <Route path="orders/:id" element={<AdminOrders />} />
                   <Route path="staff" element={<AdminStaff />} />
+                  <Route path="users" element={<AdminUsers />} />
+                  <Route path="users/:id" element={<AdminUsers />} />
                   <Route path="analytics" element={<AdminAnalytics />} />
                   <Route path="categories" element={<CategoryManager />} />
                   <Route path="occasions" element={<OccasionManager />} />

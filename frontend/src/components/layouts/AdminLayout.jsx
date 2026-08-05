@@ -38,6 +38,7 @@ const menuItems = [
   { path: '/admin/products', label: 'Products', icon: Package },
   { path: '/admin/custom-cakes', label: 'Custom Cakes', icon: Cake },
   { path: '/admin/orders', label: 'Orders', icon: ShoppingBag },
+  { path: '/admin/users', label: 'Users', icon: Users },
   { path: '/admin/staff', label: 'Staff', icon: Users },
   { path: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
   { path: '/admin/categories', label: 'Categories', icon: Tag },

@@ -78,6 +78,42 @@ exports.getAllStaff = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Get registered customer users for the admin panel
+// @route   GET /api/v1/admin/users
+// @access  Admin Only
+exports.getAllUsers = asyncHandler(async (req, res) => {
+  const users = await User.find({ role: 'user' })
+    .select('name email phone role active isVerified notificationEnabled lastActiveAt createdAt')
+    .sort({ createdAt: -1 })
+    .lean();
+
+  res.status(200).json({
+    status: 'success',
+    count: users.length,
+    data: users
+  });
+});
+
+// @desc    Get one registered customer with safe account details
+// @route   GET /api/v1/admin/users/:id
+// @access  Admin Only
+exports.getUserDetails = asyncHandler(async (req, res, next) => {
+  const user = await User.findOne({ _id: req.params.id, role: 'user' })
+    .select('-password -fcmTokens -googleId -__v')
+    .populate('wishlist', 'name slug image price offerPrice')
+    .populate('customCakeWishlist', 'name slug coverImage')
+    .lean();
+
+  if (!user) {
+    return next(new AppError('User not found', 404));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: user
+  });
+});
+
 // @desc    Update Staff Details
 // @route   PATCH /api/admin/staff/:id
 exports.updateStaff = asyncHandler(async (req, res, next) => {
