@@ -57,7 +57,8 @@ exports.uploadBuffer = async (buffer, folder = 'general', mimetype = 'image/png'
     const stream = cloudinary.uploader.upload_stream({
       folder,
       resource_type: 'image',
-      // The browser has already optimized the master image. Avoid eager variants.
+      // The browser has already optimized the master image. Avoid eager
+      // variants so storage and transformation usage stay predictable.
       use_filename: false,
       unique_filename: true
     }, (error, result) => {

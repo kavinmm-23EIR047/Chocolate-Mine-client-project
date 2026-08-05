@@ -42,10 +42,12 @@ export const getOptimizedCloudinaryUrl = (source, width) => {
     segments.shift();
   }
 
-  const transformation = `c_limit,w_${Math.round(width)}/f_auto/q_auto`;
+  // Deliver only the pixels the current layout needs. The stored master is
+  // untouched, while Cloudinary selects an efficient modern format and keeps
+  // visual quality high.
+  const transformation = `c_limit,w_${Math.round(width)}/f_auto,q_auto:good`;
   url.pathname = `${prefix}${CLOUDINARY_UPLOAD_SEGMENT}${transformation}/${hasTransformations ? `${firstSegment}/` : ''}${segments.join('/')}`;
   return url.toString();
 };
 
 export const getImageUrl = (source, width) => getOptimizedCloudinaryUrl(source, width);
-

@@ -1,8 +1,11 @@
 import imageCompression from 'browser-image-compression';
 
-export const MAX_IMAGE_DIMENSION = 1600;
-export const MAX_OPTIMIZED_BYTES = 250 * 1024;
-export const TARGET_OPTIMIZED_BYTES = 220 * 1024;
+// Keep the uploaded master large enough for product detail views and future
+// crops. Cloudinary creates the smaller delivery versions on demand.
+export const MAX_IMAGE_DIMENSION = 2600;
+// Stay below the backend's 2 MB upload limit while preserving more detail.
+export const MAX_OPTIMIZED_BYTES = 1.9 * 1024 * 1024;
+export const TARGET_OPTIMIZED_BYTES = 1.5 * 1024 * 1024;
 
 const SUPPORTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
@@ -73,13 +76,13 @@ export const compressImage = async (file) => {
   if (alreadyOptimized) return file;
 
   const outputType = preserveTransparency ? 'image/png' : 'image/webp';
-  let compressed = await optimize(file, outputType, 0.82, 0.22);
+  let compressed = await optimize(file, outputType, 0.94, 1.9);
   if (compressed.size > MAX_OPTIMIZED_BYTES) {
-    compressed = await optimize(file, outputType, 0.70, 0.25);
+    compressed = await optimize(file, outputType, 0.89, 1.9);
   }
 
   if (compressed.size > MAX_OPTIMIZED_BYTES) {
-    throw new Error('This image could not be optimized below 250 KB without risking unacceptable quality.');
+    throw new Error('This image is larger than 1.9 MB after quality optimization. Please choose a smaller source image.');
   }
 
   const extension = outputType === 'image/png' ? 'png' : 'webp';
