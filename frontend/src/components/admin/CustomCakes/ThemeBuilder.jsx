@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Check, X, Image as ImageIcon, Plus, Edit2, Trash2, UploadCloud, Scale } from 'lucide-react';
+import { Sparkles, Check, X, Image as ImageIcon, Plus, Edit2, Trash2, UploadCloud, Scale, RefreshCw } from 'lucide-react';
 import adminService from '../../../services/adminService';
 import toast from 'react-hot-toast';
+import compressImage from '../../../utils/compressImage';
 
 
 const ThemeBuilder = ({ themeId, onBack }) => {
@@ -137,32 +138,45 @@ const ThemeBuilder = ({ themeId, onBack }) => {
       } else {
         const res = await adminService.createCustomCakeTheme(theme);
         savedThemeId = res.data.data._id;
-        // Fetch the fresh theme to get the newly generated color IDs
-        const freshThemesRes = await adminService.getCustomCakeThemes();
-        const freshTheme = freshThemesRes.data.data.find(t => t._id === savedThemeId);
-        if (freshTheme) {
-          setTheme(freshTheme);
-        }
       }
 
-      // Upload pending color images
-      const currentColors = themeId ? theme.colors : (await adminService.getCustomCakeThemes()).data.data.find(t => t._id === savedThemeId)?.colors || [];
+      // Fetch the fresh theme to get the newly generated color IDs
+      const freshThemesRes = await adminService.getCustomCakeThemes();
+      const freshTheme = freshThemesRes.data?.data?.find(t => t._id === savedThemeId);
+      if (freshTheme) {
+        setTheme(freshTheme);
+      }
+
+      // Upload or process pending color images / deletions
+      const currentColors = freshTheme?.colors || (themeId ? theme.colors : []) || [];
+      const uploadEntries = Object.entries(pendingColorMappings);
       
-      const uploadEntries = Object.entries(pendingColorMappings).filter(([, data]) => isMappingReadyToSave(data));
       if (uploadEntries.length > 0) {
-        toast.loading('Uploading images...', { id: 'upload-toast' });
+        toast.loading('Processing images...', { id: 'upload-toast' });
         for (const [colorName, data] of uploadEntries) {
           const colorRecord = currentColors.find(c => c.name === colorName);
           if (!colorRecord || !colorRecord._id) continue;
 
+          const hasFilesToUpload = data.files?.tier1 || data.files?.tier2 || data.files?.tier3;
+          const hasRemovals = data.removedTiers?.tier1 || data.removedTiers?.tier2 || data.removedTiers?.tier3;
+
+          if (!hasFilesToUpload && !hasRemovals && (data.price === undefined || data.price === '')) continue;
+
           const formData = new FormData();
-          formData.append('price', data.price);
-          if (data.files.tier1) formData.append('tier1Image', data.files.tier1);
-          if (data.files.tier2) formData.append('tier2Image', data.files.tier2);
-          if (data.files.tier3) formData.append('tier3Image', data.files.tier3);
+          formData.append('price', data.price !== undefined && data.price !== '' ? data.price : (colorRecord.price || 0));
+          
+          if (data.files?.tier1) formData.append('tier1Image', data.files.tier1);
+          else if (data.removedTiers?.tier1) formData.append('tier1Image', 'remove');
+
+          if (data.files?.tier2) formData.append('tier2Image', data.files.tier2);
+          else if (data.removedTiers?.tier2) formData.append('tier2Image', 'remove');
+
+          if (data.files?.tier3) formData.append('tier3Image', data.files.tier3);
+          else if (data.removedTiers?.tier3) formData.append('tier3Image', 'remove');
+
           await adminService.uploadCustomCakeThemeColorImages(savedThemeId, colorRecord._id, formData);
         }
-        toast.success('Images uploaded successfully', { id: 'upload-toast' });
+        toast.success('Images saved successfully', { id: 'upload-toast' });
       }
 
       toast.success(themeId ? 'Theme updated successfully' : 'Theme created successfully');
@@ -174,11 +188,12 @@ const ThemeBuilder = ({ themeId, onBack }) => {
     }
   };
 
-  const handleSetPendingMapping = (colorName, files, price) => {
+  const handleSetPendingMapping = (colorName, files, price, removedTiers = {}) => {
     setPendingColorMappings(prev => ({
       ...prev,
       [colorName]: {
         files: { ...prev[colorName]?.files, ...files },
+        removedTiers: { ...prev[colorName]?.removedTiers, ...removedTiers },
         price: price === '' ? '' : (parseFloat(price) || prev[colorName]?.price || ''),
         previewUrls: { 
           tier1: files.tier1 ? URL.createObjectURL(files.tier1) : prev[colorName]?.previewUrls?.tier1,
@@ -189,33 +204,150 @@ const ThemeBuilder = ({ themeId, onBack }) => {
     }));
   };
 
-  const ensureEditingName = (colorName) => {
-    if (editingMappingName !== colorName) {
-      setEditingMappingName(colorName);
+  const formatFileSize = (bytes) => {
+    if (!bytes) return '0 KB';
+    return bytes >= 1024 * 1024 ? `${(bytes / (1024 * 1024)).toFixed(1)} MB` : `${Math.round(bytes / 1024)} KB`;
+  };
+
+  const handleFileInputChange = async (colorName, field, file) => {
+    if (!file) return;
+
+    let processedFile = file;
+    let stats = null;
+    try {
+      processedFile = await compressImage(file);
+      const originalSize = file.size;
+      const optimizedSize = processedFile.size;
+      const reduction = Math.max(0, ((1 - optimizedSize / originalSize) * 100)).toFixed(1);
+      stats = { originalSize, optimizedSize, reduction };
+    } catch (err) {
+      console.warn('Compression fallback:', err);
+    }
+
+    const previewUrl = URL.createObjectURL(processedFile);
+
+    // Update pending mappings state
+    setPendingColorMappings(prev => {
+      const current = prev[colorName] || { files: {}, price: '', previewUrls: {}, removedTiers: {}, imageStats: {} };
+      return {
+        ...prev,
+        [colorName]: {
+          ...current,
+          files: { ...(current.files || {}), [field]: processedFile },
+          previewUrls: { ...(current.previewUrls || {}), [field]: previewUrl },
+          removedTiers: { ...(current.removedTiers || {}), [field]: false },
+          imageStats: { ...(current.imageStats || {}), [field]: stats }
+        }
+      };
+    });
+
+    // Update local theme.colors image state immediately for visual feedback
+    setTheme(prev => ({
+      ...prev,
+      colors: (prev.colors || []).map(c => {
+        if (c.name === colorName) {
+          return {
+            ...c,
+            images: {
+              ...(c.images || {}),
+              [field]: previewUrl
+            }
+          };
+        }
+        return c;
+      })
+    }));
+
+    // If theme & color exist on server, upload directly so it persists immediately
+    const color = (theme.colors || []).find(c => c.name === colorName);
+    if (themeId && color?._id) {
+      const toastId = `upload-${colorName}-${field}`;
+      toast.loading(`Uploading ${field.toUpperCase()} image for ${colorName}...`, { id: toastId });
+      try {
+        const formData = new FormData();
+        formData.append('price', color.price || 0);
+        formData.append(`${field}Image`, processedFile);
+
+        const res = await adminService.uploadCustomCakeThemeColorImages(themeId, color._id, formData);
+        const savedColor = res.data.data;
+
+        setTheme(prev => ({
+          ...prev,
+          colors: (prev.colors || []).map(c => c._id === color._id ? { ...c, price: savedColor.price, images: savedColor.images } : c)
+        }));
+
+        setPendingColorMappings(prev => {
+          const current = prev[colorName];
+          if (!current) return prev;
+          const nextFiles = { ...(current.files || {}) };
+          delete nextFiles[field];
+          return {
+            ...prev,
+            [colorName]: { ...current, files: nextFiles }
+          };
+        });
+
+        toast.success(`${field.toUpperCase()} image uploaded!`, { id: toastId });
+      } catch (err) {
+        toast.error(`Upload failed: ${err.response?.data?.message || err.message}`, { id: toastId });
+      }
     }
   };
 
-  const handleFileInputChange = (colorName, field, file) => {
-    if (!file) return;
-    const prev = pendingColorMappings[colorName] || { files: {}, price: '', previewUrls: {} };
-    ensureEditingName(colorName);
-    handleSetPendingMapping(colorName, { [field]: file }, prev.price === 0 ? 0 : (prev.price || ''));
-  };
+  const handleDeleteTierImage = async (colorName, field) => {
+    if (!window.confirm(`Delete the ${field.toUpperCase()} image for ${colorName}?`)) return;
 
-  const handleRemoveTierFile = (colorName, field) => {
+    const colorIndex = (theme.colors || []).findIndex(c => c.name === colorName);
+    const color = (theme.colors || [])[colorIndex];
+
+    // If theme & color exist in DB, send server delete request directly
+    if (themeId && color?._id) {
+      try {
+        await adminService.deleteCustomCakeThemeColorTierImage(themeId, color._id, field);
+        toast.success(`Deleted ${field.toUpperCase()} image`);
+      } catch (err) {
+        toast.error('Failed to delete image on server');
+        return;
+      }
+    } else {
+      toast.success(`Cleared ${field.toUpperCase()} image`);
+    }
+
+    // Clear image from local theme state
+    setTheme(prev => ({
+      ...prev,
+      colors: (prev.colors || []).map(c => {
+        if (c.name === colorName) {
+          return {
+            ...c,
+            images: {
+              ...(c.images || {}),
+              [field]: null
+            }
+          };
+        }
+        return c;
+      })
+    }));
+
+    // Clear from pending state & mark removedTiers flag
     setPendingColorMappings(prev => {
-      const current = prev[colorName];
-      if (!current) return prev;
-      const files = { ...current.files };
-      const previewUrls = { ...current.previewUrls };
+      const current = prev[colorName] || {};
+      const files = { ...(current.files || {}) };
+      const previewUrls = { ...(current.previewUrls || {}) };
+      const removedTiers = { ...(current.removedTiers || {}) };
+      
       delete files[field];
       delete previewUrls[field];
+      removedTiers[field] = true;
+
       return {
         ...prev,
         [colorName]: {
           ...current,
           files,
           previewUrls,
+          removedTiers,
           price: current.price || 0
         }
       };
@@ -225,45 +357,72 @@ const ThemeBuilder = ({ themeId, onBack }) => {
   const isMappingReadyToSave = mapping => {
     if (!mapping) return false;
     const fileCount = Object.values(mapping.files || {}).filter(Boolean).length;
-    return fileCount > 0 && (mapping.price || 0) >= 0;
+    const removeCount = Object.values(mapping.removedTiers || {}).filter(Boolean).length;
+    return (fileCount > 0 || removeCount > 0) && (mapping.price || 0) >= 0;
   };
 
   const handlePriceInputChange = (colorName, price) => {
-    ensureEditingName(colorName);
     setPendingColorMappings(prev => ({
       ...prev,
       [colorName]: {
         ...prev[colorName],
         files: prev[colorName]?.files || {},
         previewUrls: prev[colorName]?.previewUrls || {},
+        removedTiers: prev[colorName]?.removedTiers || {},
         price: price === '' ? '' : parseFloat(price)
       }
     }));
   };
 
-  const saveThemeColorMapping = async (colorName, files, price) => {
-    const colorIndex = theme.colors.findIndex(c => c.name === colorName);
-    const color = theme.colors[colorIndex];
-    const hasExistingImages = Boolean(color?.images?.tier1 || color?.images?.tier2 || color?.images?.tier3);
-    const hasFiles = Boolean(files.tier1 || files.tier2 || files.tier3);
-    const numericPrice = parseFloat(price) || 0;
+  const saveThemeColorMapping = async (colorName, filesOverride, price) => {
+    const colorIndex = (theme.colors || []).findIndex(c => c.name === colorName);
+    const color = (theme.colors || [])[colorIndex];
+    const numericPrice = price === undefined || price === '' ? (color?.price || 0) : (parseFloat(price) || 0);
+
+    const pending = pendingColorMappings[colorName] || {};
+    const files = { ...(pending.files || {}), ...(filesOverride || {}) };
+    const removedTiers = pending.removedTiers || {};
 
     if (!themeId || !color?._id) {
       if (numericPrice < 0) {
         throw new Error('Please enter a valid price before saving.');
       }
-      handleSetPendingMapping(colorName, files, numericPrice);
+      handleSetPendingMapping(colorName, files, numericPrice, removedTiers);
+      setTheme(prev => ({
+        ...prev,
+        colors: (prev.colors || []).map(c => {
+          if (c.name === colorName) {
+            return {
+              ...c,
+              price: numericPrice,
+              images: {
+                tier1: files.tier1 ? (pending.previewUrls?.tier1 || URL.createObjectURL(files.tier1)) : (removedTiers.tier1 ? null : c.images?.tier1),
+                tier2: files.tier2 ? (pending.previewUrls?.tier2 || URL.createObjectURL(files.tier2)) : (removedTiers.tier2 ? null : c.images?.tier2),
+                tier3: files.tier3 ? (pending.previewUrls?.tier3 || URL.createObjectURL(files.tier3)) : (removedTiers.tier3 ? null : c.images?.tier3),
+              }
+            };
+          }
+          return c;
+        })
+      }));
       return null;
     }
+
     if (numericPrice < 0) {
       throw new Error('Please enter a valid price before saving.');
     }
 
     const formData = new FormData();
     formData.append('price', numericPrice);
+    
     if (files.tier1) formData.append('tier1Image', files.tier1);
+    else if (removedTiers.tier1) formData.append('tier1Image', 'remove');
+
     if (files.tier2) formData.append('tier2Image', files.tier2);
+    else if (removedTiers.tier2) formData.append('tier2Image', 'remove');
+
     if (files.tier3) formData.append('tier3Image', files.tier3);
+    else if (removedTiers.tier3) formData.append('tier3Image', 'remove');
 
     const response = await adminService.uploadCustomCakeThemeColorImages(themeId, color._id, formData);
     const savedColor = response.data.data;
@@ -690,27 +849,56 @@ const ThemeBuilder = ({ themeId, onBack }) => {
                 </div>
                 
                 {isSelected && (
-                  (hasImages || pending) && editingMappingName !== gColor.name ? (
+                  editingMappingName !== gColor.name ? (
                     <div className="flex flex-col gap-2 pl-2">
                       <div className="grid grid-cols-3 gap-2">
-                        {theme.tiers?.tier1?.isActive && (
-                          <div className="h-24 bg-border/20 rounded-lg overflow-hidden flex flex-col items-center justify-center relative">
-                            <span className="absolute top-1 left-1 text-[8px] font-black uppercase bg-black/50 text-white px-1 py-0.5 rounded z-10">T1</span>
-                            {(pending?.previewUrls?.tier1 || themeColor.images?.tier1) ? <img src={pending?.previewUrls?.tier1 || themeColor.images?.tier1} alt="T1" className={`h-full object-contain ${pending?.previewUrls?.tier1 ? 'opacity-80' : ''}`} /> : <span className="text-[10px] text-muted font-bold">{pending ? 'Pending' : 'No Img'}</span>}
-                          </div>
-                        )}
-                        {theme.tiers?.tier2?.isActive && (
-                          <div className="h-24 bg-border/20 rounded-lg overflow-hidden flex flex-col items-center justify-center relative">
-                            <span className="absolute top-1 left-1 text-[8px] font-black uppercase bg-black/50 text-white px-1 py-0.5 rounded z-10">T2</span>
-                            {(pending?.previewUrls?.tier2 || themeColor.images?.tier2) ? <img src={pending?.previewUrls?.tier2 || themeColor.images?.tier2} alt="T2" className={`h-full object-contain ${pending?.previewUrls?.tier2 ? 'opacity-80' : ''}`} /> : <span className="text-[10px] text-muted font-bold">{pending ? 'Pending' : 'No Img'}</span>}
-                          </div>
-                        )}
-                        {theme.tiers?.tier3?.isActive && (
-                          <div className="h-24 bg-border/20 rounded-lg overflow-hidden flex flex-col items-center justify-center relative">
-                            <span className="absolute top-1 left-1 text-[8px] font-black uppercase bg-black/50 text-white px-1 py-0.5 rounded z-10">T3</span>
-                            {(pending?.previewUrls?.tier3 || themeColor.images?.tier3) ? <img src={pending?.previewUrls?.tier3 || themeColor.images?.tier3} alt="T3" className={`h-full object-contain ${pending?.previewUrls?.tier3 ? 'opacity-80' : ''}`} /> : <span className="text-[10px] text-muted font-bold">{pending ? 'Pending' : 'No Img'}</span>}
-                          </div>
-                        )}
+                        {['tier1', 'tier2', 'tier3'].map((tierKey, idx) => {
+                          if (!theme.tiers?.[tierKey]?.isActive) return null;
+                          const currentImg = pending?.previewUrls?.[tierKey] || themeColor.images?.[tierKey];
+                          const stats = pending?.imageStats?.[tierKey];
+                          return (
+                            <div key={tierKey} className="flex flex-col gap-1">
+                              <div className="h-28 bg-border/20 rounded-xl overflow-hidden flex flex-col items-center justify-center relative group border border-border/50">
+                                <span className="absolute top-1 left-1 text-[9px] font-black uppercase bg-black/60 text-white px-1.5 py-0.5 rounded z-10">T{idx+1}</span>
+                                {currentImg ? (
+                                  <>
+                                    <img src={currentImg} alt={`Tier ${idx+1}`} className="h-full w-full object-contain p-1" />
+                                    <div className="absolute inset-0 bg-black/60 backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 z-20">
+                                      <label title="Change / Update image" className="p-1.5 bg-primary text-button-text rounded-lg cursor-pointer hover:scale-105 transition-transform shadow-xs flex items-center justify-center">
+                                        <UploadCloud size={14} />
+                                        <input type="file" accept="image/*" className="hidden" onChange={async e => { const file = e.target.files?.[0]; e.target.value = ''; if (file) await handleFileInputChange(gColor.name, tierKey, file); }} />
+                                      </label>
+                                      <button 
+                                        type="button" 
+                                        onClick={() => handleDeleteTierImage(gColor.name, tierKey)} 
+                                        className="p-1.5 bg-rose-600 text-white rounded-lg hover:scale-105 transition-transform shadow-xs cursor-pointer flex items-center justify-center" 
+                                        title="Delete image"
+                                      >
+                                        <Trash2 size={14} />
+                                      </button>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <label className="w-full h-full flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-primary/10 transition-colors p-2 text-center text-muted hover:text-primary">
+                                    <Plus size={16} />
+                                    <span className="text-[9px] font-black uppercase">Add Img</span>
+                                    <input type="file" accept="image/*" className="hidden" onChange={async e => { const file = e.target.files?.[0]; e.target.value = ''; if (file) await handleFileInputChange(gColor.name, tierKey, file); }} />
+                                  </label>
+                                )}
+                              </div>
+                              {stats && (
+                                <div className="mt-1 text-left w-full">
+                                  <p className="text-[9px] font-black text-secondary uppercase tracking-wider mb-0.5">Image optimized</p>
+                                  <div className="rounded-lg bg-input border border-input-border p-1.5 text-[9px] font-bold space-y-0.5 text-heading shadow-xs">
+                                    <p>Original Size: {formatFileSize(stats.originalSize)}</p>
+                                    <p>Optimized Size: {formatFileSize(stats.optimizedSize)}</p>
+                                    <p>Reduction: {stats.reduction}%</p>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                       <div className="flex justify-between items-center bg-input px-3 py-2 rounded-lg border border-input-border">
                         <span className="text-xs font-black text-muted uppercase">Base Price</span>
@@ -719,7 +907,7 @@ const ThemeBuilder = ({ themeId, onBack }) => {
                       {themeColor._id && hasImages && !pending && (
                         <button 
                           onClick={() => handleApplyToAll(themeColor._id)}
-                          className="w-full mt-1 py-1.5 bg-secondary text-white rounded font-bold text-xs hover:bg-secondary/90 transition-colors"
+                          className="w-full mt-1 py-1.5 bg-secondary text-white rounded font-bold text-xs hover:bg-secondary/90 transition-colors cursor-pointer"
                         >
                           Apply to All Colors
                         </button>
@@ -730,7 +918,8 @@ const ThemeBuilder = ({ themeId, onBack }) => {
                       <form onSubmit={async e => {
                         e.preventDefault();
                         const price = e.target.price.value;
-                        const files = {};
+                        const pendingFiles = pending?.files || {};
+                        const files = { ...pendingFiles };
                         if (theme.tiers?.tier1?.isActive && e.target.tier1Image?.files[0]) files.tier1 = e.target.tier1Image.files[0];
                         if (theme.tiers?.tier2?.isActive && e.target.tier2Image?.files[0]) files.tier2 = e.target.tier2Image.files[0];
                         if (theme.tiers?.tier3?.isActive && e.target.tier3Image?.files[0]) files.tier3 = e.target.tier3Image.files[0];
@@ -743,60 +932,50 @@ const ThemeBuilder = ({ themeId, onBack }) => {
                         }
                       }} className="flex flex-col gap-2">
                         <div className="grid grid-cols-3 gap-2">
-                          {theme.tiers?.tier1?.isActive && (
-                            <label className="flex flex-col items-center justify-center gap-1 bg-input border border-input-border p-2 rounded-lg cursor-pointer hover:bg-border/30 transition-colors text-[10px] font-bold text-muted text-center h-20 relative overflow-hidden">
-                              {pending?.previewUrls?.tier1 || themeColor.images?.tier1 ? (
-                                <>
-                                  <img src={pending?.previewUrls?.tier1 || themeColor.images?.tier1} className="absolute inset-0 w-full h-full object-contain opacity-80" />
-                                  <button type="button" onClick={e => { e.stopPropagation(); handleRemoveTierFile(gColor.name, 'tier1'); }} className="absolute top-1 right-1 z-20 rounded-full bg-black/60 p-1 text-white">
-                                    <X size={14} />
-                                  </button>
-                                </>
-                              ) : (
-                                <>
-                                  <ImageIcon size={14} className="z-10" />
-                                  <span className="z-10">Tier 1</span>
-                                </>
-                              )}
-                              <input type="file" name="tier1Image" accept="image/*" className="hidden" onChange={e => handleFileInputChange(gColor.name, 'tier1', e.target.files?.[0])} />
-                            </label>
-                          )}
-                          {theme.tiers?.tier2?.isActive && (
-                            <label className="flex flex-col items-center justify-center gap-1 bg-input border border-input-border p-2 rounded-lg cursor-pointer hover:bg-border/30 transition-colors text-[10px] font-bold text-muted text-center h-20 relative overflow-hidden">
-                              {pending?.previewUrls?.tier2 || themeColor.images?.tier2 ? (
-                                <>
-                                  <img src={pending?.previewUrls?.tier2 || themeColor.images?.tier2} className="absolute inset-0 w-full h-full object-contain opacity-80" />
-                                  <button type="button" onClick={e => { e.stopPropagation(); handleRemoveTierFile(gColor.name, 'tier2'); }} className="absolute top-1 right-1 z-20 rounded-full bg-black/60 p-1 text-white">
-                                    <X size={14} />
-                                  </button>
-                                </>
-                              ) : (
-                                <>
-                                  <ImageIcon size={14} className="z-10" />
-                                  <span className="z-10">Tier 2</span>
-                                </>
-                              )}
-                              <input type="file" name="tier2Image" accept="image/*" className="hidden" onChange={e => handleFileInputChange(gColor.name, 'tier2', e.target.files?.[0])} />
-                            </label>
-                          )}
-                          {theme.tiers?.tier3?.isActive && (
-                            <label className="flex flex-col items-center justify-center gap-1 bg-input border border-input-border p-2 rounded-lg cursor-pointer hover:bg-border/30 transition-colors text-[10px] font-bold text-muted text-center h-20 relative overflow-hidden">
-                              {pending?.previewUrls?.tier3 || themeColor.images?.tier3 ? (
-                                <>
-                                  <img src={pending?.previewUrls?.tier3 || themeColor.images?.tier3} className="absolute inset-0 w-full h-full object-contain opacity-80" />
-                                  <button type="button" onClick={e => { e.stopPropagation(); handleRemoveTierFile(gColor.name, 'tier3'); }} className="absolute top-1 right-1 z-20 rounded-full bg-black/60 p-1 text-white">
-                                    <X size={14} />
-                                  </button>
-                                </>
-                              ) : (
-                                <>
-                                  <ImageIcon size={14} className="z-10" />
-                                  <span className="z-10">Tier 3</span>
-                                </>
-                              )}
-                              <input type="file" name="tier3Image" accept="image/*" className="hidden" onChange={e => handleFileInputChange(gColor.name, 'tier3', e.target.files?.[0])} />
-                            </label>
-                          )}
+                          {['tier1', 'tier2', 'tier3'].map((tierKey, idx) => {
+                            if (!theme.tiers?.[tierKey]?.isActive) return null;
+                            const currentImg = pending?.previewUrls?.[tierKey] || themeColor.images?.[tierKey];
+                            const stats = pending?.imageStats?.[tierKey];
+                            return (
+                              <div key={tierKey} className="flex flex-col gap-1">
+                                <span className="text-[10px] font-black text-muted uppercase">Tier {idx+1}</span>
+                                {currentImg ? (
+                                  <div className="h-24 bg-border/20 rounded-xl overflow-hidden relative group border border-border/60 flex items-center justify-center">
+                                    <img src={currentImg} alt={`T${idx+1}`} className="h-full w-full object-contain p-1" />
+                                    <div className="absolute inset-0 bg-black/60 backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 z-20">
+                                      <label className="px-2 py-1 bg-primary text-button-text rounded-md text-[9px] font-black uppercase cursor-pointer hover:scale-105 transition-all shadow-xs flex items-center gap-1">
+                                        <UploadCloud size={12} /> Replace
+                                        <input type="file" name={`${tierKey}Image`} accept="image/*" className="hidden" onChange={async e => { const file = e.target.files?.[0]; e.target.value = ''; if (file) await handleFileInputChange(gColor.name, tierKey, file); }} />
+                                      </label>
+                                      <button 
+                                        type="button" 
+                                        onClick={() => handleDeleteTierImage(gColor.name, tierKey)} 
+                                        className="px-2 py-1 bg-rose-600 text-white rounded-md text-[9px] font-black uppercase hover:scale-105 transition-all shadow-xs flex items-center gap-1 cursor-pointer"
+                                      >
+                                        <Trash2 size={12} /> Delete
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <label className="h-24 bg-input border-2 border-dashed border-input-border rounded-xl flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all p-2 text-center text-muted hover:text-primary">
+                                    <ImageIcon size={18} />
+                                    <span className="text-[10px] font-black uppercase">+ Tier {idx+1}</span>
+                                    <input type="file" name={`${tierKey}Image`} accept="image/*" className="hidden" onChange={async e => { const file = e.target.files?.[0]; e.target.value = ''; if (file) await handleFileInputChange(gColor.name, tierKey, file); }} />
+                                  </label>
+                                )}
+                                {stats && (
+                                  <div className="mt-1 text-left w-full">
+                                    <p className="text-[9px] font-black text-secondary uppercase tracking-wider mb-0.5">Image optimized</p>
+                                    <div className="rounded-lg bg-input border border-input-border p-1.5 text-[9px] font-bold space-y-0.5 text-heading shadow-xs">
+                                      <p>Original Size: {formatFileSize(stats.originalSize)}</p>
+                                      <p>Optimized Size: {formatFileSize(stats.optimizedSize)}</p>
+                                      <p>Reduction: {stats.reduction}%</p>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                           {!theme.tiers?.tier1?.isActive && !theme.tiers?.tier2?.isActive && !theme.tiers?.tier3?.isActive && (
                             <span className="col-span-3 text-xs text-muted text-center py-4">No tiers enabled for this theme.</span>
                           )}

@@ -118,6 +118,7 @@ const adminService = {
   updateCustomCakeThemeColor: (themeId, colorId, data) => api.put(`/custom-cakes/themes/${themeId}/colors/${colorId}`, data),
   deleteCustomCakeThemeColor: (themeId, colorId) => api.delete(`/custom-cakes/themes/${themeId}/colors/${colorId}`),
   uploadCustomCakeThemeColorImages: (themeId, colorId, formData) => api.post(`/custom-cakes/themes/${themeId}/colors/${colorId}/images`, formData),
+  deleteCustomCakeThemeColorTierImage: (themeId, colorId, tierKey) => api.delete(`/custom-cakes/themes/${themeId}/colors/${colorId}/images/${tierKey}`),
   applyCustomCakeThemeColorToAll: (themeId, colorId) => api.post(`/custom-cakes/themes/${themeId}/colors/${colorId}/apply-to-all`),
 
   /* ----------------------------------------

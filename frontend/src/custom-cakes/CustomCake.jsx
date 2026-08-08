@@ -15,6 +15,7 @@ import { saveCustomCakeRequest } from '../utils/customCake';
 import { useWishlist } from '../context/WishlistContext';
 import toast from 'react-hot-toast';
 import api from '../utils/api';
+import compressImage from '../utils/compressImage';
 import PureVegIcon from '../assets/pure veg.webp';
 import { toSentenceCase } from '../utils/textUtils';
 
@@ -437,13 +438,20 @@ export default function CustomCake() {
       return;
     }
 
-    const localUrl = URL.createObjectURL(file);
+    let uploadFile = file;
+    try {
+      uploadFile = await compressImage(file);
+    } catch (err) {
+      console.warn('Compression fallback:', err);
+    }
+
+    const localUrl = URL.createObjectURL(uploadFile);
     setPhotoPreview(localUrl);
     setIsUploadingPhoto(true);
 
     try {
       const formData = new FormData();
-      formData.append('photo', file);
+      formData.append('photo', uploadFile);
 
       const res = await api.post('/custom-cakes/upload-photo', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }

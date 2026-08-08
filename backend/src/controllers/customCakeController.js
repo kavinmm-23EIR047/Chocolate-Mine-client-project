@@ -270,6 +270,42 @@ exports.deleteThemeColor = asyncHandler(async (req, res, next) => {
   res.status(204).json({ status: 'success', data: null });
 });
 
+const getCustomCakeFolderAndPublicId = (theme, colorName, tierKey) => {
+  const categories = Array.isArray(theme?.category) 
+    ? theme.category 
+    : (typeof theme?.category === 'string' ? [theme.category] : []);
+
+  const isWeddingOrAnniversary = categories.some(cat => {
+    if (typeof cat !== 'string') return false;
+    const clean = cat.toLowerCase().replace(/[\s_-]/g, '');
+    return clean.includes('wedding') || clean.includes('anniversary');
+  });
+
+  const topFolder = isWeddingOrAnniversary ? 'wedding-and-anniversary' : 'custom-cakes';
+
+  const themeSlug = (theme?.name || 'custom-cake')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  const folderPath = `${topFolder}/${themeSlug || 'general'}`;
+
+  const colorSlug = (colorName || 'default')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  const tierSuffix = (tierKey && tierKey !== 'tier1') ? `-${tierKey}` : '';
+  const publicId = `${colorSlug}${tierSuffix}`;
+
+  return {
+    folder: folderPath,
+    public_id: publicId
+  };
+};
+
 exports.updateThemeColorImages = asyncHandler(async (req, res, next) => {
   const theme = await CustomCakeTheme.findById(req.params.id);
   if (!theme) return next(new AppError('Theme not found', 404));
@@ -281,28 +317,47 @@ exports.updateThemeColorImages = asyncHandler(async (req, res, next) => {
     color.price = parseFloat(req.body.price) || 0;
   }
 
-  const uploadFile = async (file) => {
-    const uploaded = await cloudinaryService.uploadBuffer(file.buffer, 'custom-cakes', file.mimetype);
+  const customCakeConfig = cloudinaryService.getCustomCakeCloudinaryConfig();
+
+  const uploadFile = async (file, folderPath, publicId) => {
+    const uploaded = await cloudinaryService.uploadBuffer(file.buffer, folderPath, file.mimetype, {
+      public_id: publicId,
+      unique_filename: false,
+      overwrite: true,
+      ...customCakeConfig
+    });
     if (!uploaded) throw new Error('Image upload failed via buffer');
     return uploaded.secure_url;
   };
 
-  const uploadBase64 = async (base64Str) => {
-    const uploaded = await cloudinaryService.uploadImage(base64Str, 'custom-cakes');
+  const uploadBase64 = async (base64Str, folderPath, publicId) => {
+    const uploaded = await cloudinaryService.uploadImage(base64Str, folderPath, {
+      public_id: publicId,
+      unique_filename: false,
+      overwrite: true,
+      ...customCakeConfig
+    });
     if (!uploaded) throw new Error('Image upload failed');
     return uploaded.secure_url;
   };
 
   const tryUploadTier = async (tierKey, fileField) => {
+    const { folder, public_id } = getCustomCakeFolderAndPublicId(theme, color.name, tierKey);
+
     const file = req.files?.[fileField]?.[0];
     if (file) {
-      color.images[tierKey] = await uploadFile(file);
+      color.images[tierKey] = await uploadFile(file, folder, public_id);
       return;
     }
 
     const bodyValue = req.body[fileField];
-    if (bodyValue) {
-      color.images[tierKey] = await uploadBase64(bodyValue);
+    if (bodyValue === 'null' || bodyValue === 'delete' || bodyValue === 'remove' || bodyValue === 'clear') {
+      color.images[tierKey] = null;
+      return;
+    }
+
+    if (bodyValue && typeof bodyValue === 'string' && bodyValue.startsWith('data:image/')) {
+      color.images[tierKey] = await uploadBase64(bodyValue, folder, public_id);
     }
   };
 
@@ -326,6 +381,30 @@ exports.updateThemeColorImages = asyncHandler(async (req, res, next) => {
   );
 
   const updatedColor = updatedTheme.colors.id(req.params.colorId);
+  res.status(200).json({ status: 'success', data: updatedColor });
+});
+
+exports.deleteThemeColorTierImage = asyncHandler(async (req, res, next) => {
+  const { id, colorId, tierKey } = req.params;
+  const theme = await CustomCakeTheme.findById(id);
+  if (!theme) return next(new AppError('Theme not found', 404));
+
+  const color = theme.colors.id(colorId);
+  if (!color) return next(new AppError('Color not found in this theme', 404));
+
+  if (!['tier1', 'tier2', 'tier3'].includes(tierKey)) {
+    return next(new AppError('Invalid tier key', 400));
+  }
+
+  color.images[tierKey] = null;
+
+  const updatedTheme = await CustomCakeTheme.findOneAndUpdate(
+    { _id: id, 'colors._id': colorId },
+    { $set: { [`colors.$.images.${tierKey}`]: null } },
+    { new: true, runValidators: true }
+  );
+
+  const updatedColor = updatedTheme.colors.id(colorId);
   res.status(200).json({ status: 'success', data: updatedColor });
 });
 
