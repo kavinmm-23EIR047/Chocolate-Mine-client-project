@@ -119,7 +119,7 @@ export default function HomeLoader({ show = false, onFinish, durationMs = 3600 }
           initial={{ opacity: 1 }}
           exit={{ opacity: 0, scale: 0.98 }}
           transition={{ duration: 0.4, ease: 'easeInOut' }}
-          className="fixed inset-0 w-screen h-screen z-[999999] flex flex-col items-center justify-between py-16 px-6 overflow-hidden select-none bg-[var(--background)]"
+          className="fixed inset-0 w-screen h-screen z-[1000000] flex flex-col items-center justify-between py-16 px-6 overflow-hidden select-none bg-[var(--background)]"
         >
           {/* Subtle Ambient Radial Glow */}
           <div

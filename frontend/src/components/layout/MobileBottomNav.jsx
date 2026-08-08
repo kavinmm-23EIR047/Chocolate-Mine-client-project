@@ -35,7 +35,7 @@ const MobileBottomNav = () => {
 
   return (
     <div
-      className="fixed inset-x-0 bottom-0 z-[999999] flex px-2 pb-2 pointer-events-none sm:px-4 lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 flex px-2 pb-2 pointer-events-none sm:px-4 lg:hidden"
       style={{ paddingBottom: 'max(8px, env(safe-area-inset-bottom))' }}
     >
       <nav
