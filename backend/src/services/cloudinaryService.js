@@ -17,7 +17,7 @@ cloudinary.config({
  * @param {string} folder - Folder name for organization
  * @returns {Promise<{secure_url: string, public_id: string}|null>}
  */
-exports.uploadImage = async (input, folder = 'general') => {
+exports.uploadImage = async (input, folder = 'general', options = {}) => {
   try {
     if (!input) {
       logger.error('No image input provided');
@@ -31,8 +31,12 @@ exports.uploadImage = async (input, folder = 'general') => {
       folder: uploadFolder,
       resource_type: 'auto',
       overwrite: true,
+<<<<<<< HEAD
       quality: 'auto:good',
       fetch_format: 'auto'
+=======
+      ...options
+>>>>>>> 3e8010a39ecdf7b596b5786a3b28abae4c3042ff
     });
 
     logger.info(`Cloudinary Upload Success: ${result.secure_url}`);
@@ -50,12 +54,24 @@ exports.uploadImage = async (input, folder = 'general') => {
  * Upload image buffer directly to Cloudinary using streams
  * @param {Buffer} buffer - The image buffer
  * @param {string} folder - Folder name
+ * @param {string} mimetype - Mime type
+ * @param {object} options - Custom Cloudinary upload options
  * @returns {Promise<{secure_url: string, public_id: string}|null>}
  */
-exports.uploadBuffer = async (buffer, folder = 'general', mimetype = 'image/png') => {
+exports.uploadBuffer = async (buffer, folder = 'general', mimetype = 'image/png', options = {}) => {
   if (!Buffer.isBuffer(buffer) || buffer.length === 0) throw new Error('No image buffer provided');
 
+  const uploadOptions = {
+    folder,
+    resource_type: 'image',
+    use_filename: false,
+    unique_filename: true,
+    overwrite: true,
+    ...options
+  };
+
   return new Promise((resolve, reject) => {
+<<<<<<< HEAD
     const stream = cloudinary.uploader.upload_stream({
       folder,
       resource_type: 'image',
@@ -64,6 +80,9 @@ exports.uploadBuffer = async (buffer, folder = 'general', mimetype = 'image/png'
       use_filename: false,
       unique_filename: true
     }, (error, result) => {
+=======
+    const stream = cloudinary.uploader.upload_stream(uploadOptions, (error, result) => {
+>>>>>>> 3e8010a39ecdf7b596b5786a3b28abae4c3042ff
       if (error) {
         logger.error('Cloudinary Buffer Upload Error:', error.message);
         return reject(error);
@@ -78,18 +97,33 @@ exports.uploadBuffer = async (buffer, folder = 'general', mimetype = 'image/png'
 };
 
 /**
+ * Get dedicated Cloudinary configuration for Custom Cakes section
+ */
+exports.getCustomCakeCloudinaryConfig = () => {
+  if (process.env.CUSTOM_CAKES_CLOUDINARY_CLOUD_NAME) {
+    return {
+      cloud_name: process.env.CUSTOM_CAKES_CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CUSTOM_CAKES_CLOUDINARY_API_KEY,
+      api_secret: process.env.CUSTOM_CAKES_CLOUDINARY_API_SECRET
+    };
+  }
+  return {};
+};
+
+/**
  * Delete image from Cloudinary
  * @param {string} publicId - The public_id of the image to delete
+ * @param {object} options - Custom Cloudinary options (e.g. account credentials)
  * @returns {Promise<boolean>}
  */
-exports.deleteImage = async (publicId) => {
+exports.deleteImage = async (publicId, options = {}) => {
   if (!publicId) {
     logger.warn('No publicId provided for deletion');
     return false;
   }
   
   try {
-    const result = await cloudinary.uploader.destroy(publicId);
+    const result = await cloudinary.uploader.destroy(publicId, { ...options });
     const success = result.result === 'ok';
     if (success) {
       logger.info(`Cloudinary Delete Success: ${publicId}`);
