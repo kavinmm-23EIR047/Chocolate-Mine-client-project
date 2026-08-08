@@ -16,36 +16,34 @@ const ProductActionButtons = ({
 }) => {
   if (isMobile) {
     return (
-      // ✨ FLOATING PILL STYLE: Detached from edges, high z-index, rounded corners, backdrop blur
       <div 
-        className="lg:hidden fixed left-4 right-4 z-[9999] bg-card/95 backdrop-blur-md border border-border/50 p-3 sm:p-4 rounded-2xl grid grid-cols-2 gap-3 shadow-[0_10px_40px_rgba(0,0,0,0.2)] pb-[env(safe-area-inset-bottom,16px)] bottom-4"
+        className="lg:hidden fixed inset-x-0 bottom-0 z-[9998] bg-card/95 backdrop-blur-lg border-t border-border/40 px-4 py-3 pb-[max(12px,env(safe-area-inset-bottom))] grid grid-cols-2 gap-3 shadow-[0_-8px_30px_rgba(0,0,0,0.3)]"
       >
         {cartQty > 0 ? (
-          <div className="flex items-center border-2 border-border/30 rounded-xl h-12 sm:h-14 bg-muted/5">
-            <button onClick={() => handleUpdateQuantity(productId, cartQty - 1)} className="w-12 h-full flex items-center justify-center hover:bg-muted/10 transition"><Minus size={18} /></button>
-            <span className="flex-1 text-center font-black text-base sm:text-lg text-heading">{cartQty}</span>
-            <button onClick={() => handleUpdateQuantity(productId, cartQty + 1)} className="w-12 h-full flex items-center justify-center hover:bg-muted/10 transition"><Plus size={18} /></button>
+          <div className="flex items-center border border-border/40 rounded-xl h-11 bg-muted/5">
+            <button onClick={() => handleUpdateQuantity(productId, cartQty - 1)} className="w-11 h-full flex items-center justify-center hover:bg-muted/10 transition"><Minus size={18} /></button>
+            <span className="flex-1 text-center font-black text-base text-heading">{cartQty}</span>
+            <button onClick={() => handleUpdateQuantity(productId, cartQty + 1)} className="w-11 h-full flex items-center justify-center hover:bg-muted/10 transition"><Plus size={18} /></button>
           </div>
         ) : (
           <button
             onClick={handleAddToCart}
             disabled={!isInStock || !isDeliverable}
-            className={`h-12 sm:h-14 border-2 border-primary text-primary font-black text-xs sm:text-sm uppercase tracking-wider rounded-xl transition flex items-center justify-center gap-2 ${(!isInStock || !isDeliverable) ? 'opacity-50 cursor-not-allowed' : 'active:scale-95'}`}
+            className={`h-11 border-2 border-primary text-primary font-black text-xs sm:text-sm uppercase tracking-wider rounded-xl transition flex items-center justify-center gap-2 ${(!isInStock || !isDeliverable) ? 'opacity-50 cursor-not-allowed' : 'active:scale-95'}`}
           >
-            <ShoppingCart size={18} /> {!isDeliverable ? 'Unavailable' : isInStock ? 'Add to Cart' : 'Sold Out'}
+            <ShoppingCart size={17} /> {!isDeliverable ? 'Unavailable' : isInStock ? 'Add to Cart' : 'Sold Out'}
           </button>
         )}
 
-        {/* Updated from bg-secondary to bg-primary for accessible contrast */}
         <button
           onClick={handleBuyNow}
           disabled={!isInStock || !isDeliverable}
-          className={`h-12 sm:h-14 font-black text-xs sm:text-sm uppercase tracking-wider rounded-xl transition shadow-lg flex items-center justify-center gap-2 ${(isInStock && isDeliverable)
+          className={`h-11 font-black text-xs sm:text-sm uppercase tracking-wider rounded-xl transition shadow-md flex items-center justify-center gap-2 ${(isInStock && isDeliverable)
             ? 'bg-primary text-button-text shadow-primary/20 active:scale-95'
             : 'bg-muted/40 text-muted/60 cursor-not-allowed'
             }`}
         >
-          {!isDeliverable ? 'Unavailable' : isInStock ? 'Buy Now' : 'Out of Stock'} <ArrowRight size={18} />
+          {!isDeliverable ? 'Unavailable' : isInStock ? 'Buy Now' : 'Out of Stock'} <ArrowRight size={17} />
         </button>
       </div>
     );

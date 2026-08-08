@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { Truck, Phone, HelpCircle, MapPin, ArrowLeft } from 'lucide-react';
+import { Truck, Phone, HelpCircle, MapPin } from 'lucide-react';
 import Navbar from '../Navbar';
 import Footer from '../Footer';
-import Logo from '../Logo';
 import MobileBottomNav from '../layout/MobileBottomNav';
-import PureVegBadge from '../ui/PureVegBadge';
 import NotificationPrompt from '../ui/NotificationPrompt';
 import NotificationBanner from '../ui/NotificationBanner';
 import CocoaLeavesBackground from '../ui/CocoaLeavesBackground';
@@ -52,24 +50,22 @@ const UserLayout = () => {
   };
 
   const isProductPage = location.pathname.startsWith('/product/');
-  const isAuthPage = ['/login', '/register', '/forgot-password'].some(path => location.pathname.toLowerCase().startsWith(path));
-
-  const hasPermission = typeof window !== 'undefined' && 'Notification' in window && window.Notification && window.Notification.permission === 'granted';
-  const hasFcmToken = user?.fcmTokens && user.fcmTokens.length > 0;
-  const showBanner = user && (!hasPermission || !hasFcmToken);
+  const isAuthPage = ['/login', '/register', '/forgot-password', '/verify-otp'].some(path => location.pathname.toLowerCase().startsWith(path));
 
   return (
     <>
       <div className="min-h-screen flex flex-col bg-background relative overflow-x-hidden">
-        {/* ── COCOA LEAF BACKGROUND WATERMARKS (LIGHT THEME: DARK BROWN, DARK THEME: LIGHT BEIGE) ── */}
+        {/* ── COCOA LEAF BACKGROUND WATERMARKS ── */}
         <CocoaLeavesBackground />
-        <header className="sticky top-0 z-[200] w-full">
+
+        {/* Hide Navbar & NotificationBanner on mobile for Login/Register/Auth pages */}
+        <header className={`sticky top-0 z-[200] w-full ${isAuthPage ? 'hidden md:block' : 'block'}`}>
           <NotificationBanner />
           <Navbar />
         </header>
 
-        {/* ── RESPONSIVE INFO BANNER ── */}
-        <div className="bg-[#4E2820] dark:bg-[#F5EDE8] py-2 px-4 sm:px-6 lg:px-8 overflow-hidden transition-colors duration-300">
+        {/* ── RESPONSIVE INFO BANNER (Hidden on mobile for Auth pages) ── */}
+        <div className={`bg-[#4E2820] dark:bg-[#F5EDE8] py-2 px-4 sm:px-6 lg:px-8 overflow-hidden transition-colors duration-300 ${isAuthPage ? 'hidden md:block' : 'block'}`}>
           {/* DESKTOP/TABLET LAYOUT (md and up) */}
           <div className="hidden md:flex items-center justify-between responsive-container gap-4">
             <div className="flex items-center gap-2.5 shrink-0">
@@ -118,7 +114,7 @@ const UserLayout = () => {
           </div>
         </div>
 
-        <main className="flex-grow min-w-0 pb-24 lg:pb-0">
+        <main className={`flex-grow min-w-0 ${isAuthPage ? 'pb-0' : 'pb-24 lg:pb-0'}`}>
           <Outlet />
         </main>
         

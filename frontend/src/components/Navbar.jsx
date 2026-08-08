@@ -101,7 +101,7 @@ const Navbar = () => {
           <div className="absolute bottom-4 right-10"><Cake size={22} strokeWidth={1.2} className="text-heading" /></div>
         </div>
 
-        <div className="responsive-container pb-3 lg:pb-0 relative z-10">
+        <div className="responsive-container pb-1 lg:pb-0 relative z-10">
 
           {/* DESKTOP LAYOUT ROW */}
           <div className="hidden lg:flex items-center justify-between gap-3 py-0.5">
@@ -202,13 +202,13 @@ const Navbar = () => {
           </div>
 
           {/* MOBILE VIEW LAYOUT */}
-          <div className="lg:hidden flex flex-col gap-4 pt-3 pb-1">
+          <div className="lg:hidden flex flex-col gap-3 pt-3.5 pb-3.5 px-1.5">
 
-            {/* Top Row: Menu + Logo + Actions */}
-            <div className="flex items-center justify-between w-full px-1">
-              <div className="flex items-center gap-2">
+            {/* Top Row: Menu + Logo (Left) | Notification + Theme (Right) */}
+            <div className="flex items-center justify-between w-full px-0.5">
+              <div className="flex items-center gap-2 shrink-0">
                 <button onClick={() => setIsMenuOpen(true)} className="p-1 rounded-lg transition-colors flex-shrink-0">
-                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-heading">
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-heading">
                     <line x1="3" y1="6" x2="21" y2="6"></line>
                     <line x1="8" y1="12" x2="21" y2="12"></line>
                     <line x1="3" y1="18" x2="21" y2="18"></line>
@@ -219,29 +219,29 @@ const Navbar = () => {
                 </Link>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 shrink-0">
                 {user ? (
                   <NotificationDropdown iconClass="text-heading" />
                 ) : (
-                  <button onClick={() => window.dispatchEvent(new Event('openNotificationPrompt'))} className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center relative">
-                    <Bell size={24} className="text-heading" />
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-amber-400 rounded-full" />
+                  <button onClick={() => window.dispatchEvent(new Event('openNotificationPrompt'))} className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center relative">
+                    <Bell size={22} className="text-heading" />
+                    <span className="absolute top-1 right-1 w-2 h-2 bg-amber-400 rounded-full" />
                   </button>
                 )}
-                <ThemeToggle buttonClass="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center relative" iconClass="text-heading" />
+                <ThemeToggle buttonClass="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center relative" iconClass="text-heading" />
               </div>
             </div>
 
             {/* Location Capsule Row */}
-            <div className="flex justify-start relative mt-0.5" ref={mobileLocationDropdownRef}>
+            <div className="flex justify-start relative px-0.5" ref={mobileLocationDropdownRef}>
               <button
                 onClick={() => setIsLocationOpen(!isLocationOpen)}
-                className="flex items-center gap-2 px-4 py-2 rounded-full border border-[var(--border)] bg-[var(--card)] text-[var(--heading)] transition-all text-[12px] font-black tracking-wider uppercase shadow-sm cursor-pointer"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-[var(--border)] bg-[var(--card)] text-[var(--heading)] transition-all text-[11px] font-black tracking-wider uppercase shadow-sm cursor-pointer whitespace-nowrap"
               >
-                <MapPin size={15} className="text-[var(--primary)]" />
+                <MapPin size={14} className="text-[var(--primary)] shrink-0" />
                 <span className="flex items-center gap-1">
                   {deliveryCity === 'pan india' ? 'PAN INDIA' : (deliveryCity?.toUpperCase() || 'SELECT CITY')}
-                  <ChevronDown size={12} className={`transition-transform duration-200 text-[var(--primary)] ${isLocationOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown size={11} className={`transition-transform duration-200 text-[var(--primary)] ${isLocationOpen ? 'rotate-180' : ''}`} />
                 </span>
               </button>
 
@@ -249,13 +249,13 @@ const Navbar = () => {
                 {isLocationOpen && (
                   <motion.div
                     initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.15 }}
-                    className="absolute top-full mt-1.5 left-0 w-48 bg-[var(--card)] rounded-2xl shadow-xl border border-[var(--border)] overflow-hidden z-[100] p-1"
+                    className="absolute top-full mt-1.5 left-0.5 w-48 bg-[var(--card)] rounded-2xl shadow-xl border border-[var(--border)] overflow-hidden z-[100] p-1"
                   >
                     {['coimbatore', 'pan india'].map((city) => (
                       <button
                         key={city} onClick={() => { setDeliveryCity(city); setIsLocationOpen(false); }}
                         disabled={city === 'pan india'}
-                        className={`w-full text-left px-5 py-3 text-[11px] font-black uppercase tracking-wider rounded-xl transition-colors ${city === 'pan india' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[var(--primary)] hover:text-[var(--button-text)] text-[var(--heading)] cursor-pointer'}`}
+                        className={`w-full text-left px-4 py-2.5 text-[11px] font-black uppercase tracking-wider rounded-xl transition-colors ${city === 'pan india' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[var(--primary)] hover:text-[var(--button-text)] text-[var(--heading)] cursor-pointer'}`}
                       >
                         {city === 'pan india' ? 'PAN INDIA (Coming Soon)' : 'COIMBATORE'}
                       </button>
@@ -265,19 +265,19 @@ const Navbar = () => {
               </AnimatePresence>
             </div>
 
-            {/* Mobile Search Pill (Uses card background) */}
+            {/* Mobile Search Pill */}
             <div
-              className="relative w-full mt-0.5 cursor-pointer flex items-center pl-12 pr-12 py-3 rounded-full bg-[var(--card)] border border-[var(--border)] min-h-[48px] select-none hover:border-[var(--primary)] transition-all shadow-sm"
+              className="relative w-full cursor-pointer flex items-center pl-11 pr-11 py-3 rounded-full bg-[var(--card)] border border-[var(--border)] min-h-[46px] select-none hover:border-[var(--primary)] transition-all shadow-sm"
               onClick={() => setIsSearchOverlayOpen(true)}
             >
-              <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--primary)]" />
+              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--primary)]" />
 
-              <span className="text-[var(--body)] font-medium text-sm truncate flex-1 block">
+              <span className="text-[var(--body)] font-medium text-xs sm:text-sm truncate flex-1 block">
                 Search cakes, desserts and more...
               </span>
 
-              <button className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--primary)] hover:scale-110 transition-transform p-1 flex items-center justify-center">
-                <SlidersHorizontal size={18} />
+              <button className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--primary)] hover:scale-110 transition-transform p-1 flex items-center justify-center">
+                <SlidersHorizontal size={16} />
               </button>
             </div>
           </div>
@@ -315,7 +315,7 @@ const Navbar = () => {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 26, stiffness: 220 }}
-              className="fixed top-2 bottom-2 left-0 w-[85%] max-w-[340px] bg-card border border-l-0 border-border/30 rounded-r-[28px] z-[220] shadow-2xl flex flex-col overflow-hidden"
+              className="fixed top-2 bottom-2 left-0 w-[85%] max-w-[340px] max-h-[calc(100dvh-16px)] bg-card border border-l-0 border-border/30 rounded-r-[28px] z-[220] shadow-2xl flex flex-col overflow-hidden"
             >
               <div className="p-4 sm:p-5 border-b border-border/15 flex items-center justify-between bg-surface/50">
                 <Logo className="w-[120px] h-auto object-contain" />

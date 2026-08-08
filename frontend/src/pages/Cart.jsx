@@ -13,8 +13,6 @@ import {
   Tag,
   ChevronRight,
   ChevronDown,
-  Truck,
-  Shield,
   Cake
 } from "lucide-react";
 
@@ -213,6 +211,7 @@ const Cart = () => {
               const originalPrice = getItemMrp(item);
               const hasOfferOnly = originalPrice > baseAfterOffer;
               const showStrike = originalPrice > finalPrice && (hasOfferOnly || couponOff > 0);
+              const productDetailPath = `/product/${item.slug || item.product?.slug || item.productId}`;
 
               return (
                 <motion.div
@@ -222,19 +221,23 @@ const Cart = () => {
                   className="bg-card rounded-2xl shadow-card border border-border/50 p-3 sm:p-6"
                 >
                   <div className="flex flex-row gap-3 sm:gap-6">
-                    <div className="w-20 h-20 sm:w-32 sm:h-32 rounded-xl overflow-hidden bg-surface flex-shrink-0 border border-border/40 relative">
+                    {/* Clickable Product Image -> ProductDetails */}
+                    <Link
+                      to={productDetailPath}
+                      className="w-20 h-20 sm:w-32 sm:h-32 rounded-xl overflow-hidden bg-surface flex-shrink-0 border border-border/40 relative block group hover:opacity-90 transition-opacity cursor-pointer"
+                    >
                       {(!item.image || item.image === 'none' || item.image.trim() === '') ? (
                         <ImagePlaceholder />
                       ) : (
                         <ImageWithSkeleton
                           src={item.image}
                           alt={item.name}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           fallback={<ImagePlaceholder />}
                           imageWidth={200}
                         />
                       )}
-                    </div>
+                    </Link>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start gap-2">
@@ -242,9 +245,15 @@ const Cart = () => {
                           <p className="text-[9px] sm:text-[10px] text-muted uppercase font-black tracking-widest mb-1">
                             {Array.isArray(item.category) ? item.category.join(', ') : item.category}
                           </p>
-                          <h3 className="font-black text-heading text-sm sm:text-lg capitalize mb-1.5 sm:mb-2 leading-tight pr-2">
-                            {item.name}
-                          </h3>
+                          {/* Clickable Product Title -> ProductDetails */}
+                          <Link
+                            to={productDetailPath}
+                            className="block hover:text-primary transition-colors cursor-pointer"
+                          >
+                            <h3 className="font-black text-heading text-sm sm:text-lg capitalize mb-1.5 sm:mb-2 leading-tight pr-2 hover:text-primary transition-colors">
+                              {item.name}
+                            </h3>
+                          </Link>
                           {(Array.isArray(item?.category) ? item.category.includes('Custom Cakes') : item?.category === 'Custom Cakes') ? (
                             <>
                               {item.options?.color && (
@@ -259,14 +268,14 @@ const Cart = () => {
                               {item.options?.name && (
                                 <p className="text-xs text-muted font-medium">Name: {item.options.name}</p>
                               )}
-                               {item.options?.photoUrl && item.options.photoUrl !== item.image && item.options.photoUrl !== item.product?.image && (
-                                 <div className="flex items-center gap-2 mt-1">
-                                   <span className="text-xs text-muted font-medium">Photo:</span>
-                                   <a href={item.options.photoUrl} target="_blank" rel="noopener noreferrer">
-                                     <img src={item.options.photoUrl} alt="Uploaded Cake Photo" className="w-9 h-9 rounded-md object-cover border border-border/60 hover:opacity-90 transition-opacity" />
-                                   </a>
-                                 </div>
-                               )}
+                              {item.options?.photoUrl && item.options.photoUrl !== item.image && item.options.photoUrl !== item.product?.image && (
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-xs text-muted font-medium">Photo:</span>
+                                  <a href={item.options.photoUrl} target="_blank" rel="noopener noreferrer">
+                                    <img src={item.options.photoUrl} alt="Uploaded Cake Photo" className="w-9 h-9 rounded-md object-cover border border-border/60 hover:opacity-90 transition-opacity" />
+                                  </a>
+                                </div>
+                              )}
                             </>
                           ) : (
                             <>
@@ -346,7 +355,6 @@ const Cart = () => {
                             )}
                         </div>
 
-                        {/* FIXED: Added dispatch wrapper to action trigger */}
                         <button
                           type="button"
                           onClick={() => {

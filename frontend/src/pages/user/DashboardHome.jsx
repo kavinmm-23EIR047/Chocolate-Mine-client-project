@@ -39,69 +39,87 @@ const DashboardHome = () => {
   }, [user]);
 
   const stats = [
-    { title: 'Total Orders', value: statsData.totalOrders.toString(), icon: ShoppingBag, color: 'bg-info-light text-info border border-info/10' },
-    { title: 'Saved Addresses', value: statsData.savedAddresses.toString(), icon: MapPin, color: 'bg-success-light text-success border border-success/10' },
-    { title: 'Wishlist', value: wishlist.length.toString(), icon: Heart, color: 'bg-error-light text-error border border-error/10' },
+    { title: 'Total Orders', value: statsData.totalOrders.toString(), icon: ShoppingBag, path: '/account/orders', desc: 'Purchases & history' },
+    { title: 'Saved Addresses', value: statsData.savedAddresses.toString(), icon: MapPin, path: '/account/addresses', desc: 'Delivery locations' },
+    { title: 'Wishlist', value: wishlist.length.toString(), icon: Heart, path: '/account/wishlist', desc: 'Saved treats' },
   ];
 
   return (
-    <div className="space-y-10">
-      <div className="flex items-end justify-between">
+    <div className="space-y-6 sm:space-y-8">
+      {/* Friendly Banner */}
+      <div className="bg-gradient-to-r from-[var(--primary)]/10 via-[var(--card)] to-[var(--card)] border border-[var(--border)] p-5 sm:p-7 rounded-2xl sm:rounded-3xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
         <div>
-          <h1 className="text-4xl font-black text-heading tracking-tighter uppercase">Overview</h1>
-          <p className="text-[11px] text-muted font-black mt-1 uppercase tracking-widest">Welcome back, <span className="text-primary">{user?.name?.split(' ')[0]}!</span></p>
+          <span className="text-[10px] font-black text-[var(--primary)] uppercase tracking-widest block mb-1">Account Dashboard</span>
+          <h1 className="text-2xl sm:text-3xl font-black text-[var(--heading)] tracking-tight uppercase">
+            Welcome back, {user?.name?.split(' ')[0]}!
+          </h1>
+          <p className="text-xs text-[var(--body)] font-medium mt-1">Manage your orders, addresses, and account details in one place.</p>
         </div>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
         {stats.map((stat, index) => {
           return (
             <Link
               key={index}
-              to={stat.title === 'Wishlist' ? '/account/wishlist' : stat.title === 'Total Orders' ? '/account/orders' : '/account/addresses'}
-              className="p-6 rounded-[2rem] bg-card border border-border/50 shadow-card hover:shadow-premium hover:-translate-y-1 transition-all group relative overflow-hidden"
+              to={stat.path}
+              className="p-5 sm:p-6 rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow-xs hover:border-[var(--primary)] hover:shadow-md transition-all group relative overflow-hidden flex flex-col justify-between"
             >
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-6 bg-primary/10 text-primary border border-primary/20 transition-transform group-hover:scale-110 shadow-xs">
-                <stat.icon size={22} />
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[var(--primary)]/10 text-[var(--primary)] transition-transform group-hover:scale-110">
+                    <stat.icon size={20} />
+                  </div>
+                  <span className="text-xs font-black text-[var(--primary)] group-hover:translate-x-1 transition-transform">→</span>
+                </div>
+                <p className="text-2xl sm:text-3xl font-black text-[var(--heading)] leading-none mb-1">{stat.value}</p>
+                <p className="text-xs font-black text-[var(--heading)] uppercase tracking-wider">{stat.title}</p>
               </div>
-              <p className="text-3xl font-black text-heading leading-none mb-2">{stat.value}</p>
-              <p className="text-[10px] font-black text-muted uppercase tracking-[0.2em]">{stat.title}</p>
-              <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-2xl -mr-12 -mt-12 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <p className="text-[10px] text-[var(--body)] font-medium mt-3 opacity-70">{stat.desc}</p>
             </Link>
           );
         })}
       </div>
 
-      {/* Quick Links */}
-      <div className="grid md:grid-cols-2 gap-6 pt-2">
-        <div className="bg-card rounded-[2rem] border border-border/50 p-6 shadow-card hover:shadow-premium transition-all">
-          <h3 className="text-sm font-black text-heading uppercase tracking-widest mb-4 flex items-center gap-2">
-            <ShoppingBag size={16} className="text-primary" />
-            Recent Orders
-          </h3>
-          <div className="flex flex-col items-center justify-center py-8 text-center bg-background/80 rounded-2xl border border-dashed border-border/60 p-4">
-            <p className="text-xs font-bold text-muted mb-4">View your recent purchases and track deliveries.</p>
-            <Link to="/account/orders" className="text-xs font-black text-primary hover:underline uppercase tracking-widest">
-              View All Orders
-            </Link>
+      {/* Quick Links Grid */}
+      <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
+        <div className="bg-[var(--card)] rounded-2xl border border-[var(--border)] p-5 sm:p-6 shadow-xs flex flex-col justify-between">
+          <div>
+            <h3 className="text-xs sm:text-sm font-black text-[var(--heading)] uppercase tracking-widest mb-3 flex items-center gap-2">
+              <ShoppingBag size={16} className="text-[var(--primary)]" />
+              Recent Orders
+            </h3>
+            <p className="text-xs text-[var(--body)] font-medium leading-relaxed mb-4">
+              View order status, track live deliveries, or re-order your favorite treats.
+            </p>
           </div>
+          <Link
+            to="/account/orders"
+            className="inline-flex items-center gap-2 text-xs font-black text-[var(--primary)] uppercase tracking-widest hover:gap-3 transition-all"
+          >
+            <span>View Order History</span>
+            <span>→</span>
+          </Link>
         </div>
 
-        <div className="bg-card rounded-[2rem] border border-border/50 p-6 shadow-card hover:shadow-premium transition-all">
-          <h3 className="text-sm font-black uppercase tracking-widest mb-4 flex items-center gap-2 text-heading">
-            <MapPin size={16} className="text-primary" />
-            Default Address
-          </h3>
-          <div className="p-5 bg-background/80 rounded-2xl border border-border/60 text-heading">
-            <p className="text-sm font-black text-heading mb-1">{user?.name}</p>
-            <p className="text-xs text-muted font-bold line-clamp-2 leading-relaxed mb-4">
-              Manage your saved addresses for quicker checkout.
+        <div className="bg-[var(--card)] rounded-2xl border border-[var(--border)] p-5 sm:p-6 shadow-xs flex flex-col justify-between">
+          <div>
+            <h3 className="text-xs sm:text-sm font-black uppercase tracking-widest mb-3 flex items-center gap-2 text-[var(--heading)]">
+              <MapPin size={16} className="text-[var(--primary)]" />
+              Delivery Locations
+            </h3>
+            <p className="text-xs text-[var(--body)] font-medium leading-relaxed mb-4">
+              Save home, work, and gift delivery addresses for quick 1-click checkouts.
             </p>
-            <Link to="/account/addresses">
-              <Button variant="outline" className="text-[10px] font-black uppercase tracking-widest px-6 border-border hover:border-primary text-heading hover:text-primary">Manage Addresses</Button>
-            </Link>
           </div>
+          <Link
+            to="/account/addresses"
+            className="inline-flex items-center gap-2 text-xs font-black text-[var(--primary)] uppercase tracking-widest hover:gap-3 transition-all"
+          >
+            <span>Manage Address Book</span>
+            <span>→</span>
+          </Link>
         </div>
       </div>
     </div>

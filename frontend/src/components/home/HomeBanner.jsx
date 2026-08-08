@@ -125,18 +125,18 @@ const HomeBanner = () => {
 
   return (
     <div
-      className="banner-root relative w-full overflow-hidden rounded-[16px] sm:rounded-[24px] select-none border-0 sm:border border-border/20 bg-transparent"
-      style={{ aspectRatio: 'var(--banner-ratio, 16/9)' }}
+      className="banner-root relative w-full overflow-hidden rounded-[18px] sm:rounded-[28px] select-none border-0 sm:border border-border/20 bg-[#1A0C08]"
+      style={{ aspectRatio: 'var(--banner-ratio, 16/4.9)' }}
     >
       <style>{`
         @media (max-width: 640px) {
-          .banner-root { aspect-ratio: 16/4.6 !important; } 
+          .banner-root { aspect-ratio: 16/4.9 !important; } 
         }
         @media (min-width: 641px) and (max-width: 1024px) {
-          .banner-root { aspect-ratio: 16/4.5 !important; }
+          .banner-root { aspect-ratio: 16/4.6 !important; }
         }
         @media (min-width: 1025px) {
-          .banner-root { aspect-ratio: 16/4.2 !important; }
+          .banner-root { aspect-ratio: 16/4.4 !important; }
         }
         .premium-glass {
           background: rgba(15, 15, 15, 0.65);

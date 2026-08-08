@@ -582,8 +582,8 @@ const ProductDetails = () => {
   return (
     <div className="min-h-screen bg-background pb-24 lg:pb-12">
       {/* ── BREADCRUMB ── */}
-      <div className="bg-card border-b border-border block">
-        <div className="max-w-[1400px] mx-auto px-4 lg:px-6 py-3 lg:py-4">
+      <div className="w-full bg-[var(--card)]/30 border-b border-[var(--border)]/30 rounded-none border-t-0 border-x-0">
+        <div className="max-w-[1400px] mx-auto px-4 lg:px-6 py-2.5 lg:py-3.5">
           <div className="flex items-center flex-wrap gap-1.5 lg:gap-2 text-[9px] lg:text-[10px] font-black uppercase tracking-[0.15em] lg:tracking-[0.2em] text-muted">
             <button onClick={() => navigate('/')} className="hover:text-primary transition">Home</button>
             <ChevronRight size={12} />
@@ -601,7 +601,7 @@ const ProductDetails = () => {
         </div>
       </div>
 
-      <div className="max-w-[1400px] w-full mx-auto px-4 lg:px-8 xl:px-12 lg:py-10">
+      <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-4 sm:py-6 lg:py-10">
         {/* ── TOP SECTION: Gallery + Pricing ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start mb-6">
 

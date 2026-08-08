@@ -272,7 +272,7 @@ const SearchOverlay = ({ isOpen, onClose }) => {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -60, opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 280 }}
-            className="fixed top-0 left-0 right-0 bg-[var(--background)] z-[10000] shadow-2xl border-b border-[var(--border)] overflow-y-auto max-h-[92vh]"
+            className="fixed top-0 left-0 right-0 bg-[var(--background)] z-[10000] shadow-2xl border-b border-[var(--border)] overflow-y-auto max-h-[90dvh]"
           >
             <div className="max-w-[1600px] mx-auto px-4 sm:px-10 py-6 sm:py-8">
 

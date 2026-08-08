@@ -55,86 +55,106 @@ const DashboardLayout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pt-0 pb-20 lg:pt-32">
-      <div className="responsive-container">
+    <div className="min-h-screen bg-background pt-3 pb-24 sm:py-6 lg:pt-10">
+      <div className="responsive-container px-3 sm:px-6">
 
-        {/* Sticky Profile Header (Mobile) */}
-        <div className="lg:hidden sticky top-0 z-[110] flex items-center justify-between gap-3 bg-card/95 backdrop-blur-xl p-4 shadow-premium mb-6 border-b border-border/50">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-full bg-secondary text-button-text flex items-center justify-center font-black text-sm">
-              {getInitials(user?.name)}
+        {/* Mobile Header & Horizontal Scrollable Nav Bar */}
+        <div className="lg:hidden flex flex-col gap-3 mb-5">
+          {/* User Profile Card */}
+          <div className="flex items-center justify-between gap-3 bg-[var(--card)] p-3.5 rounded-2xl border border-[var(--border)] shadow-sm">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-11 h-11 rounded-full bg-[var(--primary)] text-[var(--button-text)] flex items-center justify-center font-black text-sm shrink-0 shadow-sm">
+                {getInitials(user?.name)}
+              </div>
+              <div className="min-w-0">
+                <p className="text-[9px] text-[var(--body)] font-black uppercase tracking-widest opacity-70">Account Overview</p>
+                <p className="text-sm sm:text-base font-black text-[var(--heading)] truncate">{user?.name}</p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className="text-[10px] text-muted font-black uppercase tracking-widest">Account Overview</p>
-              <p className="text-sm font-black text-heading line-clamp-1">{user?.name}</p>
-            </div>
+            <button
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="p-2.5 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-colors shrink-0 cursor-pointer"
+              title="Logout"
+            >
+              {isLoggingOut ? <Loader2 size={16} className="animate-spin" /> : <LogOut size={16} />}
+            </button>
           </div>
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="w-12 h-12 bg-surface text-primary rounded-xl flex items-center justify-center hover:bg-primary hover:text-button-text transition-all shadow-sm border border-border/50 shrink-0"
-          >
-            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
+
+          {/* Horizontal Navigation Pills (Scrollable) */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 px-0.5">
+            {navItems.map((item) => {
+              const isActive = location.pathname.includes(item.path);
+              return (
+                <NavLink
+                  key={item.id}
+                  to={item.path}
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap shrink-0 transition-all ${
+                    isActive
+                      ? 'bg-[var(--primary)] text-[var(--button-text)] shadow-sm'
+                      : 'bg-[var(--card)] text-[var(--heading)] border border-[var(--border)] hover:border-[var(--primary)]'
+                  }`}
+                >
+                  <item.icon size={14} />
+                  <span>{item.label}</span>
+                </NavLink>
+              );
+            })}
+          </div>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8 items-start">
 
-          {/* Sidebar Navigation */}
-          <aside className={`
-            lg:w-[300px] tv:w-[360px] shrink-0 w-full
-            ${mobileMenuOpen ? 'block' : 'hidden lg:block'}
-          `}>
-            <div className="sticky top-28 bg-card rounded-2xl lg:rounded-3xl p-4 sm:p-6 tv:p-8 shadow-sm border border-border/50 overflow-hidden relative">
-              {/* Decorative Blur */}
-              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+          {/* Desktop Sidebar Navigation */}
+          <aside className="hidden lg:block lg:w-[280px] tv:w-[320px] shrink-0">
+            <div className="sticky top-28 bg-[var(--card)] rounded-3xl p-6 tv:p-8 shadow-sm border border-[var(--border)] overflow-hidden relative">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--primary)]/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
 
               {/* Desktop User Info */}
-              <div className="hidden lg:flex flex-col items-center text-center mb-8 pt-4">
-                <div className="w-20 h-20 rounded-full bg-secondary text-button-text flex items-center justify-center font-black text-2xl shadow-lg shadow-secondary/20 mb-4 border-4 border-card ring-1 ring-border/50">
+              <div className="flex flex-col items-center text-center mb-8 pt-2">
+                <div className="w-20 h-20 rounded-full bg-[var(--primary)] text-[var(--button-text)] flex items-center justify-center font-black text-2xl shadow-lg mb-3 border-4 border-[var(--card)] ring-1 ring-[var(--border)]">
                   {getInitials(user?.name)}
                 </div>
-                <h2 className="text-xl font-black text-heading leading-tight">{user?.name}</h2>
-                <p className="text-[10px] text-muted font-black mt-1 uppercase tracking-widest">{user?.email}</p>
+                <h2 className="text-xl font-black text-[var(--heading)] leading-tight">{user?.name}</h2>
+                <p className="text-[10px] text-[var(--body)] font-black mt-1 uppercase tracking-widest opacity-70">{user?.email}</p>
               </div>
 
-              <nav className="space-y-2 relative z-10">
+              <nav className="space-y-1.5 relative z-10">
                 {navItems.map((item) => {
                   const isActive = location.pathname.includes(item.path);
                   return (
                     <NavLink
                       key={item.id}
                       to={item.path}
-                      onClick={() => setMobileMenuOpen(false)}
                       className={`
-                        w-full flex items-center gap-4 px-5 py-3.5 rounded-2xl font-black text-sm transition-all group
+                        w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all group
                         ${isActive
-                          ? 'bg-[var(--button-bg)] text-[var(--button-text)] shadow-md translate-x-2'
-                          : 'text-muted hover:bg-[var(--button-bg)] hover:text-[var(--button-text)]'
+                          ? 'bg-[var(--primary)] text-[var(--button-text)] shadow-sm translate-x-1'
+                          : 'text-[var(--heading)] hover:bg-[var(--primary)]/10 hover:text-[var(--primary)]'
                         }
                       `}
                     >
-                      <item.icon size={18} className={isActive ? 'text-[var(--button-text)]' : 'text-secondary/70 group-hover:text-[var(--button-text)] transition-colors'} />
-                      {item.label}
-                      {isActive && <ChevronRight size={14} className="ml-auto opacity-50 text-[var(--button-text)]" />}
+                      <item.icon size={16} className={isActive ? 'text-[var(--button-text)]' : 'text-[var(--primary)] transition-colors'} />
+                      <span>{item.label}</span>
+                      {isActive && <ChevronRight size={14} className="ml-auto opacity-70 text-[var(--button-text)]" />}
                     </NavLink>
-
                   );
                 })}
 
-                <div className="pt-6 mt-6 border-t border-border/50">
+                <div className="pt-4 mt-4 border-t border-[var(--border)]">
                   <button
                     onClick={handleLogout}
                     disabled={isLoggingOut}
-                    className="logout-btn-danger w-full flex items-center justify-center gap-3 px-6 py-3.5 rounded-2xl font-black text-xs active:scale-95 transition-all cursor-pointer disabled:opacity-80 uppercase tracking-widest"
+                    className="w-full flex items-center justify-center gap-2.5 px-4 py-3 rounded-2xl font-black text-xs text-red-500 bg-red-500/10 hover:bg-red-500 hover:text-white transition-all cursor-pointer disabled:opacity-80 uppercase tracking-widest"
                   >
                     {isLoggingOut ? (
                       <>
-                        <Loader2 size={18} className="animate-spin text-white shrink-0" />
+                        <Loader2 size={16} className="animate-spin shrink-0" />
                         <span>Logging out...</span>
                       </>
                     ) : (
                       <>
-                        <LogOut size={18} className="text-white shrink-0" />
+                        <LogOut size={16} className="shrink-0" />
                         <span>Logout</span>
                       </>
                     )}
@@ -144,16 +164,16 @@ const DashboardLayout = () => {
             </div>
           </aside>
 
-          {/* Main Content Area */}
+          {/* Main Content Area — Flat on mobile, Card on desktop */}
           <main className="flex-1 w-full min-w-0">
             <AnimatePresence mode="wait">
               <motion.div
                 key={location.pathname}
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                className="bg-card rounded-2xl lg:rounded-3xl p-4 sm:p-6 lg:p-10 tv:p-14 shadow-sm border border-border/50 min-h-[520px] lg:min-h-[600px]"
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.15 }}
+                className="bg-transparent lg:bg-[var(--card)] rounded-none lg:rounded-3xl p-0 lg:p-8 tv:p-12 shadow-none lg:shadow-sm border-0 lg:border border-[var(--border)] min-h-[400px]"
               >
                 <Outlet />
               </motion.div>
