@@ -5,6 +5,7 @@ import adminService from '../../services/adminService';
 import ImageUpload from '../../components/admin/ImageUpload';
 import toast from 'react-hot-toast';
 import { getOptimizedCloudinaryUrl } from '../../utils/cloudinary';
+import compressImage from '../../utils/compressImage';
 
 const OccasionManager = () => {
   const [occasions, setOccasions] = useState([]);
@@ -50,7 +51,10 @@ const OccasionManager = () => {
       const fd = new FormData();
       fd.append('name', form.name.trim());
       fd.append('label', form.label.trim() || form.name.trim());
-      if (form.imageFile) fd.append('image', form.imageFile);
+      if (form.imageFile) {
+        const imageToUpload = form.imageFile instanceof File ? await compressImage(form.imageFile) : form.imageFile;
+        fd.append('image', imageToUpload);
+      }
 
       if (editId) {
         await adminService.updateOccasion(editId, fd);

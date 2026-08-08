@@ -5,6 +5,7 @@ import adminService from '../../services/adminService';
 import ImageUpload from '../../components/admin/ImageUpload';
 import toast from 'react-hot-toast';
 import { getOptimizedCloudinaryUrl } from '../../utils/cloudinary';
+import compressImage from '../../utils/compressImage';
 
 const AdminBanner = () => {
   const [banners, setBanners] = useState([]);
@@ -74,7 +75,10 @@ const AdminBanner = () => {
       fd.append('bannerType', form.bannerType);
       fd.append('displayOrder', form.displayOrder);
       fd.append('isActive', form.isActive);
-      if (form.imageFile) fd.append('image', form.imageFile);
+      if (form.imageFile) {
+        const imageToUpload = form.imageFile instanceof File ? await compressImage(form.imageFile) : form.imageFile;
+        fd.append('image', imageToUpload);
+      }
 
       if (editId) {
         await adminService.updateBanner(editId, fd);

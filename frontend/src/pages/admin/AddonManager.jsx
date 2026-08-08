@@ -5,6 +5,7 @@ import adminService from '../../services/adminService';
 import ImageUpload from '../../components/admin/ImageUpload';
 import toast from 'react-hot-toast';
 import { getOptimizedCloudinaryUrl } from '../../utils/cloudinary';
+import compressImage from '../../utils/compressImage';
 
 const AddonManager = () => {
   const [addons, setAddons] = useState([]);
@@ -52,7 +53,10 @@ const AddonManager = () => {
       fd.append('name', form.name.trim());
       if (form.description.trim()) fd.append('description', form.description.trim());
       fd.append('price', form.price);
-      if (form.imageFile) fd.append('image', form.imageFile);
+      if (form.imageFile) {
+        const imageToUpload = form.imageFile instanceof File ? await compressImage(form.imageFile) : form.imageFile;
+        fd.append('image', imageToUpload);
+      }
 
       if (editId) {
         await adminService.updateAddon(editId, fd);

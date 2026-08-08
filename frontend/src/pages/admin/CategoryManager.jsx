@@ -5,6 +5,7 @@ import adminService from '../../services/adminService';
 import ImageUpload from '../../components/admin/ImageUpload';
 import toast from 'react-hot-toast';
 import { getOptimizedCloudinaryUrl } from '../../utils/cloudinary';
+import compressImage from '../../utils/compressImage';
 
 const CategoryManager = () => {
   const [categories, setCategories] = useState([]);
@@ -56,7 +57,10 @@ const CategoryManager = () => {
       const subList = form.subCategories.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
       fd.append('subCategories', JSON.stringify(subList));
       
-      if (form.imageFile) fd.append('image', form.imageFile);
+      if (form.imageFile) {
+        const imageToUpload = form.imageFile instanceof File ? await compressImage(form.imageFile) : form.imageFile;
+        fd.append('image', imageToUpload);
+      }
 
       if (editId) {
         await adminService.updateCategory(editId, fd);

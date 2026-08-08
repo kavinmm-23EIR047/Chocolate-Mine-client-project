@@ -31,6 +31,8 @@ exports.uploadImage = async (input, folder = 'general') => {
       folder: uploadFolder,
       resource_type: 'auto',
       overwrite: true,
+      quality: 'auto:good',
+      fetch_format: 'auto'
     });
 
     logger.info(`Cloudinary Upload Success: ${result.secure_url}`);
@@ -57,8 +59,8 @@ exports.uploadBuffer = async (buffer, folder = 'general', mimetype = 'image/png'
     const stream = cloudinary.uploader.upload_stream({
       folder,
       resource_type: 'image',
-      // The browser has already optimized the master image. Avoid eager
-      // variants so storage and transformation usage stay predictable.
+      quality: 'auto:good',
+      fetch_format: 'auto',
       use_filename: false,
       unique_filename: true
     }, (error, result) => {
