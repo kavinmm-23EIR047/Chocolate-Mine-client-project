@@ -31,12 +31,9 @@ exports.uploadImage = async (input, folder = 'general', options = {}) => {
       folder: uploadFolder,
       resource_type: 'auto',
       overwrite: true,
-<<<<<<< HEAD
       quality: 'auto:good',
-      fetch_format: 'auto'
-=======
+      fetch_format: 'auto',
       ...options
->>>>>>> 3e8010a39ecdf7b596b5786a3b28abae4c3042ff
     });
 
     logger.info(`Cloudinary Upload Success: ${result.secure_url}`);
@@ -64,6 +61,8 @@ exports.uploadBuffer = async (buffer, folder = 'general', mimetype = 'image/png'
   const uploadOptions = {
     folder,
     resource_type: 'image',
+    quality: 'auto:good',
+    fetch_format: 'auto',
     use_filename: false,
     unique_filename: true,
     overwrite: true,
@@ -71,18 +70,7 @@ exports.uploadBuffer = async (buffer, folder = 'general', mimetype = 'image/png'
   };
 
   return new Promise((resolve, reject) => {
-<<<<<<< HEAD
-    const stream = cloudinary.uploader.upload_stream({
-      folder,
-      resource_type: 'image',
-      quality: 'auto:good',
-      fetch_format: 'auto',
-      use_filename: false,
-      unique_filename: true
-    }, (error, result) => {
-=======
     const stream = cloudinary.uploader.upload_stream(uploadOptions, (error, result) => {
->>>>>>> 3e8010a39ecdf7b596b5786a3b28abae4c3042ff
       if (error) {
         logger.error('Cloudinary Buffer Upload Error:', error.message);
         return reject(error);
