@@ -96,8 +96,9 @@ const AdminGoogleReviews = () => {
         </div>
       )}
 
-      <div className="bg-[var(--card)] rounded shadow overflow-hidden border border-[var(--border)]">
-        <table className="w-full text-left border-collapse text-[var(--heading)]">
+      <div className="bg-[var(--card)] rounded shadow border border-[var(--border)]">
+        <div className="overflow-x-auto custom-scrollbar">
+        <table className="w-full min-w-[700px] text-left border-collapse text-[var(--heading)]">
           <thead>
             <tr className="bg-[var(--card-soft)] border-b border-[var(--border)]">
               <th className="p-4">Customer</th>
@@ -141,6 +142,7 @@ const AdminGoogleReviews = () => {
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

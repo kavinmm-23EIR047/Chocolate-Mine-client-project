@@ -156,8 +156,8 @@ const AdminUsers = () => {
       {loading ? <TableSkeleton rows={6} cols={3} /> : filteredUsers.length === 0 ? (
         <EmptyState icon={Users} title="No registered users" message={search ? 'No users match this search.' : 'Registered customer accounts will appear here.'} />
       ) : (
-        <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-soft">
-          <div className="overflow-x-auto">
+        <div className="bg-card border border-border rounded-2xl shadow-soft">
+          <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full min-w-[680px]">
               <thead><tr className="border-b border-border bg-border/20 text-left">
                 <th className="px-6 py-4 text-xs font-black text-muted uppercase tracking-widest">Name</th>

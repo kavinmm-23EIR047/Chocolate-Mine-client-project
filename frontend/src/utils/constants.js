@@ -1,4 +1,5 @@
 export const ORDER_STATUSES = {
+  awaiting_payment: { label: 'Awaiting Payment', color: 'bg-orange-100 text-orange-800', dot: 'bg-orange-500' },
   pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800', dot: 'bg-yellow-500' },
   confirmed: { label: 'Confirmed', color: 'bg-blue-100 text-blue-800', dot: 'bg-blue-500' },
   preparing: { label: 'Preparing', color: 'bg-orange-100 text-orange-800', dot: 'bg-orange-500' },

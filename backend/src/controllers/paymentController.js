@@ -606,8 +606,8 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
   const existingPendingOrder = await Order.findOne({
     userId: req.user._id,
     paymentStatus: 'pending',
-    orderStatus: 'confirmed',
-    createdAt: { $gt: new Date(Date.now() - 5 * 60 * 1000) }
+    orderStatus: paymentMethod === 'ONLINE' ? 'awaiting_payment' : 'confirmed',
+    createdAt: { $gt: new Date(Date.now() - 30 * 60 * 1000) }
   });
   if (existingPendingOrder?.razorpayOrderId && existingPendingOrder.total === total) {
     return res.status(200).json({
@@ -678,7 +678,7 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
     discount: 0,
     paymentMethod,
     paymentStatus: 'pending',
-    orderStatus: 'confirmed',
+    orderStatus: paymentMethod === 'ONLINE' ? 'awaiting_payment' : 'confirmed',
     address: {
       fullName: address.fullName?.trim(),
       phone: address.phone?.trim(),
@@ -716,7 +716,7 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
 const reconcilePaidOrder = async ({ order, razorpayPaymentId, razorpaySignature = null }) => {
   const updatedOrder = await Order.findOneAndUpdate(
     { _id: order._id, paymentStatus: { $ne: 'paid' } },
-    { $set: { paymentStatus: 'paid', razorpayPaymentId, ...(razorpaySignature ? { razorpaySignature } : {}) } },
+    { $set: { paymentStatus: 'paid', orderStatus: 'confirmed', razorpayPaymentId, ...(razorpaySignature ? { razorpaySignature } : {}) } },
     { new: true }
   );
   const finalOrder = updatedOrder || await Order.findById(order._id);
@@ -781,8 +781,10 @@ exports.verifyPayment = asyncHandler(async (req, res) => {
   const body = razorpay_order_id + "|" + razorpay_payment_id;
   const expectedSignature = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET).update(body).digest('hex');
   if (expectedSignature !== razorpay_signature) {
-    await Order.findByIdAndUpdate(orderId, { paymentStatus: 'failed' });
-    await Payment.findOneAndUpdate({ orderId }, { status: 'failed', failureReason: 'Payment verification failed' });
+    await Payment.findOneAndUpdate(
+      { orderId }, 
+      { $push: { failedAttempts: { errorDescription: 'Invalid signature', failedAt: new Date() } } }
+    );
     throw new AppError('Payment verification failed', 400);
   }
 
@@ -799,15 +801,22 @@ exports.verifyPayment = asyncHandler(async (req, res) => {
 });
 
 exports.handlePaymentFailure = asyncHandler(async (req, res) => {
-  const { orderId, reason } = req.body;
+  const { orderId, reason, errorDetails } = req.body;
   if (orderId) {
-    const order = await Order.findOneAndUpdate(
-      { _id: orderId, userId: req.user._id, paymentStatus: { $ne: 'paid' } },
-      { $set: { paymentStatus: 'failed', paymentFailureReason: reason || 'Payment failed' } },
-      { new: true }
-    );
+    const order = await Order.findOne({ _id: orderId, userId: req.user._id, paymentStatus: { $ne: 'paid' } });
     if (order) {
-      await Payment.findOneAndUpdate({ orderId }, { status: 'failed', failureReason: reason || 'Payment failed' });
+      const attemptData = {
+        errorDescription: reason || 'Payment failed',
+        errorCode: errorDetails?.code,
+        errorReason: errorDetails?.reason,
+        errorSource: errorDetails?.source,
+        errorStep: errorDetails?.step,
+        failedAt: new Date()
+      };
+      await Payment.findOneAndUpdate(
+        { orderId }, 
+        { $push: { failedAttempts: attemptData } }
+      );
       try {
         const notificationManager = require('../services/notificationManager');
         if (notificationManager?.notifyPaymentFailure) notificationManager.notifyPaymentFailure(order, reason).catch(err => console.error(err));
@@ -850,15 +859,21 @@ exports.handleWebhook = asyncHandler(async (req, res) => {
   }
 
   if (event === 'payment.failed' && razorpayOrderId) {
-    const order = await Order.findOneAndUpdate(
-      { razorpayOrderId, paymentStatus: { $ne: 'paid' } },
-      { $set: { paymentStatus: 'failed', paymentFailureReason: paymentEntity?.error_description || 'Payment failed' } },
-      { new: true }
-    );
+    const order = await Order.findOne({ razorpayOrderId, paymentStatus: { $ne: 'paid' } });
     if (order) {
+      const attemptData = {
+        razorpayPaymentId: paymentEntity?.id,
+        errorCode: paymentEntity?.error_code,
+        errorDescription: paymentEntity?.error_description,
+        errorReason: paymentEntity?.error_reason,
+        errorSource: paymentEntity?.error_source,
+        errorStep: paymentEntity?.error_step,
+        paymentMethod: paymentEntity?.method,
+        failedAt: new Date()
+      };
       await Payment.findOneAndUpdate(
         { orderId: order._id },
-        { $set: { status: 'failed', failureReason: paymentEntity?.error_description || 'Payment failed' } }
+        { $push: { failedAttempts: attemptData } }
       );
     }
   }

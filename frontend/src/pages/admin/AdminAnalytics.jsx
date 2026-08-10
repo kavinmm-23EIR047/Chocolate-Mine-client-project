@@ -134,7 +134,7 @@ const AdminAnalytics = () => {
                <h3 className="font-black text-heading uppercase tracking-widest text-sm">Top Selling Products</h3>
                <BarChart3 size={18} className="text-muted" />
             </div>
-            <div className="p-0 flex-1 overflow-x-auto overflow-y-hidden">
+            <div className="p-0 flex-1 overflow-x-auto overflow-y-hidden custom-scrollbar">
                <>
                {/* Desktop Table */}
                <table className="hidden md:table w-full min-w-[500px]">

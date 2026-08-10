@@ -149,11 +149,16 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 16%, transparent) !important;
 }
 
-.admin-shell :is(table, .table-responsive, [class*="overflow-x-auto"]),
-.staff-shell :is(table, .table-responsive, [class*="overflow-x-auto"]) {
+.admin-shell :is(table, .table-responsive),
+.staff-shell :is(table, .table-responsive) {
   border: 1px solid var(--workspace-line);
   border-radius: 16px;
   overflow: hidden;
+}
+
+.admin-shell [class*="overflow-x-auto"],
+.staff-shell [class*="overflow-x-auto"] {
+  overflow-x: auto !important;
 }
 
 .admin-shell th,

@@ -2,6 +2,11 @@ import React from 'react';
 
 // Order Statuses - Theme bound for Light & Dark mode (Dark BG + Light Text)
 export const ORDER_STATUSES = {
+  awaiting_payment: {
+    label: 'Awaiting Payment',
+    color: 'bg-orange-700 text-white font-black border border-orange-600 shadow-xs',
+    dot: 'bg-white'
+  },
   confirmed: {
     label: 'Confirmed',
     color: 'bg-sky-700 text-white font-black border border-sky-600 shadow-xs',

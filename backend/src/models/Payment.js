@@ -47,14 +47,28 @@ const paymentSchema = new mongoose.Schema(
     failureReason: {
       type: String,
       default: null
-    }
+    },
+
+    failedAttempts: [
+      {
+        razorpayPaymentId: String,
+        errorCode: String,
+        errorDescription: String,
+        errorReason: String,
+        errorSource: String,
+        errorStep: String,
+        paymentMethod: String,
+        failedAt: {
+          type: Date,
+          default: Date.now
+        }
+      }
+    ]
   },
   {
     timestamps: true
   }
 );
-
-
 
 
 // Removed Excel Synchronization Hooks for performance reasons.

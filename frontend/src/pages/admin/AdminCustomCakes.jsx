@@ -406,7 +406,7 @@ const AdminCustomCakes = () => {
       ) : (
         <>
           {/* Desktop Table matching Products Page layout & styling */}
-          <div className="hidden md:block bg-card border border-border rounded-2xl overflow-hidden shadow-soft">
+          <div className="hidden md:block bg-card border border-border rounded-2xl shadow-soft">
             {/* Scroll Controls Bar */}
             <div className="flex items-center justify-between px-4 py-2.5 bg-border/10 border-b border-border/50 text-xs">
               <span className="font-bold text-muted text-[11px] uppercase tracking-wider flex items-center gap-1.5">

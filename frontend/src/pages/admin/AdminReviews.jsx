@@ -177,8 +177,8 @@ const AdminReviews = () => {
       ) : (
         <>
         {/* Desktop Table */}
-        <div className="hidden md:block bg-card border border-border rounded-2xl overflow-hidden shadow-premium-sm">
-          <div className="overflow-x-auto">
+        <div className="hidden md:block bg-card border border-border rounded-2xl shadow-premium-sm">
+          <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full min-w-[1000px] whitespace-nowrap">
               <thead>
                 <tr className="border-b border-border bg-border/20">

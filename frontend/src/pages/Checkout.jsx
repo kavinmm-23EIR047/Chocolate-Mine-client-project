@@ -1255,10 +1255,6 @@ const Checkout = () => {
             } else {
               const failMessage = e?.response?.data?.message || "Verification failed. Contact support.";
               toast.error(failMessage);
-              navigate('/?payment=failed', {
-                replace: true,
-                state: { paymentFailed: true, reason: failMessage, orderId }
-              });
             }
             setLoading(false);
             isProcessingPayment.current = false;
@@ -1275,11 +1271,7 @@ const Checkout = () => {
                 reason: failReason,
               });
             } catch { }
-            toast.error("Payment cancelled.");
-            navigate('/?payment=failed', {
-              replace: true,
-              state: { paymentFailed: true, reason: failReason, orderId }
-            });
+            toast.error("Payment cancelled. You can try again when you're ready.");
           },
         },
         prefill: {
@@ -1316,9 +1308,13 @@ const Checkout = () => {
           await api.post('/payment/log-failure', {
             orderId,
             reason: r.error?.description || 'Payment failed',
+            errorDetails: r.error
           });
         } catch { }
-        toast.error(`Payment failed: ${r.error?.description || 'Please try again'}`);
+        let errorMessage = 'Payment failed. Please try again or use another payment method.';
+        if (r.error?.reason === 'payment_timed_out') errorMessage = 'Your UPI payment timed out. Please try again.';
+        if (r.error?.reason === 'insufficient_funds') errorMessage = 'The payment could not be completed. Please use another payment method.';
+        toast.error(errorMessage);
       });
       rzp.open();
     } catch (err) {
@@ -1331,13 +1327,7 @@ const Checkout = () => {
       }
       toast.error(err?.response?.data?.message || 'Failed to place order. Try again.');
     } finally {
-      setTimeout(() => {
-        if (isProcessingPayment.current) {
-          isProcessingPayment.current = false;
-          setLoading(false);
-          toast.error('Payment timed out. Try again.');
-        }
-      }, 60000);
+      // Removed 60-second artificial timeout.
     }
   };
 
