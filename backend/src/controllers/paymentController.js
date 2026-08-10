@@ -613,7 +613,7 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
     return res.status(200).json({
       status: 'success',
       data: {
-        razorpayOrder: { id: existingPendingOrder.razorpayOrderId },
+        razorpayOrder: { id: existingPendingOrder.razorpayOrderId, amount: existingPendingOrder.total * 100 },
         orderId: existingPendingOrder._id,
         pricing: {
           subtotal: existingPendingOrder.subtotal,
