@@ -168,7 +168,7 @@ const orderSchema = new mongoose.Schema(
     discount: { type: Number, default: 0 },
     deliveryCharge: { type: Number, default: 0 },
     convenienceFee: { type: Number, default: 0 },
-    gst: { type: Number, default: 0 },
+    gst: { type: String, default: 'Inclusive on product price' },
     total: { type: Number, required: true },
 
     paymentMethod: {

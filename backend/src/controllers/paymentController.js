@@ -114,7 +114,7 @@ const computePricing = ({ cartItems, addressLat, addressLng, discount = 0, payme
   const convenienceFee = Math.round(subtotal * 0.025);
   // Product prices are tax-inclusive. Store the GST component for reporting,
   // but never add it again to the customer-facing total.
-  const gst = Math.round((subtotal * GST_RATE) / (1 + GST_RATE));
+  const gst = 'Inclusive on product price';
   const total = subtotal + deliveryCharge + convenienceFee - (Number(discount) || 0);
   
   return { subtotal, deliveryCharge, convenienceFee, gst, total };

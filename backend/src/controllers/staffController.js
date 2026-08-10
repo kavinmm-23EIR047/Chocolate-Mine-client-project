@@ -608,7 +608,7 @@ exports.createInShopOrder = asyncHandler(async (req, res, next) => {
 
   // In-shop product prices already include 5% GST; record the embedded
   // component for reporting without adding tax a second time.
-  const gst = Math.round((subtotal * 0.05) / 1.05);
+  const gst = 'Inclusive on product price';
   const convenienceFee = subtotal > 0 ? Math.round(subtotal * 0.025) : 0;
   const total = subtotal + convenienceFee;
 
