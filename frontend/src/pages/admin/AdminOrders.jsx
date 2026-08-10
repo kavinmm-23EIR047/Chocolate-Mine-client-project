@@ -419,8 +419,8 @@ const AdminOrderDetailsView = ({ orderId, onBack }) => {
               </div>
 
               <div className="flex justify-between text-sm text-muted">
-                <span>GST (5%, included)</span>
-                <span className="font-semibold">{formatCurrency(order.gst)}</span>
+                <span>GST (5%)</span>
+                <span className="font-semibold text-success-text">Inclusive on product price</span>
               </div>
 
               <div className="border-t border-border/40 pt-4 mt-3 flex justify-between font-black text-xl text-heading">

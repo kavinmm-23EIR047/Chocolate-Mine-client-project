@@ -1419,8 +1419,8 @@ const CreateInShopOrderView = () => {
                   <span className="font-extrabold text-heading">{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted">GST (5%, included)</span>
-                  <span className="font-semibold text-heading">{formatCurrency(gst)}</span>
+                  <span className="text-muted">GST (5%)</span>
+                  <span className="font-semibold text-success-text">Inclusive on product price</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted">Delivery Fee</span>
