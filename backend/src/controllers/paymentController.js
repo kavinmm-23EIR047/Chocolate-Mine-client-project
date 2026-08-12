@@ -662,6 +662,7 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
       selectedWeight: item.selectedWeight,
       category: Array.isArray(item.category) ? item.category.join(', ') : String(item.category || ''),
       discountAmount: ((item.price ?? 0) - (item.finalPrice ?? item.price ?? 0)) * item.qty,
+      cakeMessage: item.cakeMessage || undefined,
       isCustomCake: item.isCustomCake || false,
       customDetails: item.customDetails || null,
       addons: item.addons ? item.addons.map(a => ({

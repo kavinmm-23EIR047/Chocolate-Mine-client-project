@@ -231,10 +231,11 @@ const emailService = {
     const itemsRows = order.items.map((item) => {
       const lineTotal = Number(item.price) * Number(item.qty);
       const subtag = item.size ? `${item.size}` : '';
+      const msgOnCake = (item.cakeMessage || item.messageOnCake || '').trim();
       return `
         <tr>
           <td style="padding: 12px 4px; border-bottom: 1px solid #EAE3DE; font-size: 13px; font-weight: 700; color: #2C1A16;">
-            ${item.name}${subtag ? `<br/><span style="font-size: 11px; font-weight: 500; color: #7A6B65;">${subtag}</span>` : ''}
+            ${item.name}${subtag ? `<br/><span style="font-size: 11px; font-weight: 500; color: #7A6B65;">${subtag}</span>` : ''}${msgOnCake ? `<br/><span style="font-size: 12px; font-weight: 800; color: #2C1A16;">🎂 Message on Cake: "${msgOnCake}"</span>` : ''}
           </td>
           <td style="padding: 12px 4px; border-bottom: 1px solid #EAE3DE; text-align: center; font-size: 13px; font-weight: 800; color: #2C1A16;">${item.qty}</td>
           <td style="padding: 12px 4px; border-bottom: 1px solid #EAE3DE; text-align: right; font-size: 13px; font-weight: 800; color: #2C1A16;">₹${lineTotal.toFixed(2)}</td>

@@ -224,6 +224,10 @@ exports.generateInvoiceBuffer = async (orderId) => {
       if (Number(item.price) > finalUnitPrice) {
         subParts.push(`Original: Rs. ${Number(item.price).toFixed(2)}`);
       }
+      const msgOnCake = (item.cakeMessage || item.messageOnCake || '').trim();
+      if (msgOnCake) {
+        subParts.push(`Msg on Cake: "${msgOnCake}"`);
+      }
       let subtitle = subParts.length > 0 ? subParts.join(' · ') : '';
 
       if (item.addons && Array.isArray(item.addons) && item.addons.length > 0) {

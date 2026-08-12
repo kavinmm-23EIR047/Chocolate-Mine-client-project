@@ -353,7 +353,7 @@ const OrderDetails = () => {
                           )}
                           {item.selectedWeight && <span className="ml-2">Weight: {item.selectedWeight}</span>}
                           {(item.cakeMessage || item.messageOnCake) && (
-                            <p className="text-primary font-bold mt-0.5">Msg on Cake: "{item.cakeMessage || item.messageOnCake}"</p>
+                            <p className="text-sm font-bold text-heading mt-1">🎂 Message on Cake: "{item.cakeMessage || item.messageOnCake}"</p>
                           )}
                         </div>
                       )}

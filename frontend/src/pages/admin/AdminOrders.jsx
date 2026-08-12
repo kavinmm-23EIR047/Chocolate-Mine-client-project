@@ -287,7 +287,7 @@ const AdminOrderDetailsView = ({ orderId, onBack }) => {
                           )}
                           {item.selectedWeight && <span className="ml-4">Weight: <strong className="text-heading">{item.selectedWeight}</strong></span>}
                           {(item.cakeMessage || item.messageOnCake) && (
-                            <div className="mt-1.5 font-bold text-amber-600 dark:text-amber-400">🎂 Message on Cake: "{item.cakeMessage || item.messageOnCake}"</div>
+                            <div className="mt-1.5 font-bold text-base text-heading">🎂 Message on Cake: "{item.cakeMessage || item.messageOnCake}"</div>
                           )}
                         </div>
                       )}
@@ -380,8 +380,8 @@ const AdminOrderDetailsView = ({ orderId, onBack }) => {
                 <p className="text-sm text-muted font-semibold">⏰ Delivery Slot: {order.deliverySlot}</p>
               )}
               {order.cakeMessage && (
-                <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-sm">
-                  <span className="font-bold text-amber-600 dark:text-amber-400">🎂 Message on Cake:</span> "{order.cakeMessage}"
+                <div className="mt-3 p-3 bg-muted/5 border border-border rounded-xl text-base text-heading">
+                  <span className="font-bold">🎂 Message on Cake:</span> "{order.cakeMessage}"
                 </div>
               )}
               {order.notes && (

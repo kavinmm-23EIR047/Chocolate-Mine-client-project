@@ -1876,7 +1876,7 @@ const Checkout = () => {
                             <>
                               {displayFlavor && <p className="text-xs sm:text-sm text-muted font-bold mt-1">Flavor: {displayFlavor}</p>}
                               {displayWeight && <p className="text-xs sm:text-sm text-muted font-bold">Weight: {displayWeight}</p>}
-                              {msgOnCake && <p className="text-xs sm:text-sm text-primary font-bold mt-0.5">Msg on Cake: "{msgOnCake}"</p>}
+                              {msgOnCake && <p className="text-sm sm:text-base text-heading font-bold mt-1">🎂 Message on Cake: "{msgOnCake}"</p>}
                             </>
                           );
                         })()}
