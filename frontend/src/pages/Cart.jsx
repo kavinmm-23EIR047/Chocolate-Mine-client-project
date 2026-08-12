@@ -285,6 +285,9 @@ const Cart = () => {
                               {item.selectedWeight && (
                                 <p className="text-xs text-muted font-medium">Weight: {item.selectedWeight}</p>
                               )}
+                              {(item.cakeMessage || item.options?.cakeMessage) && (
+                                <p className="text-xs text-primary font-bold mt-0.5">Msg on Cake: "{item.cakeMessage || item.options?.cakeMessage}"</p>
+                              )}
                             </>
                           )}
                           

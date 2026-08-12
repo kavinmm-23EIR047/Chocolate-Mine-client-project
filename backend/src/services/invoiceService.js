@@ -7,59 +7,56 @@ const logger = require('../utils/logger');
 const fs = require('fs');
 const path = require('path');
 
-// ─── Brand Palette (Mapped from theme.css Light Theme) ────────────────────────
+// ─── Original Brand Palette (Restored from theme.css) ─────────────────────────
 const COLORS = {
-  brandBg:      '#EBDEDA', // --background (Soft Rose Cream)
-  brandCard:    '#F1E6E2', // --card
-  brandPrimary: '#4E2820', // --primary (Deep Cocoa)
-  brandText:    '#2D1B17', // --foreground
-  brandMuted:   '#7C6660', // --muted
-  brandAccent:  '#C98F45', // --accent (Caramel Gold)
-  border:       '#D5C0BA', // --border
-  white:        '#FFFFFF',
+  brandBg: '#EBDEDA', // Soft Rose Cream
+  brandCard: '#F1E6E2', // Card Surface
+  brandPrimary: '#4E2820', // Deep Cocoa
+  brandText: '#2D1B17', // Main Foreground Text
+  brandMuted: '#7C6660', // Muted Text
+  brandAccent: '#C98F45', // Caramel Gold Accent
+  border: '#D5C0BA', // Border Dividers
+  white: '#FFFFFF',
 };
 
 // ─── Layout Constants ─────────────────────────────────────────────────────────
-const PAGE_W    = 595.28; // A4 Width
-const PAGE_H    = 841.89; // A4 Height
-const MARGIN    = 45;
-const CONTENT_W = PAGE_W - MARGIN * 2;   // 505.28 pt
+const PAGE_W = 595.28; // A4 Width
+const PAGE_H = 841.89; // A4 Height
+const MARGIN = 40;
+const CONTENT_W = PAGE_W - MARGIN * 2; // 515.28 pt
 
 // Table Columns configuration
 const COL = {
-  qty:       MARGIN,
-  desc:      MARGIN + 45,
-  unitPrice: MARGIN + 315,
-  amount:    MARGIN + 415,
+  qty: MARGIN + 10,
+  desc: MARGIN + 60,
+  unitPrice: MARGIN + 310,
+  amount: MARGIN + 410,
 };
 const COL_W = {
-  qty:       45,
-  desc:      270,
-  unitPrice: 100,
-  amount:    90,
+  qty: 40,
+  desc: 240,
+  unitPrice: 90,
+  amount: 95,
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-function hRule(doc, y, color, thickness) {
-  color     = color     || COLORS.border;
-  thickness = thickness || 1;
+function hRule(doc, y, color = COLORS.border, thickness = 1) {
   doc.save()
-     .moveTo(MARGIN, y)
-     .lineTo(PAGE_W - MARGIN, y)
-     .lineWidth(thickness)
-     .strokeColor(color)
-     .stroke()
-     .restore();
+    .moveTo(MARGIN, y)
+    .lineTo(PAGE_W - MARGIN, y)
+    .lineWidth(thickness)
+    .strokeColor(color)
+    .stroke()
+    .restore();
 }
 
-// ─── Helper: Resolve dynamic display flavor for order items ───────────────────
 function getDisplayFlavor(item) {
   if (!item) return 'Standard';
   if (item.isCustomCake) return item.selectedFlavor || 'Custom';
-  var flavor = item.selectedFlavor;
+  const flavor = item.selectedFlavor;
   if (!flavor || flavor.toLowerCase() === 'standard') {
-    var cat = Array.isArray(item.category) ? item.category.join(' ').toLowerCase() : String(item.category || '').toLowerCase();
-    var name = String(item.name || '').toLowerCase();
+    const cat = Array.isArray(item.category) ? item.category.join(' ').toLowerCase() : String(item.category || '').toLowerCase();
+    const name = String(item.name || '').toLowerCase();
     if (cat.includes('chocolate') || name.includes('chocolate') || name.includes('forest') || name.includes('fudge') || name.includes('truffle') || name.includes('oreo') || name.includes('caramel')) return 'Chocolate';
     if (cat.includes('vanilla') || name.includes('vanilla') || name.includes('pineapple') || name.includes('butterscotch') || name.includes('strawberry') || name.includes('blueberry') || name.includes('biscoff') || name.includes('jamun') || name.includes('gulkand') || name.includes('rasmalai') || name.includes('honey') || name.includes('almond') || name.includes('lychee') || name.includes('rose')) return 'Vanilla';
     if (cat.includes('red-velvet') || cat.includes('red velvet') || name.includes('red-velvet') || name.includes('red velvet')) return 'Red Velvet';
@@ -82,7 +79,7 @@ exports.generateInvoiceBuffer = async (orderId) => {
       try {
         await order.save();
       } catch (err) {
-        // Ignore save error
+        // Ignore background save error
       }
     }
 
@@ -90,120 +87,126 @@ exports.generateInvoiceBuffer = async (orderId) => {
     const buffers = [];
     doc.on('data', buffers.push.bind(buffers));
 
-    // ── Cream Background Surface ──────────────────────────────────────────────
+    // ── Soft Rose Cream Canvas Fill ───────────────────────────────────────────
     doc.rect(0, 0, PAGE_W, PAGE_H).fill(COLORS.brandBg);
 
-    // ── Top Aesthetic Structural Border Bar ───────────────────────────────────
+    // Top Accent Border Bar
     doc.rect(MARGIN, 20, CONTENT_W, 4).fill(COLORS.brandPrimary);
 
-    // ─────────────────────────────────────────────────────────────────────────
-    //  HEADER SECTION (Text-Logo Left | Invoice Meta Details Right)
-    // ─────────────────────────────────────────────────────────────────────────
-    const HEADER_TOP = 42;
+    // ── 1. HEADER SECTION ────────────────────────────────────────────────────
+    const HEADER_TOP = 38;
 
-    // Render Logo Image from assets
-    const logoPath = path.join(__dirname, '../assets/logo.png');
-    const altLogoPath = path.join(__dirname, '../../../frontend/src/assets/dark logo.png');
-    const activeLogo = fs.existsSync(logoPath) ? logoPath : (fs.existsSync(altLogoPath) ? altLogoPath : null);
+    // Resolve 'light logo.png' image file
+    const logoPaths = [
+      path.join(__dirname, '../assets/light logo.png'),
+      path.join(__dirname, '../../../frontend/src/assets/light logo.png'),
+      path.join(__dirname, '../../frontend/src/assets/light logo.png'),
+      path.join(__dirname, '../assets/logo.png')
+    ];
 
-    if (activeLogo) {
-      doc.image(activeLogo, MARGIN, HEADER_TOP - 8, { width: 145 });
-    } else {
-      doc.save();
-      doc.font('Helvetica-Bold').fontSize(12).fillColor(COLORS.brandAccent).text('T H E   C H O C O L A T E', MARGIN, HEADER_TOP, { lineBreak: false });
-      doc.font('Helvetica-Bold').fontSize(38).fillColor(COLORS.brandPrimary).text('MINE', MARGIN, HEADER_TOP + 12, { lineBreak: false });
-      doc.font('Helvetica-Oblique').fontSize(9).fillColor(COLORS.brandMuted).text('Premium Artisan Bakery', MARGIN, HEADER_TOP + 54, { lineBreak: false });
-      doc.restore();
+    let activeLogo = null;
+    for (const p of logoPaths) {
+      if (fs.existsSync(p)) {
+        activeLogo = p;
+        break;
+      }
     }
 
-    // Right Side Metadata Block
+    // Render image with strict fit constraints to prevent text overlap
+    if (activeLogo) {
+      doc.image(activeLogo, MARGIN, HEADER_TOP, { fit: [150, 50] });
+    } else {
+      doc.font('Helvetica-Bold').fontSize(16).fillColor(COLORS.brandPrimary).text('THE CHOCOLATE MINE', MARGIN, HEADER_TOP);
+      doc.font('Helvetica').fontSize(9).fillColor(COLORS.brandAccent).text('PREMIUM ARTISAN BAKERY', MARGIN, HEADER_TOP + 18);
+    }
+
+    // Right Side Metadata
     const INV_W = 180;
     const INV_X = PAGE_W - MARGIN - INV_W;
-    
-    doc.font('Helvetica-Bold').fontSize(26).fillColor(COLORS.brandPrimary)
-       .text('INVOICE', INV_X, HEADER_TOP, { width: INV_W, align: 'right', lineBreak: false });
+
+    doc.font('Helvetica-Bold').fontSize(24).fillColor(COLORS.brandPrimary)
+      .text('INVOICE', INV_X, HEADER_TOP, { width: INV_W, align: 'right' });
 
     const invoiceDate = new Date(order.createdAt).toLocaleDateString('en-IN', {
-      day: '2-digit', month: 'long', year: 'numeric',
+      day: '2-digit', month: 'short', year: 'numeric'
     });
 
     doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLORS.brandMuted)
-       .text('Invoice No:', INV_X, HEADER_TOP + 36, { width: 65, align: 'left' });
+      .text('Invoice No:', INV_X, HEADER_TOP + 32, { width: 65, align: 'left' });
     doc.font('Helvetica').fontSize(8.5).fillColor(COLORS.brandText)
-       .text(order.invoiceNumber, INV_X + 65, HEADER_TOP + 36, { width: INV_W - 65, align: 'right' });
+      .text(order.invoiceNumber, INV_X + 65, HEADER_TOP + 32, { width: INV_W - 65, align: 'right' });
 
     doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLORS.brandMuted)
-       .text('Date:', INV_X, HEADER_TOP + 48, { width: 65, align: 'left' });
+      .text('Date:', INV_X, HEADER_TOP + 46, { width: 65, align: 'left' });
     doc.font('Helvetica').fontSize(8.5).fillColor(COLORS.brandText)
-       .text(invoiceDate, INV_X + 65, HEADER_TOP + 48, { width: INV_W - 65, align: 'right' });
+      .text(invoiceDate, INV_X + 65, HEADER_TOP + 46, { width: INV_W - 65, align: 'right' });
 
-    // Divider separating header structures cleanly
-    hRule(doc, 118, COLORS.brandPrimary, 1.5);
+    // Divider line below header
+    hRule(doc, 105, COLORS.brandPrimary, 1.25);
 
-    // ─────────────────────────────────────────────────────────────────────────
-    //  CLIENT DETAILS (BILL TO)
-    // ─────────────────────────────────────────────────────────────────────────
-    const BILL_TOP = 132;
+    // ── 2. BILLED TO & PAYMENT DETAILS ───────────────────────────────────────
+    const BILL_TOP = 118;
+    const COL_WIDTH = (CONTENT_W - 20) / 2;
 
+    // Left Column: Bill To
     doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLORS.brandAccent)
-       .text('BILL TO', MARGIN, BILL_TOP);
+      .text('BILL TO', MARGIN, BILL_TOP);
 
-    const addrLine = [
-      order.address && order.address.houseNo,
-      order.address && order.address.street,
-      order.address && order.address.city,
-      order.address && order.address.pincode,
-    ].filter(Boolean).join(', ');
-
-    const BILL_NAME_Y = BILL_TOP + 14;
-    const BILL_TEXT_W = 280;
     const clientName = (order.address && order.address.fullName) || (order.userId && order.userId.name) || order.customerName || 'Walk-in Customer';
     const clientPhone = (order.address && order.address.phone) || (order.userId && order.userId.phone) || order.customerPhone || '—';
 
-    doc.font('Helvetica-Bold').fontSize(11).fillColor(COLORS.brandText)
-       .text(clientName, MARGIN, BILL_NAME_Y, { width: BILL_TEXT_W });
+    // Deduplicate address string parts
+    const rawAddrParts = [
+      order.address && order.address.houseNo,
+      order.address && order.address.street,
+      order.address && order.address.city,
+      order.address && order.address.state,
+      order.address && order.address.pincode,
+    ].filter(Boolean);
+    const uniqueAddr = [...new Set(rawAddrParts)].join(', ');
 
-    const nameH = doc.heightOfString(clientName,
-                  { font: 'Helvetica-Bold', fontSize: 11, width: BILL_TEXT_W });
+    doc.font('Helvetica-Bold').fontSize(10.5).fillColor(COLORS.brandText)
+      .text(clientName, MARGIN, BILL_TOP + 14, { width: COL_WIDTH });
 
-    doc.font('Helvetica').fontSize(9).fillColor(COLORS.brandMuted)
-       .text('Phone: ' + clientPhone, MARGIN, BILL_NAME_Y + nameH + 3, { width: BILL_TEXT_W })
-       .text(addrLine || 'Counter Sale', MARGIN, BILL_NAME_Y + nameH + 16, { width: BILL_TEXT_W });
+    doc.font('Helvetica').fontSize(8.5).fillColor(COLORS.brandMuted)
+      .text('Phone: ' + clientPhone, MARGIN, BILL_TOP + 28, { width: COL_WIDTH })
+      .text(uniqueAddr || 'Counter Sale', MARGIN, BILL_TOP + 40, { width: COL_WIDTH, height: 32, lineGap: 2 });
 
-    // Status / Payment Badge Content block
-    const BADGE_W = 160;
-    const BADGE_X = PAGE_W - MARGIN - BADGE_W;
-    doc.roundedRect(BADGE_X, BILL_TOP + 12, BADGE_W, 26, 6).fill(COLORS.brandCard);
-    doc.rect(BADGE_X, BILL_TOP + 12, BADGE_W, 26).lineWidth(1).strokeColor(COLORS.border).stroke();
-    
-    doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLORS.brandPrimary)
-       .text('PAYMENT: ' + (order.paymentMethod || '—').toUpperCase(), BADGE_X, BILL_TOP + 21,
-             { width: BADGE_W, align: 'center', lineBreak: false });
+    // Right Column: Payment Badge Container
+    const BADGE_X = MARGIN + COL_WIDTH + 20;
 
-    // Clean structural separation row line
-    hRule(doc, 215, COLORS.border, 1);
+    doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLORS.brandAccent)
+      .text('PAYMENT DETAILS', BADGE_X, BILL_TOP);
 
-    // ─────────────────────────────────────────────────────────────────────────
-    //  INVOICE ITEM DETAILS TABLE
-    // ─────────────────────────────────────────────────────────────────────────
-    const TABLE_TOP = 230;
-    const HEADER_H  = 26;
+    doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLORS.brandMuted)
+      .text('Payment Method:', BADGE_X, BILL_TOP + 14);
+    doc.font('Helvetica').fontSize(8.5).fillColor(COLORS.brandText)
+      .text((order.paymentMethod || '—').toUpperCase(), BADGE_X + 90, BILL_TOP + 14);
 
-    // Table primary heading background accent fill
+    doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLORS.brandMuted)
+      .text('Order Ref ID:', BADGE_X, BILL_TOP + 28);
+    doc.font('Helvetica').fontSize(8.5).fillColor(COLORS.brandText)
+      .text(order.orderNumber || order._id.toString().slice(-8).toUpperCase(), BADGE_X + 90, BILL_TOP + 28);
+
+    hRule(doc, 190, COLORS.border, 1);
+
+    // ── 3. ITEMIZED TABLE ─────────────────────────────────────────────────────
+    const TABLE_TOP = 205;
+    const HEADER_H = 24;
+
     doc.rect(MARGIN, TABLE_TOP, CONTENT_W, HEADER_H).fill(COLORS.brandPrimary);
 
-    const HL_Y = TABLE_TOP + 8;
+    const HL_Y = TABLE_TOP + 7;
     doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLORS.white);
-    doc.text('QTY',         COL.qty,       HL_Y, { width: COL_W.qty,       align: 'center' });
-    doc.text('DESCRIPTION', COL.desc,      HL_Y, { width: COL_W.desc,      align: 'left' });
-    doc.text('UNIT PRICE',  COL.unitPrice, HL_Y, { width: COL_W.unitPrice, align: 'right' });
-    doc.text('AMOUNT',      COL.amount,    HL_Y, { width: COL_W.amount,    align: 'right' });
+    doc.text('QTY', COL.qty, HL_Y, { width: COL_W.qty, align: 'center' });
+    doc.text('DESCRIPTION', COL.desc, HL_Y, { width: COL_W.desc, align: 'left' });
+    doc.text('UNIT PRICE', COL.unitPrice, HL_Y, { width: COL_W.unitPrice, align: 'right' });
+    doc.text('AMOUNT', COL.amount, HL_Y, { width: COL_W.amount, align: 'right' });
 
-    // Render Product Row Loop
-    let rowY   = TABLE_TOP + HEADER_H;
+    let rowY = TABLE_TOP + HEADER_H;
     const ROW_PAD = 8;
 
-    order.items.forEach(function(item, idx) {
+    order.items.forEach(function (item, idx) {
       const qty = Number(item.qty || 0);
       const finalUnitPrice = Number(item.finalPrice ?? item.price ?? 0);
       let addonTotal = 0;
@@ -213,105 +216,109 @@ exports.generateInvoiceBuffer = async (orderId) => {
       const total = (qty * finalUnitPrice) + addonTotal;
       const nameText = item.name || '—';
 
-      // Build subtitle with color/weight/flavor
       const colorDisp = item.selectedColor ? `Color: ${item.selectedColor}` : '';
       const weightDisp = item.selectedWeight ? `Weight: ${item.selectedWeight}` : ((item.isCustomCake && item.customDetails && item.customDetails.weight) ? `Weight: ${item.customDetails.weight}` : '');
       const flavorDisp = item.selectedFlavor ? `Flavor: ${item.selectedFlavor}` : (getDisplayFlavor(item) !== 'Standard' ? `Flavor: ${getDisplayFlavor(item)}` : '');
+
       const subParts = [colorDisp, weightDisp, flavorDisp].filter(Boolean);
       if (Number(item.price) > finalUnitPrice) {
         subParts.push(`Original: Rs. ${Number(item.price).toFixed(2)}`);
       }
       let subtitle = subParts.length > 0 ? subParts.join(' · ') : '';
-      
+
       if (item.addons && Array.isArray(item.addons) && item.addons.length > 0) {
         const addonStr = item.addons.map(a => `+ Addon: ${a.name} (x${a.qty || 1}) - Rs. ${(a.price * (a.qty || 1)).toFixed(2)}`).join('\n');
         subtitle = subtitle ? `${subtitle}\n${addonStr}` : addonStr;
       }
 
-      // Calculate row height based on name + optional subtitle
-      const nameH = doc.heightOfString(nameText, { font: 'Helvetica', fontSize: 9, width: COL_W.desc });
-      const subH = subtitle ? doc.heightOfString(subtitle, { font: 'Helvetica-Oblique', fontSize: 7.5, width: COL_W.desc }) + 4 : 0;
+      const nameH = doc.heightOfString(nameText, { font: 'Helvetica-Bold', fontSize: 9, width: COL_W.desc });
+      const subH = subtitle ? doc.heightOfString(subtitle, { font: 'Helvetica-Oblique', fontSize: 7.5, width: COL_W.desc }) + 2 : 0;
       const rowH = Math.max(nameH + subH + ROW_PAD * 2, 26);
 
-      // Explicit alternate background tracking row strips
+      // Alternating row card background
       doc.rect(MARGIN, rowY, CONTENT_W, rowH)
-         .fill(idx % 2 === 0 ? COLORS.white : COLORS.brandCard);
+        .fill(idx % 2 === 0 ? COLORS.white : COLORS.brandCard);
 
-      // Row inline borders bounds fix
+      // Row outline border
       doc.rect(MARGIN, rowY, CONTENT_W, rowH).lineWidth(0.5).strokeColor(COLORS.border).stroke();
 
       const cy = rowY + ROW_PAD;
       doc.font('Helvetica').fontSize(9).fillColor(COLORS.brandText);
-      doc.text(qty.toString(),             COL.qty,       cy, { width: COL_W.qty,       align: 'center' });
-      doc.text(nameText,                    COL.desc,      cy, { width: COL_W.desc,      align: 'left' });
+      doc.text(qty.toString(), COL.qty, cy, { width: COL_W.qty, align: 'center' });
+
+      doc.font('Helvetica-Bold').fontSize(9).fillColor(COLORS.brandText);
+      doc.text(nameText, COL.desc, cy, { width: COL_W.desc, align: 'left' });
+
       if (subtitle) {
         doc.font('Helvetica-Oblique').fontSize(7.5).fillColor(COLORS.brandMuted);
-        doc.text(subtitle, COL.desc, cy + nameH + 1, { width: COL_W.desc, align: 'left' });
+        doc.text(subtitle, COL.desc, cy + nameH + 2, { width: COL_W.desc, align: 'left' });
       }
+
       doc.font('Helvetica').fontSize(9).fillColor(COLORS.brandText);
-      doc.text('Rs. ' + finalUnitPrice.toFixed(2),   COL.unitPrice, cy, { width: COL_W.unitPrice, align: 'right' });
-      doc.text('Rs. ' + total.toFixed(2),   COL.amount,    cy, { width: COL_W.amount,    align: 'right' });
+      doc.text('Rs. ' + finalUnitPrice.toFixed(2), COL.unitPrice, cy, { width: COL_W.unitPrice, align: 'right' });
+      doc.text('Rs. ' + total.toFixed(2), COL.amount, cy, { width: COL_W.amount, align: 'right' });
 
       rowY += rowH;
     });
 
-    // ─────────────────────────────────────────────────────────────────────────
-    //  SUMMARY CALCULATIONS & TOTALS CLOSING
-    // ─────────────────────────────────────────────────────────────────────────
-    const TOT_LBL_X  = PAGE_W - MARGIN - 240;
-    const TOT_LBL_W  = 130;
-    const TOT_VAL_X  = TOT_LBL_X + TOT_LBL_W;
-    const TOT_VAL_W  = 110;
-    const LINE_H     = 20;
+    // ── 4. SUMMARY CALCULATIONS & TOTALS ─────────────────────────────────────
+    const TOT_LBL_X = PAGE_W - MARGIN - 240;
+    const TOT_LBL_W = 130;
+    const TOT_VAL_X = TOT_LBL_X + TOT_LBL_W;
+    const TOT_VAL_W = 110;
+    const LINE_H = 18;
 
     let ty = rowY + 15;
 
     function summaryLine(label, value) {
-      doc.font('Helvetica').fontSize(9).fillColor(COLORS.brandMuted)
-         .text(label, TOT_LBL_X, ty, { width: TOT_LBL_W, align: 'left' });
-      doc.font('Helvetica-Bold').fontSize(9).fillColor(COLORS.brandText)
-         .text(value, TOT_VAL_X, ty, { width: TOT_VAL_W, align: 'right' });
+      doc.font('Helvetica').fontSize(8.5).fillColor(COLORS.brandMuted)
+        .text(label, TOT_LBL_X, ty, { width: TOT_LBL_W, align: 'left' });
+      doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLORS.brandText)
+        .text(value, TOT_VAL_X, ty, { width: TOT_VAL_W, align: 'right' });
       ty += LINE_H;
     }
 
-    summaryLine('Subtotal',        'Rs. ' + Number(order.subtotal       || 0).toFixed(2));
+    summaryLine('Subtotal:', 'Rs. ' + Number(order.subtotal || 0).toFixed(2));
+
     if (order.discount > 0) {
-      summaryLine('Discount',      '-Rs. ' + Number(order.discount      || 0).toFixed(2));
+      summaryLine('Discount:', '-Rs. ' + Number(order.discount || 0).toFixed(2));
     }
-    summaryLine('Delivery Charge', 'Rs. ' + Number(order.deliveryCharge || 0).toFixed(2));
-    summaryLine('Convenience Fee (2.5%)', 'Rs. ' + Number(order.convenienceFee || 0).toFixed(2));
-    summaryLine('GST (5%)',        'Included in Price');
+
+    summaryLine('Delivery Charges:', 'Rs. ' + Number(order.deliveryCharge || 0).toFixed(2));
+
+    if (order.convenienceFee > 0) {
+      summaryLine('Convenience Fee:', 'Rs. ' + Number(order.convenienceFee || 0).toFixed(2));
+    }
+
+    summaryLine('Tax (GST 5% Included):', 'Included');
 
     ty += 4;
     hRule(doc, ty, COLORS.brandPrimary, 1);
     ty += 6;
 
-    // Grand Total Clean Display Row
-    const GT_H = 32;
+    // Grand Total Deep Cocoa Bar
+    const GT_H = 30;
     doc.rect(MARGIN, ty, CONTENT_W, GT_H).fill(COLORS.brandPrimary);
 
     doc.font('Helvetica-Bold').fontSize(10).fillColor(COLORS.white)
-       .text('GRAND TOTAL', MARGIN + 12, ty + 11, { width: CONTENT_W * 0.5, align: 'left' })
-       .text('Rs. ' + Number(order.total || 0).toFixed(2), MARGIN + CONTENT_W * 0.5, ty + 11, { width: CONTENT_W * 0.5 - 24, align: 'right' });
+      .text('GRAND TOTAL', MARGIN + 12, ty + 10, { width: CONTENT_W * 0.5, align: 'left' })
+      .text('Rs. ' + Number(order.total || 0).toFixed(2), MARGIN + CONTENT_W * 0.5, ty + 10, { width: CONTENT_W * 0.5 - 24, align: 'right' });
 
-    // ─────────────────────────────────────────────────────────────────────────
-    //  STABLE FOOTER RUNTIME DESIGN
-    // ─────────────────────────────────────────────────────────────────────────
-    const FOOTER_TOP = PAGE_H - 70;
+    // ── 5. FOOTER ────────────────────────────────────────────────────────────
+    const FOOTER_TOP = PAGE_H - 65;
     hRule(doc, FOOTER_TOP, COLORS.border, 1);
 
-    doc.font('Helvetica-Bold').fontSize(10).fillColor(COLORS.brandPrimary)
-       .text('Thank you for choosing The Chocolate Mine!', MARGIN, FOOTER_TOP + 14, { width: CONTENT_W, align: 'center' });
+    doc.font('Helvetica-Bold').fontSize(9.5).fillColor(COLORS.brandPrimary)
+      .text('Thank you for choosing The Chocolate Mine!', MARGIN, FOOTER_TOP + 12, { width: CONTENT_W, align: 'center' });
     doc.font('Helvetica').fontSize(8).fillColor(COLORS.brandMuted)
-       .text('Freshly baked with care  ·  Every bite tells a story', MARGIN, FOOTER_TOP + 28, { width: CONTENT_W, align: 'center' });
+      .text('Freshly baked with care  ·  Every bite tells a story', MARGIN, FOOTER_TOP + 26, { width: CONTENT_W, align: 'center' });
 
-    // Decorative baseline border ring
     doc.rect(MARGIN, PAGE_H - 20, CONTENT_W, 4).fill(COLORS.brandPrimary);
 
     doc.end();
 
-    return new Promise(function(resolve) {
-      doc.on('end', function(){ resolve(Buffer.concat(buffers)); });
+    return new Promise(function (resolve) {
+      doc.on('end', function () { resolve(Buffer.concat(buffers)); });
     });
 
   } catch (err) {
@@ -320,8 +327,7 @@ exports.generateInvoiceBuffer = async (orderId) => {
   }
 };
 
-exports.sendInvoiceAfterDelivery = async (orderId, forceResend) => {
-  forceResend = forceResend || false;
+exports.sendInvoiceAfterDelivery = async (orderId, forceResend = false) => {
   try {
     const order = await Order.findById(orderId).populate('userId');
     if (!order) return false;

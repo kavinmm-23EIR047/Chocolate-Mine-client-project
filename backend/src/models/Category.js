@@ -27,7 +27,8 @@ const categorySchema = new mongoose.Schema({
     enum: ['ordinary', 'custom', 'both'],
     default: 'both'
   },
-  active: { type: Boolean, default: true }
+  active: { type: Boolean, default: true },
+  allowCakeMessage: { type: Boolean, default: false }
 }, { timestamps: true });
 
 

@@ -31,12 +31,14 @@ const cartSlice = createSlice({
   initialState,
   reducers: {
     addToCart: (state, action) => {
-      const { product, qty, options, variantPrice, addons } = action.payload;
+      const { product, qty, options, variantPrice, addons, cakeMessage: rawMsg } = action.payload;
+      const cakeMessage = (rawMsg || options?.cakeMessage || '').trim();
       const existingItem = state.items.find(
         (item) =>
           item.productId === product._id &&
           JSON.stringify(item.options) === JSON.stringify(options) &&
-          JSON.stringify(item.addons) === JSON.stringify(addons)
+          JSON.stringify(item.addons) === JSON.stringify(addons) &&
+          (item.cakeMessage || '') === cakeMessage
       );
 
       if (existingItem) {
@@ -54,6 +56,7 @@ const cartSlice = createSlice({
           qty,
           options,
           addons: addons || [],
+          cakeMessage: cakeMessage || undefined,
           selectedFlavor: options?.flavor || options?.color || null,
           selectedWeight: options?.weight || null,
           stock: product.stock, // Store initial stock for quick reference

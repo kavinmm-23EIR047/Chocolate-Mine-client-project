@@ -21,9 +21,9 @@ const emitOrderUpdate = (order) => {
     console.log('⚠️ Socket.io not initialized, skipping emit');
     return;
   }
-  
+
   if (!order) return;
-  
+
   // Emit to order room
   ioInstance.to(`order_${order._id}`).emit('order_detail_updated', {
     orderId: order._id,
@@ -32,7 +32,7 @@ const emitOrderUpdate = (order) => {
     updatedAt: order.updatedAt,
     order: order.toObject()
   });
-  
+
   // Emit to user room
   if (order.userId) {
     const userId = typeof order.userId === 'object' ? order.userId._id : order.userId;
@@ -44,7 +44,7 @@ const emitOrderUpdate = (order) => {
     });
     ioInstance.to(`user_${userId}`).emit('orders_needs_refresh');
   }
-  
+
   // Emit to admin room
   ioInstance.to('admin_room').emit('order_status_updated', {
     orderId: order._id,
@@ -55,7 +55,7 @@ const emitOrderUpdate = (order) => {
     customerPhone: order.address?.phone
   });
   ioInstance.to('admin_room').emit('dashboard_needs_refresh');
-  
+
   // Emit to staff room if assigned
   if (order.assignedStaff) {
     ioInstance.to(`staff_${order.assignedStaff}`).emit('assigned_order_updated', {
@@ -66,7 +66,7 @@ const emitOrderUpdate = (order) => {
     });
     ioInstance.to(`staff_${order.assignedStaff}`).emit('dashboard_needs_refresh');
   }
-  
+
   // Broadcast general order status update
   ioInstance.emit('order_status_changed', {
     orderId: order._id,
@@ -74,7 +74,7 @@ const emitOrderUpdate = (order) => {
     status: order.orderStatus,
     updatedAt: order.updatedAt
   });
-  
+
   console.log(`📡 Socket: Order ${order.orderNumber} status = ${order.orderStatus}`);
 };
 
@@ -215,7 +215,7 @@ exports.getPackedOrders = asyncHandler(async (req, res) => {
 // @desc    Get Out For Delivery Orders
 // @route   GET /api/v1/staff/orders/out-for-delivery
 exports.getOutForDeliveryOrders = asyncHandler(async (req, res) => {
-  const orders = await Order.find({ 
+  const orders = await Order.find({
     orderStatus: 'out_for_delivery'
   })
     .populate('userId', 'name phone email')
@@ -238,7 +238,7 @@ exports.getOutForDeliveryOrders = asyncHandler(async (req, res) => {
 // @desc    Get Delivered Orders
 // @route   GET /api/v1/staff/orders/delivered
 exports.getDeliveredOrders = asyncHandler(async (req, res) => {
-  const orders = await Order.find({ 
+  const orders = await Order.find({
     orderStatus: 'delivered'
   })
     .populate('userId', 'name phone email')
@@ -298,7 +298,7 @@ exports.getKOTData = asyncHandler(async (req, res, next) => {
   if (!order) {
     order = await InShopOrder.findById(req.params.id);
   }
-  
+
   if (!order) {
     return next(new AppError('Order not found', 404));
   }
@@ -316,7 +316,7 @@ exports.printKOT = asyncHandler(async (req, res, next) => {
   if (!order) {
     order = await InShopOrder.findById(req.params.id);
   }
-  
+
   if (!order) {
     return next(new AppError('Order not found', 404));
   }
@@ -334,7 +334,8 @@ exports.printKOT = asyncHandler(async (req, res, next) => {
     estimatedHeight += 36; // item name & qty row
     if (item.selectedFlavor || item.customFlavor) estimatedHeight += 14;
     if (item.selectedWeight || item.customWeight) estimatedHeight += 14;
-    
+    if (item.cakeMessage || item.messageOnCake) estimatedHeight += 14;
+
     if (item.isCustomCake && item.customDetails) {
       estimatedHeight += 24; // details divider
       if (item.customDetails.tiers) estimatedHeight += 14;
@@ -350,7 +351,7 @@ exports.printKOT = asyncHandler(async (req, res, next) => {
         estimatedHeight += lineCount * 14;
       }
     }
-    
+
     if (item.designImages && (item.designImages.preview || item.designImages.front || item.designImages.top)) {
       estimatedHeight += 18;
       if (item.designImages.preview) estimatedHeight += 14;
@@ -399,7 +400,7 @@ exports.printKOT = asyncHandler(async (req, res, next) => {
   doc.fillColor('#000000');
   doc.font('Helvetica-Bold').fontSize(13).text('THE CHOCOLATE MINE', { align: 'center' });
   doc.font('Helvetica-Bold').fontSize(9).text('KITCHEN ORDER TICKET (KOT)', { align: 'center' });
-  
+
   drawDivider();
 
   doc.font('Helvetica-Bold').fontSize(9).fillColor('#000000');
@@ -409,7 +410,7 @@ exports.printKOT = asyncHandler(async (req, res, next) => {
   doc.text(`Date     : ${new Date(order.createdAt).toLocaleDateString('en-IN')}`);
   doc.text(`Delivery : ${order.deliveryDate ? new Date(order.deliveryDate).toLocaleDateString('en-IN') : 'N/A'} (${order.deliverySlot || 'N/A'})`);
   doc.text(`Customer : ${order.userId?.name || 'N/A'} (${order.userId?.phone || 'N/A'})`);
-  
+
   drawDivider();
 
   doc.font('Helvetica-Bold').fontSize(9).fillColor('#000000').text('ITEMS PREPARATION:', { underline: true });
@@ -417,7 +418,7 @@ exports.printKOT = asyncHandler(async (req, res, next) => {
 
   order.items.forEach((item, index) => {
     doc.font('Helvetica-Bold').fontSize(10).fillColor('#000000').text(`${item.name} x ${item.qty}`);
-    
+
     if (item.selectedColor) {
       doc.font('Helvetica-Bold').fontSize(8.5).fillColor('#000000').text(`  Color   : ${item.selectedColor}`);
     }
@@ -427,7 +428,10 @@ exports.printKOT = asyncHandler(async (req, res, next) => {
     if (item.selectedFlavor || item.customFlavor) {
       doc.font('Helvetica-Bold').fontSize(8.5).fillColor('#000000').text(`  Flavour : ${item.selectedFlavor || item.customFlavor}`);
     }
-    
+    if (item.cakeMessage || item.messageOnCake) {
+      doc.font('Helvetica-Bold').fontSize(8.5).fillColor('#000000').text(`  Msg on Cake : "${item.cakeMessage || item.messageOnCake}"`);
+    }
+
     if (item.isCustomCake && item.customDetails) {
       doc.moveDown(0.1);
       doc.font('Helvetica-Bold').fontSize(8.5).fillColor('#000000').text('  -- CUSTOM CAKE DETAILS --');
@@ -441,7 +445,7 @@ exports.printKOT = asyncHandler(async (req, res, next) => {
       if (item.customDetails.photoReferenceUrl) doc.text(`  Ref Photo      : ${item.customDetails.photoReferenceUrl}`);
       if (item.customDetails.notes) doc.text(`  Notes          : ${item.customDetails.notes}`);
     }
-    
+
     if (item.designImages && (item.designImages.preview || item.designImages.front || item.designImages.top)) {
       doc.moveDown(0.1);
       doc.font('Helvetica-Bold').fontSize(8.5).fillColor('#000000').text('  -- DESIGN IMAGES --');
@@ -474,7 +478,7 @@ exports.printKOT = asyncHandler(async (req, res, next) => {
 // @route   PATCH /api/v1/staff/orders/:id/print-kot
 exports.markKOTPrinted = asyncHandler(async (req, res, next) => {
   const order = await Order.findById(req.params.id);
-  
+
   if (!order) {
     return next(new AppError('Order not found', 404));
   }
@@ -495,7 +499,7 @@ exports.markKOTPrinted = asyncHandler(async (req, res, next) => {
 exports.updateKitchenStatus = asyncHandler(async (req, res, next) => {
   const { status } = req.body;
   const order = await Order.findById(req.params.id).populate('userId', 'name phone email');
-  
+
   if (!order) {
     return next(new AppError('Order not found', 404));
   }
@@ -601,13 +605,11 @@ exports.createInShopOrder = asyncHandler(async (req, res, next) => {
       selectedFlavor: item.selectedFlavor || null,
       selectedWeight: item.selectedWeight || null,
       selectedColor: item.selectedColor || null,
+      cakeMessage: item.cakeMessage || item.messageOnCake || null,
       isCustomCake: item.isCustomCake || false,
       category: item.category || 'General'
     });
   }
-
-  // In-shop product prices already include 5% GST; record the embedded
-  // component for reporting without adding tax a second time.
   const gst = 'Inclusive on product price';
   const convenienceFee = subtotal > 0 ? Math.round(subtotal * 0.025) : 0;
   const total = subtotal + convenienceFee;

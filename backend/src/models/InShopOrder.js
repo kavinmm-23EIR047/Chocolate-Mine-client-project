@@ -123,6 +123,7 @@ const inShopOrderSchema = new mongoose.Schema(
         customFlavor: { type: String },
         customWeight: { type: String },
         category: { type: String },
+        cakeMessage: { type: String },
 
         isCustomCake: { type: Boolean, default: false },
 

@@ -190,6 +190,7 @@ const ProductDetails = () => {
   const [customWeight, setCustomWeight] = useState('');
   const [showCustomFlavorInput, setShowCustomFlavorInput] = useState(false);
   const [showCustomWeightInput, setShowCustomWeightInput] = useState(false);
+  const [cakeMessage, setCakeMessage] = useState('');
 
   // ─── INITIALIZE SELECTIONS ─────────────────────────────
   useEffect(() => {
@@ -490,7 +491,14 @@ const ProductDetails = () => {
       else { toast.error('Please select weight'); setAddingToCart(false); return; }
     }
 
-    dispatch(addToCart({ product, qty: 1, options, variantPrice: isCakeWithVariants ? currentPrice : null, addons: selectedAddons }));
+    dispatch(addToCart({
+      product,
+      qty: 1,
+      options,
+      cakeMessage: cakeMessage.trim(),
+      variantPrice: isCakeWithVariants ? currentPrice : null,
+      addons: selectedAddons
+    }));
     toast.success(`Item added to cart!`);
     setAddingToCart(false);
   };
@@ -516,6 +524,7 @@ const ProductDetails = () => {
         product,
         qty: quantity,
         options,
+        cakeMessage: cakeMessage.trim(),
         variantPrice: isCakeWithVariants ? currentPrice : null,
         addons: selectedAddons
       }));
@@ -677,6 +686,24 @@ const ProductDetails = () => {
                 handleCustomWeightSubmit={handleCustomWeightSubmit}
                 isInStock={isInStock}
               />
+
+              {product?.allowCakeMessage && (
+                <div className="mb-6 space-y-2 bg-card-soft/50 border border-primary/20 rounded-2xl p-4 shadow-sm">
+                  <label className="text-xs font-black text-heading uppercase tracking-widest flex items-center justify-between">
+                    <span>Message on Cake</span>
+                    <span className="text-[10px] text-muted font-normal lowercase">(optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={cakeMessage}
+                    onChange={(e) => setCakeMessage(e.target.value)}
+                    maxLength={50}
+                    placeholder="e.g. Happy Birthday Rahul!"
+                    className="w-full bg-input border border-input-border px-4 py-3 rounded-xl text-sm font-bold text-heading placeholder:text-muted/60 focus:ring-2 focus:ring-primary outline-none transition-all"
+                  />
+                  <p className="text-[10px] text-muted font-medium">This text will be neatly written on top of the cake.</p>
+                </div>
+              )}
 
               {availableAddons.length > 0 && (
                 <div className="mb-6">

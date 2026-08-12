@@ -420,6 +420,7 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
           productId: product._id, name: product.name, qty: validatedQty, price: product.price, image: product.image,
           finalPrice, activeCouponCode, selectedFlavor: directItem.selectedFlavor || (directItem.options && (directItem.options.color || directItem.options.flavor)),
           selectedWeight: directItem.selectedWeight || (directItem.options && directItem.options.weight), isCustomCake, customDetails,
+          cakeMessage: (directItem.cakeMessage || directItem.options?.cakeMessage || '') ? String(directItem.cakeMessage || directItem.options?.cakeMessage).trim() : undefined,
           category: product.category, addons: safeAddons
         }],
         total: (finalPrice * validatedQty) + (addonSum * validatedQty)
@@ -538,6 +539,7 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
           productId: product._id, name: product.name, qty: validatedQty, price: product.price, image: product.image,
           finalPrice, activeCouponCode, selectedFlavor: item.options?.color || item.options?.flavor || item.selectedFlavor,
           selectedWeight: item.options?.weight || item.selectedWeight, isCustomCake, customDetails,
+          cakeMessage: (item.cakeMessage || item.options?.cakeMessage || '') ? String(item.cakeMessage || item.options?.cakeMessage).trim() : undefined,
           category: product.category, addons: safeAddons
         });
         

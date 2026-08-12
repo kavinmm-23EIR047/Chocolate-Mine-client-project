@@ -1070,6 +1070,7 @@ const Checkout = () => {
               selectedFlavor: directItem.selectedFlavor,
               selectedWeight: directItem.selectedWeight,
               appliedCoupon: couponCodeForApi,
+              cakeMessage: directItem.cakeMessage || directItem.options?.cakeMessage,
               options: directItem.options,
               addons: directItem.addons,
             }
@@ -1870,10 +1871,12 @@ const Checkout = () => {
                         {(() => {
                           const displayFlavor = item.selectedFlavor || item.options?.flavor || item.options?.color;
                           const displayWeight = item.selectedWeight || item.options?.weight;
+                          const msgOnCake = item.cakeMessage || item.options?.cakeMessage;
                           return (
                             <>
                               {displayFlavor && <p className="text-xs sm:text-sm text-muted font-bold mt-1">Flavor: {displayFlavor}</p>}
                               {displayWeight && <p className="text-xs sm:text-sm text-muted font-bold">Weight: {displayWeight}</p>}
+                              {msgOnCake && <p className="text-xs sm:text-sm text-primary font-bold mt-0.5">Msg on Cake: "{msgOnCake}"</p>}
                             </>
                           );
                         })()}

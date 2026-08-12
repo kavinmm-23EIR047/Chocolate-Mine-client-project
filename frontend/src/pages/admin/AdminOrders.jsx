@@ -280,12 +280,15 @@ const AdminOrderDetailsView = ({ orderId, onBack }) => {
                         <span>Quantity: <strong className="text-heading font-bold">{item.qty}</strong></span>
                         <span>{formatCurrency(item.price)} each</span>
                       </div>
-                      {(item.selectedFlavor || item.selectedWeight || getDisplayFlavor(item) !== 'Standard') && (
+                      {(item.selectedFlavor || item.selectedWeight || item.cakeMessage || item.messageOnCake || getDisplayFlavor(item) !== 'Standard') && (
                         <div className="text-sm text-muted mt-2">
                           {(item.selectedFlavor || getDisplayFlavor(item) !== 'Standard') && (
                             <span>{item.isCustomCake ? 'Color' : 'Flavor'}: <strong className="text-heading">{getDisplayFlavor(item)}</strong></span>
                           )}
                           {item.selectedWeight && <span className="ml-4">Weight: <strong className="text-heading">{item.selectedWeight}</strong></span>}
+                          {(item.cakeMessage || item.messageOnCake) && (
+                            <div className="mt-1.5 font-bold text-amber-600 dark:text-amber-400">🎂 Message on Cake: "{item.cakeMessage || item.messageOnCake}"</div>
+                          )}
                         </div>
                       )}
                       {item.customDetails && Object.keys(item.customDetails).length > 0 && (

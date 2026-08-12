@@ -68,11 +68,11 @@ const applyCoupon = (product) => {
   if (!product.coupon || !product.coupon.enabled) return null;
   const now = new Date();
   const { startDate, endDate, usageLimit, usedCount, type, value, code } = product.coupon;
-  
+
   // Check date range
   if (startDate && now < new Date(startDate)) return null;
   if (endDate && now > new Date(endDate)) return null;
-  
+
   // Check usage limit
   if (usageLimit && usedCount >= usageLimit) return null;
 
@@ -90,6 +90,7 @@ const applyCoupon = (product) => {
   }
   return { code, finalPrice, saved, discountText: type === 'percent' ? `${value}% OFF` : `Save ₹${saved}` };
 };
+
 function getBaseFilterPattern(term) {
   if (!term) return '';
   const lower = term.toLowerCase().trim();
@@ -97,17 +98,17 @@ function getBaseFilterPattern(term) {
 }
 
 exports.getProducts = asyncHandler(async (req, res) => {
-  const { 
-    page = 1, 
-    limit = 10, 
-    sort, 
-    featured, 
-    bestseller, 
+  const {
+    page = 1,
+    limit = 10,
+    sort,
+    featured,
+    bestseller,
     offers,
-    category, 
+    category,
     subCategory,
     cakeType,
-    location, 
+    location,
     occasion,
     rating,
     minPrice,
@@ -144,7 +145,7 @@ exports.getProducts = asyncHandler(async (req, res) => {
   if (subCategory) {
     const subCatLower = subCategory.toLowerCase();
     const regexPattern = subCatLower.replace(/[\s_-]+/g, '[\\s_-]*');
-    
+
     query.$and = query.$and || [];
     query.$and.push({
       $or: [
@@ -169,7 +170,7 @@ exports.getProducts = asyncHandler(async (req, res) => {
       });
     }
   }
-  
+
   if (occasion) {
     const regexPattern = getBaseFilterPattern(occasion);
     query.$and = query.$and || [];
@@ -191,7 +192,7 @@ exports.getProducts = asyncHandler(async (req, res) => {
     const priceCond = {};
     if (minPrice) priceCond.$gte = parseFloat(minPrice);
     if (maxPrice) priceCond.$lte = parseFloat(maxPrice);
-    
+
     query.$and = query.$and || [];
     query.$and.push({
       $or: [
@@ -302,14 +303,14 @@ exports.getProducts = asyncHandler(async (req, res) => {
   const products = rawProducts.map(p => {
     const couponData = applyCoupon(p);
     const productObj = productListFields(p);
-    
+
     const isBento = Array.isArray(p.category) ? p.category.some(c => typeof c === 'string' && c.toLowerCase().includes('bento')) : (p.category || '').toLowerCase().includes('bento');
 
     let defaultFlavorPrice = 0;
     if (!(p.hasVariants && p.variants && p.variants.length > 0) && p.flavors && Array.isArray(p.flavors) && p.flavors.length > 0) {
       defaultFlavorPrice = getFlavorPriceHelper(p.flavors[0]);
     }
-    
+
     let baseP = Number(p.price || 0);
     if (baseP === 0 && (p.hasCustomWeights || (Array.isArray(p.customWeightPrices) && p.customWeightPrices.length > 0)) && p.customWeightPrices?.[0]?.price !== undefined) {
       baseP = Number(p.customWeightPrices[0].price);
@@ -338,31 +339,31 @@ exports.getProducts = asyncHandler(async (req, res) => {
 
 exports.validateCoupon = asyncHandler(async (req, res, next) => {
   const { productId, code } = req.body;
-  
+
   if (!productId || !code) {
     return next(new AppError('Product ID and coupon code are required', 400));
   }
-  
+
   const product = await Product.findById(productId);
   if (!product) {
     return next(new AppError('Product not found', 404));
   }
-  
+
   // Check if coupon exists and is enabled
   if (!product.coupon || !product.coupon.enabled) {
     return next(new AppError('No active coupon available for this product', 400));
   }
-  
+
   // Case-insensitive code comparison
   const normalizedInputCode = code.trim().toUpperCase();
   const normalizedCouponCode = product.coupon.code.trim().toUpperCase();
-  
+
   if (normalizedCouponCode !== normalizedInputCode) {
     return next(new AppError('Invalid coupon code', 400));
   }
-  
+
   const now = new Date();
-  
+
   // Check start date
   if (product.coupon.startDate) {
     const startDate = new Date(product.coupon.startDate);
@@ -370,7 +371,7 @@ exports.validateCoupon = asyncHandler(async (req, res, next) => {
       return next(new AppError(`Coupon is not valid until ${startDate.toLocaleDateString()}`, 400));
     }
   }
-  
+
   // Check end date
   if (product.coupon.endDate) {
     const endDate = new Date(product.coupon.endDate);
@@ -378,7 +379,7 @@ exports.validateCoupon = asyncHandler(async (req, res, next) => {
       return next(new AppError(`Coupon expired on ${endDate.toLocaleDateString()}`, 400));
     }
   }
-  
+
   // Check usage limit
   if (product.coupon.usageLimit) {
     const usedCount = product.coupon.usedCount || 0;
@@ -386,13 +387,13 @@ exports.validateCoupon = asyncHandler(async (req, res, next) => {
       return next(new AppError('Coupon usage limit has been reached', 400));
     }
   }
-  
+
   // Calculate discount using applyCoupon
   const couponData = applyCoupon(product);
   if (!couponData) {
     return next(new AppError('Invalid or expired coupon code', 400));
   }
-  
+
   // Determine selling price (consider variants and offer price)
   let sellingPrice;
   if (product.hasVariants && product.variants && product.variants.length > 0) {
@@ -400,12 +401,12 @@ exports.validateCoupon = asyncHandler(async (req, res, next) => {
   } else {
     sellingPrice = (product.offerPrice && product.offerPrice < product.price) ? product.offerPrice : product.price;
   }
-  
+
   // Recalculate final price based on selling price
   let finalPrice = sellingPrice;
   let saved = 0;
   let discountText = '';
-  
+
   if (product.coupon.type === 'flat') {
     saved = product.coupon.value;
     finalPrice = Math.max(0, sellingPrice - saved);
@@ -419,19 +420,19 @@ exports.validateCoupon = asyncHandler(async (req, res, next) => {
     saved = sellingPrice - finalPrice;
     discountText = `Special price: ₹${finalPrice}`;
   }
-  
-  res.status(200).json({ 
-    status: 'success', 
-    data: { 
-      valid: true, 
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      valid: true,
       code: product.coupon.code,
       originalPrice: sellingPrice,
-      finalPrice: Math.round(finalPrice), 
+      finalPrice: Math.round(finalPrice),
       saved: Math.round(saved),
       discountText,
       type: product.coupon.type,
       value: product.coupon.value
-    } 
+    }
   });
 });
 
@@ -440,7 +441,7 @@ exports.getProduct = asyncHandler(async (req, res, next) => {
   if (!slug) return next(new AppError('Product identifier missing', 400));
 
   let product;
-  
+
   // 1. Try by ObjectId if valid 24-hex string
   if (slug.match(/^[0-9a-fA-F]{24}$/)) {
     try {
@@ -481,135 +482,92 @@ exports.getProduct = asyncHandler(async (req, res, next) => {
     sellingPrice = (product.offerPrice && product.offerPrice < product.price) ? product.offerPrice : product.price;
   }
 
-  res.status(200).json({ 
-    status: 'success', 
-    data: { 
-      ...product.toObject(), 
-      couponAvailable: !!couponData, 
-      finalPrice: sellingPrice, 
+  const Category = require('../models/Category');
+  let allowCakeMessage = false;
+  try {
+    const categoriesToCheck = Array.isArray(product.category) ? product.category : (product.category ? [product.category] : []);
+    const catQuery = [];
+    if (product.categoryId) catQuery.push({ _id: product.categoryId });
+    if (categoriesToCheck.length > 0) {
+      catQuery.push({ name: { $in: categoriesToCheck.map(c => typeof c === 'string' ? c.trim().toLowerCase() : String(c).trim().toLowerCase()) } });
+    }
+    if (catQuery.length > 0) {
+      const matchedCat = await Category.findOne({ $or: catQuery, allowCakeMessage: true }).lean();
+      if (matchedCat) allowCakeMessage = true;
+    }
+  } catch (err) {
+    console.error('Error resolving category allowCakeMessage:', err);
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      ...product.toObject(),
+      allowCakeMessage,
+      couponAvailable: !!couponData,
+      finalPrice: sellingPrice,
       discountText: couponData ? couponData.discountText : null,
       priceWithCoupon: couponData ? couponData.finalPrice : sellingPrice
-    } 
+    }
   });
 });
 
 exports.createProduct = asyncHandler(async (req, res, next) => {
   const body = { ...req.body };
   if (body.name) body.name = toSentenceCase(body.name);
-  
-  // FIX: Normalize boolean fields first (critical for CastError fix)
+
+  // Normalize Boolean fields
   body.hasVariants = normalizeBoolean(body.hasVariants);
   body.hasWeights = normalizeBoolean(body.hasWeights);
   body.hasCustomWeights = normalizeBoolean(body.hasCustomWeights);
   body.allowCustomFlavor = normalizeBoolean(body.allowCustomFlavor);
   body.allowCustomWeight = normalizeBoolean(body.allowCustomWeight);
-  
-  // FIX: Normalize category to lowercase and trim (filter out empty strings)
+
+  // Parse categories if stringified
   if (body.category) {
-    if (Array.isArray(body.category)) {
-      body.category = body.category.map(c => typeof c === 'string' ? c.trim().toLowerCase() : c).filter(c => typeof c === 'string' && c.length > 0);
-    } else if (typeof body.category === 'string') {
+    if (typeof body.category === 'string') {
       try {
         const parsed = JSON.parse(body.category);
-        body.category = Array.isArray(parsed) 
-          ? parsed.map(c => typeof c === 'string' ? c.trim().toLowerCase() : c).filter(c => typeof c === 'string' && c.length > 0) 
-          : (parsed && String(parsed).trim() ? [String(parsed).trim().toLowerCase()] : []);
+        body.category = Array.isArray(parsed) ? parsed.map(c => c.trim().toLowerCase()) : [parsed.trim().toLowerCase()];
       } catch (e) {
         body.category = body.category.split(',').map(c => c.trim().toLowerCase()).filter(Boolean);
       }
+    } else if (Array.isArray(body.category)) {
+      body.category = body.category.map(c => c.toString().trim().toLowerCase());
     }
-  } else {
-    body.category = [];
   }
-  if (body.subCategory) {
-    body.subCategory = body.subCategory.trim().toLowerCase();
-  }
-  
-  Object.keys(body).forEach(key => {
-    if (typeof body[key] === 'string') {
-      const trimmed = body[key].trim();
-      if (trimmed === 'true') {
-        body[key] = true;
-      } else if (trimmed === 'false') {
-        body[key] = false;
-      } else if (trimmed !== '' && !isNaN(trimmed) && !['name', 'slug', 'description', 'shortDescription', 'image', 'occasion', 'flavors', 'weights', 'variants', 'category', 'subCategory', 'customWeightPrices', 'weightPrices'].includes(key)) {
-        body[key] = Number(trimmed);
-      } else {
-        body[key] = trimmed;
-      }
+
+  if (body.subCategory) body.subCategory = body.subCategory.trim().toLowerCase();
+
+  // Parse JSON fields
+  const jsonFields = ['flavors', 'weights', 'variants', 'customWeightPrices', 'occasion'];
+  jsonFields.forEach(field => {
+    if (body[field] && typeof body[field] === 'string') {
+      try {
+        body[field] = JSON.parse(body[field]);
+      } catch (e) { }
     }
   });
 
-  // Handle occasion array
-  if (body.occasion) {
-    if (Array.isArray(body.occasion)) {
-      body.occasion = body.occasion;
-    } else if (typeof body.occasion === 'string') {
-      try {
-        const parsed = JSON.parse(body.occasion);
-        body.occasion = Array.isArray(parsed) ? parsed : [parsed];
-      } catch (e) {
-        body.occasion = body.occasion.split(',').map(o => o.trim()).filter(Boolean);
-      }
-    }
-  } else {
-    body.occasion = [];
-  }
+  const isCakes = Array.isArray(body.category) ? body.category.some(c => c.includes('cake') || c.includes('bento')) : (body.category || '').includes('cake');
 
-  // Handle variant data for cakes (with multiple images per flavor)
-  const isCakes = Array.isArray(body.category) ? body.category.some(c => typeof c === 'string' && (c.includes('cake') || c.includes('bento'))) : false;
-  if (isCakes) {
-    if (body.flavors && typeof body.flavors === 'string') {
-      try {
-        const parsedFlavors = JSON.parse(body.flavors);
-        // Ensure each flavor has price and images array
-        body.flavors = parsedFlavors.map(flavor => ({
-          name: flavor.name,
-          price: flavor.price || 0,
-          images: flavor.images || []
-        }));
-      } catch (e) {}
-    }
-    if (body.weights && typeof body.weights === 'string') {
-      try {
-        body.weights = JSON.parse(body.weights);
-      } catch (e) {}
-    }
-    if (body.variants && typeof body.variants === 'string') {
-      try {
-        body.variants = JSON.parse(body.variants);
-      } catch (e) {}
-    }
+  if (isCakes && body.flavors) {
     body.flavors = await normalizeFlavorImageUrls(
       body.flavors,
       `products/${slugify(body.name || 'product', { lower: true })}/flavors`
     );
-    // Use normalized boolean values
-    if (body.hasVariants === undefined) {
-      body.hasVariants = true;
-    }
-  } else {
-    delete body.flavors;
-    delete body.weights;
-    delete body.variants;
-    delete body.hasVariants;
-    delete body.allowCustomFlavor;
-    delete body.allowCustomWeight;
   }
 
-  // Parse customWeightPrices for all product categories
-  if (body.customWeightPrices !== undefined) {
-    if (typeof body.customWeightPrices === 'string') {
-      try {
-        body.customWeightPrices = JSON.parse(body.customWeightPrices);
-      } catch (e) {}
-    }
+  if (body.customWeightPrices && typeof body.customWeightPrices === 'string') {
+    try {
+      body.customWeightPrices = JSON.parse(body.customWeightPrices);
+    } catch (e) { }
   }
 
   // Handle nested coupon object
   if (body['coupon.enabled'] !== undefined) {
     const isEnabled = body['coupon.enabled'] === 'true' || body['coupon.enabled'] === true;
-    
+
     if (!isEnabled) {
       body.coupon = { enabled: false };
     } else {
@@ -624,7 +582,7 @@ exports.createProduct = asyncHandler(async (req, res, next) => {
         usedCount: 0
       };
     }
-    
+
     Object.keys(body).forEach(key => {
       if (key.startsWith('coupon.')) delete body[key];
     });
@@ -660,7 +618,7 @@ exports.createProduct = asyncHandler(async (req, res, next) => {
   }
   body.slug = slugStr;
   body.createdBy = req.user._id;
-  
+
   let product;
   try {
     product = await Product.create(body);
@@ -668,14 +626,14 @@ exports.createProduct = asyncHandler(async (req, res, next) => {
     if (uploadedImage?.public_id) await cloudinaryService.deleteImage(uploadedImage.public_id);
     throw error;
   }
-  
+
   // Trigger Push Notification asynchronously
   notificationManager.notifyNewProduct(product).catch(console.error);
-  
+
   if (product.coupon && product.coupon.enabled) {
     notificationManager.notifyCouponAdded(product).catch(console.error);
   }
-  
+
   res.status(201).json({ status: 'success', data: product });
 });
 
@@ -693,7 +651,7 @@ exports.updateProduct = asyncHandler(async (req, res, next) => {
 
   const body = { ...req.body };
   if (body.name) body.name = toSentenceCase(body.name);
-  
+
   // FIX: Normalize boolean fields first (critical for CastError fix)
   const hasVariants = normalizeBoolean(body.hasVariants);
   const hasWeights = normalizeBoolean(body.hasWeights);
@@ -702,7 +660,7 @@ exports.updateProduct = asyncHandler(async (req, res, next) => {
   const allowCustomWeight = normalizeBoolean(body.allowCustomWeight);
   if (body.hasWeights !== undefined) product.hasWeights = hasWeights;
   if (body.hasCustomWeights !== undefined) product.hasCustomWeights = hasCustomWeights;
-  
+
   // FIX: Normalize category to lowercase and trim (for dynamic category support)
   if (body.category !== undefined) {
     if (Array.isArray(body.category)) {
@@ -719,7 +677,7 @@ exports.updateProduct = asyncHandler(async (req, res, next) => {
   if (body.subCategory) {
     body.subCategory = body.subCategory.trim().toLowerCase();
   }
-  
+
   Object.keys(body).forEach(key => {
     if (typeof body[key] === 'string') {
       const trimmed = body[key].trim();
@@ -762,7 +720,7 @@ exports.updateProduct = asyncHandler(async (req, res, next) => {
             price: flavor.price || 0,
             images: flavor.images || []
           }));
-        } catch (e) {}
+        } catch (e) { }
       } else {
         product.flavors = body.flavors;
       }
@@ -771,7 +729,7 @@ exports.updateProduct = asyncHandler(async (req, res, next) => {
       if (typeof body.weights === 'string') {
         try {
           product.weights = JSON.parse(body.weights);
-        } catch (e) {}
+        } catch (e) { }
       } else {
         product.weights = body.weights;
       }
@@ -780,7 +738,7 @@ exports.updateProduct = asyncHandler(async (req, res, next) => {
       if (typeof body.variants === 'string') {
         try {
           product.variants = JSON.parse(body.variants);
-        } catch (e) {}
+        } catch (e) { }
       } else {
         product.variants = body.variants;
       }
@@ -809,7 +767,7 @@ exports.updateProduct = asyncHandler(async (req, res, next) => {
     if (typeof body.customWeightPrices === 'string') {
       try {
         product.customWeightPrices = JSON.parse(body.customWeightPrices);
-      } catch (e) {}
+      } catch (e) { }
     } else {
       product.customWeightPrices = body.customWeightPrices;
     }
@@ -1007,7 +965,7 @@ const executeProductAtlasSearch = async (q, extraMatch = {}, options = {}) => {
     pipeline.push({ $sort: sortStage });
 
     const allMatches = await Product.aggregate(pipeline);
-    
+
     if (allMatches && allMatches.length > 0) {
       // Preserve populated reference fields if present in schema
       await Product.populate(allMatches, [

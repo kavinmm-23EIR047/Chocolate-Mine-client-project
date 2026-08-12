@@ -13,7 +13,7 @@ const CategoryManager = () => {
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState(null);
-  const [form, setForm] = useState({ name: '', label: '', categoryType: 'both', subCategories: '', imageFile: null });
+  const [form, setForm] = useState({ name: '', label: '', categoryType: 'both', subCategories: '', allowCakeMessage: false, imageFile: null });
 
   const fetchCategories = async () => {
     try {
@@ -30,7 +30,7 @@ const CategoryManager = () => {
   useEffect(() => { fetchCategories(); }, []);
 
   const resetForm = () => {
-    setForm({ name: '', label: '', categoryType: 'both', subCategories: '', imageFile: null });
+    setForm({ name: '', label: '', categoryType: 'both', subCategories: '', allowCakeMessage: false, imageFile: null });
     setEditId(null);
     setShowForm(false);
   };
@@ -38,7 +38,7 @@ const CategoryManager = () => {
   const handleEdit = (cat) => {
     setEditId(cat._id);
     const subStr = Array.isArray(cat.subCategories) ? cat.subCategories.join(', ') : (cat.subCategories || '');
-    setForm({ name: cat.name, label: cat.label || cat.name, categoryType: cat.categoryType || 'both', subCategories: subStr, imageFile: null });
+    setForm({ name: cat.name, label: cat.label || cat.name, categoryType: cat.categoryType || 'both', subCategories: subStr, allowCakeMessage: !!cat.allowCakeMessage, imageFile: null });
     setShowForm(true);
   };
 
@@ -53,6 +53,7 @@ const CategoryManager = () => {
       fd.append('name', form.name.trim());
       fd.append('label', form.label.trim() || form.name.trim());
       fd.append('categoryType', form.categoryType || 'both');
+      fd.append('allowCakeMessage', String(form.allowCakeMessage));
       
       const subList = form.subCategories.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
       fd.append('subCategories', JSON.stringify(subList));
@@ -170,6 +171,18 @@ const CategoryManager = () => {
                   className="w-full bg-input border border-input-border px-4 py-3 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold"
                 />
               </div>
+              <div className="flex items-center gap-2 pt-1 pb-1">
+                <input
+                  type="checkbox"
+                  id="allowCakeMessage"
+                  checked={form.allowCakeMessage}
+                  onChange={e => setForm(p => ({ ...p, allowCakeMessage: e.target.checked }))}
+                  className="w-4 h-4 accent-primary rounded cursor-pointer"
+                />
+                <label htmlFor="allowCakeMessage" className="text-xs font-black text-muted uppercase tracking-widest cursor-pointer select-none">
+                  Enable "Message on Cake" input field for products in this category
+                </label>
+              </div>
               <ImageUpload
                 label="Category Image"
                 onChange={(file) => setForm(p => ({ ...p, imageFile: file }))}
@@ -232,6 +245,13 @@ const CategoryManager = () => {
                       {sub.replace(/-/g, ' ')}
                     </span>
                   ))}
+                </div>
+              )}
+              {cat.allowCakeMessage && (
+                <div className="px-3 pb-1">
+                  <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 border border-amber-500/20 uppercase tracking-wider">
+                    🎂 Msg Field Enabled
+                  </span>
                 </div>
               )}
               <div className="p-3 pt-1 flex items-center justify-between gap-2">

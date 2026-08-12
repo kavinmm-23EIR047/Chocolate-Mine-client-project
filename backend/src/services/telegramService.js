@@ -27,11 +27,12 @@ const sendTelegram = async (message) => {
   } catch (err) {
     const errMsg = err.response?.data?.description || err.message;
     logger.error(`Telegram FAILED: ${errMsg}`);
-  }
+    }
 };
 
 // =============================================================================
 // Helper: Resolve dynamic display flavor for order items
+// =============================================================================
 const getDisplayFlavor = (item) => {
   if (!item) return 'Standard';
   if (item.isCustomCake) return item.selectedFlavor || 'Custom';
@@ -100,18 +101,16 @@ const formatOrderItem = (item) => {
   const resolvedFlavor = getDisplayFlavor(item);
   const showFlavor = item.selectedFlavor || resolvedFlavor !== 'Standard';
   const showWeight = item.selectedWeight;
-  if (showFlavor || showWeight || addonStr) {
+  const msgOnCake = (item.cakeMessage || item.messageOnCake || '').trim();
+  if (showFlavor || showWeight || msgOnCake || addonStr) {
     details += `\n`;
     if (showFlavor) details += `   Flavor: ${resolvedFlavor}\n`;
     if (showWeight) details += `   Weight: ${showWeight}\n`;
+    if (msgOnCake) details += `   🎂 Message: "${msgOnCake}"\n`;
     if (addonStr) details += `   ${addonStr.trim()}\n`;
   }
   return details.trim();
 };
-
-// =============================================================================
-// USER Notifications (SKIPPED for Telegram - keeps logic silent)
-// =============================================================================
 
 const sendOrderPlaced = () => {};
 const sendPreparing = () => {};

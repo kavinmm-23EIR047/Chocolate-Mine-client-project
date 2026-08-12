@@ -87,7 +87,7 @@ const OrderDetails = () => {
         socketRef.current.disconnect();
       }
     };
-  }, [id]);
+  }, [id, user]);
 
   const fetchOrder = async (silent = false) => {
     try {
@@ -95,7 +95,7 @@ const OrderDetails = () => {
 
       // First try to get order directly by ID
       let orderData = null;
-      
+
       try {
         const directRes = await api.get(`/orders/${id}`);
         orderData = directRes.data.data;
@@ -107,7 +107,6 @@ const OrderDetails = () => {
 
       if (orderData) {
         setOrder(orderData);
-        
         setReviewCheckLoading(false);
       } else if (!silent) {
         toast.error("Order not found");
@@ -128,7 +127,7 @@ const OrderDetails = () => {
     if (id) {
       fetchOrder();
     }
-  }, [id, navigate]);
+  }, [id]);
 
   const toggleItemExpand = (index) => {
     setExpandedItems(prev => ({ ...prev, [index]: !prev[index] }));
@@ -180,7 +179,6 @@ const OrderDetails = () => {
 
   // Calculate current step index for timeline
   const activeStep = STATUS_ORDER.indexOf(order.orderStatus);
-  const progressPercent = activeStep >= 0 ? (activeStep / (STATUS_ORDER.length - 1)) * 100 : 0;
 
   // Format timeline steps with proper dates
   const timelineSteps = [
@@ -197,8 +195,8 @@ const OrderDetails = () => {
       label: "Out For Delivery",
       icon: Truck,
       description: "Your order is on the way to your doorstep.",
-      time: order.orderStatus === "out_for_delivery" || order.orderStatus === "delivered" 
-        ? (order.otpVerifiedAt || order.updatedAt) 
+      time: order.orderStatus === "out_for_delivery" || order.orderStatus === "delivered"
+        ? (order.otpVerifiedAt || order.updatedAt)
         : null,
       completed: activeStep >= 1,
     },
@@ -214,7 +212,6 @@ const OrderDetails = () => {
 
   return (
     <div className="space-y-8">
-
       <div className="flex items-center gap-4 border-b border-border/50 pb-6 flex-wrap">
         <button
           onClick={() => navigate("/account/orders")}
@@ -250,15 +247,11 @@ const OrderDetails = () => {
           >
             INVOICE
           </Button>
-
-
         </div>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
-
         <div className="lg:col-span-2 space-y-8">
-
           {/* Delivery Timeline */}
           <div className="card-premium p-4 sm:p-8 bg-card rounded-[2rem] border border-border overflow-hidden">
             <h3 className="text-xs sm:text-sm font-black uppercase tracking-widest mb-6 sm:mb-10 pl-1 sm:pl-2">
@@ -284,19 +277,17 @@ const OrderDetails = () => {
                         )}
 
                         <div
-                          className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border-[3px] sm:border-4 border-card shadow-sm transition-all duration-300 ${
-                            isCompleted || isCurrent
+                          className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border-[3px] sm:border-4 border-card shadow-sm transition-all duration-300 ${isCompleted || isCurrent
                               ? "bg-secondary text-white"
                               : "bg-card text-muted border-border"
-                          } ${isCurrent ? "ring-4 ring-secondary/20 scale-110" : ""}`}
+                            } ${isCurrent ? "ring-4 ring-secondary/20 scale-110" : ""}`}
                         >
                           <step.icon size={14} className="sm:w-4 sm:h-4" />
                         </div>
                       </div>
 
-                      <div className={`flex-1 p-3 sm:p-5 rounded-2xl border transition-all ${
-                        isCurrent ? "border-secondary bg-secondary/5" : "border-border"
-                      }`}>
+                      <div className={`flex-1 p-3 sm:p-5 rounded-2xl border transition-all ${isCurrent ? "border-secondary bg-secondary/5" : "border-border"
+                        }`}>
                         <div className="flex justify-between items-start flex-wrap gap-1 sm:gap-2">
                           <h4 className={`text-[11px] sm:text-sm font-black uppercase whitespace-nowrap sm:whitespace-normal ${isCurrent ? "text-secondary" : ""}`}>
                             {step.label}
@@ -319,13 +310,11 @@ const OrderDetails = () => {
                           <div className="mt-3 p-3 bg-orange-500/10 rounded-xl text-xs text-orange-600 border border-orange-200/20">
                             📦 Your order is out for delivery! Please keep your phone handy.
                           </div>
-
                         )}
                         {step.id === "delivered" && order.orderStatus === "delivered" && (
                           <div className="mt-3 p-3 bg-green-500/10 rounded-xl text-xs text-green-600 border border-green-200/20">
                             ✅ Order delivered successfully! Please share your feedback by clicking the "WRITE REVIEW" button above.
                           </div>
-
                         )}
                       </div>
                     </div>
@@ -357,16 +346,19 @@ const OrderDetails = () => {
                         <span className="text-sm">Qty: {item.qty}</span>
                         <span className="text-xs text-muted">{formatCurrency(item.price)} each</span>
                       </div>
-                      {(item.selectedFlavor || item.selectedWeight || getDisplayFlavor(item) !== 'Standard') && (
+                      {(item.selectedFlavor || item.selectedWeight || item.cakeMessage || item.messageOnCake || getDisplayFlavor(item) !== 'Standard') && (
                         <div className="text-xs text-muted mt-1">
                           {(item.selectedFlavor || getDisplayFlavor(item) !== 'Standard') && (
                             <span>{item.isCustomCake ? 'Color' : 'Flavor'}: {getDisplayFlavor(item)}</span>
                           )}
                           {item.selectedWeight && <span className="ml-2">Weight: {item.selectedWeight}</span>}
+                          {(item.cakeMessage || item.messageOnCake) && (
+                            <p className="text-primary font-bold mt-0.5">Msg on Cake: "{item.cakeMessage || item.messageOnCake}"</p>
+                          )}
                         </div>
                       )}
                       {item.customDetails && Object.values(item.customDetails).some(val => val) && (
-                        <button 
+                        <button
                           onClick={() => toggleItemExpand(idx)}
                           className="text-xs text-secondary flex items-center gap-1 mt-2"
                         >
@@ -395,7 +387,6 @@ const OrderDetails = () => {
         </div>
 
         <div className="space-y-8">
-          {/* Delivery Info */}
           <div className="card-premium p-6 bg-card rounded-3xl border border-border">
             <h3 className="font-black uppercase mb-4 flex gap-2 items-center">
               <MapPin size={16} />
@@ -463,9 +454,8 @@ const OrderDetails = () => {
               <div className="pt-2">
                 <p className="text-xs text-muted">
                   Payment Status:{" "}
-                  <span className={`font-bold ${
-                    order.paymentStatus === 'paid' ? 'text-green-600' : 'text-orange-600'
-                  }`}>
+                  <span className={`font-bold ${order.paymentStatus === 'paid' ? 'text-green-600' : 'text-orange-600'
+                    }`}>
                     {order.paymentStatus?.toUpperCase()}
                   </span>
                 </p>

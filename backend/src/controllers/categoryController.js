@@ -42,7 +42,7 @@ exports.createCategory = asyncHandler(async (req, res, next) => {
   console.log('Body:', req.body);
   console.log('File:', req.file);
   
-  const { name, label, subCategories, categoryType } = req.body;
+  const { name, label, subCategories, categoryType, allowCakeMessage } = req.body;
   
   if (!name) {
     return next(new AppError('Category name is required', 400));
@@ -96,6 +96,7 @@ exports.createCategory = asyncHandler(async (req, res, next) => {
     label: label || name.trim(),
     categoryType: categoryType || 'both',
     subCategories: subCategories ? (Array.isArray(subCategories) ? subCategories : JSON.parse(subCategories)).map(s => s.trim().toLowerCase()) : [],
+    allowCakeMessage: allowCakeMessage === 'true' || allowCakeMessage === true,
     image: imageUrl,
     imagePublicId: imagePublicId
   });
@@ -113,7 +114,7 @@ exports.updateCategory = asyncHandler(async (req, res, next) => {
     return next(new AppError('Category not found', 404));
   }
 
-  const { name, label, active, subCategories, categoryType } = req.body;
+  const { name, label, active, subCategories, categoryType, allowCakeMessage } = req.body;
   const oldName = category.name;
   
   if (name && name.trim().toLowerCase() !== oldName) {
@@ -137,6 +138,7 @@ exports.updateCategory = asyncHandler(async (req, res, next) => {
   if (label !== undefined) category.label = label;
   if (categoryType !== undefined) category.categoryType = categoryType;
   if (active !== undefined) category.active = active === 'true' || active === true;
+  if (allowCakeMessage !== undefined) category.allowCakeMessage = allowCakeMessage === 'true' || allowCakeMessage === true;
   if (subCategories !== undefined) category.subCategories = (Array.isArray(subCategories) ? subCategories : JSON.parse(subCategories)).map(s => s.trim().toLowerCase());
 
   if (req.file) {
