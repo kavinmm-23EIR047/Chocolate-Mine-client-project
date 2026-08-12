@@ -439,6 +439,9 @@ const OrderDetailsModal = ({ order, onClose }) => {
                             Flavor: <span className="text-heading font-extrabold">{getDisplayFlavor(item)}</span>
                             {item.selectedWeight && <> · Weight: <span className="text-heading font-extrabold">{item.selectedWeight}</span></>}
                           </p>
+                          {(item.cakeMessage || item.messageOnCake) && (
+                            <p className="text-sm font-bold text-heading mt-1">🎂 Message on Cake: "{item.cakeMessage || item.messageOnCake}"</p>
+                          )}
                           <p className="text-xs text-muted font-mono mt-0.5">
                             {item.qty} x {formatCurrency(itemPrice)}
                           </p>
