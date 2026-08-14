@@ -254,6 +254,16 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
   const { address, discount, couponCode, deliveryDate, deliverySlot, directItem, notes, cakeMessage, paymentMethod = 'ONLINE' } = req.body;
 
   if (!req.user?._id) throw new AppError('Unauthorized user', 401);
+  const customer = await User.findById(req.user._id).select('phone phoneVerified provider');
+  // Preserve existing email-verified local accounts created before this field
+  // existed. Google accounts never receive this compatibility upgrade.
+  if (customer?.provider === 'local' && customer.phone && customer.phoneVerified !== true) {
+    customer.phoneVerified = true;
+    await customer.save({ validateBeforeSave: false });
+  }
+  if (!customer?.phone || customer.phoneVerified !== true) {
+    throw new AppError('Please verify your mobile number before placing an order.', 403);
+  }
   try {
     validateAddress(address);
   } catch (err) {

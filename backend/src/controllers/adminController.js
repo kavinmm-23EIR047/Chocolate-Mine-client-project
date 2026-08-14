@@ -694,3 +694,23 @@ exports.exportUsers = asyncHandler(async (req, res, next) => {
     }
   });
 });
+
+// @desc    Get All Orders for a Specific User ID (Admin Panel)
+// @route   GET /api/v1/admin/users/:userId/orders
+// @access  Admin Only
+exports.getUserOrders = asyncHandler(async (req, res, next) => {
+  const Order = require('../models/Order');
+  const { userId } = req.params;
+
+  const orders = await Order.find({ userId })
+    .populate('userId', 'name email phone')
+    .populate('assignedStaff', 'name')
+    .sort('-createdAt')
+    .lean();
+
+  res.status(200).json({
+    status: 'success',
+    count: orders.length,
+    data: orders
+  });
+});

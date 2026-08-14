@@ -12,7 +12,7 @@ const otpSessionSchema = new mongoose.Schema({
   hashedOtp: { type: String }, // For user login/registration (hashed)
   type: { 
     type: String, 
-    enum: ['login', 'register', 'delivery', 'password_reset'],
+    enum: ['login', 'register', 'delivery', 'password_reset', 'phone_verification'],
     default: 'login'
   },
   expiresAt: { type: Date, required: true },

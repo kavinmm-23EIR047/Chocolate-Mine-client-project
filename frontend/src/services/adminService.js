@@ -25,6 +25,7 @@ const adminService = {
   ---------------------------------------- */
   getAllUsers: () => api.get('/admin/users'),
   getUser: (id) => api.get(`/admin/users/${id}`),
+  getUserOrders: (userId) => api.get(`/admin/users/${userId}/orders`),
 
   /* ----------------------------------------
      Order Management

@@ -36,6 +36,7 @@ exports.updateProfile = asyncHandler(async (req, res, next) => {
   // Update phone
   if (phone !== undefined) {
     const formattedPhone = phone.trim() === '' ? null : phone.trim();
+    if (formattedPhone !== user.phone) user.phoneVerified = false;
     user.phone = formattedPhone;
   }
 

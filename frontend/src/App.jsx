@@ -20,7 +20,7 @@ import StaffLayout from './components/layouts/StaffLayout';
 import DashboardLayout from './components/layout/DashboardLayout';
 
 // Guards
-import { ProtectedRoute, AdminRoute, StaffRoute, GuestRoute } from './routes/Guards';
+import { ProtectedRoute, AdminRoute, StaffRoute, GuestRoute, PhoneVerificationGate } from './routes/Guards';
 
 // Public & User Pages
 import Home from './pages/Home';
@@ -35,6 +35,7 @@ import VerifyOtp from './pages/VerifyOtp';
 import Cart from './pages/Cart';
 import ForgotPassword from './pages/ForgotPassword';
 import OAuthCallback from './pages/OAuthCallback';
+import PhoneVerification from './pages/PhoneVerification';
 import ReviewPage from './pages/ReviewPage';
 import Contact from './pages/Contact';
 import Help from './pages/Help';
@@ -218,7 +219,10 @@ function App() {
               />
               <Routes>
                 {/* Public / User Routes */}
-                <Route element={<UserLayout />}>
+                <Route path="/oauth-callback" element={<ErrorBoundary><OAuthCallback /></ErrorBoundary>} />
+                <Route path="/verify-phone" element={<ProtectedRoute allowUnverified><PhoneVerification /></ProtectedRoute>} />
+
+                <Route element={<PhoneVerificationGate><UserLayout /></PhoneVerificationGate>}>
                   <Route path="/" element={<ErrorBoundary><Home /></ErrorBoundary>} />
                   <Route path="/shop" element={<ErrorBoundary><Shop /></ErrorBoundary>} />
                   <Route path="/custom-cake" element={<ErrorBoundary><CustomCake /></ErrorBoundary>} />
@@ -227,7 +231,6 @@ function App() {
                   <Route path="/cart" element={<ErrorBoundary><Cart /></ErrorBoundary>} />
                   <Route path="/track/:orderId?" element={<ErrorBoundary><OrderTracking /></ErrorBoundary>} />
                   <Route path="/order-success" element={<ErrorBoundary><OrderSuccess /></ErrorBoundary>} />
-                  <Route path="/oauth-callback" element={<ErrorBoundary><OAuthCallback /></ErrorBoundary>} />
                   <Route path="/contact" element={<ErrorBoundary><Contact /></ErrorBoundary>} />
                   <Route path="/help" element={<ErrorBoundary><Help /></ErrorBoundary>} />
                   <Route path="/stores" element={<ErrorBoundary><Stores /></ErrorBoundary>} />

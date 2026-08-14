@@ -33,6 +33,10 @@ const userSchema = new mongoose.Schema({
     sparse: true
     // ✅ REMOVED unique: true - Multiple users can now have the same phone number
   },
+  phoneVerified: {
+    type: Boolean,
+    default: false
+  },
   role: {
     type: String,
     enum: ['user', 'staff', 'admin'],

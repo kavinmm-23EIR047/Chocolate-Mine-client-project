@@ -1,16 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, User, UserPlus, Phone, Eye, EyeOff, ShieldCheck, ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
+import { Mail, Lock, User, UserPlus, Phone, Eye, EyeOff, ShieldCheck, ArrowRight, ArrowLeft, Loader2, CheckCircle } from 'lucide-react';
 import authService from '../services/authService';
 import toast from 'react-hot-toast';
 import LightLogo from '../assets/light logo.png';
 import { signInWithGoogle } from '../firebase';
+import api from '../utils/api';
 
 const Register = () => {
   const [step, setStep] = useState(1); // 1 = details, 2 = otp
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', password: '', confirmPassword: '' });
+  const [isGoogleAuth, setIsGoogleAuth] = useState(false);
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -18,8 +20,20 @@ const Register = () => {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [timer, setTimer] = useState(60);
   const navigate = useNavigate();
+  const location = useLocation();
   const { updateUser } = useAuth();
   const otpRefs = useRef([]);
+
+  useEffect(() => {
+    if (location.state?.fromGoogle) {
+      setIsGoogleAuth(true);
+      setFormData(prev => ({
+        ...prev,
+        name: location.state.name || prev.name,
+        email: location.state.email || prev.email
+      }));
+    }
+  }, [location.state]);
 
   useEffect(() => {
     let interval;
@@ -62,9 +76,15 @@ const Register = () => {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
-        password: formData.password
+        password: formData.password,
+        isGoogle: isGoogleAuth
       });
-      if (res.data.requiresOtp) {
+
+      if (res.data?.token && res.data?.user) {
+        updateUser(res.data.user, res.data.token);
+        toast.success('Account created successfully! Welcome to The Chocolate Mine!');
+        navigate('/', { replace: true });
+      } else if (res.data?.requiresOtp) {
         toast.success(res.data.message || 'OTP sent to your email');
         setStep(2);
         setTimer(60);
@@ -186,8 +206,20 @@ const Register = () => {
                 >
                   <div className="hidden md:block text-center md:text-left mb-8">
                     <h2 className="text-2xl sm:text-3xl font-black text-[var(--heading)] tracking-tight uppercase">Create Account</h2>
-                    <p className="text-sm font-bold text-[var(--muted)] mt-1">Please enter your details to sign up</p>
+                    <p className="text-sm font-bold text-[var(--muted)] mt-1">
+                      {isGoogleAuth ? 'Google verified! Enter mobile number & password to finish.' : 'Please enter your details to sign up'}
+                    </p>
                   </div>
+
+                  {isGoogleAuth && (
+                    <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-xl p-3.5 flex items-start gap-3 text-xs font-bold text-amber-800 dark:text-amber-300">
+                      <CheckCircle size={18} className="text-emerald-500 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-extrabold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider text-[11px] mb-0.5">Google Sign-In Verified</p>
+                        <p>Name and Email auto-filled from Google. Enter your mobile number & password to complete your account.</p>
+                      </div>
+                    </div>
+                  )}
 
                   <form onSubmit={handleDetailsSubmit} className="space-y-4">
                     <div className="space-y-1.5">
@@ -288,7 +320,7 @@ const Register = () => {
                           <Loader2 size={18} className="animate-spin" />
                           Processing...
                         </>
-                      ) : 'Continue'}
+                      ) : (isGoogleAuth ? 'Complete & Sign In' : 'Continue')}
                       {!loading && <ArrowRight size={18} />}
                     </button>
                     
@@ -303,11 +335,28 @@ const Register = () => {
                       onClick={async () => {
                         try {
                           setGoogleLoading(true);
-                          await signInWithGoogle();
-                          toast.success('Welcome to The Chocolate Mine!');
-                          navigate('/');
+                          const googleUser = await signInWithGoogle();
+                          if (!googleUser || !googleUser.email) {
+                            throw new Error('Could not retrieve Google profile');
+                          }
+                          const response = await api.post('/auth/firebase-login', {
+                            email: googleUser.email,
+                            name: googleUser.displayName,
+                            avatar: googleUser.photoURL
+                          });
+                          if (response.data?.user && response.data?.token) {
+                            updateUser(response.data.user, response.data.token);
+                            if (response.data.user.phoneVerified) {
+                              toast.success('Welcome back to The Chocolate Mine!');
+                              navigate('/');
+                            } else {
+                              toast.success('Please verify your mobile number to continue.');
+                              navigate('/verify-phone');
+                            }
+                          }
                         } catch (err) {
-                          toast.error('Google Sign-In failed');
+                          console.error('Google Sign-In error:', err);
+                          toast.error(err.response?.data?.message || 'Google Sign-In failed');
                         } finally {
                           setGoogleLoading(false);
                         }
