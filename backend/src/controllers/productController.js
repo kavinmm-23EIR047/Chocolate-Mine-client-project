@@ -1030,9 +1030,39 @@ const executeProductAtlasSearch = async (q, extraMatch = {}, options = {}) => {
 exports.executeProductAtlasSearch = executeProductAtlasSearch;
 
 /**
+ * Helper to extract the best display image from a custom cake theme document.
+ */
+const getThemeDisplayImage = (theme) => {
+  if (theme.image && typeof theme.image === 'string' && theme.image.trim() !== '') return theme.image;
+  if (theme.imageUrl && typeof theme.imageUrl === 'string' && theme.imageUrl.trim() !== '') return theme.imageUrl;
+  if (theme.thumbnail && typeof theme.thumbnail === 'string' && theme.thumbnail.trim() !== '') return theme.thumbnail;
+
+  if (theme.colors && Array.isArray(theme.colors)) {
+    for (const c of theme.colors) {
+      if (c && c.images) {
+        const candidate = c.images.tier1 || c.images.single || c.images.tier2 || c.images.tier3;
+        if (candidate && typeof candidate === 'string' && candidate.trim() !== '') {
+          return candidate;
+        }
+      }
+    }
+  }
+
+  if (theme.flavors && Array.isArray(theme.flavors)) {
+    for (const f of theme.flavors) {
+      if (f && f.image && typeof f.image === 'string' && f.image.trim() !== '') {
+        return f.image;
+      }
+    }
+  }
+
+  return null;
+};
+
+/**
  * Controller endpoint to handle product search using MongoDB Atlas Search ($search).
  * Endpoint: GET /api/search?q= or GET /api/v1/products/search?q=
- * Collection: products
+ * Searches BOTH products AND customcakethemes collections and merges results.
  * Index: default
  */
 exports.searchProducts = asyncHandler(async (req, res) => {
@@ -1047,8 +1077,21 @@ exports.searchProducts = asyncHandler(async (req, res) => {
   const extraMatch = admin !== 'true' ? { isActive: true } : {};
 
   try {
-    const { results: rawProducts, total } = await executeProductAtlasSearch(searchTerm, extraMatch, { page, limit, sort });
+    // Search both products and custom cake themes in parallel
+    const CustomCakeTheme = require('../models/CustomCakeTheme');
+    const { executeThemeAtlasSearch } = require('./customCakeController');
 
+    const [productResult, themeResults] = await Promise.all([
+      executeProductAtlasSearch(searchTerm, extraMatch, { page, limit, sort }),
+      executeThemeAtlasSearch(searchTerm).catch(err => {
+        console.warn('Theme search failed, continuing with products only:', err.message);
+        return [];
+      })
+    ]);
+
+    const { results: rawProducts, total: productTotal } = productResult;
+
+    // Map regular products
     let products = rawProducts.map(p => {
       const couponData = applyCoupon(p);
       let sellingPrice;
@@ -1064,7 +1107,29 @@ exports.searchProducts = asyncHandler(async (req, res) => {
       };
     });
 
-    res.status(200).json({ status: 'success', total, data: products });
+    // Map custom cake themes to product-like shape
+    const mappedThemes = (Array.isArray(themeResults) ? themeResults : [])
+      .filter(t => t.isActive !== false)
+      .map(t => ({
+        _id: t._id,
+        name: t.name,
+        description: t.description || '',
+        image: getThemeDisplayImage(t),
+        price: t.basePrice || 0,
+        category: Array.isArray(t.category) && t.category.length > 0 ? t.category : ['Custom Cakes'],
+        isCustom: true,
+        isTheme: true,
+        slug: null,
+        finalPrice: t.basePrice || 0,
+        couponAvailable: false,
+        score: t.score || 0
+      }));
+
+    // Merge: products first, then themes
+    const combined = [...products, ...mappedThemes];
+    const totalCombined = combined.length;
+
+    res.status(200).json({ status: 'success', total: totalCombined, data: combined });
   } catch (error) {
     console.error('Atlas Search Product Error:', error);
     res.status(500).json({ status: 'error', message: 'Failed to search products via Atlas Search' });
