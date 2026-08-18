@@ -1,9 +1,27 @@
 const axios = require('axios');
 const logger = require('../utils/logger');
 
-const SMS_GATEWAY_URL = process.env.SMS_GATEWAY_URL || 'https://api.textbee.dev/api/v1/gateway';
-const SMS_GATEWAY_API_KEY = process.env.SMS_GATEWAY_API_KEY;
-const SMS_GATEWAY_DEVICE_ID = process.env.SMS_GATEWAY_DEVICE_ID;
+/**
+ * Read SMS credentials dynamically so env vars set on Render (or any
+ * live host) are always picked up — even if they weren't present when
+ * the module was first required.
+ */
+const getSmsConfig = () => ({
+  url: process.env.SMS_GATEWAY_URL || 'https://api.textbee.dev/api/v1/gateway',
+  apiKey: process.env.SMS_GATEWAY_API_KEY,
+  deviceId: process.env.SMS_GATEWAY_DEVICE_ID,
+});
+
+// Log once at startup so you can immediately see in Render logs whether
+// the credentials are loaded.
+(() => {
+  const { apiKey, deviceId } = getSmsConfig();
+  if (!apiKey || !deviceId) {
+    logger.warn('[SMS] ⚠️  SMS_GATEWAY_API_KEY or SMS_GATEWAY_DEVICE_ID is NOT set — SMS will not work!');
+  } else {
+    logger.info(`[SMS] ✅ SMS gateway configured (API key: ${apiKey.substring(0, 8)}…, Device: ${deviceId.substring(0, 8)}…)`);
+  }
+})();
 
 /**
  * Normalize Indian phone numbers to +91XXXXXXXXXX format.
@@ -42,19 +60,24 @@ const sendSMS = async (phone, message) => {
     return { success: false, error: 'Invalid phone number format' };
   }
 
-  if (!SMS_GATEWAY_API_KEY || !SMS_GATEWAY_DEVICE_ID) {
+  // Read credentials fresh every time
+  const { url: gatewayUrl, apiKey, deviceId } = getSmsConfig();
+
+  if (!apiKey || !deviceId) {
     logger.warn('[SMS] SMS_GATEWAY_API_KEY or SMS_GATEWAY_DEVICE_ID not configured');
+    logger.warn(`[SMS] Current env check → API_KEY present: ${!!apiKey}, DEVICE_ID present: ${!!deviceId}`);
     return { success: false, error: 'SMS gateway not configured' };
   }
 
   try {
-    const url = `${SMS_GATEWAY_URL}/devices/${SMS_GATEWAY_DEVICE_ID}/send-sms`;
+    const url = `${gatewayUrl}/devices/${deviceId}/send-sms`;
+    logger.info(`[SMS] Sending to ${normalizedPhone} via device ${deviceId.substring(0, 8)}…`);
     const response = await axios.post(
       url,
       { recipients: [normalizedPhone], message: message },
       {
         headers: {
-          'x-api-key': SMS_GATEWAY_API_KEY,
+          'x-api-key': apiKey,
           'Content-Type': 'application/json',
         },
         timeout: 15000,
@@ -71,6 +94,9 @@ const sendSMS = async (phone, message) => {
   } catch (err) {
     const errMsg = err.response?.data?.message || err.response?.data?.error || err.message || 'Unknown SMS error';
     logger.error(`[SMS] Failed to send to ${normalizedPhone}: ${errMsg}`);
+    if (err.response) {
+      logger.error(`[SMS] Response status: ${err.response.status}, data: ${JSON.stringify(err.response.data)}`);
+    }
     return { success: false, error: errMsg };
   }
 };
