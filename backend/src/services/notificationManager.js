@@ -152,93 +152,124 @@ exports.notifyOrderSuccess = async (order) => {
     const populatedOrder = await order.populate('userId');
     const trackingNumber = populatedOrder.orderNumber || populatedOrder._id.toString();
 
-    // ✅ FIXED: Send detailed WhatsApp to customer with FULL ORDER OBJECT
-    if (populatedOrder.userId.phone) {
-      await whatsappService.sendOrderPlaced(
-        populatedOrder.userId.phone, 
-        trackingNumber, 
-        populatedOrder  // Pass the complete order object for detailed template
-      );
+    // USER SOCKET NOTIFICATION
+    try {
+      if (populatedOrder.userId) {
+        socketService.emitToUser(populatedOrder.userId._id, 'order_confirmed', { orderNumber: trackingNumber });
+      }
+    } catch (err) {
+      logger.error('User Socket Notification Failed:', err.message);
+    }
+    
+    // USER EMAIL
+    try {
+      if (populatedOrder.userId && populatedOrder.userId.email) {
+        if (typeof emailService.sendOrderConfirmed === 'function') {
+          emailService.sendOrderConfirmed(populatedOrder.userId.email, populatedOrder)
+            .catch(e => logger.error('Order Email Promise Failed:', e.message));
+        }
+      }
+    } catch (err) {
+      logger.error('Order Email Sync Failed:', err.message);
     }
 
-    // ✅ FIXED: Send detailed WhatsApp to admin with FULL ORDER OBJECT
-    const adminPhone = process.env.ADMIN_PHONE || '9363265477';
-    await whatsappService.sendInternalOrderAlert(adminPhone, populatedOrder);
-
-    // 1. NOTIFY USER (SOCKET, EMAIL)
-    socketService.emitToUser(populatedOrder.userId._id, 'order_confirmed', { orderNumber: trackingNumber });
-    
-    if (populatedOrder.userId.email) {
-      emailService.sendOrderConfirmed(populatedOrder.userId.email, populatedOrder)
-        .catch(e => logger.error('Order Email Failed:', e.message));
+    // ADMIN EMAIL
+    try {
+      const adminEmail = process.env.ADMIN_NOTIFY_EMAIL || 'thechocolateminercm@gmail.com';
+      if (typeof emailService.sendAdminNewOrderAlert === 'function') {
+        emailService.sendAdminNewOrderAlert(adminEmail, populatedOrder)
+          .then(() => logger.info('✅ ADMIN EMAIL SUCCESS'))
+          .catch(e => logger.error(`[ADMIN NOTIFICATION FAILED] Email: ${e.message}`));
+      } else {
+        logger.warn('[ADMIN NOTIFICATION FAILED] Email: emailService.sendAdminNewOrderAlert is not implemented.');
+      }
+    } catch (err) {
+      logger.error(`[ADMIN NOTIFICATION FAILED] Email Sync: ${err.message}`);
     }
 
-    // Send Dedicated Admin Order Alert Email to Admin
-    const adminEmail = process.env.ADMIN_NOTIFY_EMAIL || 'thechocolateminercm@gmail.com';
-    emailService.sendAdminNewOrderAlert(adminEmail, populatedOrder)
-      .catch(e => logger.error('Admin Order Alert Email Failed:', e.message));
-
-    const userTitle = '✅ Order Confirmed';
-    const userMsg = `Your order #${trackingNumber} has been confirmed.`;
-    const userMetadata = {
-      type: 'order_confirmed',
-      orderId: populatedOrder._id.toString(),
-      url: `/account/orders/${populatedOrder._id}`
-    };
-
-    // Save history & send FCM to User
-    await saveWebNotification(populatedOrder.userId._id, userTitle, userMsg, 'order_confirmed', userMetadata);
-
-    // 2. NOTIFY ADMINS (Telegram Group Alert)
-    const alertLockKey = `alert_lock:order:${populatedOrder._id}`;
-    const isAlreadyAlerted = await cacheService.get(alertLockKey);
-
-    if (!isAlreadyAlerted) {
-      await cacheService.set(alertLockKey, 'true', 60);
-      await telegramService.sendInternalOrderAlert(adminPhone, populatedOrder);
+    // USER WEB NOTIFICATION (PUSH)
+    try {
+      if (populatedOrder.userId) {
+        const userTitle = '✅ Order Confirmed';
+        const userMsg = `Your order #${trackingNumber} has been confirmed.`;
+        const userMetadata = {
+          type: 'order_confirmed',
+          orderId: populatedOrder._id.toString(),
+          url: `/account/orders/${populatedOrder._id}`
+        };
+        await saveWebNotification(populatedOrder.userId._id, userTitle, userMsg, 'order_confirmed', userMetadata);
+      }
+    } catch (err) {
+      logger.error('User Web Notification Failed:', err.message);
     }
 
-    // 3. EMIT Socket + Push/DB Notification to all admins
-    const admins = await User.find({ role: 'admin' });
-    
-    const adminTitle = '🔔 New Order Received';
-    const adminMsg = `Order #${trackingNumber}\nCustomer: ${populatedOrder.address.fullName}\nPhone: ${populatedOrder.address.phone}\nAmount: ₹${populatedOrder.total}`;
-    const adminMetadata = {
-      type: 'new_order',
-      orderId: populatedOrder._id.toString(),
-      customerId: populatedOrder.userId._id.toString(),
-      customerPhone: populatedOrder.address.phone,
-      amount: String(populatedOrder.total),
-      url: '/admin/orders'
-    };
+    // ADMIN TELEGRAM NOTIFICATION
+    try {
+      const alertLockKey = `alert_lock:order:${populatedOrder._id}`;
+      const isAlreadyAlerted = await cacheService.get(alertLockKey);
 
-    // Save history and send FCM to Admins
-    await saveAdminWebNotification(adminTitle, adminMsg, 'new_order', adminMetadata);
+      if (!isAlreadyAlerted) {
+        await cacheService.set(alertLockKey, 'true', 60);
+        const adminPhone = process.env.ADMIN_PHONE || '9363265477';
+        await telegramService.sendInternalOrderAlert(adminPhone, populatedOrder)
+          .then(() => logger.info('✅ TELEGRAM ADMIN SUCCESS'))
+          .catch(e => logger.error(`[ADMIN NOTIFICATION FAILED] Telegram: ${e.message}`));
+      }
+    } catch (err) {
+      logger.error(`[ADMIN NOTIFICATION FAILED] Telegram Sync: ${err.message}`);
+    }
 
-    const newOrderPayload = { 
-      orderId: populatedOrder._id, 
-      orderNumber: trackingNumber,
-      amount: populatedOrder.total,
-      customer: populatedOrder.address.fullName 
-    };
+    // ADMIN WEB NOTIFICATION (PUSH)
+    try {
+      const adminTitle = '🔔 New Order Received';
+      const adminMsg = `Order #${trackingNumber}\nCustomer: ${populatedOrder.address.fullName}\nPhone: ${populatedOrder.address.phone}\nAmount: ₹${populatedOrder.total}`;
+      const adminMetadata = {
+        type: 'new_order',
+        orderId: populatedOrder._id.toString(),
+        customerId: populatedOrder.userId ? populatedOrder.userId._id.toString() : '',
+        customerPhone: populatedOrder.address.phone,
+        amount: String(populatedOrder.total),
+        url: '/admin/orders'
+      };
+      await saveAdminWebNotification(adminTitle, adminMsg, 'new_order', adminMetadata)
+        .then(() => logger.info('✅ WEB PUSH ADMIN SUCCESS'))
+        .catch(e => logger.error(`[ADMIN NOTIFICATION FAILED] Web Push: ${e.message}`));
+    } catch (err) {
+      logger.error(`[ADMIN NOTIFICATION FAILED] Web Push Sync: ${err.message}`);
+    }
 
-    // Emit to Admin, Staff, and All connected sockets for guaranteed real-time dashboard updates & sound alerts
-    socketService.emitToAdmin('new_order_alert', newOrderPayload);
-    socketService.emitToAdmin('new_order_confirmed', newOrderPayload);
-    socketService.emitToAdmin('dashboard_needs_refresh', newOrderPayload);
-    
-    socketService.emitToStaff('new_order_alert', newOrderPayload);
-    socketService.emitToStaff('new_order_confirmed', newOrderPayload);
-    socketService.emitToStaff('dashboard_needs_refresh', newOrderPayload);
+    // SOCKET EMITS FOR ADMIN/STAFF DASHBOARD
+    try {
+      const newOrderPayload = { 
+        orderId: populatedOrder._id, 
+        orderNumber: trackingNumber,
+        amount: populatedOrder.total,
+        customer: populatedOrder.address.fullName 
+      };
 
-    socketService.emitToAll('new_order_alert', newOrderPayload);
-    socketService.emitToAll('new_order_confirmed', newOrderPayload);
-    socketService.emitToAll('dashboard_needs_refresh', newOrderPayload);
+      socketService.emitToAdmin('new_order_alert', newOrderPayload);
+      socketService.emitToAdmin('new_order_confirmed', newOrderPayload);
+      socketService.emitToAdmin('dashboard_needs_refresh', newOrderPayload);
+      
+      socketService.emitToStaff('new_order_alert', newOrderPayload);
+      socketService.emitToStaff('new_order_confirmed', newOrderPayload);
+      socketService.emitToStaff('dashboard_needs_refresh', newOrderPayload);
 
-    // 4. Trigger Custom Cake request alert if order contains custom cake
-    const hasCustomCake = populatedOrder.items.some(item => item.isCustomCake);
-    if (hasCustomCake) {
-      await exports.notifyCustomCakeRequest(populatedOrder.address.fullName);
+      socketService.emitToAll('new_order_alert', newOrderPayload);
+      socketService.emitToAll('new_order_confirmed', newOrderPayload);
+      socketService.emitToAll('dashboard_needs_refresh', newOrderPayload);
+    } catch (err) {
+      logger.error('Socket Emits for Admin/Staff Failed:', err.message);
+    }
+
+    // CUSTOM CAKE ALERT
+    try {
+      const hasCustomCake = populatedOrder.items.some(item => item.isCustomCake);
+      if (hasCustomCake) {
+        await exports.notifyCustomCakeRequest(populatedOrder.address.fullName);
+      }
+    } catch (err) {
+      logger.error('Custom Cake Notification Failed:', err.message);
     }
 
     logger.info(`✅ All notifications sent for order ${trackingNumber}`);

@@ -7,40 +7,40 @@ const logger = require('../utils/logger');
 const fs = require('fs');
 const path = require('path');
 
-// ─── Original Brand Palette (Restored from theme.css) ─────────────────────────
+// ─── Palette Extracted Directly from Your Website/Admin Dashboard ────────────
 const COLORS = {
-  brandBg: '#EBDEDA', // Soft Rose Cream
-  brandCard: '#F1E6E2', // Card Surface
-  brandPrimary: '#4E2820', // Deep Cocoa
-  brandText: '#2D1B17', // Main Foreground Text
-  brandMuted: '#7C6660', // Muted Text
-  brandAccent: '#C98F45', // Caramel Gold Accent
-  border: '#D5C0BA', // Border Dividers
+  bgCanvas: '#E0D3C9', // Warm Nude/Cream Page Background
+  cardBg: '#F2E8E2', // Light Cream Card Fill
+  primary: '#231512', // Deep Dark Brown
+  accent: '#C98F45', // Caramel Gold (Banner headers)
+  textDark: '#231512', // Primary Foreground Text
+  textMuted: '#6E5D57', // Muted Subtitles
+  border: '#D2C4BC', // Soft Divider Border
   white: '#FFFFFF',
 };
 
-// ─── Layout Constants ─────────────────────────────────────────────────────────
+// ─── Page Geometry Constants ─────────────────────────────────────────────────
 const PAGE_W = 595.28; // A4 Width
 const PAGE_H = 841.89; // A4 Height
-const MARGIN = 40;
-const CONTENT_W = PAGE_W - MARGIN * 2; // 515.28 pt
+const MARGIN = 35;
+const CONTENT_W = PAGE_W - MARGIN * 2; // 525.28 pt
 
-// Table Columns configuration
+// Table Column Mapping
 const COL = {
   qty: MARGIN + 10,
-  desc: MARGIN + 60,
-  unitPrice: MARGIN + 310,
-  amount: MARGIN + 410,
+  desc: MARGIN + 55,
+  unitPrice: MARGIN + 320,
+  amount: MARGIN + 420,
 };
 const COL_W = {
   qty: 40,
-  desc: 240,
-  unitPrice: 90,
+  desc: 265,
+  unitPrice: 95,
   amount: 95,
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-function hRule(doc, y, color = COLORS.border, thickness = 1) {
+function drawDivider(doc, y, color = COLORS.border, thickness = 0.75) {
   doc.save()
     .moveTo(MARGIN, y)
     .lineTo(PAGE_W - MARGIN, y)
@@ -79,7 +79,7 @@ exports.generateInvoiceBuffer = async (orderId) => {
       try {
         await order.save();
       } catch (err) {
-        // Ignore background save error
+        // Ignore background save errors
       }
     }
 
@@ -87,16 +87,13 @@ exports.generateInvoiceBuffer = async (orderId) => {
     const buffers = [];
     doc.on('data', buffers.push.bind(buffers));
 
-    // ── Soft Rose Cream Canvas Fill ───────────────────────────────────────────
-    doc.rect(0, 0, PAGE_W, PAGE_H).fill(COLORS.brandBg);
+    // ── Full Page Website Canvas Background ──────────────────────────────────
+    doc.rect(0, 0, PAGE_W, PAGE_H).fill(COLORS.bgCanvas);
 
-    // Top Accent Border Bar
-    doc.rect(MARGIN, 20, CONTENT_W, 4).fill(COLORS.brandPrimary);
+    // ── HEADER SECTION ────────────────────────────────────────────────────────
+    const HEADER_TOP = 30;
 
-    // ── 1. HEADER SECTION ────────────────────────────────────────────────────
-    const HEADER_TOP = 38;
-
-    // Resolve 'light logo.png' image file
+    // Resolve 'light logo.png' asset
     const logoPaths = [
       path.join(__dirname, '../assets/light logo.png'),
       path.join(__dirname, '../../../frontend/src/assets/light logo.png'),
@@ -112,109 +109,119 @@ exports.generateInvoiceBuffer = async (orderId) => {
       }
     }
 
-    // Render image with strict fit constraints to prevent text overlap
     if (activeLogo) {
-      doc.image(activeLogo, MARGIN, HEADER_TOP, { fit: [150, 50] });
+      doc.image(activeLogo, MARGIN, HEADER_TOP, { fit: [150, 48] });
     } else {
-      doc.font('Helvetica-Bold').fontSize(16).fillColor(COLORS.brandPrimary).text('THE CHOCOLATE MINE', MARGIN, HEADER_TOP);
-      doc.font('Helvetica').fontSize(9).fillColor(COLORS.brandAccent).text('PREMIUM ARTISAN BAKERY', MARGIN, HEADER_TOP + 18);
+      doc.font('Helvetica-Bold').fontSize(16).fillColor(COLORS.primary).text('THE CHOCOLATE MINE', MARGIN, HEADER_TOP);
+      doc.font('Helvetica').fontSize(8.5).fillColor(COLORS.accent).text('PREMIUM ARTISAN BAKERY', MARGIN, HEADER_TOP + 18);
     }
 
-    // Right Side Metadata
-    const INV_W = 180;
-    const INV_X = PAGE_W - MARGIN - INV_W;
+    // Right Header: Large Title
+    doc.font('Helvetica-Bold').fontSize(26).fillColor(COLORS.accent)
+      .text('Invoice', PAGE_W - MARGIN - 180, HEADER_TOP + 5, { width: 180, align: 'right' });
 
-    doc.font('Helvetica-Bold').fontSize(24).fillColor(COLORS.brandPrimary)
-      .text('INVOICE', INV_X, HEADER_TOP, { width: INV_W, align: 'right' });
+    drawDivider(doc, 90, COLORS.border, 1);
+
+    // ── SECTION 1: BANNER STRIP - BILL TO & ORDER DETAILS ─────────────────────
+    let currentY = 105;
+    const BANNER_H = 20;
+
+    doc.rect(MARGIN, currentY, CONTENT_W, BANNER_H).fill(COLORS.accent);
+    doc.font('Helvetica-Bold').fontSize(9).fillColor(COLORS.white)
+      .text('CUSTOMER & ORDER INFORMATION', MARGIN + 8, currentY + 5);
+
+    currentY += BANNER_H + 8;
+
+    // Data Mapping for Customer & Address
+    const clientName = (order.address && order.address.fullName) || (order.userId && order.userId.name) || order.customerName || 'Walk-in Customer';
+    const clientPhone = (order.address && order.address.phone) || (order.userId && order.userId.phone) || order.customerPhone || 'N/A';
+
+    const streetAddr = [order.address && order.address.houseNo, order.address && order.address.street].filter(Boolean).join(', ');
+    const cityState = [order.address && order.address.city, order.address && order.address.state].filter(Boolean).join(', ');
+    const pincode = (order.address && order.address.pincode) || '';
+    const landmark = (order.address && order.address.landmark) || '';
 
     const invoiceDate = new Date(order.createdAt).toLocaleDateString('en-IN', {
       day: '2-digit', month: 'short', year: 'numeric'
     });
 
-    doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLORS.brandMuted)
-      .text('Invoice No:', INV_X, HEADER_TOP + 32, { width: 65, align: 'left' });
-    doc.font('Helvetica').fontSize(8.5).fillColor(COLORS.brandText)
-      .text(order.invoiceNumber, INV_X + 65, HEADER_TOP + 32, { width: INV_W - 65, align: 'right' });
+    const deliveryDate = order.deliveryDate
+      ? new Date(order.deliveryDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+      : (order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN') : 'N/A');
 
-    doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLORS.brandMuted)
-      .text('Date:', INV_X, HEADER_TOP + 46, { width: 65, align: 'left' });
-    doc.font('Helvetica').fontSize(8.5).fillColor(COLORS.brandText)
-      .text(invoiceDate, INV_X + 65, HEADER_TOP + 46, { width: INV_W - 65, align: 'right' });
+    const COL_W_GRID = (CONTENT_W - 20) / 2;
+    const LEFT_X = MARGIN;
+    const RIGHT_X = MARGIN + COL_W_GRID + 20;
 
-    // Divider line below header
-    hRule(doc, 105, COLORS.brandPrimary, 1.25);
+    // Outer Card Frame around Grid Box
+    const GRID_BOX_H = 100;
+    doc.rect(MARGIN, currentY, CONTENT_W, GRID_BOX_H).fillAndStroke(COLORS.cardBg, COLORS.border);
 
-    // ── 2. BILLED TO & PAYMENT DETAILS ───────────────────────────────────────
-    const BILL_TOP = 118;
-    const COL_WIDTH = (CONTENT_W - 20) / 2;
+    // Left Column: Customer & Shipping Info
+    let leftY = currentY + 8;
+    doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLORS.textDark).text('Billed / Shipped To:', LEFT_X + 8, leftY);
+    leftY += 14;
+    doc.font('Helvetica-Bold').fontSize(9.5).fillColor(COLORS.primary).text(clientName, LEFT_X + 8, leftY);
+    leftY += 13;
+    doc.font('Helvetica').fontSize(8.5).fillColor(COLORS.textMuted);
+    doc.text(`Phone: ${clientPhone}`, LEFT_X + 8, leftY);
+    leftY += 12;
+    if (streetAddr) doc.text(streetAddr, LEFT_X + 8, leftY, { width: COL_W_GRID - 16 });
+    leftY += streetAddr ? 12 : 0;
+    if (cityState || pincode) doc.text(`${cityState}${pincode ? ' - ' + pincode : ''}`, LEFT_X + 8, leftY);
+    leftY += (cityState || pincode) ? 12 : 0;
+    if (landmark) doc.text(`Landmark: ${landmark}`, LEFT_X + 8, leftY);
 
-    // Left Column: Bill To
-    doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLORS.brandAccent)
-      .text('BILL TO', MARGIN, BILL_TOP);
+    // Right Column: Invoice Details Form
+    let rightY = currentY + 8;
+    function gridRow(label, value) {
+      doc.font('Helvetica-Bold').fontSize(8).fillColor(COLORS.textMuted).text(label, RIGHT_X, rightY, { width: 95 });
+      doc.font('Helvetica').fontSize(8.5).fillColor(COLORS.textDark).text(value || 'N/A', RIGHT_X + 95, rightY, { width: COL_W_GRID - 105, align: 'right' });
+      rightY += 14;
+    }
 
-    const clientName = (order.address && order.address.fullName) || (order.userId && order.userId.name) || order.customerName || 'Walk-in Customer';
-    const clientPhone = (order.address && order.address.phone) || (order.userId && order.userId.phone) || order.customerPhone || '—';
+    gridRow('Invoice No:', order.invoiceNumber);
+    gridRow('Date:', invoiceDate);
+    gridRow('Order Ref ID:', order.orderNumber || order._id.toString().slice(-8).toUpperCase());
+    gridRow('Payment Method:', (order.paymentMethod || 'N/A').toUpperCase());
+    if (order.deliverySlot) {
+      gridRow('Delivery Slot:', `${deliveryDate} (${order.deliverySlot})`);
+    } else {
+      gridRow('Delivery Date:', deliveryDate);
+    }
 
-    // Deduplicate address string parts
-    const rawAddrParts = [
-      order.address && order.address.houseNo,
-      order.address && order.address.street,
-      order.address && order.address.city,
-      order.address && order.address.state,
-      order.address && order.address.pincode,
-    ].filter(Boolean);
-    const uniqueAddr = [...new Set(rawAddrParts)].join(', ');
+    currentY += GRID_BOX_H + 15;
 
-    doc.font('Helvetica-Bold').fontSize(10.5).fillColor(COLORS.brandText)
-      .text(clientName, MARGIN, BILL_TOP + 14, { width: COL_WIDTH });
+    // ── SECTION 2: BANNER STRIP - ORDER ITEMS ─────────────────────────────────
+    doc.rect(MARGIN, currentY, CONTENT_W, BANNER_H).fill(COLORS.accent);
+    doc.font('Helvetica-Bold').fontSize(9).fillColor(COLORS.white)
+      .text(`ORDER ITEMS (${(order.items && order.items.length) || 0})`, MARGIN + 8, currentY + 5);
 
-    doc.font('Helvetica').fontSize(8.5).fillColor(COLORS.brandMuted)
-      .text('Phone: ' + clientPhone, MARGIN, BILL_TOP + 28, { width: COL_WIDTH })
-      .text(uniqueAddr || 'Counter Sale', MARGIN, BILL_TOP + 40, { width: COL_WIDTH, height: 32, lineGap: 2 });
+    currentY += BANNER_H;
 
-    // Right Column: Payment Badge Container
-    const BADGE_X = MARGIN + COL_WIDTH + 20;
+    // Table Header Bar
+    const TABLE_HDR_H = 18;
+    doc.rect(MARGIN, currentY, CONTENT_W, TABLE_HDR_H).fill(COLORS.primary);
 
-    doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLORS.brandAccent)
-      .text('PAYMENT DETAILS', BADGE_X, BILL_TOP);
+    const TH_Y = currentY + 4;
+    doc.font('Helvetica-Bold').fontSize(8).fillColor(COLORS.white);
+    doc.text('QTY', COL.qty, TH_Y, { width: COL_W.qty, align: 'center' });
+    doc.text('DESCRIPTION', COL.desc, TH_Y, { width: COL_W.desc, align: 'left' });
+    doc.text('UNIT PRICE', COL.unitPrice, TH_Y, { width: COL_W.unitPrice, align: 'right' });
+    doc.text('AMOUNT', COL.amount, TH_Y, { width: COL_W.amount, align: 'right' });
 
-    doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLORS.brandMuted)
-      .text('Payment Method:', BADGE_X, BILL_TOP + 14);
-    doc.font('Helvetica').fontSize(8.5).fillColor(COLORS.brandText)
-      .text((order.paymentMethod || '—').toUpperCase(), BADGE_X + 90, BILL_TOP + 14);
+    currentY += TABLE_HDR_H;
+    const ROW_PAD = 6;
 
-    doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLORS.brandMuted)
-      .text('Order Ref ID:', BADGE_X, BILL_TOP + 28);
-    doc.font('Helvetica').fontSize(8.5).fillColor(COLORS.brandText)
-      .text(order.orderNumber || order._id.toString().slice(-8).toUpperCase(), BADGE_X + 90, BILL_TOP + 28);
-
-    hRule(doc, 190, COLORS.border, 1);
-
-    // ── 3. ITEMIZED TABLE ─────────────────────────────────────────────────────
-    const TABLE_TOP = 205;
-    const HEADER_H = 24;
-
-    doc.rect(MARGIN, TABLE_TOP, CONTENT_W, HEADER_H).fill(COLORS.brandPrimary);
-
-    const HL_Y = TABLE_TOP + 7;
-    doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLORS.white);
-    doc.text('QTY', COL.qty, HL_Y, { width: COL_W.qty, align: 'center' });
-    doc.text('DESCRIPTION', COL.desc, HL_Y, { width: COL_W.desc, align: 'left' });
-    doc.text('UNIT PRICE', COL.unitPrice, HL_Y, { width: COL_W.unitPrice, align: 'right' });
-    doc.text('AMOUNT', COL.amount, HL_Y, { width: COL_W.amount, align: 'right' });
-
-    let rowY = TABLE_TOP + HEADER_H;
-    const ROW_PAD = 8;
-
-    order.items.forEach(function (item, idx) {
+    order.items.forEach((item, idx) => {
       const qty = Number(item.qty || 0);
       const finalUnitPrice = Number(item.finalPrice ?? item.price ?? 0);
       let addonTotal = 0;
       if (item.addons && Array.isArray(item.addons)) {
         addonTotal = item.addons.reduce((sum, a) => sum + (Number(a.price || 0) * (a.qty || 1)), 0) * qty;
       }
-      const total = (qty * finalUnitPrice) + addonTotal;
-      const nameText = item.name || '—';
+      const lineTotal = (qty * finalUnitPrice) + addonTotal;
+      const nameText = item.name || 'Custom Product';
 
       const colorDisp = item.selectedColor ? `Color: ${item.selectedColor}` : '';
       const weightDisp = item.selectedWeight ? `Weight: ${item.selectedWeight}` : ((item.isCustomCake && item.customDetails && item.customDetails.weight) ? `Weight: ${item.customDetails.weight}` : '');
@@ -224,109 +231,113 @@ exports.generateInvoiceBuffer = async (orderId) => {
       if (Number(item.price) > finalUnitPrice) {
         subParts.push(`Original: Rs. ${Number(item.price).toFixed(2)}`);
       }
-      const msgOnCake = (item.cakeMessage || item.messageOnCake || '').trim();
-      if (msgOnCake) {
-        subParts.push(`Msg on Cake: "${msgOnCake}"`);
-      }
       let subtitle = subParts.length > 0 ? subParts.join(' · ') : '';
 
       if (item.addons && Array.isArray(item.addons) && item.addons.length > 0) {
-        const addonStr = item.addons.map(a => `+ Addon: ${a.name} (x${a.qty || 1}) - Rs. ${(a.price * (a.qty || 1)).toFixed(2)}`).join('\n');
+        const addonStr = item.addons.map(a => `+ ${a.name} (x${a.qty || 1}) - Rs. ${(a.price * (a.qty || 1)).toFixed(2)}`).join('\n');
         subtitle = subtitle ? `${subtitle}\n${addonStr}` : addonStr;
       }
 
-      const nameH = doc.heightOfString(nameText, { font: 'Helvetica-Bold', fontSize: 9, width: COL_W.desc });
-      const subH = subtitle ? doc.heightOfString(subtitle, { font: 'Helvetica-Oblique', fontSize: 7.5, width: COL_W.desc }) + 2 : 0;
-      const rowH = Math.max(nameH + subH + ROW_PAD * 2, 26);
+      const nameH = doc.heightOfString(nameText, { font: 'Helvetica-Bold', fontSize: 8.5, width: COL_W.desc });
+      const subH = subtitle ? doc.heightOfString(subtitle, { font: 'Helvetica', fontSize: 7.5, width: COL_W.desc }) + 2 : 0;
+      const rowH = Math.max(nameH + subH + ROW_PAD * 2, 24);
 
-      // Alternating row card background
-      doc.rect(MARGIN, rowY, CONTENT_W, rowH)
-        .fill(idx % 2 === 0 ? COLORS.white : COLORS.brandCard);
+      // Background shading for alternate rows
+      doc.rect(MARGIN, currentY, CONTENT_W, rowH)
+        .fillAndStroke(idx % 2 === 0 ? COLORS.cardBg : COLORS.white, COLORS.border);
 
-      // Row outline border
-      doc.rect(MARGIN, rowY, CONTENT_W, rowH).lineWidth(0.5).strokeColor(COLORS.border).stroke();
+      const cy = currentY + ROW_PAD;
 
-      const cy = rowY + ROW_PAD;
-      doc.font('Helvetica').fontSize(9).fillColor(COLORS.brandText);
+      doc.font('Helvetica').fontSize(8.5).fillColor(COLORS.textDark);
       doc.text(qty.toString(), COL.qty, cy, { width: COL_W.qty, align: 'center' });
 
-      doc.font('Helvetica-Bold').fontSize(9).fillColor(COLORS.brandText);
+      doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLORS.textDark);
       doc.text(nameText, COL.desc, cy, { width: COL_W.desc, align: 'left' });
 
       if (subtitle) {
-        doc.font('Helvetica-Oblique').fontSize(7.5).fillColor(COLORS.brandMuted);
+        doc.font('Helvetica').fontSize(7.5).fillColor(COLORS.textMuted);
         doc.text(subtitle, COL.desc, cy + nameH + 2, { width: COL_W.desc, align: 'left' });
       }
 
-      doc.font('Helvetica').fontSize(9).fillColor(COLORS.brandText);
+      doc.font('Helvetica').fontSize(8.5).fillColor(COLORS.textDark);
       doc.text('Rs. ' + finalUnitPrice.toFixed(2), COL.unitPrice, cy, { width: COL_W.unitPrice, align: 'right' });
-      doc.text('Rs. ' + total.toFixed(2), COL.amount, cy, { width: COL_W.amount, align: 'right' });
+      doc.text('Rs. ' + lineTotal.toFixed(2), COL.amount, cy, { width: COL_W.amount, align: 'right' });
 
-      rowY += rowH;
+      currentY += rowH;
     });
 
-    // ── 4. SUMMARY CALCULATIONS & TOTALS ─────────────────────────────────────
-    const TOT_LBL_X = PAGE_W - MARGIN - 240;
-    const TOT_LBL_W = 130;
-    const TOT_VAL_X = TOT_LBL_X + TOT_LBL_W;
-    const TOT_VAL_W = 110;
-    const LINE_H = 18;
+    currentY += 15;
 
-    let ty = rowY + 15;
+    // ── SECTION 3: SUMMARY & SPECIAL NOTES ───────────────────────────────────
+    const SUMMARY_W = 230;
+    const SUMMARY_X = PAGE_W - MARGIN - SUMMARY_W;
+    const NOTES_W = CONTENT_W - SUMMARY_W - 20;
 
-    function summaryLine(label, value) {
-      doc.font('Helvetica').fontSize(8.5).fillColor(COLORS.brandMuted)
-        .text(label, TOT_LBL_X, ty, { width: TOT_LBL_W, align: 'left' });
-      doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLORS.brandText)
-        .text(value, TOT_VAL_X, ty, { width: TOT_VAL_W, align: 'right' });
-      ty += LINE_H;
+    // Left Side: Notes Block
+    doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLORS.accent)
+      .text('NOTES & INFORMATION', MARGIN, currentY);
+    doc.font('Helvetica').fontSize(8).fillColor(COLORS.textMuted)
+      .text('• All items are freshly prepared according to order standards.\n• For support regarding this order, please present Order Ref ID.\n• GST (5%) is included in the item display price.', MARGIN, currentY + 12, { width: NOTES_W, lineGap: 3 });
+
+    // Right Side: Totals Form Grid
+    let ty = currentY;
+    const LBL_W = 130;
+    const VAL_W = 100;
+    const SUM_LINE_H = 16;
+
+    function sumRow(label, value) {
+      doc.font('Helvetica').fontSize(8.5).fillColor(COLORS.textMuted)
+        .text(label, SUMMARY_X, ty, { width: LBL_W, align: 'left' });
+      doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLORS.textDark)
+        .text(value, SUMMARY_X + LBL_W, ty, { width: VAL_W, align: 'right' });
+      ty += SUM_LINE_H;
     }
 
-    summaryLine('Subtotal:', 'Rs. ' + Number(order.subtotal || 0).toFixed(2));
+    sumRow('Subtotal:', 'Rs. ' + Number(order.subtotal || 0).toFixed(2));
 
     if (order.discount > 0) {
-      summaryLine('Discount:', '-Rs. ' + Number(order.discount || 0).toFixed(2));
+      sumRow('Discount:', '-Rs. ' + Number(order.discount || 0).toFixed(2));
     }
 
-    summaryLine('Delivery Charges:', 'Rs. ' + Number(order.deliveryCharge || 0).toFixed(2));
+    sumRow('Delivery Charge:', 'Rs. ' + Number(order.deliveryCharge || 0).toFixed(2));
 
     if (order.convenienceFee > 0) {
-      summaryLine('Convenience Fee:', 'Rs. ' + Number(order.convenienceFee || 0).toFixed(2));
+      sumRow('Convenience Fee:', 'Rs. ' + Number(order.convenienceFee || 0).toFixed(2));
     }
 
-    summaryLine('Tax (GST 5% Included):', 'Included');
+    sumRow('GST (5% Included):', 'Inclusive');
 
     ty += 4;
-    hRule(doc, ty, COLORS.brandPrimary, 1);
+    drawDivider(doc, ty, COLORS.primary, 1);
     ty += 6;
 
-    // Grand Total Deep Cocoa Bar
-    const GT_H = 30;
-    doc.rect(MARGIN, ty, CONTENT_W, GT_H).fill(COLORS.brandPrimary);
+    // Grand Total Solid Banner
+    const GT_H = 26;
+    doc.rect(SUMMARY_X, ty, SUMMARY_W, GT_H).fill(COLORS.primary);
 
-    doc.font('Helvetica-Bold').fontSize(10).fillColor(COLORS.white)
-      .text('GRAND TOTAL', MARGIN + 12, ty + 10, { width: CONTENT_W * 0.5, align: 'left' })
-      .text('Rs. ' + Number(order.total || 0).toFixed(2), MARGIN + CONTENT_W * 0.5, ty + 10, { width: CONTENT_W * 0.5 - 24, align: 'right' });
+    doc.font('Helvetica-Bold').fontSize(9.5).fillColor(COLORS.white)
+      .text('GRAND TOTAL', SUMMARY_X + 10, ty + 8, { width: LBL_W, align: 'left' })
+      .text('Rs. ' + Number(order.total || 0).toFixed(2), SUMMARY_X + LBL_W, ty + 8, { width: VAL_W - 10, align: 'right' });
 
-    // ── 5. FOOTER ────────────────────────────────────────────────────────────
-    const FOOTER_TOP = PAGE_H - 65;
-    hRule(doc, FOOTER_TOP, COLORS.border, 1);
+    // ── FOOTER SECTION ───────────────────────────────────────────────────────
+    const FOOTER_Y = PAGE_H - 50;
+    drawDivider(doc, FOOTER_Y, COLORS.border, 0.75);
 
-    doc.font('Helvetica-Bold').fontSize(9.5).fillColor(COLORS.brandPrimary)
-      .text('Thank you for choosing The Chocolate Mine!', MARGIN, FOOTER_TOP + 12, { width: CONTENT_W, align: 'center' });
-    doc.font('Helvetica').fontSize(8).fillColor(COLORS.brandMuted)
-      .text('Freshly baked with care  ·  Every bite tells a story', MARGIN, FOOTER_TOP + 26, { width: CONTENT_W, align: 'center' });
+    doc.font('Helvetica-Bold').fontSize(9).fillColor(COLORS.primary)
+      .text('Thank you for your order!', MARGIN, FOOTER_Y + 10, { width: CONTENT_W, align: 'center' });
+    doc.font('Helvetica').fontSize(8).fillColor(COLORS.textMuted)
+      .text('The Chocolate Mine · Premium Artisan Bakery', MARGIN, FOOTER_Y + 22, { width: CONTENT_W, align: 'center' });
 
-    doc.rect(MARGIN, PAGE_H - 20, CONTENT_W, 4).fill(COLORS.brandPrimary);
+    doc.rect(0, PAGE_H - 4, PAGE_W, 4).fill(COLORS.accent);
 
     doc.end();
 
-    return new Promise(function (resolve) {
-      doc.on('end', function () { resolve(Buffer.concat(buffers)); });
+    return new Promise((resolve) => {
+      doc.on('end', () => resolve(Buffer.concat(buffers)));
     });
 
   } catch (err) {
-    logger.error('Invoice Buffer Error:', err.message);
+    logger.error('Invoice Generation Error:', err.message);
     throw err;
   }
 };

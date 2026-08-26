@@ -693,6 +693,79 @@ const emailService = {
       logger.error(`[Email] Failed to send delivery OTP email to ${email}: ${err.message}`);
       return { success: false, error: err.message };
     }
+  },
+
+  // ==========================================
+  // ADMIN NEW ORDER ALERT EMAIL
+  // ==========================================
+  sendAdminNewOrderAlert: async (adminEmail, order) => {
+    try {
+      const { getFrontendUrl } = require('../utils/urlUtils');
+      const frontendUrl = getFrontendUrl();
+      const adminOrdersLink = `${frontendUrl}/admin/orders`;
+      const formattedDate = new Date(order.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      const trackingNumber = order.orderNumber || order._id.toString();
+
+      const itemsRows = order.items.map((item) => {
+        const lineTotal = Number(item.price) * Number(item.qty);
+        return `
+          <tr>
+            <td style="padding: 12px 4px; border-bottom: 1px solid #EAE3DE; font-size: 13px; font-weight: 700; color: #2C1A16;">
+              ${item.name}
+            </td>
+            <td style="padding: 12px 4px; border-bottom: 1px solid #EAE3DE; text-align: center; font-size: 13px; font-weight: 800; color: #2C1A16;">${item.qty}</td>
+            <td style="padding: 12px 4px; border-bottom: 1px solid #EAE3DE; text-align: right; font-size: 13px; font-weight: 800; color: #2C1A16;">₹${lineTotal.toFixed(2)}</td>
+          </tr>`;
+      }).join('');
+
+      await sendMail({
+        to: adminEmail,
+        subject: `[ADMIN ALERT] New Order Received #${trackingNumber}`,
+        html: `
+          <html>
+            <head>
+              <link href="https://fonts.googleapis.com/css2?family=Helvetica+Neue:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+              ${getThemeStyles()}
+            </head>
+            <body style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #F5F2EF; color: #2C1A16; margin: 0; padding: 24px 12px;">
+              <div class="receipt-container" style="background-color: #FFFFFF; color: #2C1A16; border: 1px solid #D8CFC8; max-width: 540px; margin: 0 auto; padding: 36px 32px; border-radius: 0px;">
+                ${getLogoMarkup()}
+                <h2 style="color: #3C1B13; font-size: 18px; font-weight: 900; text-transform: uppercase; margin-top: 0; text-align: center;">New Order Received</h2>
+                
+                <div style="background: #F8F5F2; padding: 16px; margin-bottom: 24px; border: 1px solid #EAE3DE;">
+                  <p style="margin: 0 0 8px 0; font-size: 13px;"><b>Order:</b> #${trackingNumber}</p>
+                  <p style="margin: 0 0 8px 0; font-size: 13px;"><b>Customer:</b> ${order.address?.fullName || 'N/A'}</p>
+                  <p style="margin: 0 0 8px 0; font-size: 13px;"><b>Phone:</b> ${order.address?.phone || 'N/A'}</p>
+                  <p style="margin: 0 0 8px 0; font-size: 13px;"><b>Amount:</b> ₹${Number(order.total || 0).toFixed(2)}</p>
+                  <p style="margin: 0; font-size: 13px;"><b>Time:</b> ${formattedDate}</p>
+                </div>
+
+                <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; margin-bottom: 24px;">
+                  <thead>
+                    <tr>
+                      <th style="text-align: left; padding: 8px 4px; border-bottom: 1.5px solid #3C1B13; font-size: 10px; font-weight: 900; color: #7A6B65;">ITEMS</th>
+                      <th style="text-align: center; padding: 8px 4px; border-bottom: 1.5px solid #3C1B13; font-size: 10px; font-weight: 900; color: #7A6B65;">QTY</th>
+                      <th style="text-align: right; padding: 8px 4px; border-bottom: 1.5px solid #3C1B13; font-size: 10px; font-weight: 900; color: #7A6B65;">PRICE</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${itemsRows}
+                  </tbody>
+                </table>
+
+                <div style="text-align: center; margin: 28px 0 16px 0;">
+                  <a href="${adminOrdersLink}" class="action-button" style="background-color: #3C1B13; color: #FFFFFF; display: inline-block; padding: 14px 32px; text-decoration: none; border-radius: 0px; font-weight: 800; font-size: 13px; text-transform: uppercase;">View Dashboard</a>
+                </div>
+              </div>
+            </body>
+          </html>
+        `,
+      });
+      return { success: true };
+    } catch (err) {
+      logger.error(`[Email] Admin New Order Alert Failed: ${err.message}`);
+      throw err;
+    }
   }
 };
 
