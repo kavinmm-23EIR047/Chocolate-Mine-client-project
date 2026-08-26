@@ -412,12 +412,17 @@ const SearchOverlay = ({ isOpen, onClose }) => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {results.map((p, index) => {
                             const catName = Array.isArray(p.category) ? p.category[0] : (p.category || 'Cake');
+                            const isCustomTheme = p.isCustom || p.isTheme;
                             return (
                               <div
                                 key={p._id?.$oid || p._id}
                                 onClick={() => {
                                   saveSearchTerm(query);
-                                  navigate(`/product/${p.slug || p._id}`);
+                                  if (isCustomTheme) {
+                                    navigate(`/custom-cake?theme=${p._id}`);
+                                  } else {
+                                    navigate(`/product/${p.slug || p._id}`);
+                                  }
                                   onClose();
                                 }}
                                 className="flex items-center gap-4 p-3.5 bg-[var(--card)] rounded-2xl border border-[var(--border)] hover:border-[var(--primary)] cursor-pointer transition-all group shadow-sm hover:shadow-md relative overflow-hidden"
@@ -429,10 +434,14 @@ const SearchOverlay = ({ isOpen, onClose }) => {
                                   <p className="font-bold text-[var(--heading)] text-sm leading-tight truncate group-hover:text-[var(--primary)] transition-colors tracking-tight">{toSentenceCase(p.name)}</p>
                                   <p className="text-[10px] text-[var(--muted)] font-extrabold uppercase tracking-wider mt-1">{catName}</p>
                                   <div className="flex items-center gap-2 mt-1.5">
-                                    <span className="text-sm font-black text-[var(--primary)]">₹{p.offerPrice || p.price}</span>
-                                    {p.offerPrice && p.offerPrice < p.price && (
-                                      <span className="text-[11px] line-through text-[var(--muted)] opacity-60">₹{p.price}</span>
-                                    )}
+                                    {(p.offerPrice || p.price || p.finalPrice) ? (
+                                      <>
+                                        <span className="text-sm font-black text-[var(--primary)]">₹{p.offerPrice || p.finalPrice || p.price}</span>
+                                        {p.offerPrice && p.offerPrice < p.price && (
+                                          <span className="text-[11px] line-through text-[var(--muted)] opacity-60">₹{p.price}</span>
+                                        )}
+                                      </>
+                                    ) : null}
                                   </div>
                                 </div>
                                 <div className="pr-2 opacity-0 group-hover:opacity-100 transition-opacity">

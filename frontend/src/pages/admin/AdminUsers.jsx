@@ -11,12 +11,16 @@ import {
   ShieldCheck,
   UserRound,
   Users,
+  ShoppingBag,
+  Package,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import adminService from '../../services/adminService';
 import Badge from '../../components/ui/Badge';
 import EmptyState from '../../components/ui/EmptyState';
 import { TableSkeleton } from '../../components/ui/Skeleton';
+import { OrderStatusBadge } from '../../components/ui/StatusBadge';
+import { formatCurrency } from '../../utils/helpers';
 
 const formatDate = (value) => (value ? new Date(value).toLocaleString() : 'Not available');
 
@@ -34,8 +38,10 @@ const AdminUsers = () => {
   const { id } = useParams();
   const [users, setUsers] = useState([]);
   const [user, setUser] = useState(null);
+  const [userOrders, setUserOrders] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [ordersLoading, setOrdersLoading] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -43,8 +49,18 @@ const AdminUsers = () => {
       try {
         setLoading(true);
         if (id) {
-          const response = await adminService.getUser(id);
-          if (mounted) setUser(response.data.data);
+          setOrdersLoading(true);
+          const [userRes, ordersRes] = await Promise.allSettled([
+            adminService.getUser(id),
+            adminService.getUserOrders(id)
+          ]);
+          if (userRes.status === 'fulfilled' && mounted) {
+            setUser(userRes.value.data.data);
+          }
+          if (ordersRes.status === 'fulfilled' && mounted) {
+            setUserOrders(ordersRes.value.data.data || []);
+          }
+          setOrdersLoading(false);
         } else {
           const response = await adminService.getAllUsers();
           if (mounted) setUsers(response.data.data || []);
@@ -102,6 +118,82 @@ const AdminUsers = () => {
             <DetailRow icon={Clock3} label="Last active" value={formatDate(user.lastActiveAt)} />
             <DetailRow icon={ShieldCheck} label="Notifications" value={user.notificationEnabled ? 'Enabled' : 'Disabled'} />
           </div>
+        </section>
+
+        {/* Orders / Order History Section */}
+        <section className="bg-card border border-border rounded-2xl p-5 sm:p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-black text-heading uppercase tracking-widest flex items-center gap-2">
+              <ShoppingBag size={18} className="text-primary" />
+              Order History ({userOrders.length})
+            </h3>
+          </div>
+
+          {ordersLoading ? (
+            <p className="text-sm font-bold text-muted py-2">Loading user orders...</p>
+          ) : userOrders.length > 0 ? (
+            <div className="overflow-x-auto border border-border rounded-xl">
+              <table className="w-full text-left border-collapse min-w-[650px]">
+                <thead>
+                  <tr className="border-b border-border bg-background/50 text-[10px] font-black uppercase text-muted tracking-wider">
+                    <th className="px-4 py-3">Order ID</th>
+                    <th className="px-4 py-3">Date</th>
+                    <th className="px-4 py-3">Products / Items</th>
+                    <th className="px-4 py-3">Total Amount</th>
+                    <th className="px-4 py-3">Order Status</th>
+                    <th className="px-4 py-3">Payment Status</th>
+                    <th className="px-4 py-3 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border text-sm">
+                  {userOrders.map((order) => (
+                    <tr key={order._id} className="hover:bg-background/40 transition-colors">
+                      <td className="px-4 py-3.5 font-bold font-mono text-heading">
+                        #{order.orderNumber || order._id?.substring(0, 8)}
+                      </td>
+                      <td className="px-4 py-3.5 text-xs text-muted font-bold">
+                        {formatDate(order.createdAt)}
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <div className="space-y-1 max-w-xs">
+                          {order.items?.map((item, idx) => (
+                            <p key={idx} className="text-xs font-bold text-heading truncate">
+                              {item.quantity}x {item.name || item.product?.name || 'Product'}
+                              {item.weight && <span className="text-muted ml-1">({item.weight}kg)</span>}
+                            </p>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5 font-black text-heading">
+                        {formatCurrency(order.total || 0)}
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <OrderStatusBadge status={order.orderStatus} />
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <Badge
+                          variant={order.paymentStatus === 'paid' ? 'success' : order.paymentStatus === 'failed' ? 'danger' : 'warning'}
+                          className="uppercase text-[10px]"
+                        >
+                          {order.paymentStatus || 'Pending'}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3.5 text-right">
+                        <Link
+                          to={`/admin/orders/${order._id}`}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white font-bold text-xs transition-colors"
+                        >
+                          View <ChevronRight size={14} />
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-sm font-bold text-muted py-2">No orders found</p>
+          )}
         </section>
 
         <section className="bg-card border border-border rounded-2xl p-5 sm:p-6">

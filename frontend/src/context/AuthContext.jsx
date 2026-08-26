@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import api from '../utils/api';
 import { requestFirebaseNotificationPermission, getExistingFcmToken, auth, onAuthStateChanged, logoutGoogle } from '../firebase';
 
@@ -154,12 +154,12 @@ export const AuthProvider = ({ children }) => {
       try {
         const response = await api.get('/auth/me');
         const userData = response.data.user;
-        setUser(userData);
-        safeSet(sessionStorage, 'user', JSON.stringify(userData));
-        safeSet(localStorage, 'user', JSON.stringify(userData));
-
-        // Sync FCM token in background
-        syncFcmToken();
+        if (userData) {
+          setUser(userData);
+          safeSet(sessionStorage, 'user', JSON.stringify(userData));
+          safeSet(localStorage, 'user', JSON.stringify(userData));
+          if (userData.phoneVerified) syncFcmToken();
+        }
       } catch (err) {
         // Only a confirmed auth failure should destroy a stored session. A
         // mobile network/CORS/server failure must not log the customer out.
@@ -200,6 +200,18 @@ export const AuthProvider = ({ children }) => {
               name: firebaseUser.displayName,
               avatar: firebaseUser.photoURL
             });
+            
+            // If details (phone & password) are required, do not complete login automatically
+            if (response.data?.requiresDetails) {
+              setUser(null);
+              safeRemove(sessionStorage, 'user');
+              safeRemove(sessionStorage, 'token');
+              safeRemove(localStorage, 'user');
+              safeRemove(localStorage, 'token');
+              setLoading(false);
+              return;
+            }
+
             const { user: userData, token } = response.data;
             if (userData) {
               userData.isFirebase = true;
@@ -312,7 +324,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const updateUser = (userData, token = null) => {
+  const updateUser = useCallback((userData, token = null) => {
     setUser(userData);
     safeSet(sessionStorage, 'user', JSON.stringify(userData));
     safeSet(localStorage, 'user', JSON.stringify(userData));
@@ -320,7 +332,7 @@ export const AuthProvider = ({ children }) => {
       safeSet(sessionStorage, 'token', token);
       safeSet(localStorage, 'token', token);
     }
-  };
+  }, []);
 
   const isAuthenticated = !!user;
 

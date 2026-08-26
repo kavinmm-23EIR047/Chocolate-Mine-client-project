@@ -77,6 +77,8 @@ router.post('/login', authLimiter, validate(loginSchema), authController.login);
 
 // POST /api/v1/auth/firebase-login
 router.post('/firebase-login', authLimiter, authController.firebaseLogin);
+router.post('/phone-verification/send-otp', protect, otpLimiter, authController.sendPhoneVerificationOtp);
+router.post('/phone-verification/verify-otp', protect, otpLimiter, authController.verifyPhoneVerificationOtp);
 
 // GET /api/v1/auth/me
 router.get('/me', protect, authController.getMe);

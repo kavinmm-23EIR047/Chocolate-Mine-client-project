@@ -897,7 +897,8 @@ const Checkout = () => {
         lng: deliveryInfo.position.lng,
       });
 
-      setSavedAddresses(prev => prev.map(a => a._id === editingAddressId ? data : a));
+      // The address endpoint returns the complete updated list.
+      setSavedAddresses(data.data);
       setEditingAddressId(null);
       toast.success('Address updated successfully');
     } catch (err) {
@@ -907,16 +908,61 @@ const Checkout = () => {
     }
   };
 
-  const handleDeliverHere = () => {
+  const saveCheckoutAddress = async () => {
+    if (subtotal < 300 || !user || !deliveryInfo.position) return;
+
+    const normalized = (value) => String(value || '').trim().toLowerCase();
+    const payload = {
+      fullName: addressDetails.fullName.trim(),
+      phone: addressDetails.phone,
+      houseNo: addressDetails.houseNo.trim(),
+      street: addressDetails.street.trim(),
+      landmark: addressDetails.landmark.trim(),
+      city: 'Coimbatore',
+      pincode: addressDetails.pincode.trim(),
+      lat: deliveryInfo.position.lat,
+      lng: deliveryInfo.position.lng,
+    };
+
+    const duplicate = savedAddresses.find((address) =>
+      normalized(address.houseNo) === normalized(payload.houseNo) &&
+      normalized(address.street) === normalized(payload.street) &&
+      normalized(address.pincode) === normalized(payload.pincode) &&
+      Number(address.lat) === Number(payload.lat) &&
+      Number(address.lng) === Number(payload.lng)
+    );
+
+    if (duplicate) {
+      setSelectedAddressId(duplicate._id);
+      return;
+    }
+
+    const { data } = await api.post('/users/addresses', payload);
+    const addresses = data.data;
+    setSavedAddresses(addresses);
+    const savedAddress = addresses[addresses.length - 1];
+    setSelectedAddressId(savedAddress?._id || null);
+  };
+
+  const handleDeliverHere = async () => {
     if (!addressDetails.fullName.trim()) return toast.error('Please enter recipient name');
     if (!validatePhoneNumber(addressDetails.phone)) return toast.error('Please enter a valid 10-digit phone number');
     if (subtotal >= 300) {
       if (!addressDetails.houseNo?.trim()) return toast.error('Please enter house/flat number');
       if (!addressDetails.street?.trim()) return toast.error('Please enter street address');
       if (!addressDetails.landmark?.trim()) return toast.error('Please enter a landmark');
+      if (!/^[0-9]{6}$/.test(addressDetails.pincode || '')) return toast.error('Please enter a valid 6-digit pincode');
       if (!deliveryInfo.position) return toast.error('Please select delivery location on map');
       if (!locationValid) return toast.error(locationError || 'Location outside service area');
     }
+
+    try {
+      await saveCheckoutAddress();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Unable to save this address. Please try again.');
+      return;
+    }
+
     setActiveStep(2);
   };
 

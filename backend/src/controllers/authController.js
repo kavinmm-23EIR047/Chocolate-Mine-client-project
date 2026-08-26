@@ -6,6 +6,7 @@ const OtpSession = require('../models/OtpSession');
 const emailService = require('../services/emailService');
 const AppError = require('../utils/AppError');
 const asyncHandler = require('../utils/asyncHandler');
+const { sendSMS, normalizeIndianPhone } = require('../services/smsService');
 
 const REFRESH_TOKEN_MAX_AGE = 30 * 24 * 60 * 60 * 1000;
 
@@ -28,6 +29,11 @@ const generateRefreshToken = (userId) => {
     }
   );
 };
+
+const hasPhoneNumber = (user) => Boolean(user?.phone && String(user.phone).trim() && user.phone !== 'Not provided');
+const hasVerifiedPhone = (user) => Boolean(
+  hasPhoneNumber(user) && (user.phoneVerified === true || user.provider === 'local')
+);
 
 const sendTokenResponse = (user, statusCode, res) => {
   const accessToken = generateAccessToken(user._id);
@@ -58,6 +64,8 @@ const sendTokenResponse = (user, statusCode, res) => {
       email: user.email,
       role: user.role,
       phone: user.phone,
+      phoneNumber: user.phone || null,
+      phoneVerified: hasVerifiedPhone(user),
       isVerified: user.isVerified === true,
       fcmTokens: user.fcmTokens || [],
       notificationEnabled: user.notificationEnabled
@@ -86,24 +94,38 @@ const issueSignupOtp = async (email) => {
   return targetEmail;
 };
 
-// @desc    Normal Signup
+// @desc    Normal Signup / Google Signup Completion
 // @route   POST /api/v1/auth/signup
 exports.signup = asyncHandler(async (req, res, next) => {
-  const { name, email, password, phone } = req.body;
+  const { name, email, password, phone, isGoogle } = req.body;
   const targetEmail = email.trim().toLowerCase();
 
-  let user = await User.findOne({ email: targetEmail });
+  let user = await User.findOne({ email: targetEmail }).select('+password');
+
+  // If user already exists with complete details (both phone & password) and is verified
+  if (user && user.isVerified && user.phone && user.password) {
+    return next(new AppError('An account with this email already exists. Please sign in.', 400));
+  }
 
   if (user) {
-    if (user.isVerified) {
-      return next(new AppError('Email already in use', 400));
-    }
-    // If not verified, update details and resend OTP
-    user.name = name;
+    // User exists (e.g. created via Google without phone/password or unverified local signup)
+    user.name = name || user.name;
     user.password = password;
     user.phone = phone;
+    if (isGoogle) {
+      user.isVerified = true;
+      user.provider = 'google';
+      user.phoneVerified = false;
+    } else {
+      user.phoneVerified = true;
+    }
     await user.save();
+
+    if (isGoogle) {
+      return sendTokenResponse(user, 201, res);
+    }
   } else {
+    // Create new user
     user = await User.create({
       name,
       email: targetEmail,
@@ -111,14 +133,25 @@ exports.signup = asyncHandler(async (req, res, next) => {
       phone,
       role: 'user',
       active: true,
-      isVerified: false,
-      provider: 'local'
+      isVerified: isGoogle ? true : false,
+      provider: isGoogle ? 'google' : 'local',
+      phoneVerified: !isGoogle
     });
+
+    if (isGoogle) {
+      try {
+        const notificationManager = require('../services/notificationManager');
+        notificationManager.notifyNewUserRegistration(user).catch(err => console.error('Notification Error:', err));
+      } catch (err) {
+        console.error('Notification Error:', err);
+      }
+      return sendTokenResponse(user, 201, res);
+    }
   }
 
   await issueSignupOtp(targetEmail);
 
-  // 4. Respond to frontend
+  // Respond to frontend for standard local signup
   res.status(201).json({
     status: 'success',
     message: 'OTP sent to your email',
@@ -308,14 +341,21 @@ exports.login = asyncHandler(async (req, res, next) => {
 // @desc    Get Current User
 // @route   GET /api/v1/auth/me
 exports.getMe = asyncHandler(async (req, res) => {
+  const account = await User.findById(req.user._id);
+  const phoneVerified = hasVerifiedPhone(account);
+
   res.status(200).json({
     status: 'success',
+    authenticated: true,
+    requiresDetails: !phoneVerified,
     user: {
       id: req.user._id,
       name: req.user.name,
       email: req.user.email,
       role: req.user.role,
       phone: req.user.phone,
+      phoneNumber: req.user.phone || null,
+      phoneVerified,
       isVerified: req.user.isVerified === true,
       fcmTokens: req.user.fcmTokens || [],
       notificationEnabled: req.user.notificationEnabled
@@ -371,31 +411,110 @@ exports.firebaseLogin = asyncHandler(async (req, res, next) => {
   let user = await User.findOne({ email: trimmedEmail });
 
   if (!user) {
-    // Create new user if they don't exist
-    user = await User.create({
-      name: name || 'Google User',
-      email: trimmedEmail,
-      active: true,
-      isVerified: true,
-      provider: 'google'
-    });
-    
     try {
-      const notificationManager = require('../services/notificationManager');
-      notificationManager.notifyNewUserRegistration(user).catch(err => console.error('Notification Error:', err));
-    } catch (err) {
-      console.error('Notification Error:', err);
+      user = await User.create({
+        name: name || 'Google User',
+        email: trimmedEmail,
+        active: true,
+        isVerified: true,
+        provider: 'google',
+        phoneVerified: false
+      });
+    } catch (error) {
+      // Firebase's auth-state listener and the sign-in button can arrive at
+      // the API together. Reuse the account created by the other request.
+      if (error?.code !== 11000) throw error;
+      user = await User.findOne({ email: trimmedEmail });
     }
   } else {
-    // Update last active
-    user.lastActiveAt = Date.now();
     user.provider = 'google';
     user.isVerified = true;
+    user.lastActiveAt = Date.now();
     await user.save({ validateBeforeSave: false });
   }
 
-  // Issue standard JWT cookies so the rest of the app works seamlessly
-  sendTokenResponse(user, 200, res);
+  // The customer receives a session so they can complete protected phone OTP
+  // verification. Route and payment guards keep unverified users from normal use.
+  return sendTokenResponse(user, 200, res);
+});
+
+// @desc    Send OTP for the authenticated customer's phone verification
+// @route   POST /api/v1/auth/phone-verification/send-otp
+exports.sendPhoneVerificationOtp = asyncHandler(async (req, res, next) => {
+  const phone = normalizeIndianPhone(req.body.phone);
+  if (!phone) return next(new AppError('Please enter a valid 10-digit Indian mobile number.', 400));
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const hashedOtp = await bcrypt.hash(otp, 12);
+  await OtpSession.updateMany(
+    { email: req.user.email, type: 'phone_verification', isUsed: false },
+    { $set: { isUsed: true } }
+  );
+
+  const session = await OtpSession.create({
+    email: req.user.email,
+    phone,
+    hashedOtp,
+    type: 'phone_verification',
+    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+    maxAttempts: 5
+  });
+
+  const result = await sendSMS(phone, `The Chocolate Mine: your mobile verification OTP is ${otp}. It expires in 10 minutes.`);
+  if (!result.success) {
+    await OtpSession.deleteOne({ _id: session._id });
+    return next(new AppError('We could not send the OTP. Please try again.', 503));
+  }
+
+  res.status(200).json({ status: 'success', message: 'OTP sent to your mobile number.', phoneNumber: phone });
+});
+
+// @desc    Verify the authenticated customer's phone OTP
+// @route   POST /api/v1/auth/phone-verification/verify-otp
+exports.verifyPhoneVerificationOtp = asyncHandler(async (req, res, next) => {
+  const otp = String(req.body.otp || '').trim();
+  if (!/^\d{6}$/.test(otp)) return next(new AppError('Please enter the 6-digit OTP.', 400));
+
+  const session = await OtpSession.findOne({
+    email: req.user.email,
+    type: 'phone_verification',
+    isUsed: false,
+    expiresAt: { $gt: new Date() }
+  }).sort('-createdAt');
+
+  if (!session) return next(new AppError('OTP expired or not found. Please send a new OTP.', 400));
+  if (session.attempts >= session.maxAttempts) return next(new AppError('Too many incorrect attempts. Please send a new OTP.', 400));
+
+  if (!await bcrypt.compare(otp, session.hashedOtp)) {
+    session.attempts += 1;
+    if (session.attempts >= session.maxAttempts) session.isUsed = true;
+    await session.save();
+    return next(new AppError(`Invalid OTP. ${session.maxAttempts - session.attempts} attempts remaining.`, 400));
+  }
+
+  session.isUsed = true;
+  session.verifiedAt = new Date();
+  await session.save();
+
+  const user = await User.findById(req.user._id);
+  user.phone = session.phone;
+  user.phoneVerified = true;
+  await user.save({ validateBeforeSave: false });
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Mobile number verified successfully.',
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      phone: user.phone,
+      phoneNumber: user.phone,
+      phoneVerified: true,
+      isVerified: user.isVerified === true
+    }
+  });
 });
 
 // @desc    Forgot Password - Generate OTP and send email

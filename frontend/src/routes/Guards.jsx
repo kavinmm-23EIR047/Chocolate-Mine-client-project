@@ -3,7 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Loader2 } from 'lucide-react';
 
-export const ProtectedRoute = ({ children }) => {
+export const ProtectedRoute = ({ children, allowUnverified = false }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
 
@@ -17,6 +17,28 @@ export const ProtectedRoute = ({ children }) => {
 
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (!allowUnverified && user.role === 'user' && user.phoneVerified !== true) {
+    return <Navigate to="/verify-phone" replace />;
+  }
+
+  return children;
+};
+
+export const PhoneVerificationGate = ({ children }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 size={32} className="animate-spin text-secondary" />
+      </div>
+    );
+  }
+
+  if (user?.role === 'user' && user.phoneVerified !== true) {
+    return <Navigate to="/verify-phone" replace />;
   }
 
   return children;

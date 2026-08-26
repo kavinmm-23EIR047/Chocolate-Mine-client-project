@@ -21,6 +21,7 @@ router.delete('/staff/:id', adminController.deleteStaff);
 // --- User Management / Exports ---
 router.get('/users', adminController.getAllUsers);
 router.get('/users/:id', adminController.getUserDetails);
+router.get('/users/:userId/orders', adminController.getUserOrders);
 // @route   GET /api/admin/export-users
 router.get('/export-users', adminController.exportUsers);
 

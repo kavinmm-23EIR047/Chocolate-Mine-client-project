@@ -6,6 +6,7 @@ import { Mail, Lock, ArrowLeft, Eye, EyeOff, ShieldCheck, ArrowRight, Loader2 } 
 import toast from 'react-hot-toast';
 import LightLogo from '../assets/light logo.png';
 import { signInWithGoogle } from '../firebase';
+import api from '../utils/api';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -13,7 +14,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, updateUser } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -170,11 +171,30 @@ const Login = () => {
                     onClick={async () => {
                       try {
                         setGoogleLoading(true);
-                        await signInWithGoogle();
-                        toast.success('Welcome back to The Chocolate Mine!');
-                        navigate('/');
+                        const googleUser = await signInWithGoogle();
+                        if (!googleUser || !googleUser.email) {
+                          throw new Error('Could not retrieve Google user profile.');
+                        }
+
+                        const response = await api.post('/auth/firebase-login', {
+                          email: googleUser.email,
+                          name: googleUser.displayName,
+                          avatar: googleUser.photoURL
+                        });
+
+                        if (response.data?.user && response.data?.token) {
+                          updateUser(response.data.user, response.data.token);
+                          if (response.data.user.phoneVerified) {
+                            toast.success('Welcome back to The Chocolate Mine!');
+                            navigate('/');
+                          } else {
+                            toast.success('Please verify your mobile number to continue.');
+                            navigate('/verify-phone');
+                          }
+                        }
                       } catch (err) {
-                        toast.error('Google Sign-In failed');
+                        console.error('Google Sign-In failed:', err);
+                        toast.error(err.response?.data?.message || 'Google Sign-In failed');
                       } finally {
                         setGoogleLoading(false);
                       }
